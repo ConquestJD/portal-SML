@@ -1,15 +1,20 @@
 <div class="comunicados-container">
   <div class="page-header">
-    <h1 class="page-title">Comunicados y Avisos</h1>
+    <div class="header-content">
+      <h1 class="page-title">Comunicados y Avisos</h1>
+      <p class="page-subtitle">Mantente informado sobre las novedades institucionales</p>
+    </div>
     <div class="header-actions">
-      <input
-        type="text"
-        class="form-input"
-        placeholder="Buscar comunicado..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-        style="width: 250px;"
-      />
+      <div class="search-wrapper">
+        <i class="icon-search"></i>
+        <input
+          type="text"
+          class="form-input search-input"
+          placeholder="Buscar comunicado..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
     </div>
   </div>
 
@@ -33,31 +38,54 @@
 
   <div class="summary-panel">
     <div class="summary-item">
-      <span class="summary-label">No Leídos</span>
-      <span class="summary-value">{{ unreadCount() }}</span>
+      <div class="summary-icon-wrapper unread">
+        <i class="icon-announcement"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">No Leídos</span>
+        <span class="summary-value">{{ unreadCount() }}</span>
+      </div>
     </div>
     <div class="summary-item">
-      <span class="summary-label">Urgentes</span>
-      <span class="summary-value error">{{ urgentCount() }}</span>
+      <div class="summary-icon-wrapper urgent">
+        <i class="icon-warning"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Urgentes</span>
+        <span class="summary-value error">{{ urgentCount() }}</span>
+      </div>
     </div>
   </div>
 
   <div class="announcements-list">
     @for (announcement of filteredAnnouncements(); track announcement.id) {
-      <div class="announcement-card" [class.unread]="!announcement.read">
+      <div class="announcement-card" [class.unread]="!announcement.read" [class.urgent]="announcement.priority === 'urgente'">
         <div class="announcement-header">
           <div class="announcement-badges">
             <span class="badge" [class.badge-info]="announcement.type === 'institucional'" [class.badge-success]="announcement.type === 'grado'">
-              {{ announcement.type === 'institucional' ? 'Institucional' : announcement.type === 'grado' ? 'Grado' : 'Sección' }}
+              @if (announcement.type === 'institucional') {
+                <i class="icon-school"></i> Institucional
+              } @else if (announcement.type === 'grado') {
+                <i class="icon-book"></i> Grado
+              } @else {
+                <i class="icon-user"></i> Sección
+              }
             </span>
             @if (announcement.priority === 'urgente') {
-              <span class="badge badge-error">Urgente</span>
+              <span class="badge badge-error">
+                <i class="icon-warning"></i> Urgente
+              </span>
             }
             @if (!announcement.read) {
-              <span class="badge badge-info">Nuevo</span>
+              <span class="badge badge-info">
+                <i class="icon-announcement"></i> Nuevo
+              </span>
             }
           </div>
-          <span class="announcement-date">{{ announcement.date }}</span>
+          <div class="announcement-date-wrapper">
+            <i class="icon-calendar"></i>
+            <span class="announcement-date">{{ announcement.date }}</span>
+          </div>
         </div>
         
         <h3 class="announcement-title">{{ announcement.title }}</h3>
@@ -73,11 +101,11 @@
           </div>
           <div class="announcement-actions">
             <button class="btn btn-primary btn-sm" (click)="markAsRead(announcement.id)">
-              Leer más
+              <i class="icon-arrow-right"></i> Leer más
             </button>
             @if (!announcement.read) {
               <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id)">
-                Marcar como leído
+                <i class="icon-check"></i> Marcar como leído
               </button>
             }
           </div>

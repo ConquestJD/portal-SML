@@ -20,12 +20,12 @@ export class DashboardComponent {
   upcomingEvaluations = signal(3);
 
   quickAccess = signal([
-    { icon: '📚', title: 'Mis Cursos', link: '/cursos', count: 8 },
-    { icon: '📝', title: 'Tareas', link: '/tareas', count: this.pendingTasks() },
-    { icon: '📊', title: 'Notas', link: '/notas' },
-    { icon: '📅', title: 'Asistencia', link: '/asistencia' },
-    { icon: '📢', title: 'Comunicados', link: '/comunicados', count: 2 },
-    { icon: '👤', title: 'Perfil', link: '/perfil' }
+    { icon: 'icon-book', title: 'Mis Cursos', link: '/cursos', count: 8 },
+    { icon: 'icon-task', title: 'Tareas', link: '/tareas', count: this.pendingTasks() },
+    { icon: 'icon-chart', title: 'Notas', link: '/notas' },
+    { icon: 'icon-calendar', title: 'Asistencia', link: '/asistencia' },
+    { icon: 'icon-announcement', title: 'Comunicados', link: '/comunicados', count: 2 },
+    { icon: 'icon-user', title: 'Perfil', link: '/perfil' }
   ]);
 
   alerts = signal([

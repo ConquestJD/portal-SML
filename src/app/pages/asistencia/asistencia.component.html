@@ -1,9 +1,15 @@
 <div class="asistencia-container">
   <div class="page-header">
-    <h1 class="page-title">Mi Asistencia</h1>
+    <div class="header-content">
+      <h1 class="page-title">Mi Asistencia</h1>
+      <p class="page-subtitle">Consulta tu registro de asistencia y puntualidad</p>
+    </div>
     <div class="header-actions">
-      <input type="month" [(ngModel)]="selectedMonth" class="form-input">
-      <select [(ngModel)]="selectedCourse" class="form-input">
+      <div class="filter-wrapper">
+        <i class="icon-calendar"></i>
+        <input type="month" [(ngModel)]="selectedMonth" class="form-input month-input">
+      </div>
+      <select [(ngModel)]="selectedCourse" class="form-input course-select">
         <option value="todos">Todos los cursos</option>
         <option value="mat">Matemática</option>
         <option value="len">Lengua</option>
@@ -13,29 +19,49 @@
 
   <div class="summary-cards grid grid-cols-4">
     <div class="summary-card">
-      <span class="summary-icon icon-chart"></span>
-      <span class="summary-label">Asistencia del Mes</span>
-      <span class="summary-value">{{ summary().attendancePercentage }}%</span>
+      <div class="summary-icon-wrapper primary">
+        <i class="icon-chart"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Asistencia del Mes</span>
+        <span class="summary-value">{{ summary().attendancePercentage }}%</span>
+      </div>
     </div>
     <div class="summary-card">
-      <span class="summary-icon icon-check"></span>
-      <span class="summary-label">Días Asistidos</span>
-      <span class="summary-value">{{ summary().daysAttended }}</span>
+      <div class="summary-icon-wrapper success">
+        <i class="icon-check"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Días Asistidos</span>
+        <span class="summary-value">{{ summary().daysAttended }}</span>
+      </div>
     </div>
     <div class="summary-card">
-      <span class="summary-icon icon-error"></span>
-      <span class="summary-label">Faltas</span>
-      <span class="summary-value error">{{ summary().absences }}</span>
+      <div class="summary-icon-wrapper error">
+        <i class="icon-error"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Faltas</span>
+        <span class="summary-value error">{{ summary().absences }}</span>
+      </div>
     </div>
     <div class="summary-card">
-      <span class="summary-icon icon-clock"></span>
-      <span class="summary-label">Tardanzas</span>
-      <span class="summary-value warning">{{ summary().tardies }}</span>
+      <div class="summary-icon-wrapper warning">
+        <i class="icon-clock"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Tardanzas</span>
+        <span class="summary-value warning">{{ summary().tardies }}</span>
+      </div>
     </div>
   </div>
 
   <div class="attendance-section">
-    <h2 class="section-title">Registro de Asistencia</h2>
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="icon-calendar"></i> Registro de Asistencia
+      </h2>
+    </div>
     <div class="attendance-table-wrapper">
       <table class="attendance-table">
         <thead>
@@ -50,8 +76,8 @@
         </thead>
         <tbody>
           @for (record of attendanceRecords(); track $index) {
-            <tr>
-              <td>{{ record.date }}</td>
+            <tr [class.row-presente]="record.status === 'presente'" [class.row-falta]="record.status === 'falta'" [class.row-tardanza]="record.status === 'tardanza'">
+              <td><strong>{{ record.date }}</strong></td>
               <td>{{ record.course }}</td>
               <td>
                 <span class="badge"
@@ -63,9 +89,23 @@
                   @if (record.status === 'tardanza') { Tardanza }
                 </span>
               </td>
-              <td>{{ record.timeIn }}</td>
-              <td>{{ record.timeOut }}</td>
-              <td>-</td>
+              <td>
+                @if (record.timeIn !== '-') {
+                  <span class="time-value">{{ record.timeIn }}</span>
+                } @else {
+                  <span class="time-empty">-</span>
+                }
+              </td>
+              <td>
+                @if (record.timeOut !== '-') {
+                  <span class="time-value">{{ record.timeOut }}</span>
+                } @else {
+                  <span class="time-empty">-</span>
+                }
+              </td>
+              <td>
+                <span class="observations">-</span>
+              </td>
             </tr>
           }
         </tbody>
@@ -75,8 +115,13 @@
 
   @if (summary().absences > 3) {
     <div class="alert alert-error">
-      <span class="icon-warning"></span>
-      <span>Advertencia: Tienes más de 3 faltas. Contacta con la administración.</span>
+      <div class="alert-icon-wrapper">
+        <i class="icon-warning"></i>
+      </div>
+      <div class="alert-content">
+        <strong class="alert-title">Advertencia</strong>
+        <p class="alert-message">Tienes más de 3 faltas. Contacta con la administración.</p>
+      </div>
     </div>
   }
 </div>

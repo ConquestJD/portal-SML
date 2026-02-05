@@ -1,15 +1,20 @@
 <div class="tareas-container">
   <div class="page-header">
-    <h1 class="page-title">Mis Tareas</h1>
+    <div class="header-content">
+      <h1 class="page-title">Mis Tareas</h1>
+      <p class="page-subtitle">Gestiona y completa todas tus tareas académicas</p>
+    </div>
     <div class="header-actions">
-      <input
-        type="text"
-        class="form-input"
-        placeholder="Buscar tarea..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-        style="width: 250px;"
-      />
+      <div class="search-wrapper">
+        <i class="icon-search"></i>
+        <input
+          type="text"
+          class="form-input search-input"
+          placeholder="Buscar tarea..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
     </div>
   </div>
 
@@ -46,25 +51,43 @@
 
   <div class="summary-panel">
     <div class="summary-item">
-      <span class="summary-label">Total Pendientes</span>
-      <span class="summary-value">{{ pendingCount() }}</span>
+      <div class="summary-icon-wrapper pending">
+        <i class="icon-task"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Total Pendientes</span>
+        <span class="summary-value">{{ pendingCount() }}</span>
+      </div>
     </div>
     <div class="summary-item">
-      <span class="summary-label">Vencidas</span>
-      <span class="summary-value error">{{ overdueCount() }}</span>
+      <div class="summary-icon-wrapper error">
+        <i class="icon-error"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Vencidas</span>
+        <span class="summary-value error">{{ overdueCount() }}</span>
+      </div>
     </div>
     <div class="summary-item">
-      <span class="summary-label">Entregadas</span>
-      <span class="summary-value success">{{ completedCount() }}</span>
+      <div class="summary-icon-wrapper success">
+        <i class="icon-check"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Entregadas</span>
+        <span class="summary-value success">{{ completedCount() }}</span>
+      </div>
     </div>
   </div>
 
   <div class="tasks-list">
     @for (task of filteredTasks(); track task.id) {
-      <div class="task-card">
+      <div class="task-card" [class.task-vencida]="task.status === 'vencida'">
         <div class="task-header">
           <div class="task-course">
-            <span class="course-badge">{{ task.courseCode }}</span>
+            <div class="course-badge-wrapper">
+              <i class="icon-book"></i>
+              <span class="course-badge">{{ task.courseCode }}</span>
+            </div>
             <span class="course-name">{{ task.course }}</span>
           </div>
           <span class="badge" 
@@ -83,25 +106,34 @@
         
         <div class="task-details">
           <div class="detail-item">
-            <span class="detail-label">
-              <i class="icon-calendar"></i> Fecha límite:
-            </span>
-            <span class="detail-value" [class.overdue]="task.status === 'vencida'">
-              {{ task.dueDate }}
-            </span>
+            <div class="detail-icon-wrapper">
+              <i class="icon-calendar"></i>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Fecha límite</span>
+              <span class="detail-value" [class.overdue]="task.status === 'vencida'">
+                {{ task.dueDate }}
+              </span>
+            </div>
           </div>
           <div class="detail-item">
-            <span class="detail-label">
-              <i class="icon-chart"></i> Puntos:
-            </span>
-            <span class="detail-value">{{ task.points }}</span>
+            <div class="detail-icon-wrapper">
+              <i class="icon-chart"></i>
+            </div>
+            <div class="detail-content">
+              <span class="detail-label">Puntos</span>
+              <span class="detail-value">{{ task.points }}</span>
+            </div>
           </div>
           @if (task.grade) {
             <div class="detail-item">
-              <span class="detail-label">
-                <i class="icon-check"></i> Calificación:
-              </span>
-              <span class="detail-value grade">{{ task.grade }}</span>
+              <div class="detail-icon-wrapper success">
+                <i class="icon-check"></i>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Calificación</span>
+                <span class="detail-value grade">{{ task.grade }}</span>
+              </div>
             </div>
           }
         </div>
@@ -109,9 +141,9 @@
         <div class="task-actions">
           <a [routerLink]="['/tareas', task.id]" class="btn btn-primary">
             @if (task.status === 'pendiente' || task.status === 'vencida') {
-              Continuar / Entregar
+              <i class="icon-arrow-right"></i> Continuar / Entregar
             } @else {
-              Ver Detalle
+              <i class="icon-arrow-right"></i> Ver Detalle
             }
           </a>
         </div>

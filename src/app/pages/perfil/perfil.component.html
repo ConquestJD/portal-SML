@@ -1,15 +1,31 @@
 <div class="perfil-container">
   <div class="perfil-header">
     <div class="photo-section">
-      <img [src]="studentData().photo" [alt]="studentData().fullName" class="student-photo">
-      <button class="change-photo-btn">
-        <i class="icon-camera"></i> Cambiar foto
-      </button>
+      <div class="photo-wrapper">
+        <img [src]="studentData().photo" [alt]="studentData().fullName" class="student-photo">
+        <div class="photo-overlay">
+          <button class="change-photo-btn" title="Cambiar foto de perfil">
+            <i class="icon-camera"></i>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="header-info">
+      <div class="student-badge">
+        <i class="icon-user"></i>
+        <span>Estudiante</span>
+      </div>
       <h1 class="student-name">{{ studentData().fullName }}</h1>
-      <p class="student-code">Código: {{ studentData().code }}</p>
-      <p class="student-grade">{{ studentData().grade }} Grado - Sección {{ studentData().section }}</p>
+      <div class="student-details">
+        <div class="detail-row">
+          <i class="icon-book"></i>
+          <span class="student-code">Código: {{ studentData().code }}</span>
+        </div>
+        <div class="detail-row">
+          <i class="icon-calendar"></i>
+          <span class="student-grade">{{ studentData().grade }} Grado - Sección {{ studentData().section }}</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -19,64 +35,113 @@
       [class.active]="activeTab() === 'personal'"
       (click)="setTab('personal')"
     >
-      Datos Personales
+      <i class="icon-user"></i> Datos Personales
     </button>
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'academico'"
       (click)="setTab('academico')"
     >
-      Datos Académicos
+      <i class="icon-book"></i> Datos Académicos
     </button>
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'foto'"
       (click)="setTab('foto')"
     >
-      Foto y Avatar
+      <i class="icon-camera"></i> Foto y Avatar
     </button>
   </div>
 
   <div class="tab-content">
     @if (activeTab() === 'personal') {
       <div class="data-section">
-        <h2 class="section-title">Información Personal</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-user"></i> Información Personal
+          </h2>
+        </div>
         <div class="data-grid">
           <div class="data-item">
-            <span class="data-label">Nombre Completo</span>
-            <span class="data-value">{{ studentData().fullName }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-user"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Nombre Completo</span>
+              <span class="data-value">{{ studentData().fullName }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Fecha de Nacimiento</span>
-            <span class="data-value">{{ studentData().birthDate }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-calendar"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Fecha de Nacimiento</span>
+              <span class="data-value">{{ studentData().birthDate }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Edad</span>
-            <span class="data-value">{{ studentData().age }} años</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-chart"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Edad</span>
+              <span class="data-value">{{ studentData().age }} años</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">DNI</span>
-            <span class="data-value">{{ studentData().dni }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-file"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">DNI</span>
+              <span class="data-value">{{ studentData().dni }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Dirección</span>
-            <span class="data-value">{{ studentData().address }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-home"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Dirección</span>
+              <span class="data-value">{{ studentData().address }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Teléfono</span>
-            <span class="data-value">{{ studentData().phone }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-email"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Teléfono</span>
+              <span class="data-value">{{ studentData().phone }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Email</span>
-            <span class="data-value">{{ studentData().email }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-email"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Email</span>
+              <span class="data-value">{{ studentData().email }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Apoderado/Tutor</span>
-            <span class="data-value">{{ studentData().tutor }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-user"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Apoderado/Tutor</span>
+              <span class="data-value">{{ studentData().tutor }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Teléfono de Emergencia</span>
-            <span class="data-value">{{ studentData().emergencyPhone }}</span>
+            <div class="data-icon-wrapper emergency">
+              <i class="icon-warning"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Teléfono de Emergencia</span>
+              <span class="data-value">{{ studentData().emergencyPhone }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -84,31 +149,67 @@
 
     @if (activeTab() === 'academico') {
       <div class="data-section">
-        <h2 class="section-title">Información Académica</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-book"></i> Información Académica
+          </h2>
+        </div>
         <div class="data-grid">
           <div class="data-item">
-            <span class="data-label">Año Académico</span>
-            <span class="data-value">{{ academicData().academicYear }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-calendar"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Año Académico</span>
+              <span class="data-value">{{ academicData().academicYear }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Grado y Sección</span>
-            <span class="data-value">{{ academicData().grade }} - {{ academicData().section }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-book"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Grado y Sección</span>
+              <span class="data-value">{{ academicData().grade }} - {{ academicData().section }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Turno</span>
-            <span class="data-value">{{ academicData().shift }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-clock"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Turno</span>
+              <span class="data-value">{{ academicData().shift }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Fecha de Ingreso</span>
-            <span class="data-value">{{ academicData().admissionDate }}</span>
+            <div class="data-icon-wrapper">
+              <i class="icon-calendar"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Fecha de Ingreso</span>
+              <span class="data-value">{{ academicData().admissionDate }}</span>
+            </div>
+          </div>
+          <div class="data-item highlight">
+            <div class="data-icon-wrapper success">
+              <i class="icon-chart"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Promedio Histórico</span>
+              <span class="data-value highlight-value">{{ academicData().historicalAverage }}</span>
+            </div>
           </div>
           <div class="data-item">
-            <span class="data-label">Promedio Histórico</span>
-            <span class="data-value">{{ academicData().historicalAverage }}</span>
-          </div>
-          <div class="data-item">
-            <span class="data-label">Estado Académico</span>
-            <span class="data-value badge badge-success">{{ academicData().status }}</span>
+            <div class="data-icon-wrapper success">
+              <i class="icon-check"></i>
+            </div>
+            <div class="data-content">
+              <span class="data-label">Estado Académico</span>
+              <span class="data-value">
+                <span class="badge badge-success">{{ academicData().status }}</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -116,16 +217,32 @@
 
     @if (activeTab() === 'foto') {
       <div class="data-section">
-        <h2 class="section-title">Foto de Perfil</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-camera"></i> Foto de Perfil
+          </h2>
+        </div>
         <div class="photo-upload-section">
-          <div class="photo-preview">
-            <img [src]="studentData().photo" alt="Foto actual" class="preview-photo">
+          <div class="photo-preview-wrapper">
+            <div class="photo-preview">
+              <img [src]="studentData().photo" alt="Foto actual" class="preview-photo">
+              <div class="photo-overlay-preview">
+                <i class="icon-camera"></i>
+              </div>
+            </div>
           </div>
           <div class="upload-actions">
             <button class="btn btn-primary">
               <i class="icon-upload"></i> Subir Nueva Foto
             </button>
-            <p class="upload-hint">Formatos permitidos: JPG, PNG (máx. 2MB)</p>
+            <div class="upload-info">
+              <p class="upload-hint">
+                <i class="icon-file"></i> Formatos permitidos: JPG, PNG
+              </p>
+              <p class="upload-hint">
+                <i class="icon-chart"></i> Tamaño máximo: 2MB
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,21 +1,30 @@
 <div class="cursos-container">
   <div class="page-header">
-    <h1 class="page-title">Mis Cursos</h1>
+    <div class="header-content">
+      <h1 class="page-title">Mis Cursos</h1>
+      <p class="page-subtitle">Gestiona y accede a todos tus cursos académicos</p>
+    </div>
     <div class="header-actions">
-      <select [(ngModel)]="filterPeriod" class="form-input" style="width: auto;">
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
+      <div class="search-wrapper">
+        <i class="icon-search"></i>
+        <input
+          type="text"
+          class="form-input search-input"
+          placeholder="Buscar curso..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
+      <select [(ngModel)]="filterPeriod" class="form-input period-select">
+        <option value="2024">Año 2024</option>
+        <option value="2023">Año 2023</option>
       </select>
-      <input
-        type="text"
-        class="form-input"
-        placeholder="Buscar curso..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-        style="width: 250px;"
-      />
-      <button class="btn btn-secondary" (click)="toggleView()">
-        {{ viewMode() === 'grid' ? 'Lista' : 'Grid' }}
+      <button class="btn btn-secondary view-toggle" (click)="toggleView()" [title]="viewMode() === 'grid' ? 'Vista de lista' : 'Vista de cuadrícula'">
+        @if (viewMode() === 'grid') {
+          <i class="icon-list"></i> Lista
+        } @else {
+          <i class="icon-grid"></i> Cuadrícula
+        }
       </button>
     </div>
   </div>
@@ -32,7 +41,10 @@
         @for (course of filteredCourses(); track course.id) {
           <div class="course-card">
             <div class="course-header">
-              <span class="course-code">{{ course.code }}</span>
+              <div class="course-code-wrapper">
+                <i class="icon-book"></i>
+                <span class="course-code">{{ course.code }}</span>
+              </div>
               <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
                 {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
               </span>
@@ -41,36 +53,56 @@
             <h3 class="course-name">{{ course.name }}</h3>
             
             <div class="teacher-info">
-              <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo">
-              <div>
+              <div class="teacher-photo-wrapper">
+                <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo">
+              </div>
+              <div class="teacher-details">
                 <p class="teacher-name">{{ course.teacher }}</p>
                 <a href="mailto:teacher@colegio.edu" class="teacher-email">
-                  <i class="icon-email"></i> Contactar
+                  <i class="icon-email"></i> Contactar docente
                 </a>
               </div>
             </div>
 
             <div class="course-metrics">
               <div class="metric">
-                <span class="metric-label">Promedio</span>
-                <span class="metric-value">{{ course.average }}</span>
+                <div class="metric-icon-wrapper">
+                  <i class="icon-chart"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Promedio</span>
+                  <span class="metric-value">{{ course.average }}</span>
+                </div>
               </div>
               <div class="metric">
-                <span class="metric-label">Tareas Pendientes</span>
-                <span class="metric-value badge badge-warning">{{ course.pendingTasks }}</span>
+                <div class="metric-icon-wrapper">
+                  <i class="icon-task"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Tareas</span>
+                  <span class="metric-value">
+                    @if (course.pendingTasks > 0) {
+                      <span class="badge badge-warning">{{ course.pendingTasks }}</span>
+                    } @else {
+                      <span class="metric-zero">0</span>
+                    }
+                  </span>
+                </div>
               </div>
             </div>
 
             <div class="course-actions">
               <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block">
-                Ver Detalle
+                <i class="icon-arrow-right"></i> Ver Detalle
               </a>
               <div class="action-buttons">
-                <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary">
-                  Materiales
+                <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary btn-icon">
+                  <i class="icon-file"></i>
+                  <span>Materiales</span>
                 </a>
-                <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary">
-                  Tareas
+                <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary btn-icon">
+                  <i class="icon-task"></i>
+                  <span>Tareas</span>
                 </a>
               </div>
             </div>
@@ -118,7 +150,7 @@
                 <td>{{ course.nextEvaluation }}</td>
                 <td>
                   <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">
-                    Ver
+                    <i class="icon-arrow-right"></i> Ver
                   </a>
                 </td>
               </tr>

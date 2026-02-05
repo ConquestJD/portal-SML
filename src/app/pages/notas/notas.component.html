@@ -1,18 +1,21 @@
 <div class="notas-container">
   <div class="page-header">
-    <h1 class="page-title">Mis Notas y Evaluaciones</h1>
+    <div class="header-content">
+      <h1 class="page-title">Mis Notas y Evaluaciones</h1>
+      <p class="page-subtitle">Consulta tus calificaciones y rendimiento académico</p>
+    </div>
     <div class="header-actions">
-      <select [(ngModel)]="selectedPeriod" class="form-input">
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
+      <select [(ngModel)]="selectedPeriod" class="form-input period-select">
+        <option value="2024">Año 2024</option>
+        <option value="2023">Año 2023</option>
       </select>
-      <select [(ngModel)]="selectedCourse" class="form-input">
+      <select [(ngModel)]="selectedCourse" class="form-input course-select">
         <option value="todos">Todos los cursos</option>
         @for (course of courses(); track course.id) {
           <option [value]="course.id">{{ course.name }}</option>
         }
       </select>
-      <button class="btn btn-secondary">
+      <button class="btn btn-secondary export-btn">
         <i class="icon-download"></i> Exportar PDF
       </button>
     </div>
@@ -21,14 +24,24 @@
   <div class="summary-section">
     <div class="average-card">
       <div class="average-header">
-        <span class="average-label">Promedio General</span>
-        <span class="trend-indicator" [class.trend-up]="generalAverage() > previousAverage()">
-          {{ generalAverage() > previousAverage() ? '↑' : '↓' }}
-        </span>
+        <div class="average-label-wrapper">
+          <i class="icon-chart"></i>
+          <span class="average-label">Promedio General</span>
+        </div>
+        <div class="trend-indicator-wrapper" [class.trend-up]="generalAverage() > previousAverage()" [class.trend-down]="generalAverage() <= previousAverage()">
+          @if (generalAverage() > previousAverage()) {
+            <i class="icon-trend-up"></i>
+          } @else {
+            <i class="icon-trend-down"></i>
+          }
+        </div>
       </div>
       <div class="average-value">{{ generalAverage() }}</div>
       <div class="average-comparison">
-        {{ generalAverage() > previousAverage() ? '+' : '' }}{{ (generalAverage() - previousAverage()).toFixed(1) }} vs período anterior
+        <span class="comparison-value" [class.positive]="generalAverage() > previousAverage()" [class.negative]="generalAverage() <= previousAverage()">
+          {{ generalAverage() > previousAverage() ? '+' : '' }}{{ (generalAverage() - previousAverage()).toFixed(1) }}
+        </span>
+        <span class="comparison-text">vs período anterior</span>
       </div>
     </div>
   </div>
@@ -37,8 +50,14 @@
     @for (course of courses(); track course.id) {
       <div class="course-grade-card">
         <div class="course-grade-header">
-          <h3>{{ course.name }}</h3>
-          <span class="course-average">{{ course.average }}</span>
+          <div class="course-header-content">
+            <i class="icon-book"></i>
+            <h3>{{ course.name }}</h3>
+          </div>
+          <div class="course-average-wrapper">
+            <span class="course-average-label">Promedio</span>
+            <span class="course-average">{{ course.average }}</span>
+          </div>
         </div>
         
         <table class="evaluations-table">
@@ -72,16 +91,25 @@
 
         <div class="grade-summary">
           <div class="summary-row">
-            <span>Promedio de Exámenes:</span>
-            <strong>16.5</strong>
+            <div class="summary-row-label">
+              <i class="icon-chart"></i>
+              <span>Promedio de Exámenes</span>
+            </div>
+            <strong class="summary-row-value">16.5</strong>
           </div>
           <div class="summary-row">
-            <span>Promedio de Tareas:</span>
-            <strong>17.0</strong>
+            <div class="summary-row-label">
+              <i class="icon-task"></i>
+              <span>Promedio de Tareas</span>
+            </div>
+            <strong class="summary-row-value">17.0</strong>
           </div>
           <div class="summary-row highlight">
-            <span>Promedio Final:</span>
-            <strong>{{ course.average }}</strong>
+            <div class="summary-row-label">
+              <i class="icon-chart"></i>
+              <span>Promedio Final</span>
+            </div>
+            <strong class="summary-row-value final">{{ course.average }}</strong>
           </div>
         </div>
       </div>

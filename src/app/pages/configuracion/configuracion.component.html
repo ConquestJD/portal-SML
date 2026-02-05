@@ -1,50 +1,92 @@
 <div class="configuracion-container">
-  <div class="page-header">
-    <h1 class="page-title">Configuración</h1>
+  <div class="page-header with-border">
+    <div class="header-content">
+      <h1 class="page-title">Configuración</h1>
+      <p class="page-subtitle">Gestiona tu cuenta, preferencias y notificaciones</p>
+    </div>
   </div>
 
   <div class="config-tabs">
     <button class="tab-btn" [class.active]="activeTab() === 'cuenta'" (click)="setTab('cuenta')">
-      Cuenta y Seguridad
+      <i class="icon-user"></i> Cuenta y Seguridad
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'preferencias'" (click)="setTab('preferencias')">
-      Preferencias
+      <i class="icon-settings"></i> Preferencias
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'notificaciones'" (click)="setTab('notificaciones')">
-      Notificaciones
+      <i class="icon-announcement"></i> Notificaciones
     </button>
   </div>
 
   <div class="config-content">
     @if (activeTab() === 'cuenta') {
       <div class="config-section">
-        <h2 class="section-title">Cambio de Contraseña</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-lock"></i> Cambio de Contraseña
+          </h2>
+        </div>
         <form class="password-form" (ngSubmit)="savePassword()">
           <div class="form-group">
-            <label class="form-label">Contraseña Actual</label>
-            <input type="password" class="form-input" [(ngModel)]="currentPassword" name="currentPassword" required>
+            <label class="form-label">
+              <i class="icon-lock"></i> Contraseña Actual
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-lock"></i>
+              <input type="password" class="form-input" [(ngModel)]="currentPassword" name="currentPassword" placeholder="Ingresa tu contraseña actual" required>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Nueva Contraseña</label>
-            <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" required>
-            <p class="form-hint">Mínimo 8 caracteres, incluir mayúscula y número</p>
+            <label class="form-label">
+              <i class="icon-lock"></i> Nueva Contraseña
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-lock"></i>
+              <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="Ingresa tu nueva contraseña" required>
+            </div>
+            <p class="form-hint">
+              <i class="icon-info"></i> Mínimo 8 caracteres, incluir mayúscula y número
+            </p>
           </div>
           <div class="form-group">
-            <label class="form-label">Confirmar Nueva Contraseña</label>
-            <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" required>
+            <label class="form-label">
+              <i class="icon-lock"></i> Confirmar Nueva Contraseña
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-lock"></i>
+              <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Confirma tu nueva contraseña" required>
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="icon-check"></i> Cambiar Contraseña
+          </button>
         </form>
 
         <div class="info-section">
-          <h3>Información de Cuenta</h3>
-          <div class="info-item">
-            <span class="info-label">Email:</span>
-            <span class="info-value">estudiante@colegio.edu</span>
+          <div class="section-header">
+            <h3 class="section-subtitle">
+              <i class="icon-user"></i> Información de Cuenta
+            </h3>
           </div>
-          <div class="info-item">
-            <span class="info-label">Último acceso:</span>
-            <span class="info-value">2024-03-18 10:30</span>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon-wrapper">
+                <i class="icon-email"></i>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Email</span>
+                <span class="info-value">estudiante@colegio.edu</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon-wrapper">
+                <i class="icon-calendar"></i>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Último acceso</span>
+                <span class="info-value">2024-03-18 10:30</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -52,41 +94,69 @@
 
     @if (activeTab() === 'preferencias') {
       <div class="config-section">
-        <h2 class="section-title">Preferencias de Usuario</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-settings"></i> Preferencias de Usuario
+          </h2>
+        </div>
         <form class="preferences-form" (ngSubmit)="savePreferences()">
           <div class="form-group">
-            <label class="form-label">Idioma</label>
-            <select class="form-input" [(ngModel)]="language" name="language">
-              <option value="es">Español</option>
-              <option value="en">English</option>
-            </select>
+            <label class="form-label">
+              <i class="icon-globe"></i> Idioma
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-globe"></i>
+              <select class="form-input" [(ngModel)]="language" name="language">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Tema</label>
-            <select class="form-input" [(ngModel)]="theme" name="theme">
-              <option value="light">Claro</option>
-              <option value="dark">Oscuro</option>
-              <option value="auto">Automático</option>
-            </select>
+            <label class="form-label">
+              <i class="icon-settings"></i> Tema
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-settings"></i>
+              <select class="form-input" [(ngModel)]="theme" name="theme">
+                <option value="light">Claro</option>
+                <option value="dark">Oscuro</option>
+                <option value="auto">Automático</option>
+              </select>
+            </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Formato de Fecha</label>
-            <select class="form-input" [(ngModel)]="dateFormat" name="dateFormat">
-              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-            </select>
+            <label class="form-label">
+              <i class="icon-calendar"></i> Formato de Fecha
+            </label>
+            <div class="input-wrapper">
+              <i class="input-icon icon-calendar"></i>
+              <select class="form-input" [(ngModel)]="dateFormat" name="dateFormat">
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              </select>
+            </div>
           </div>
-          <button type="submit" class="btn btn-primary">Guardar Preferencias</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="icon-check"></i> Guardar Preferencias
+          </button>
         </form>
       </div>
     }
 
     @if (activeTab() === 'notificaciones') {
       <div class="config-section">
-        <h2 class="section-title">Preferencias de Notificaciones</h2>
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="icon-announcement"></i> Preferencias de Notificaciones
+          </h2>
+        </div>
         <form class="notifications-form" (ngSubmit)="saveNotifications()">
           <div class="notification-item">
+            <div class="notification-icon-wrapper">
+              <i class="icon-task"></i>
+            </div>
             <div class="notification-info">
               <h4>Nuevas Tareas</h4>
               <p>Recibir notificaciones cuando se asignen nuevas tareas</p>
@@ -98,6 +168,9 @@
           </div>
 
           <div class="notification-item">
+            <div class="notification-icon-wrapper">
+              <i class="icon-chart"></i>
+            </div>
             <div class="notification-info">
               <h4>Calificaciones Publicadas</h4>
               <p>Recibir notificaciones cuando se publiquen nuevas calificaciones</p>
@@ -109,6 +182,9 @@
           </div>
 
           <div class="notification-item">
+            <div class="notification-icon-wrapper urgent">
+              <i class="icon-warning"></i>
+            </div>
             <div class="notification-info">
               <h4>Comunicados Urgentes</h4>
               <p>Recibir notificaciones de comunicados marcados como urgentes</p>
@@ -120,6 +196,9 @@
           </div>
 
           <div class="notification-item">
+            <div class="notification-icon-wrapper">
+              <i class="icon-clock"></i>
+            </div>
             <div class="notification-info">
               <h4>Recordatorios de Tareas</h4>
               <p>Recibir recordatorios antes de que venzan las tareas</p>
@@ -130,15 +209,20 @@
             </label>
           </div>
 
-          <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="icon-check"></i> Guardar Configuración
+          </button>
         </form>
       </div>
     }
   </div>
 
   <div class="config-footer">
-    <a routerLink="/login" class="btn btn-danger">
-      <i class="icon-logout"></i> Cerrar Sesión
-    </a>
+    <div class="footer-content">
+      <p class="footer-text">¿Necesitas ayuda? Contacta al soporte técnico</p>
+      <a routerLink="/login" class="btn btn-danger">
+        <i class="icon-logout"></i> Cerrar Sesión
+      </a>
+    </div>
   </div>
 </div>

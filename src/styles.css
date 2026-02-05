@@ -173,34 +173,41 @@ body {
 
 /* Iconos - Reemplazo de emojis */
 .icon-home::before { content: "⌂"; }
-.icon-book::before { content: "📖"; }
+.icon-book::before { content: ""; }
 .icon-task::before { content: "✓"; }
-.icon-chart::before { content: "📊"; }
-.icon-calendar::before { content: "📅"; }
-.icon-announcement::before { content: "📢"; }
-.icon-user::before { content: "👤"; }
+.icon-chart::before { content: ""; }
+.icon-calendar::before { content: ""; }
+.icon-announcement::before { content: "!"; }
+.icon-user::before { content: ""; }
 .icon-settings::before { content: "⚙"; }
 .icon-logout::before { content: "→"; }
-.icon-bell::before { content: "🔔"; }
+.icon-bell::before { content: ""; }
 .icon-warning::before { content: "⚠"; }
 .icon-info::before { content: "ℹ"; }
 .icon-error::before { content: "✕"; }
 .icon-check::before { content: "✓"; }
-.icon-attachment::before { content: "📎"; }
-.icon-clock::before { content: "🕐"; }
+.icon-attachment::before { content: ""; }
+.icon-clock::before { content: ""; }
 .icon-download::before { content: "⬇"; }
 .icon-email::before { content: "@"; }
-.icon-camera::before { content: "📷"; }
+.icon-camera::before { content: ""; }
 .icon-upload::before { content: "⬆"; }
-.icon-file::before { content: "📄"; }
+.icon-file::before { content: ""; }
 .icon-video::before { content: "▶"; }
-.icon-school::before { content: "🏫"; }
-.icon-lock::before { content: "🔒"; }
-.icon-eye::before { content: "👁"; }
-.icon-eye-off::before { content: "👁"; }
-.icon-evaluation::before { content: "📋"; }
+.icon-school::before { content: ""; }
+.icon-globe::before { content: ""; }
+.icon-lock::before { content: ""; }
+.icon-eye::before { content: ""; }
+.icon-eye-off::before { content: ""; }
+.icon-evaluation::before { content: ""; }
+.icon-arrow-right::before { content: "→"; }
+.icon-trend-up::before { content: "↑"; }
+.icon-trend-down::before { content: "↓"; }
+.icon-search::before { content: ""; }
+.icon-list::before { content: "☰"; }
+.icon-grid::before { content: "⊞"; }
 
-/* Estilos para iconos */
+/* Estilos para iconos - Diseño visual profesional sin emoticonos */
 [class^="icon-"]::before,
 [class*=" icon-"]::before {
   display: inline-block;
@@ -210,6 +217,8 @@ body {
   text-transform: none;
   line-height: 1;
   vertical-align: middle;
+  font-size: 0.75em;
+  opacity: 0.7;
 }
 
 .icon-warning,
@@ -238,7 +247,15 @@ body {
 .icon-user,
 .icon-settings,
 .icon-logout,
-.icon-bell {
+.icon-globe,
+.icon-bell,
+.icon-arrow-right,
+.icon-arrow-left,
+.icon-trend-up,
+.icon-trend-down,
+.icon-search,
+.icon-list,
+.icon-grid {
   display: inline-block;
   font-size: inherit;
   line-height: 1;
