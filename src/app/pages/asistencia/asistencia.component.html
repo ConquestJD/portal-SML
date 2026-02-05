@@ -6,7 +6,7 @@
     </div>
     <div class="header-actions">
       <div class="filter-wrapper">
-        <i class="icon-calendar"></i>
+        <i class="fas fa-calendar-alt"></i>
         <input type="month" [(ngModel)]="selectedMonth" class="form-input month-input">
       </div>
       <select [(ngModel)]="selectedCourse" class="form-input course-select">
@@ -20,7 +20,7 @@
   <div class="summary-cards grid grid-cols-4">
     <div class="summary-card">
       <div class="summary-icon-wrapper primary">
-        <i class="icon-chart"></i>
+        <i class="fas fa-chart-line"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Asistencia del Mes</span>
@@ -29,7 +29,7 @@
     </div>
     <div class="summary-card">
       <div class="summary-icon-wrapper success">
-        <i class="icon-check"></i>
+        <i class="fas fa-check-circle"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Días Asistidos</span>
@@ -38,7 +38,7 @@
     </div>
     <div class="summary-card">
       <div class="summary-icon-wrapper error">
-        <i class="icon-error"></i>
+        <i class="fas fa-times-circle"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Faltas</span>
@@ -47,7 +47,7 @@
     </div>
     <div class="summary-card">
       <div class="summary-icon-wrapper warning">
-        <i class="icon-clock"></i>
+        <i class="fas fa-clock"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Tardanzas</span>
@@ -59,7 +59,7 @@
   <div class="attendance-section">
     <div class="section-header">
       <h2 class="section-title">
-        <i class="icon-calendar"></i> Registro de Asistencia
+        <i class="fas fa-calendar-alt"></i> Registro de Asistencia
       </h2>
     </div>
     <div class="attendance-table-wrapper">
@@ -116,7 +116,7 @@
   @if (summary().absences > 3) {
     <div class="alert alert-error">
       <div class="alert-icon-wrapper">
-        <i class="icon-warning"></i>
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
       <div class="alert-content">
         <strong class="alert-title">Advertencia</strong>

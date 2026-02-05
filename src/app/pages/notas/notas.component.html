@@ -16,7 +16,7 @@
         }
       </select>
       <button class="btn btn-secondary export-btn">
-        <i class="icon-download"></i> Exportar PDF
+        <i class="fas fa-download"></i> Exportar PDF
       </button>
     </div>
   </div>
@@ -25,14 +25,14 @@
     <div class="average-card">
       <div class="average-header">
         <div class="average-label-wrapper">
-          <i class="icon-chart"></i>
+          <i class="fas fa-chart-line"></i>
           <span class="average-label">Promedio General</span>
         </div>
         <div class="trend-indicator-wrapper" [class.trend-up]="generalAverage() > previousAverage()" [class.trend-down]="generalAverage() <= previousAverage()">
           @if (generalAverage() > previousAverage()) {
-            <i class="icon-trend-up"></i>
+            <i class="fas fa-arrow-up"></i>
           } @else {
-            <i class="icon-trend-down"></i>
+            <i class="fas fa-arrow-down"></i>
           }
         </div>
       </div>
@@ -51,7 +51,7 @@
       <div class="course-grade-card">
         <div class="course-grade-header">
           <div class="course-header-content">
-            <i class="icon-book"></i>
+            <i class="fas fa-book"></i>
             <h3>{{ course.name }}</h3>
           </div>
           <div class="course-average-wrapper">
@@ -92,21 +92,21 @@
         <div class="grade-summary">
           <div class="summary-row">
             <div class="summary-row-label">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
               <span>Promedio de Exámenes</span>
             </div>
             <strong class="summary-row-value">16.5</strong>
           </div>
           <div class="summary-row">
             <div class="summary-row-label">
-              <i class="icon-task"></i>
+              <i class="fas fa-tasks"></i>
               <span>Promedio de Tareas</span>
             </div>
             <strong class="summary-row-value">17.0</strong>
           </div>
           <div class="summary-row highlight">
             <div class="summary-row-label">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
               <span>Promedio Final</span>
             </div>
             <strong class="summary-row-value final">{{ course.average }}</strong>

@@ -46,12 +46,13 @@
   align-items: center;
 }
 
-.search-wrapper .icon-search {
+.search-wrapper i {
   position: absolute;
   left: var(--spacing-md);
   color: var(--text-tertiary);
   font-size: var(--font-size-lg);
   pointer-events: none;
+  z-index: 1;
 }
 
 .search-input {
@@ -132,17 +133,17 @@
 }
 
 .summary-icon-wrapper.pending {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: var(--primary);
   color: white;
 }
 
 .summary-icon-wrapper.error {
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  background: var(--secondary);
   color: white;
 }
 
 .summary-icon-wrapper.success {
-  background: linear-gradient(135deg, var(--success) 0%, #34D399 100%);
+  background: var(--success);
   color: white;
 }
 
@@ -202,7 +203,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
   opacity: 0;
   transition: opacity 0.3s;
@@ -220,11 +221,12 @@
 
 .task-card.task-vencida {
   border-left-color: var(--secondary);
-  background: linear-gradient(to right, rgba(196, 30, 58, 0.02) 0%, var(--bg-primary) 4px);
+  background: var(--bg-primary);
+  border-left: 4px solid var(--secondary);
 }
 
 .task-card.task-vencida::before {
-  background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  background: var(--secondary);
 }
 
 .task-header {
@@ -251,7 +253,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.1) 0%, rgba(196, 30, 58, 0.1) 100%);
+  background: rgba(0, 51, 102, 0.05);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
 }
@@ -288,7 +290,7 @@
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.03) 0%, rgba(196, 30, 58, 0.03) 100%);
+  background: rgba(0, 51, 102, 0.02);
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--border-color);
 }

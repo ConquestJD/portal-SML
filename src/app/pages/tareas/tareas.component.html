@@ -6,7 +6,7 @@
     </div>
     <div class="header-actions">
       <div class="search-wrapper">
-        <i class="icon-search"></i>
+        <i class="fas fa-search"></i>
         <input
           type="text"
           class="form-input search-input"
@@ -52,7 +52,7 @@
   <div class="summary-panel">
     <div class="summary-item">
       <div class="summary-icon-wrapper pending">
-        <i class="icon-task"></i>
+        <i class="fas fa-tasks"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Total Pendientes</span>
@@ -61,7 +61,7 @@
     </div>
     <div class="summary-item">
       <div class="summary-icon-wrapper error">
-        <i class="icon-error"></i>
+        <i class="fas fa-exclamation-circle"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Vencidas</span>
@@ -70,7 +70,7 @@
     </div>
     <div class="summary-item">
       <div class="summary-icon-wrapper success">
-        <i class="icon-check"></i>
+        <i class="fas fa-check-circle"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Entregadas</span>
@@ -85,7 +85,7 @@
         <div class="task-header">
           <div class="task-course">
             <div class="course-badge-wrapper">
-              <i class="icon-book"></i>
+              <i class="fas fa-book"></i>
               <span class="course-badge">{{ task.courseCode }}</span>
             </div>
             <span class="course-name">{{ task.course }}</span>
@@ -107,7 +107,7 @@
         <div class="task-details">
           <div class="detail-item">
             <div class="detail-icon-wrapper">
-              <i class="icon-calendar"></i>
+              <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="detail-content">
               <span class="detail-label">Fecha límite</span>
@@ -118,7 +118,7 @@
           </div>
           <div class="detail-item">
             <div class="detail-icon-wrapper">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
             </div>
             <div class="detail-content">
               <span class="detail-label">Puntos</span>
@@ -128,7 +128,7 @@
           @if (task.grade) {
             <div class="detail-item">
               <div class="detail-icon-wrapper success">
-                <i class="icon-check"></i>
+                <i class="fas fa-check-circle"></i>
               </div>
               <div class="detail-content">
                 <span class="detail-label">Calificación</span>
@@ -141,9 +141,9 @@
         <div class="task-actions">
           <a [routerLink]="['/tareas', task.id]" class="btn btn-primary">
             @if (task.status === 'pendiente' || task.status === 'vencida') {
-              <i class="icon-arrow-right"></i> Continuar / Entregar
+              <i class="fas fa-arrow-right"></i> Continuar / Entregar
             } @else {
-              <i class="icon-arrow-right"></i> Ver Detalle
+              <i class="fas fa-arrow-right"></i> Ver Detalle
             }
           </a>
         </div>
@@ -153,7 +153,7 @@
 
   @if (filteredTasks().length === 0) {
     <div class="empty-state">
-      <span class="empty-icon icon-task"></span>
+      <i class="fas fa-tasks empty-icon"></i>
       <h2>No hay tareas que mostrar</h2>
       <p>No tienes tareas en este filtro.</p>
     </div>

@@ -2,7 +2,7 @@
   <div class="login-card">
     <div class="login-header">
       <div class="logo-placeholder">
-        <span class="logo-icon icon-school"></span>
+        <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
       </div>
       <h1 class="login-title">Portal Estudiantil</h1>
       <p class="login-subtitle">Bienvenido de vuelta</p>
@@ -11,7 +11,7 @@
     <form (ngSubmit)="onSubmit()" class="login-form">
       @if (error()) {
         <div class="alert alert-error">
-          <span class="icon-warning"></span>
+          <i class="fas fa-exclamation-triangle"></i>
           <span>{{ error() }}</span>
         </div>
       }
@@ -19,7 +19,7 @@
       <div class="form-group">
         <label for="username" class="form-label">Usuario o Email</label>
         <div class="input-wrapper">
-          <span class="input-icon icon-user"></span>
+          <i class="input-icon fas fa-user"></i>
           <input
             id="username"
             type="text"
@@ -35,7 +35,7 @@
       <div class="form-group">
         <label for="password" class="form-label">Contraseña</label>
         <div class="input-wrapper">
-          <span class="input-icon icon-lock"></span>
+          <i class="input-icon fas fa-lock"></i>
           <input
             id="password"
             [type]="showPassword() ? 'text' : 'password'"
@@ -51,7 +51,7 @@
             (click)="togglePasswordVisibility()"
             [disabled]="isLoading()"
           >
-            <i [class]="showPassword() ? 'icon-eye-off' : 'icon-eye'"></i>
+            <i [class]="showPassword() ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
           </button>
         </div>
       </div>

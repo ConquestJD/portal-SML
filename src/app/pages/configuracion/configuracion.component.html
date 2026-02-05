@@ -8,13 +8,13 @@
 
   <div class="config-tabs">
     <button class="tab-btn" [class.active]="activeTab() === 'cuenta'" (click)="setTab('cuenta')">
-      <i class="icon-user"></i> Cuenta y Seguridad
+      <i class="fas fa-user"></i> Cuenta y Seguridad
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'preferencias'" (click)="setTab('preferencias')">
-      <i class="icon-settings"></i> Preferencias
+      <i class="fas fa-cog"></i> Preferencias
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'notificaciones'" (click)="setTab('notificaciones')">
-      <i class="icon-announcement"></i> Notificaciones
+      <i class="fas fa-bullhorn"></i> Notificaciones
     </button>
   </div>
 
@@ -23,55 +23,55 @@
       <div class="config-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-lock"></i> Cambio de Contraseña
+            <i class="fas fa-lock"></i> Cambio de Contraseña
           </h2>
         </div>
         <form class="password-form" (ngSubmit)="savePassword()">
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-lock"></i> Contraseña Actual
+              <i class="fas fa-lock"></i> Contraseña Actual
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-lock"></i>
+              <i class="input-icon fas fa-lock"></i>
               <input type="password" class="form-input" [(ngModel)]="currentPassword" name="currentPassword" placeholder="Ingresa tu contraseña actual" required>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-lock"></i> Nueva Contraseña
+              <i class="fas fa-lock"></i> Nueva Contraseña
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-lock"></i>
+              <i class="input-icon fas fa-lock"></i>
               <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="Ingresa tu nueva contraseña" required>
             </div>
             <p class="form-hint">
-              <i class="icon-info"></i> Mínimo 8 caracteres, incluir mayúscula y número
+              <i class="fas fa-info-circle"></i> Mínimo 8 caracteres, incluir mayúscula y número
             </p>
           </div>
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-lock"></i> Confirmar Nueva Contraseña
+              <i class="fas fa-lock"></i> Confirmar Nueva Contraseña
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-lock"></i>
+              <i class="input-icon fas fa-lock"></i>
               <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Confirma tu nueva contraseña" required>
             </div>
           </div>
           <button type="submit" class="btn btn-primary">
-            <i class="icon-check"></i> Cambiar Contraseña
+            <i class="fas fa-check-circle"></i> Cambiar Contraseña
           </button>
         </form>
 
         <div class="info-section">
           <div class="section-header">
             <h3 class="section-subtitle">
-              <i class="icon-user"></i> Información de Cuenta
+              <i class="fas fa-user"></i> Información de Cuenta
             </h3>
           </div>
           <div class="info-grid">
             <div class="info-item">
               <div class="info-icon-wrapper">
-                <i class="icon-email"></i>
+                <i class="fas fa-envelope"></i>
               </div>
               <div class="info-content">
                 <span class="info-label">Email</span>
@@ -80,7 +80,7 @@
             </div>
             <div class="info-item">
               <div class="info-icon-wrapper">
-                <i class="icon-calendar"></i>
+                <i class="fas fa-calendar-alt"></i>
               </div>
               <div class="info-content">
                 <span class="info-label">Último acceso</span>
@@ -96,16 +96,16 @@
       <div class="config-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-settings"></i> Preferencias de Usuario
+            <i class="fas fa-cog"></i> Preferencias de Usuario
           </h2>
         </div>
         <form class="preferences-form" (ngSubmit)="savePreferences()">
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-globe"></i> Idioma
+              <i class="fas fa-globe"></i> Idioma
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-globe"></i>
+              <i class="input-icon fas fa-globe"></i>
               <select class="form-input" [(ngModel)]="language" name="language">
                 <option value="es">Español</option>
                 <option value="en">English</option>
@@ -114,10 +114,10 @@
           </div>
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-settings"></i> Tema
+              <i class="fas fa-cog"></i> Tema
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-settings"></i>
+              <i class="input-icon fas fa-cog"></i>
               <select class="form-input" [(ngModel)]="theme" name="theme">
                 <option value="light">Claro</option>
                 <option value="dark">Oscuro</option>
@@ -127,10 +127,10 @@
           </div>
           <div class="form-group">
             <label class="form-label">
-              <i class="icon-calendar"></i> Formato de Fecha
+              <i class="fas fa-calendar-alt"></i> Formato de Fecha
             </label>
             <div class="input-wrapper">
-              <i class="input-icon icon-calendar"></i>
+              <i class="input-icon fas fa-calendar-alt"></i>
               <select class="form-input" [(ngModel)]="dateFormat" name="dateFormat">
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -139,7 +139,7 @@
             </div>
           </div>
           <button type="submit" class="btn btn-primary">
-            <i class="icon-check"></i> Guardar Preferencias
+            <i class="fas fa-check-circle"></i> Guardar Preferencias
           </button>
         </form>
       </div>
@@ -149,13 +149,13 @@
       <div class="config-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-announcement"></i> Preferencias de Notificaciones
+            <i class="fas fa-bullhorn"></i> Preferencias de Notificaciones
           </h2>
         </div>
         <form class="notifications-form" (ngSubmit)="saveNotifications()">
           <div class="notification-item">
             <div class="notification-icon-wrapper">
-              <i class="icon-task"></i>
+              <i class="fas fa-tasks"></i>
             </div>
             <div class="notification-info">
               <h4>Nuevas Tareas</h4>
@@ -169,7 +169,7 @@
 
           <div class="notification-item">
             <div class="notification-icon-wrapper">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
             </div>
             <div class="notification-info">
               <h4>Calificaciones Publicadas</h4>
@@ -183,7 +183,7 @@
 
           <div class="notification-item">
             <div class="notification-icon-wrapper urgent">
-              <i class="icon-warning"></i>
+              <i class="fas fa-exclamation-triangle"></i>
             </div>
             <div class="notification-info">
               <h4>Comunicados Urgentes</h4>
@@ -197,7 +197,7 @@
 
           <div class="notification-item">
             <div class="notification-icon-wrapper">
-              <i class="icon-clock"></i>
+              <i class="fas fa-clock"></i>
             </div>
             <div class="notification-info">
               <h4>Recordatorios de Tareas</h4>
@@ -210,7 +210,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary">
-            <i class="icon-check"></i> Guardar Configuración
+            <i class="fas fa-check-circle"></i> Guardar Configuración
           </button>
         </form>
       </div>
@@ -221,7 +221,7 @@
     <div class="footer-content">
       <p class="footer-text">¿Necesitas ayuda? Contacta al soporte técnico</p>
       <a routerLink="/login" class="btn btn-danger">
-        <i class="icon-logout"></i> Cerrar Sesión
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
       </a>
     </div>
   </div>

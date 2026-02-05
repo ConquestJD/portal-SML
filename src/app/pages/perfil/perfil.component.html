@@ -5,24 +5,24 @@
         <img [src]="studentData().photo" [alt]="studentData().fullName" class="student-photo">
         <div class="photo-overlay">
           <button class="change-photo-btn" title="Cambiar foto de perfil">
-            <i class="icon-camera"></i>
+            <i class="fas fa-camera"></i>
           </button>
         </div>
       </div>
     </div>
     <div class="header-info">
       <div class="student-badge">
-        <i class="icon-user"></i>
+        <i class="fas fa-user"></i>
         <span>Estudiante</span>
       </div>
       <h1 class="student-name">{{ studentData().fullName }}</h1>
       <div class="student-details">
         <div class="detail-row">
-          <i class="icon-book"></i>
+          <i class="fas fa-book"></i>
           <span class="student-code">Código: {{ studentData().code }}</span>
         </div>
         <div class="detail-row">
-          <i class="icon-calendar"></i>
+          <i class="fas fa-calendar-alt"></i>
           <span class="student-grade">{{ studentData().grade }} Grado - Sección {{ studentData().section }}</span>
         </div>
       </div>
@@ -35,21 +35,21 @@
       [class.active]="activeTab() === 'personal'"
       (click)="setTab('personal')"
     >
-      <i class="icon-user"></i> Datos Personales
+      <i class="fas fa-user"></i> Datos Personales
     </button>
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'academico'"
       (click)="setTab('academico')"
     >
-      <i class="icon-book"></i> Datos Académicos
+      <i class="fas fa-book"></i> Datos Académicos
     </button>
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'foto'"
       (click)="setTab('foto')"
     >
-      <i class="icon-camera"></i> Foto y Avatar
+      <i class="fas fa-camera"></i> Foto y Avatar
     </button>
   </div>
 
@@ -58,13 +58,13 @@
       <div class="data-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-user"></i> Información Personal
+            <i class="fas fa-user"></i> Información Personal
           </h2>
         </div>
         <div class="data-grid">
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-user"></i>
+              <i class="fas fa-user"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Nombre Completo</span>
@@ -73,7 +73,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-calendar"></i>
+              <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Fecha de Nacimiento</span>
@@ -82,7 +82,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Edad</span>
@@ -91,7 +91,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-file"></i>
+              <i class="fas fa-file"></i>
             </div>
             <div class="data-content">
               <span class="data-label">DNI</span>
@@ -100,7 +100,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-home"></i>
+              <i class="fas fa-home"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Dirección</span>
@@ -109,7 +109,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-email"></i>
+              <i class="fas fa-phone"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Teléfono</span>
@@ -118,7 +118,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-email"></i>
+              <i class="fas fa-envelope"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Email</span>
@@ -127,7 +127,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-user"></i>
+              <i class="fas fa-user"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Apoderado/Tutor</span>
@@ -136,7 +136,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper emergency">
-              <i class="icon-warning"></i>
+              <i class="fas fa-exclamation-triangle"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Teléfono de Emergencia</span>
@@ -151,13 +151,13 @@
       <div class="data-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-book"></i> Información Académica
+            <i class="fas fa-book"></i> Información Académica
           </h2>
         </div>
         <div class="data-grid">
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-calendar"></i>
+              <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Año Académico</span>
@@ -166,7 +166,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-book"></i>
+              <i class="fas fa-book"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Grado y Sección</span>
@@ -175,7 +175,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-clock"></i>
+              <i class="fas fa-clock"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Turno</span>
@@ -184,7 +184,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper">
-              <i class="icon-calendar"></i>
+              <i class="fas fa-calendar-alt"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Fecha de Ingreso</span>
@@ -193,7 +193,7 @@
           </div>
           <div class="data-item highlight">
             <div class="data-icon-wrapper success">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Promedio Histórico</span>
@@ -202,7 +202,7 @@
           </div>
           <div class="data-item">
             <div class="data-icon-wrapper success">
-              <i class="icon-check"></i>
+              <i class="fas fa-check-circle"></i>
             </div>
             <div class="data-content">
               <span class="data-label">Estado Académico</span>
@@ -219,7 +219,7 @@
       <div class="data-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-camera"></i> Foto de Perfil
+            <i class="fas fa-camera"></i> Foto de Perfil
           </h2>
         </div>
         <div class="photo-upload-section">
@@ -227,20 +227,20 @@
             <div class="photo-preview">
               <img [src]="studentData().photo" alt="Foto actual" class="preview-photo">
               <div class="photo-overlay-preview">
-                <i class="icon-camera"></i>
+                <i class="fas fa-camera"></i>
               </div>
             </div>
           </div>
           <div class="upload-actions">
             <button class="btn btn-primary">
-              <i class="icon-upload"></i> Subir Nueva Foto
+              <i class="fas fa-upload"></i> Subir Nueva Foto
             </button>
             <div class="upload-info">
               <p class="upload-hint">
-                <i class="icon-file"></i> Formatos permitidos: JPG, PNG
+                <i class="fas fa-file"></i> Formatos permitidos: JPG, PNG
               </p>
               <p class="upload-hint">
-                <i class="icon-chart"></i> Tamaño máximo: 2MB
+                <i class="fas fa-info-circle"></i> Tamaño máximo: 2MB
               </p>
             </div>
           </div>
@@ -251,7 +251,7 @@
 
   <div class="actions-section">
     <button class="btn btn-secondary">
-      <i class="icon-download"></i> Descargar Perfil PDF
+      <i class="fas fa-download"></i> Descargar Perfil PDF
     </button>
   </div>
 </div>

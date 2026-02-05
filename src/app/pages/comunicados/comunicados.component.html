@@ -6,7 +6,7 @@
     </div>
     <div class="header-actions">
       <div class="search-wrapper">
-        <i class="icon-search"></i>
+        <i class="fas fa-search"></i>
         <input
           type="text"
           class="form-input search-input"
@@ -39,7 +39,7 @@
   <div class="summary-panel">
     <div class="summary-item">
       <div class="summary-icon-wrapper unread">
-        <i class="icon-announcement"></i>
+        <i class="fas fa-bullhorn"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">No Leídos</span>
@@ -48,7 +48,7 @@
     </div>
     <div class="summary-item">
       <div class="summary-icon-wrapper urgent">
-        <i class="icon-warning"></i>
+        <i class="fas fa-exclamation-triangle"></i>
       </div>
       <div class="summary-content">
         <span class="summary-label">Urgentes</span>
@@ -64,26 +64,26 @@
           <div class="announcement-badges">
             <span class="badge" [class.badge-info]="announcement.type === 'institucional'" [class.badge-success]="announcement.type === 'grado'">
               @if (announcement.type === 'institucional') {
-                <i class="icon-school"></i> Institucional
+                <i class="fas fa-school"></i> Institucional
               } @else if (announcement.type === 'grado') {
-                <i class="icon-book"></i> Grado
+                <i class="fas fa-book"></i> Grado
               } @else {
-                <i class="icon-user"></i> Sección
+                <i class="fas fa-user"></i> Sección
               }
             </span>
             @if (announcement.priority === 'urgente') {
               <span class="badge badge-error">
-                <i class="icon-warning"></i> Urgente
+                <i class="fas fa-exclamation-triangle"></i> Urgente
               </span>
             }
             @if (!announcement.read) {
               <span class="badge badge-info">
-                <i class="icon-announcement"></i> Nuevo
+                <i class="fas fa-bullhorn"></i> Nuevo
               </span>
             }
           </div>
           <div class="announcement-date-wrapper">
-            <i class="icon-calendar"></i>
+            <i class="fas fa-calendar-alt"></i>
             <span class="announcement-date">{{ announcement.date }}</span>
           </div>
         </div>
@@ -95,17 +95,17 @@
           <div class="announcement-meta">
             @if (announcement.attachments > 0) {
               <span class="attachment-info">
-                <i class="icon-attachment"></i> {{ announcement.attachments }} archivo(s)
+                <i class="fas fa-paperclip"></i> {{ announcement.attachments }} archivo(s)
               </span>
             }
           </div>
           <div class="announcement-actions">
             <button class="btn btn-primary btn-sm" (click)="markAsRead(announcement.id)">
-              <i class="icon-arrow-right"></i> Leer más
+              <i class="fas fa-arrow-right"></i> Leer más
             </button>
             @if (!announcement.read) {
               <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id)">
-                <i class="icon-check"></i> Marcar como leído
+                <i class="fas fa-check-circle"></i> Marcar como leído
               </button>
             }
           </div>
@@ -116,7 +116,7 @@
 
   @if (filteredAnnouncements().length === 0) {
     <div class="empty-state">
-      <span class="empty-icon icon-announcement"></span>
+      <i class="fas fa-bullhorn empty-icon"></i>
       <h2>No hay comunicados</h2>
       <p>No hay comunicados que coincidan con los filtros seleccionados.</p>
     </div>

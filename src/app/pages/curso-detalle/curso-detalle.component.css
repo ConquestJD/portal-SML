@@ -73,7 +73,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.1) 0%, rgba(196, 30, 58, 0.1) 100%);
+  background: rgba(0, 51, 102, 0.05);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   margin-bottom: var(--spacing-md);
@@ -173,7 +173,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   border-radius: var(--border-radius-lg);
   color: white;
   min-width: 180px;
@@ -324,7 +324,7 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
   border-radius: var(--border-radius-lg);
   font-size: var(--font-size-xl);
@@ -387,12 +387,12 @@
 }
 
 .material-icon-wrapper.pdf {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  background: var(--error);
   color: white;
 }
 
 .material-icon-wrapper.video {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  background: var(--primary);
   color: white;
 }
 
@@ -438,7 +438,7 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
   border-radius: var(--border-radius-lg);
   flex-shrink: 0;
@@ -500,7 +500,7 @@
 }
 
 .grades-table thead {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .grades-table th {
@@ -541,7 +541,7 @@
 }
 
 .percentage-badge.high {
-  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  background: var(--success);
   color: #065F46;
   border: 1px solid #10B981;
 }
@@ -552,7 +552,7 @@
   gap: var(--spacing-sm);
   padding-top: var(--spacing-lg);
   border-top: 2px solid var(--border-color);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.03) 0%, rgba(196, 30, 58, 0.03) 100%);
+  background: rgba(0, 51, 102, 0.02);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
   margin-top: var(--spacing-lg);
@@ -595,7 +595,7 @@
 }
 
 .summary-item.highlight {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);

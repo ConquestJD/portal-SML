@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   border: 2px solid white;
   border-radius: 50%;
   cursor: pointer;
@@ -81,7 +81,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.1) 0%, rgba(196, 30, 58, 0.1) 100%);
+  background: rgba(0, 51, 102, 0.05);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   margin-bottom: var(--spacing-md);
@@ -231,7 +231,7 @@
 }
 
 .data-item.highlight {
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.05) 0%, rgba(196, 30, 58, 0.05) 100%);
+  background: rgba(0, 51, 102, 0.02);
   border-color: var(--primary);
 }
 

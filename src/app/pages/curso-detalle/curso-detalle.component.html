@@ -1,7 +1,7 @@
 <div class="curso-detalle-container">
   <div class="breadcrumb">
     <a routerLink="/cursos" class="breadcrumb-link">
-      <i class="icon-arrow-left"></i> Cursos
+      <i class="fas fa-arrow-left"></i> Cursos
     </a>
     <span class="breadcrumb-separator">/</span>
     <span class="breadcrumb-current">{{ course().name }}</span>
@@ -11,7 +11,7 @@
     <div class="course-header-content">
       <div class="course-title-wrapper">
         <div class="course-code-badge">
-          <i class="icon-book"></i>
+          <i class="fas fa-book"></i>
           <span>{{ course().code }}</span>
         </div>
         <h1 class="course-title">{{ course().name }}</h1>
@@ -25,14 +25,14 @@
           <p class="teacher-label">Docente</p>
           <p class="teacher-name">{{ course().teacher }}</p>
           <a href="mailto:teacher@colegio.edu" class="teacher-contact">
-            <i class="icon-email"></i> Contactar docente
+            <i class="fas fa-envelope"></i> Contactar docente
           </a>
         </div>
       </div>
     </div>
     <div class="course-average">
       <div class="average-icon-wrapper">
-        <i class="icon-chart"></i>
+        <i class="fas fa-chart-line"></i>
       </div>
       <div class="average-content">
         <span class="average-label">Promedio</span>
@@ -43,16 +43,16 @@
 
   <div class="tabs">
     <button class="tab-btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">
-      <i class="icon-book"></i> Contenido
+      <i class="fas fa-book"></i> Contenido
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'materiales'" (click)="setTab('materiales')">
-      <i class="icon-file"></i> Materiales
+      <i class="fas fa-file"></i> Materiales
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
-      <i class="icon-task"></i> Tareas
+      <i class="fas fa-tasks"></i> Tareas
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">
-      <i class="icon-chart"></i> Calificaciones
+      <i class="fas fa-chart-line"></i> Calificaciones
     </button>
   </div>
 
@@ -61,7 +61,7 @@
       <div class="content-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-book"></i> Plan de Estudios
+            <i class="fas fa-book"></i> Plan de Estudios
           </h2>
         </div>
         <div class="units-list">
@@ -87,15 +87,15 @@
       <div class="materials-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-file"></i> Materiales de Estudio
+            <i class="fas fa-file"></i> Materiales de Estudio
           </h2>
         </div>
         <div class="materials-list">
           @for (material of materials(); track material.id) {
             <div class="material-item">
               <div class="material-icon-wrapper" [class.pdf]="material.type === 'PDF'" [class.video]="material.type === 'Video'">
-                @if (material.type === 'PDF') { <i class="icon-file"></i> }
-                @if (material.type === 'Video') { <i class="icon-video"></i> }
+                @if (material.type === 'PDF') { <i class="fas fa-file-pdf"></i> }
+                @if (material.type === 'Video') { <i class="fas fa-video"></i> }
               </div>
               <div class="material-info">
                 <h4>{{ material.name }}</h4>
@@ -108,7 +108,7 @@
                 </div>
               </div>
               <button class="btn btn-primary">
-                <i class="icon-download"></i> Descargar
+                <i class="fas fa-download"></i> Descargar
               </button>
             </div>
           }
@@ -120,25 +120,25 @@
       <div class="tasks-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-task"></i> Tareas del Curso
+            <i class="fas fa-tasks"></i> Tareas del Curso
           </h2>
         </div>
         <div class="tasks-list">
           @for (task of tasks(); track task.id) {
             <div class="task-item" [class.task-entregada]="task.status === 'entregada'">
               <div class="task-icon-wrapper">
-                <i class="icon-task"></i>
+                <i class="fas fa-tasks"></i>
               </div>
               <div class="task-info">
                 <h4>{{ task.name }}</h4>
                 <div class="task-details">
                   <div class="task-detail-item">
-                    <i class="icon-calendar"></i>
+                    <i class="fas fa-calendar-alt"></i>
                     <span>Fecha límite: <strong>{{ task.dueDate }}</strong></span>
                   </div>
                   @if (task.grade) {
                     <div class="task-detail-item">
-                      <i class="icon-check"></i>
+                      <i class="fas fa-check-circle"></i>
                       <span>Calificación: <strong class="task-grade">{{ task.grade }}</strong></span>
                     </div>
                   }
@@ -149,7 +149,7 @@
                   {{ task.status === 'entregada' ? 'Entregada' : 'Pendiente' }}
                 </span>
                 <a [routerLink]="['/tareas', task.id]" class="btn btn-primary btn-sm">
-                  <i class="icon-arrow-right"></i> Ver Detalle
+                  <i class="fas fa-arrow-right"></i> Ver Detalle
                 </a>
               </div>
             </div>
@@ -162,7 +162,7 @@
       <div class="grades-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="icon-chart"></i> Calificaciones y Evaluaciones
+            <i class="fas fa-chart-line"></i> Calificaciones y Evaluaciones
           </h2>
         </div>
         <table class="grades-table">
@@ -199,21 +199,21 @@
         <div class="grade-summary">
           <div class="summary-item">
             <div class="summary-item-label">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
               <span>Promedio de Exámenes</span>
             </div>
             <strong class="summary-item-value">16.5</strong>
           </div>
           <div class="summary-item">
             <div class="summary-item-label">
-              <i class="icon-task"></i>
+              <i class="fas fa-tasks"></i>
               <span>Promedio de Tareas</span>
             </div>
             <strong class="summary-item-value">17.0</strong>
           </div>
           <div class="summary-item highlight">
             <div class="summary-item-label">
-              <i class="icon-chart"></i>
+              <i class="fas fa-chart-line"></i>
               <span>Promedio Final</span>
             </div>
             <strong class="summary-item-value final">16.5</strong>

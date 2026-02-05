@@ -47,12 +47,13 @@
   align-items: center;
 }
 
-.filter-wrapper .icon-calendar {
+.filter-wrapper i {
   position: absolute;
   left: var(--spacing-md);
   color: var(--text-tertiary);
   font-size: var(--font-size-lg);
   pointer-events: none;
+  z-index: 1;
 }
 
 .month-input {
@@ -91,7 +92,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .summary-card:hover {
@@ -112,22 +113,22 @@
 }
 
 .summary-icon-wrapper.primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
 }
 
 .summary-icon-wrapper.success {
-  background: linear-gradient(135deg, var(--success) 0%, #34D399 100%);
+  background: var(--success);
   color: white;
 }
 
 .summary-icon-wrapper.error {
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  background: var(--secondary);
   color: white;
 }
 
 .summary-icon-wrapper.warning {
-  background: linear-gradient(135deg, var(--warning) 0%, #FBBF24 100%);
+  background: var(--warning);
   color: white;
 }
 
@@ -204,7 +205,7 @@
 }
 
 .attendance-table thead {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .attendance-table th {
@@ -273,7 +274,7 @@
 }
 
 .alert-error {
-  background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(196, 30, 58, 0.05) 100%);
+  background: rgba(196, 30, 58, 0.05);
   border-left-color: var(--secondary);
   color: #C41E3A;
 }

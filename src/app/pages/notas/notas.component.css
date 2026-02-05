@@ -57,7 +57,7 @@
 }
 
 .average-card {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-2xl);
@@ -189,7 +189,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .course-grade-card:hover {
@@ -262,7 +262,7 @@
 }
 
 .evaluations-table thead {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .evaluations-table th {
@@ -307,19 +307,19 @@
 }
 
 .percentage-badge.high {
-  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  background: var(--success);
   color: #065F46;
   border: 1px solid #10B981;
 }
 
 .percentage-badge.medium {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  background: var(--warning);
   color: #92400E;
   border: 1px solid #F59E0B;
 }
 
 .percentage-badge.low {
-  background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  background: var(--error);
   color: #C41E3A;
   border: 1px solid var(--secondary);
 }
@@ -330,7 +330,7 @@
   gap: var(--spacing-sm);
   padding-top: var(--spacing-lg);
   border-top: 2px solid var(--border-color);
-  background: linear-gradient(135deg, rgba(0, 51, 102, 0.03) 0%, rgba(196, 30, 58, 0.03) 100%);
+  background: rgba(0, 51, 102, 0.02);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
   margin-top: var(--spacing-lg);
@@ -374,7 +374,7 @@
 }
 
 .summary-row.highlight {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   color: white;
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);

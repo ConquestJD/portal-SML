@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-lg);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .login-card {
@@ -23,10 +23,15 @@
 
 .logo-placeholder {
   margin-bottom: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.logo-icon {
-  font-size: 4rem;
+.logo-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
 }
 
 .login-title {
