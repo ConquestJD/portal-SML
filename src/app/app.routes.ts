@@ -53,6 +53,24 @@ export const routes: Routes = [
       {
         path: 'configuracion',
         loadComponent: () => import('./pages/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)
+      },
+      // Rutas para profesores
+      {
+        path: 'profesor/dashboard',
+        loadComponent: () => import('./pages/profesor/dashboard-profesor/dashboard-profesor.component').then(m => m.DashboardProfesorComponent)
+      },
+      {
+        path: 'profesor/cursos',
+        loadComponent: () => import('./pages/profesor/cursos-profesor/cursos-profesor.component').then(m => m.CursosProfesorComponent)
+      },
+      {
+        path: 'profesor/cursos/:id',
+        loadComponent: () => import('./pages/profesor/curso-detalle-profesor/curso-detalle-profesor.component').then(m => m.CursoDetalleProfesorComponent)
+      },
+      // Rutas para administradores
+      {
+        path: 'admin/dashboard',
+        loadComponent: () => import('./pages/admin/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent)
       }
     ]
   }

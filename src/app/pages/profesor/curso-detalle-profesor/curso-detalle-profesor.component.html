@@ -1,0 +1,153 @@
+<div class="curso-detalle-container">
+  <div class="breadcrumb">
+    <a routerLink="/profesor/cursos" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a Cursos
+    </a>
+  </div>
+
+  <div class="course-header">
+    <div class="header-content">
+      <div class="course-icon-wrapper">
+        <i class="fas fa-book"></i>
+      </div>
+      <div class="course-info">
+        <h1 class="course-title">{{ course().name }}</h1>
+        <p class="course-subtitle">{{ course().code }} - {{ course().grade }} Grado - Sección {{ course().section }}</p>
+        <div class="course-meta">
+          <span><i class="fas fa-users"></i> {{ course().students }} estudiantes</span>
+          <span><i class="fas fa-clock"></i> {{ course().schedule }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'estudiantes'" (click)="setTab('estudiantes')">
+      <i class="fas fa-users"></i> Estudiantes
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
+      <i class="fas fa-tasks"></i> Tareas
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">
+      <i class="fas fa-chart-line"></i> Notas
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
+      <i class="fas fa-calendar-check"></i> Asistencia
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">
+      <i class="fas fa-file"></i> Material
+    </button>
+  </div>
+
+  <div class="tab-content">
+    @if (activeTab() === 'estudiantes') {
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Lista de Estudiantes</h2>
+          <button class="btn btn-primary">
+            <i class="fas fa-plus"></i> Agregar Estudiante
+          </button>
+        </div>
+        <div class="students-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Promedio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (student of students(); track student.id) {
+                <tr>
+                  <td>{{ student.code }}</td>
+                  <td>{{ student.name }}</td>
+                  <td>{{ student.average }}</td>
+                  <td>
+                    <span class="badge badge-success">Activo</span>
+                  </td>
+                  <td>
+                    <a [routerLink]="['/profesor/estudiantes', student.id]" class="btn btn-sm btn-secondary">
+                      <i class="fas fa-eye"></i> Ver
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'tareas') {
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Tareas del Curso</h2>
+          <button class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Tarea
+          </button>
+        </div>
+        <div class="tasks-grid">
+          @for (task of tasks(); track task.id) {
+            <div class="task-card">
+              <div class="task-header">
+                <h3 class="task-title">{{ task.title }}</h3>
+                <span class="badge badge-warning">{{ task.pending }} pendientes</span>
+              </div>
+              <div class="task-info">
+                <p><i class="fas fa-calendar-alt"></i> Fecha límite: {{ task.dueDate }}</p>
+                <p><i class="fas fa-check-circle"></i> Entregadas: {{ task.submitted }}</p>
+              </div>
+              <div class="task-actions">
+                <button class="btn btn-primary btn-sm">
+                  <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn btn-secondary btn-sm">
+                  <i class="fas fa-check"></i> Calificar
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'notas') {
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Calificaciones</h2>
+          <button class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Evaluación
+          </button>
+        </div>
+        <p class="info-text">Gestiona las calificaciones de los estudiantes en este curso.</p>
+      </div>
+    }
+
+    @if (activeTab() === 'asistencia') {
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Asistencia</h2>
+          <button class="btn btn-primary">
+            <i class="fas fa-calendar-check"></i> Marcar Asistencia
+          </button>
+        </div>
+        <p class="info-text">Registra y gestiona la asistencia de los estudiantes.</p>
+      </div>
+    }
+
+    @if (activeTab() === 'material') {
+      <div class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Material del Curso</h2>
+          <button class="btn btn-primary">
+            <i class="fas fa-upload"></i> Subir Material
+          </button>
+        </div>
+        <p class="info-text">Gestiona los materiales y recursos del curso.</p>
+      </div>
+    }
+  </div>
+</div>

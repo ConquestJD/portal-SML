@@ -1,0 +1,121 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <h1 class="welcome-title">Panel de Administración</h1>
+        <p class="welcome-subtitle">Bienvenido, {{ adminName() }}</p>
+      </div>
+    </div>
+    <div class="current-date">
+      <i class="fas fa-calendar-alt"></i>
+      <span class="date-text">{{ getCurrentDate() }}</span>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  @if (alerts().length > 0) {
+    <div class="alerts-section">
+      @for (alert of alerts(); track $index) {
+        <div class="alert alert-{{ alert.type }}">
+          <span class="alert-icon">
+            @if (alert.type === 'warning') { <i class="fas fa-exclamation-triangle"></i> }
+            @if (alert.type === 'info') { <i class="fas fa-info-circle"></i> }
+            @if (alert.type === 'error') { <i class="fas fa-times-circle"></i> }
+          </span>
+          <span class="alert-message">{{ alert.message }}</span>
+          <a [routerLink]="alert.link" class="alert-link">
+            Ver más <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Resumen -->
+  <div class="summary-grid grid grid-cols-4">
+    <div class="summary-card">
+      <div class="summary-header">
+        <span class="summary-icon"><i class="fas fa-users"></i></span>
+        <span class="summary-label">Total Estudiantes</span>
+      </div>
+      <div class="summary-value">{{ totalStudents() }}</div>
+      <a [routerLink]="'/admin/estudiantes'" class="summary-link">
+        Ver estudiantes <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-header">
+        <span class="summary-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+        <span class="summary-label">Total Profesores</span>
+      </div>
+      <div class="summary-value">{{ totalTeachers() }}</div>
+      <a [routerLink]="'/admin/profesores'" class="summary-link">
+        Ver profesores <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-header">
+        <span class="summary-icon"><i class="fas fa-book"></i></span>
+        <span class="summary-label">Total Cursos</span>
+      </div>
+      <div class="summary-value">{{ totalCourses() }}</div>
+      <a [routerLink]="'/admin/cursos'" class="summary-link">
+        Ver cursos <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-header">
+        <span class="summary-icon"><i class="fas fa-exclamation-circle"></i></span>
+        <span class="summary-label">Solicitudes Pendientes</span>
+      </div>
+      <div class="summary-value">{{ pendingRequests() }}</div>
+      <a [routerLink]="'/admin/solicitudes'" class="summary-link">
+        Revisar <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Accesos Rápidos -->
+  <div class="section">
+    <h2 class="section-title">Accesos Rápidos</h2>
+    <div class="quick-access-grid grid grid-cols-3">
+      @for (item of quickAccess(); track item.title) {
+        <a [routerLink]="item.link" class="quick-access-card">
+          <div class="quick-access-icon-wrapper">
+            <i [class]="item.icon"></i>
+          </div>
+          <div class="quick-access-content">
+            <h3 class="quick-access-title">{{ item.title }}</h3>
+            @if (item.count !== undefined) {
+              <span class="quick-access-count">{{ item.count }}</span>
+            }
+          </div>
+          <i class="fas fa-arrow-right quick-access-arrow"></i>
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Actividad Reciente -->
+  <div class="section">
+    <h2 class="section-title">Actividad Reciente</h2>
+    <div class="activity-list">
+      @for (activity of recentActivity(); track $index) {
+        <div class="activity-item">
+          <div class="activity-icon-wrapper">
+            @if (activity.type === 'user') { <i class="fas fa-user activity-icon"></i> }
+            @if (activity.type === 'course') { <i class="fas fa-book activity-icon"></i> }
+            @if (activity.type === 'request') { <i class="fas fa-file-alt activity-icon"></i> }
+          </div>
+          <div class="activity-content">
+            <p class="activity-message">{{ activity.message }}</p>
+            <span class="activity-time">{{ activity.time }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

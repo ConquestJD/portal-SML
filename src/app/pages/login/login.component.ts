@@ -1,12 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -17,6 +17,8 @@ export class LoginComponent {
   showPassword = signal(false);
   isLoading = signal(false);
   error = signal('');
+
+  constructor(private authService: AuthService) {}
 
   togglePasswordVisibility() {
     this.showPassword.update(value => !value);
@@ -31,15 +33,21 @@ export class LoginComponent {
     this.isLoading.set(true);
     this.error.set('');
 
-    // Simulación de login
+    // Simular delay de red
     setTimeout(() => {
+      const result = this.authService.login(
+        this.username(),
+        this.password(),
+        this.rememberMe()
+      );
+
       this.isLoading.set(false);
-      // Aquí iría la lógica real de autenticación
-      console.log('Login attempt:', {
-        username: this.username(),
-        rememberMe: this.rememberMe()
-      });
-    }, 1500);
+
+      if (!result.success) {
+        this.error.set(result.message || 'Error al iniciar sesión');
+      }
+      // Si es exitoso, el servicio redirige automáticamente
+    }, 800);
   }
 
   forgotPassword() {

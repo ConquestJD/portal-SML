@@ -1,6 +1,6 @@
 <aside class="sidebar" [class.collapsed]="isMenuOpen()">
   <div class="sidebar-header">
-    <a routerLink="/dashboard" class="logo-link">
+    <a [routerLink]="userRole() === 'profesor' ? '/profesor/dashboard' : userRole() === 'admin' ? '/admin/dashboard' : '/dashboard'" class="logo-link">
       <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
       <span class="logo-text">Portal SML</span>
     </a>
@@ -11,51 +11,38 @@
 
   <div class="sidebar-content">
     <nav class="sidebar-nav">
-      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-home nav-icon"></i>
-        <span class="nav-text">Inicio</span>
-      </a>
-      <a routerLink="/cursos" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-book nav-icon"></i>
-        <span class="nav-text">Cursos</span>
-      </a>
-      <a routerLink="/tareas" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-tasks nav-icon"></i>
-        <span class="nav-text">Tareas</span>
-        @if (notificationsCount() > 0) {
-          <span class="badge badge-error">{{ notificationsCount() }}</span>
-        }
-      </a>
-      <a routerLink="/notas" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-chart-line nav-icon"></i>
-        <span class="nav-text">Notas</span>
-      </a>
-      <a routerLink="/asistencia" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-calendar-check nav-icon"></i>
-        <span class="nav-text">Asistencia</span>
-      </a>
-      <a routerLink="/comunicados" routerLinkActive="active" class="nav-link">
-        <i class="fas fa-bullhorn nav-icon"></i>
-        <span class="nav-text">Comunicados</span>
-      </a>
+      @for (item of navigationItems(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
+          <i [class]="item.icon + ' nav-icon'"></i>
+          <span class="nav-text">{{ item.label }}</span>
+        </a>
+      }
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-section">
-        <img [src]="studentPhoto()" [alt]="studentName()" class="user-avatar">
+        <img [src]="userPhoto()" [alt]="userName()" class="user-avatar">
         <div class="user-info">
-          <span class="user-name">{{ studentName() }}</span>
-          <span class="user-role">Estudiante</span>
+          <span class="user-name">{{ userName() }}</span>
+          <span class="user-role">
+            @if (userRole() === 'profesor') {
+              Profesor
+            } @else if (userRole() === 'admin') {
+              Administrador
+            } @else {
+              Estudiante
+            }
+          </span>
         </div>
       </div>
       <div class="sidebar-actions">
-        <a routerLink="/perfil" class="action-link" title="Mi Perfil">
+        <a [routerLink]="userRole() === 'profesor' ? '/profesor/perfil' : userRole() === 'admin' ? '/admin/perfil' : '/perfil'" class="action-link" title="Mi Perfil">
           <i class="fas fa-user"></i>
         </a>
-        <a routerLink="/configuracion" class="action-link" title="Configuración">
+        <a [routerLink]="userRole() === 'profesor' ? '/profesor/configuracion' : userRole() === 'admin' ? '/admin/configuracion' : '/configuracion'" class="action-link" title="Configuración">
           <i class="fas fa-cog"></i>
         </a>
-        <a routerLink="/login" class="action-link" title="Cerrar Sesión">
+        <a (click)="logout()" class="action-link" title="Cerrar Sesión" style="cursor: pointer;">
           <i class="fas fa-sign-out-alt"></i>
         </a>
       </div>
