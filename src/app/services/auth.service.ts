@@ -57,8 +57,10 @@ export class AuthService {
   userRole = computed(() => this.currentUser()?.role || null);
 
   constructor(private router: Router) {
-    // Verificar si hay sesión guardada
-    this.checkStoredSession();
+    // Verificar si hay sesión guardada solo en el cliente
+    if (typeof window !== 'undefined') {
+      this.checkStoredSession();
+    }
   }
 
   login(username: string, password: string, rememberMe: boolean = false): { success: boolean; message?: string } {
@@ -77,11 +79,13 @@ export class AuthService {
     this.currentUser.set(user);
     this.isAuthenticated.set(true);
 
-    // Guardar sesión si se seleccionó "Recordarme"
-    if (rememberMe) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    // Guardar sesión si se seleccionó "Recordarme" (solo en el cliente)
+    if (typeof window !== 'undefined') {
+      if (rememberMe) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+      }
     }
 
     // Redirigir según el rol
@@ -93,8 +97,10 @@ export class AuthService {
   logout(): void {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
-    localStorage.removeItem('currentUser');
-    sessionStorage.removeItem('currentUser');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+      sessionStorage.removeItem('currentUser');
+    }
     this.router.navigate(['/login']);
   }
 
@@ -115,6 +121,11 @@ export class AuthService {
   }
 
   private checkStoredSession(): void {
+    // Solo verificar en el cliente (no en SSR)
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Verificar localStorage primero (recordarme)
     let storedUser = localStorage.getItem('currentUser');
     
@@ -136,8 +147,10 @@ export class AuthService {
   }
 
   private clearStoredSession(): void {
-    localStorage.removeItem('currentUser');
-    sessionStorage.removeItem('currentUser');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+      sessionStorage.removeItem('currentUser');
+    }
   }
 
   hasRole(role: UserRole): boolean {
