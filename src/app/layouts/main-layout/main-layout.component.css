@@ -1,4 +1,21 @@
+:host {
+  display: block;
+}
+
 .main-content {
-  min-height: calc(100vh - 64px);
-  padding: var(--spacing-xl) 0;
+  margin-left: 260px;
+  min-height: 100vh;
+  padding: var(--spacing-xl);
+  transition: margin-left 0.3s ease;
+}
+
+/* Cuando el sidebar está colapsado, ajustar el contenido */
+:host-context(.sidebar.collapsed) .main-content {
+  margin-left: 80px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 80px;
+  }
 }

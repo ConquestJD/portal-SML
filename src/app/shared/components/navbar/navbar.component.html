@@ -1,119 +1,64 @@
-<nav class="navbar">
-  <div class="navbar-container">
-    <div class="navbar-brand">
-      <a routerLink="/dashboard" class="logo-link">
-        <span class="logo-text">Portal Estudiantil</span>
-      </a>
-    </div>
+<aside class="sidebar" [class.collapsed]="isMenuOpen()">
+  <div class="sidebar-header">
+    <a routerLink="/dashboard" class="logo-link">
+      <i class="fas fa-graduation-cap"></i>
+      <span class="logo-text">Portal SML</span>
+    </a>
+    <button class="sidebar-toggle" (click)="toggleMenu()" aria-label="Toggle sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
 
-    <!-- Desktop Menu -->
-    <div class="navbar-menu desktop-menu">
+  <div class="sidebar-content">
+    <nav class="sidebar-nav">
       <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-home"></span>
-        <span>Inicio</span>
+        <i class="fas fa-home nav-icon"></i>
+        <span class="nav-text">Inicio</span>
       </a>
       <a routerLink="/cursos" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-book"></span>
-        <span>Cursos</span>
+        <i class="fas fa-book nav-icon"></i>
+        <span class="nav-text">Cursos</span>
       </a>
       <a routerLink="/tareas" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-task"></span>
-        <span>Tareas</span>
+        <i class="fas fa-tasks nav-icon"></i>
+        <span class="nav-text">Tareas</span>
         @if (notificationsCount() > 0) {
           <span class="badge badge-error">{{ notificationsCount() }}</span>
         }
       </a>
       <a routerLink="/notas" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-chart"></span>
-        <span>Notas</span>
+        <i class="fas fa-chart-line nav-icon"></i>
+        <span class="nav-text">Notas</span>
       </a>
       <a routerLink="/asistencia" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-calendar"></span>
-        <span>Asistencia</span>
+        <i class="fas fa-calendar-check nav-icon"></i>
+        <span class="nav-text">Asistencia</span>
       </a>
       <a routerLink="/comunicados" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon icon-announcement"></span>
-        <span>Comunicados</span>
+        <i class="fas fa-bullhorn nav-icon"></i>
+        <span class="nav-text">Comunicados</span>
       </a>
-    </div>
+    </nav>
 
-    <!-- Right Side -->
-    <div class="navbar-actions">
-      <button class="icon-btn notification-btn" title="Notificaciones">
-        <span class="icon-bell"></span>
-        @if (notificationsCount() > 0) {
-          <span class="notification-badge">{{ notificationsCount() }}</span>
-        }
-      </button>
-      
-      <div class="user-menu">
-        <button class="user-btn" (click)="toggleMenu()">
-          <img [src]="studentPhoto()" [alt]="studentName()" class="user-avatar">
+    <div class="sidebar-footer">
+      <div class="user-section">
+        <img [src]="studentPhoto()" [alt]="studentName()" class="user-avatar">
+        <div class="user-info">
           <span class="user-name">{{ studentName() }}</span>
-          <span class="dropdown-icon">▼</span>
-        </button>
-        
-        @if (isMenuOpen()) {
-          <div class="dropdown-menu">
-            <a routerLink="/perfil" class="dropdown-item" (click)="closeMenu()">
-              <span class="icon-user"></span> Mi Perfil
-            </a>
-            <a routerLink="/configuracion" class="dropdown-item" (click)="closeMenu()">
-              <span class="icon-settings"></span> Configuración
-            </a>
-            <hr class="dropdown-divider">
-            <a routerLink="/login" class="dropdown-item" (click)="closeMenu()">
-              <span class="icon-logout"></span> Cerrar Sesión
-            </a>
-          </div>
-        }
+          <span class="user-role">Estudiante</span>
+        </div>
       </div>
-
-      <!-- Mobile Menu Button -->
-      <button class="mobile-menu-btn" (click)="toggleMenu()" aria-label="Toggle menu">
-        <span>☰</span>
-      </button>
+      <div class="sidebar-actions">
+        <a routerLink="/perfil" class="action-link" title="Mi Perfil">
+          <i class="fas fa-user"></i>
+        </a>
+        <a routerLink="/configuracion" class="action-link" title="Configuración">
+          <i class="fas fa-cog"></i>
+        </a>
+        <a routerLink="/login" class="action-link" title="Cerrar Sesión">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </div>
     </div>
   </div>
-
-  <!-- Mobile Menu -->
-  @if (isMenuOpen()) {
-    <div class="mobile-menu">
-      <a routerLink="/dashboard" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-home"></span>
-        <span>Inicio</span>
-      </a>
-      <a routerLink="/cursos" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-book"></span>
-        <span>Cursos</span>
-      </a>
-      <a routerLink="/tareas" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-task"></span>
-        <span>Tareas</span>
-        @if (notificationsCount() > 0) {
-          <span class="badge badge-error">{{ notificationsCount() }}</span>
-        }
-      </a>
-      <a routerLink="/notas" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-chart"></span>
-        <span>Notas</span>
-      </a>
-      <a routerLink="/asistencia" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-calendar"></span>
-        <span>Asistencia</span>
-      </a>
-      <a routerLink="/comunicados" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-announcement"></span>
-        <span>Comunicados</span>
-      </a>
-      <a routerLink="/perfil" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-user"></span>
-        <span>Mi Perfil</span>
-      </a>
-      <a routerLink="/configuracion" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon icon-settings"></span>
-        <span>Configuración</span>
-      </a>
-    </div>
-  }
-</nav>
+</aside>
