@@ -7,7 +7,7 @@
       </div>
     </div>
     <div class="current-date">
-      <i class="icon-calendar"></i>
+      <i class="fas fa-calendar-alt"></i>
       <span class="date-text">{{ getCurrentDate() }}</span>
     </div>
   </div>
@@ -18,13 +18,13 @@
       @for (alert of alerts(); track $index) {
         <div class="alert alert-{{ alert.type }}">
           <span class="alert-icon">
-            @if (alert.type === 'warning') { <i class="icon-warning"></i> }
-            @if (alert.type === 'info') { <i class="icon-info"></i> }
-            @if (alert.type === 'error') { <i class="icon-error"></i> }
+            @if (alert.type === 'warning') { <i class="fas fa-exclamation-triangle"></i> }
+            @if (alert.type === 'info') { <i class="fas fa-info-circle"></i> }
+            @if (alert.type === 'error') { <i class="fas fa-times-circle"></i> }
           </span>
           <span class="alert-message">{{ alert.message }}</span>
           <a [routerLink]="alert.link" class="alert-link">
-            Ver más <i class="icon-arrow-right"></i>
+            Ver más <i class="fas fa-arrow-right"></i>
           </a>
         </div>
       }
@@ -35,30 +35,30 @@
   <div class="summary-grid grid grid-cols-4">
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon icon-chart"></span>
+        <span class="summary-icon"><i class="fas fa-chart-line"></i></span>
         <span class="summary-label">Promedio General</span>
       </div>
       <div class="summary-value">{{ averageGrade() }}</div>
       <div class="summary-trend">
-        <i class="icon-trend-up"></i>
+        <i class="fas fa-arrow-up"></i>
         <span class="trend-text">+0.5 vs período anterior</span>
       </div>
     </div>
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon icon-task"></span>
+        <span class="summary-icon"><i class="fas fa-tasks"></i></span>
         <span class="summary-label">Tareas Pendientes</span>
       </div>
       <div class="summary-value">{{ pendingTasks() }}</div>
       <a [routerLink]="'/tareas'" class="summary-link">
-        Ver tareas <i class="icon-arrow-right"></i>
+        Ver tareas <i class="fas fa-arrow-right"></i>
       </a>
     </div>
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon icon-calendar"></span>
+        <span class="summary-icon"><i class="fas fa-calendar-check"></i></span>
         <span class="summary-label">Asistencia del Mes</span>
       </div>
       <div class="summary-value">{{ attendancePercentage() }}%</div>
@@ -69,7 +69,7 @@
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon icon-evaluation"></span>
+        <span class="summary-icon"><i class="fas fa-clipboard-list"></i></span>
         <span class="summary-label">Próximas Evaluaciones</span>
       </div>
       <div class="summary-value">{{ upcomingEvaluations() }}</div>
@@ -92,7 +92,7 @@
               <span class="quick-access-count">{{ item.count }}</span>
             }
           </div>
-          <i class="icon-arrow-right quick-access-arrow"></i>
+          <i class="fas fa-arrow-right quick-access-arrow"></i>
         </a>
       }
     </div>
@@ -105,9 +105,9 @@
       @for (activity of recentActivity(); track $index) {
         <div class="activity-item">
           <div class="activity-icon-wrapper">
-            @if (activity.type === 'task') { <i class="icon-check activity-icon"></i> }
-            @if (activity.type === 'grade') { <i class="icon-chart activity-icon"></i> }
-            @if (activity.type === 'announcement') { <i class="icon-announcement activity-icon"></i> }
+            @if (activity.type === 'task') { <i class="fas fa-check-circle activity-icon"></i> }
+            @if (activity.type === 'grade') { <i class="fas fa-chart-bar activity-icon"></i> }
+            @if (activity.type === 'announcement') { <i class="fas fa-bullhorn activity-icon"></i> }
           </div>
           <div class="activity-content">
             <p class="activity-message">{{ activity.message }}</p>

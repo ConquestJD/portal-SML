@@ -41,7 +41,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   border-radius: var(--border-radius-lg);
   color: white;
   font-weight: 500;
@@ -147,7 +147,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
 }
 
 .summary-card:hover {
@@ -164,8 +164,6 @@
 }
 
 .summary-icon {
-  font-size: var(--font-size-2xl);
-  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,6 +172,11 @@
   background: rgba(0, 51, 102, 0.1);
   border-radius: var(--border-radius);
   flex-shrink: 0;
+}
+
+.summary-icon i {
+  font-size: var(--font-size-xl);
+  color: var(--primary);
 }
 
 .summary-label {
@@ -238,7 +241,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   transition: width 0.3s;
   border-radius: 9999px;
 }
@@ -294,7 +297,7 @@
   justify-content: center;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--primary);
   border-radius: var(--border-radius-lg);
   color: white;
   font-size: var(--font-size-2xl);
