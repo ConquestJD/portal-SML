@@ -13,22 +13,22 @@
 
   <div class="summary-cards grid grid-cols-4">
     <div class="summary-card">
-      <span class="summary-icon">📊</span>
+      <span class="summary-icon icon-chart"></span>
       <span class="summary-label">Asistencia del Mes</span>
       <span class="summary-value">{{ summary().attendancePercentage }}%</span>
     </div>
     <div class="summary-card">
-      <span class="summary-icon">✅</span>
+      <span class="summary-icon icon-check"></span>
       <span class="summary-label">Días Asistidos</span>
       <span class="summary-value">{{ summary().daysAttended }}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-icon">❌</span>
+      <span class="summary-icon icon-error"></span>
       <span class="summary-label">Faltas</span>
       <span class="summary-value error">{{ summary().absences }}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-icon">⏰</span>
+      <span class="summary-icon icon-clock"></span>
       <span class="summary-label">Tardanzas</span>
       <span class="summary-value warning">{{ summary().tardies }}</span>
     </div>
@@ -58,9 +58,9 @@
                   [class.badge-success]="record.status === 'presente'"
                   [class.badge-error]="record.status === 'falta'"
                   [class.badge-warning]="record.status === 'tardanza'">
-                  @if (record.status === 'presente') { ✅ Presente }
-                  @if (record.status === 'falta') { ❌ Falta }
-                  @if (record.status === 'tardanza') { ⏰ Tardanza }
+                  @if (record.status === 'presente') { Presente }
+                  @if (record.status === 'falta') { Falta }
+                  @if (record.status === 'tardanza') { Tardanza }
                 </span>
               </td>
               <td>{{ record.timeIn }}</td>
@@ -75,7 +75,7 @@
 
   @if (summary().absences > 3) {
     <div class="alert alert-error">
-      <span>⚠️</span>
+      <span class="icon-warning"></span>
       <span>Advertencia: Tienes más de 3 faltas. Contacta con la administración.</span>
     </div>
   }

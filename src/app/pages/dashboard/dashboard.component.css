@@ -59,7 +59,7 @@
 .alert-info {
   background-color: #DBEAFE;
   border-color: var(--info);
-  color: #1E40AF;
+  color: #003366;
 }
 
 .alert-error {

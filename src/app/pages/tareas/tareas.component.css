@@ -48,6 +48,10 @@
   border-color: var(--primary);
 }
 
+.filter-chip.active:hover {
+  background: var(--primary-dark);
+}
+
 .summary-panel {
   display: flex;
   gap: var(--spacing-lg);
@@ -81,7 +85,7 @@
 }
 
 .summary-value.error {
-  color: var(--error);
+  color: var(--secondary);
 }
 
 .summary-value.success {

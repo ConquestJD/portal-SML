@@ -9,30 +9,30 @@
     <!-- Desktop Menu -->
     <div class="navbar-menu desktop-menu">
       <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon icon-home"></span>
         <span>Inicio</span>
       </a>
       <a routerLink="/cursos" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">📚</span>
+        <span class="nav-icon icon-book"></span>
         <span>Cursos</span>
       </a>
       <a routerLink="/tareas" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">📝</span>
+        <span class="nav-icon icon-task"></span>
         <span>Tareas</span>
         @if (notificationsCount() > 0) {
           <span class="badge badge-error">{{ notificationsCount() }}</span>
         }
       </a>
       <a routerLink="/notas" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon icon-chart"></span>
         <span>Notas</span>
       </a>
       <a routerLink="/asistencia" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">📅</span>
+        <span class="nav-icon icon-calendar"></span>
         <span>Asistencia</span>
       </a>
       <a routerLink="/comunicados" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">📢</span>
+        <span class="nav-icon icon-announcement"></span>
         <span>Comunicados</span>
       </a>
     </div>
@@ -40,7 +40,7 @@
     <!-- Right Side -->
     <div class="navbar-actions">
       <button class="icon-btn notification-btn" title="Notificaciones">
-        <span>🔔</span>
+        <span class="icon-bell"></span>
         @if (notificationsCount() > 0) {
           <span class="notification-badge">{{ notificationsCount() }}</span>
         }
@@ -56,14 +56,14 @@
         @if (isMenuOpen()) {
           <div class="dropdown-menu">
             <a routerLink="/perfil" class="dropdown-item" (click)="closeMenu()">
-              <span>👤</span> Mi Perfil
+              <span class="icon-user"></span> Mi Perfil
             </a>
             <a routerLink="/configuracion" class="dropdown-item" (click)="closeMenu()">
-              <span>⚙️</span> Configuración
+              <span class="icon-settings"></span> Configuración
             </a>
             <hr class="dropdown-divider">
             <a routerLink="/login" class="dropdown-item" (click)="closeMenu()">
-              <span>🚪</span> Cerrar Sesión
+              <span class="icon-logout"></span> Cerrar Sesión
             </a>
           </div>
         }
@@ -80,38 +80,38 @@
   @if (isMenuOpen()) {
     <div class="mobile-menu">
       <a routerLink="/dashboard" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon icon-home"></span>
         <span>Inicio</span>
       </a>
       <a routerLink="/cursos" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">📚</span>
+        <span class="nav-icon icon-book"></span>
         <span>Cursos</span>
       </a>
       <a routerLink="/tareas" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">📝</span>
+        <span class="nav-icon icon-task"></span>
         <span>Tareas</span>
         @if (notificationsCount() > 0) {
           <span class="badge badge-error">{{ notificationsCount() }}</span>
         }
       </a>
       <a routerLink="/notas" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon icon-chart"></span>
         <span>Notas</span>
       </a>
       <a routerLink="/asistencia" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">📅</span>
+        <span class="nav-icon icon-calendar"></span>
         <span>Asistencia</span>
       </a>
       <a routerLink="/comunicados" routerLinkActive="active" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">📢</span>
+        <span class="nav-icon icon-announcement"></span>
         <span>Comunicados</span>
       </a>
       <a routerLink="/perfil" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">👤</span>
+        <span class="nav-icon icon-user"></span>
         <span>Mi Perfil</span>
       </a>
       <a routerLink="/configuracion" class="mobile-nav-link" (click)="closeMenu()">
-        <span class="nav-icon">⚙️</span>
+        <span class="nav-icon icon-settings"></span>
         <span>Configuración</span>
       </a>
     </div>

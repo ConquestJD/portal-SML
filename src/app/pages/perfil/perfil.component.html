@@ -2,7 +2,9 @@
   <div class="perfil-header">
     <div class="photo-section">
       <img [src]="studentData().photo" [alt]="studentData().fullName" class="student-photo">
-      <button class="change-photo-btn">📷 Cambiar foto</button>
+      <button class="change-photo-btn">
+        <i class="icon-camera"></i> Cambiar foto
+      </button>
     </div>
     <div class="header-info">
       <h1 class="student-name">{{ studentData().fullName }}</h1>
@@ -41,39 +43,39 @@
         <h2 class="section-title">Información Personal</h2>
         <div class="data-grid">
           <div class="data-item">
-            <span class="data-label">👤 Nombre Completo</span>
+            <span class="data-label">Nombre Completo</span>
             <span class="data-value">{{ studentData().fullName }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📅 Fecha de Nacimiento</span>
+            <span class="data-label">Fecha de Nacimiento</span>
             <span class="data-value">{{ studentData().birthDate }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">🎂 Edad</span>
+            <span class="data-label">Edad</span>
             <span class="data-value">{{ studentData().age }} años</span>
           </div>
           <div class="data-item">
-            <span class="data-label">🆔 DNI</span>
+            <span class="data-label">DNI</span>
             <span class="data-value">{{ studentData().dni }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📍 Dirección</span>
+            <span class="data-label">Dirección</span>
             <span class="data-value">{{ studentData().address }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📞 Teléfono</span>
+            <span class="data-label">Teléfono</span>
             <span class="data-value">{{ studentData().phone }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📧 Email</span>
+            <span class="data-label">Email</span>
             <span class="data-value">{{ studentData().email }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">👨‍👩‍👧 Apoderado/Tutor</span>
+            <span class="data-label">Apoderado/Tutor</span>
             <span class="data-value">{{ studentData().tutor }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">🚨 Teléfono de Emergencia</span>
+            <span class="data-label">Teléfono de Emergencia</span>
             <span class="data-value">{{ studentData().emergencyPhone }}</span>
           </div>
         </div>
@@ -85,27 +87,27 @@
         <h2 class="section-title">Información Académica</h2>
         <div class="data-grid">
           <div class="data-item">
-            <span class="data-label">📚 Año Académico</span>
+            <span class="data-label">Año Académico</span>
             <span class="data-value">{{ academicData().academicYear }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">🎓 Grado y Sección</span>
+            <span class="data-label">Grado y Sección</span>
             <span class="data-value">{{ academicData().grade }} - {{ academicData().section }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">🕐 Turno</span>
+            <span class="data-label">Turno</span>
             <span class="data-value">{{ academicData().shift }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📅 Fecha de Ingreso</span>
+            <span class="data-label">Fecha de Ingreso</span>
             <span class="data-value">{{ academicData().admissionDate }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">📊 Promedio Histórico</span>
+            <span class="data-label">Promedio Histórico</span>
             <span class="data-value">{{ academicData().historicalAverage }}</span>
           </div>
           <div class="data-item">
-            <span class="data-label">✅ Estado Académico</span>
+            <span class="data-label">Estado Académico</span>
             <span class="data-value badge badge-success">{{ academicData().status }}</span>
           </div>
         </div>
@@ -120,7 +122,9 @@
             <img [src]="studentData().photo" alt="Foto actual" class="preview-photo">
           </div>
           <div class="upload-actions">
-            <button class="btn btn-primary">📤 Subir Nueva Foto</button>
+            <button class="btn btn-primary">
+              <i class="icon-upload"></i> Subir Nueva Foto
+            </button>
             <p class="upload-hint">Formatos permitidos: JPG, PNG (máx. 2MB)</p>
           </div>
         </div>
@@ -129,6 +133,8 @@
   </div>
 
   <div class="actions-section">
-    <button class="btn btn-secondary">📥 Descargar Perfil PDF</button>
+    <button class="btn btn-secondary">
+      <i class="icon-download"></i> Descargar Perfil PDF
+    </button>
   </div>
 </div>

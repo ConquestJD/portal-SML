@@ -1,16 +1,19 @@
 /* Global Styles - Portal Estudiantil */
 
 :root {
-  /* Colores primarios */
-  --primary: #1E40AF;
-  --primary-dark: #1E3A8A;
-  --primary-light: #3B82F6;
+  /* Colores primarios - Santa María Laura (Rojo y Azul) */
+  --primary: #003366; /* Azul institucional */
+  --primary-dark: #002244;
+  --primary-light: #004488;
+  --secondary: #C41E3A; /* Rojo institucional */
+  --secondary-dark: #A01A2E;
+  --secondary-light: #E0244A;
   
   /* Colores secundarios */
   --success: #10B981;
   --warning: #F59E0B;
-  --error: #EF4444;
-  --info: #3B82F6;
+  --error: #C41E3A; /* Usar rojo institucional para errores */
+  --info: #003366; /* Usar azul institucional para info */
   
   /* Grises */
   --gray-50: #F9FAFB;
@@ -160,12 +163,86 @@ body {
 
 .badge-error {
   background-color: #FEE2E2;
-  color: #991B1B;
+  color: #C41E3A;
 }
 
 .badge-info {
   background-color: #DBEAFE;
-  color: #1E40AF;
+  color: #003366;
+}
+
+/* Iconos - Reemplazo de emojis */
+.icon-home::before { content: "⌂"; }
+.icon-book::before { content: "📖"; }
+.icon-task::before { content: "✓"; }
+.icon-chart::before { content: "📊"; }
+.icon-calendar::before { content: "📅"; }
+.icon-announcement::before { content: "📢"; }
+.icon-user::before { content: "👤"; }
+.icon-settings::before { content: "⚙"; }
+.icon-logout::before { content: "→"; }
+.icon-bell::before { content: "🔔"; }
+.icon-warning::before { content: "⚠"; }
+.icon-info::before { content: "ℹ"; }
+.icon-error::before { content: "✕"; }
+.icon-check::before { content: "✓"; }
+.icon-attachment::before { content: "📎"; }
+.icon-clock::before { content: "🕐"; }
+.icon-download::before { content: "⬇"; }
+.icon-email::before { content: "@"; }
+.icon-camera::before { content: "📷"; }
+.icon-upload::before { content: "⬆"; }
+.icon-file::before { content: "📄"; }
+.icon-video::before { content: "▶"; }
+.icon-school::before { content: "🏫"; }
+.icon-lock::before { content: "🔒"; }
+.icon-eye::before { content: "👁"; }
+.icon-eye-off::before { content: "👁"; }
+.icon-evaluation::before { content: "📋"; }
+
+/* Estilos para iconos */
+[class^="icon-"]::before,
+[class*=" icon-"]::before {
+  display: inline-block;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.icon-warning,
+.icon-info,
+.icon-error,
+.icon-check,
+.icon-attachment,
+.icon-clock,
+.icon-download,
+.icon-email,
+.icon-camera,
+.icon-upload,
+.icon-file,
+.icon-video,
+.icon-school,
+.icon-lock,
+.icon-eye,
+.icon-eye-off,
+.icon-evaluation,
+.icon-home,
+.icon-book,
+.icon-task,
+.icon-chart,
+.icon-calendar,
+.icon-announcement,
+.icon-user,
+.icon-settings,
+.icon-logout,
+.icon-bell {
+  display: inline-block;
+  font-size: inherit;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 /* Formularios */
@@ -192,7 +269,7 @@ body {
 .form-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(30 64 175 / 0.1);
+  box-shadow: 0 0 0 3px rgb(0 51 102 / 0.1);
 }
 
 /* Grid */

@@ -15,14 +15,14 @@
         style="width: 250px;"
       />
       <button class="btn btn-secondary" (click)="toggleView()">
-        {{ viewMode() === 'grid' ? '📋 Lista' : '🔲 Grid' }}
+        {{ viewMode() === 'grid' ? 'Lista' : 'Grid' }}
       </button>
     </div>
   </div>
 
   @if (filteredCourses().length === 0) {
     <div class="empty-state">
-      <span class="empty-icon">📚</span>
+      <span class="empty-icon icon-book"></span>
       <h2>No tienes cursos asignados</h2>
       <p>Contacta con la administración si crees que hay un error.</p>
     </div>
@@ -44,7 +44,9 @@
               <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo">
               <div>
                 <p class="teacher-name">{{ course.teacher }}</p>
-                <a href="mailto:teacher@colegio.edu" class="teacher-email">📧 Contactar</a>
+                <a href="mailto:teacher@colegio.edu" class="teacher-email">
+                  <i class="icon-email"></i> Contactar
+                </a>
               </div>
             </div>
 
@@ -65,10 +67,10 @@
               </a>
               <div class="action-buttons">
                 <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary">
-                  📁 Materiales
+                  Materiales
                 </a>
                 <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary">
-                  📝 Tareas
+                  Tareas
                 </a>
               </div>
             </div>

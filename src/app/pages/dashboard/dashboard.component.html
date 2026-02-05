@@ -15,9 +15,9 @@
       @for (alert of alerts(); track $index) {
         <div class="alert alert-{{ alert.type }}">
           <span class="alert-icon">
-            @if (alert.type === 'warning') { ⚠️ }
-            @if (alert.type === 'info') { ℹ️ }
-            @if (alert.type === 'error') { ❌ }
+            @if (alert.type === 'warning') { <i class="icon-warning"></i> }
+            @if (alert.type === 'info') { <i class="icon-info"></i> }
+            @if (alert.type === 'error') { <i class="icon-error"></i> }
           </span>
           <span class="alert-message">{{ alert.message }}</span>
           <a [routerLink]="alert.link" class="alert-link">Ver más →</a>
@@ -30,7 +30,7 @@
   <div class="summary-grid grid grid-cols-4">
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon">📊</span>
+        <span class="summary-icon icon-chart"></span>
         <span class="summary-label">Promedio General</span>
       </div>
       <div class="summary-value">{{ averageGrade() }}</div>
@@ -42,7 +42,7 @@
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon">📝</span>
+        <span class="summary-icon icon-task"></span>
         <span class="summary-label">Tareas Pendientes</span>
       </div>
       <div class="summary-value">{{ pendingTasks() }}</div>
@@ -51,7 +51,7 @@
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon">📅</span>
+        <span class="summary-icon icon-calendar"></span>
         <span class="summary-label">Asistencia del Mes</span>
       </div>
       <div class="summary-value">{{ attendancePercentage() }}%</div>
@@ -62,7 +62,7 @@
 
     <div class="summary-card">
       <div class="summary-header">
-        <span class="summary-icon">📋</span>
+        <span class="summary-icon icon-evaluation"></span>
         <span class="summary-label">Próximas Evaluaciones</span>
       </div>
       <div class="summary-value">{{ upcomingEvaluations() }}</div>
@@ -96,9 +96,9 @@
       @for (activity of recentActivity(); track $index) {
         <div class="activity-item">
           <div class="activity-icon">
-            @if (activity.type === 'task') { ✅ }
-            @if (activity.type === 'grade') { 📊 }
-            @if (activity.type === 'announcement') { 📢 }
+            @if (activity.type === 'task') { <i class="icon-check"></i> }
+            @if (activity.type === 'grade') { <i class="icon-chart"></i> }
+            @if (activity.type === 'announcement') { <i class="icon-announcement"></i> }
           </div>
           <div class="activity-content">
             <p class="activity-message">{{ activity.message }}</p>

@@ -11,7 +11,9 @@
         <img [src]="course().teacherPhoto" [alt]="course().teacher" class="teacher-photo">
         <div>
           <p class="teacher-name">{{ course().teacher }}</p>
-          <a href="mailto:teacher@colegio.edu" class="teacher-contact">📧 Contactar</a>
+          <a href="mailto:teacher@colegio.edu" class="teacher-contact">
+            <i class="icon-email"></i> Contactar
+          </a>
         </div>
       </div>
     </div>
@@ -59,14 +61,16 @@
           @for (material of materials(); track material.id) {
             <div class="material-item">
               <div class="material-icon">
-                @if (material.type === 'PDF') { 📄 }
-                @if (material.type === 'Video') { 🎥 }
+                @if (material.type === 'PDF') { <i class="icon-file"></i> }
+                @if (material.type === 'Video') { <i class="icon-video"></i> }
               </div>
               <div class="material-info">
                 <h4>{{ material.name }}</h4>
                 <p>{{ material.type }} • {{ material.size }} • {{ material.date }}</p>
               </div>
-              <button class="btn btn-primary">⬇️ Descargar</button>
+              <button class="btn btn-primary">
+                <i class="icon-download"></i> Descargar
+              </button>
             </div>
           }
         </div>

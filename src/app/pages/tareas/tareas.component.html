@@ -83,18 +83,24 @@
         
         <div class="task-details">
           <div class="detail-item">
-            <span class="detail-label">📅 Fecha límite:</span>
+            <span class="detail-label">
+              <i class="icon-calendar"></i> Fecha límite:
+            </span>
             <span class="detail-value" [class.overdue]="task.status === 'vencida'">
               {{ task.dueDate }}
             </span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">📊 Puntos:</span>
+            <span class="detail-label">
+              <i class="icon-chart"></i> Puntos:
+            </span>
             <span class="detail-value">{{ task.points }}</span>
           </div>
           @if (task.grade) {
             <div class="detail-item">
-              <span class="detail-label">✅ Calificación:</span>
+              <span class="detail-label">
+                <i class="icon-check"></i> Calificación:
+              </span>
               <span class="detail-value grade">{{ task.grade }}</span>
             </div>
           }
@@ -115,9 +121,9 @@
 
   @if (filteredTasks().length === 0) {
     <div class="empty-state">
-      <span class="empty-icon">📝</span>
+      <span class="empty-icon icon-task"></span>
       <h2>No hay tareas que mostrar</h2>
-      <p>¡Excelente trabajo! No tienes tareas en este filtro.</p>
+      <p>No tienes tareas en este filtro.</p>
     </div>
   }
 </div>
