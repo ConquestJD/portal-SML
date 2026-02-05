@@ -6,7 +6,7 @@
     </div>
     <div class="header-actions">
       <div class="search-wrapper">
-        <i class="icon-search"></i>
+        <i class="fas fa-search"></i>
         <input
           type="text"
           class="form-input search-input"
@@ -21,9 +21,9 @@
       </select>
       <button class="btn btn-secondary view-toggle" (click)="toggleView()" [title]="viewMode() === 'grid' ? 'Vista de lista' : 'Vista de cuadrícula'">
         @if (viewMode() === 'grid') {
-          <i class="icon-list"></i> Lista
+          <i class="fas fa-list"></i> Lista
         } @else {
-          <i class="icon-grid"></i> Cuadrícula
+          <i class="fas fa-th"></i> Cuadrícula
         }
       </button>
     </div>
@@ -31,7 +31,7 @@
 
   @if (filteredCourses().length === 0) {
     <div class="empty-state">
-      <span class="empty-icon icon-book"></span>
+      <i class="fas fa-book empty-icon"></i>
       <h2>No tienes cursos asignados</h2>
       <p>Contacta con la administración si crees que hay un error.</p>
     </div>
@@ -42,7 +42,7 @@
           <div class="course-card">
             <div class="course-header">
               <div class="course-code-wrapper">
-                <i class="icon-book"></i>
+                <i class="fas fa-book"></i>
                 <span class="course-code">{{ course.code }}</span>
               </div>
               <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
@@ -59,7 +59,7 @@
               <div class="teacher-details">
                 <p class="teacher-name">{{ course.teacher }}</p>
                 <a href="mailto:teacher@colegio.edu" class="teacher-email">
-                  <i class="icon-email"></i> Contactar docente
+                  <i class="fas fa-envelope"></i> Contactar docente
                 </a>
               </div>
             </div>
@@ -67,7 +67,7 @@
             <div class="course-metrics">
               <div class="metric">
                 <div class="metric-icon-wrapper">
-                  <i class="icon-chart"></i>
+                  <i class="fas fa-chart-line"></i>
                 </div>
                 <div class="metric-content">
                   <span class="metric-label">Promedio</span>
@@ -76,7 +76,7 @@
               </div>
               <div class="metric">
                 <div class="metric-icon-wrapper">
-                  <i class="icon-task"></i>
+                  <i class="fas fa-tasks"></i>
                 </div>
                 <div class="metric-content">
                   <span class="metric-label">Tareas</span>
@@ -93,15 +93,15 @@
 
             <div class="course-actions">
               <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block">
-                <i class="icon-arrow-right"></i> Ver Detalle
+                <i class="fas fa-arrow-right"></i> Ver Detalle
               </a>
               <div class="action-buttons">
                 <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary btn-icon">
-                  <i class="icon-file"></i>
+                  <i class="fas fa-file"></i>
                   <span>Materiales</span>
                 </a>
                 <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary btn-icon">
-                  <i class="icon-task"></i>
+                  <i class="fas fa-tasks"></i>
                   <span>Tareas</span>
                 </a>
               </div>
@@ -150,7 +150,7 @@
                 <td>{{ course.nextEvaluation }}</td>
                 <td>
                   <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">
-                    <i class="icon-arrow-right"></i> Ver
+                    <i class="fas fa-arrow-right"></i> Ver
                   </a>
                 </td>
               </tr>
