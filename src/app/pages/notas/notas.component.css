@@ -1,0 +1,178 @@
+.notas-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.page-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.summary-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.average-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-2xl);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.average-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.average-label {
+  font-size: var(--font-size-lg);
+  opacity: 0.9;
+}
+
+.trend-indicator {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+
+.trend-up {
+  color: #10B981;
+}
+
+.trend-down {
+  color: #EF4444;
+}
+
+.average-value {
+  font-size: var(--font-size-4xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+}
+
+.average-comparison {
+  font-size: var(--font-size-base);
+  opacity: 0.9;
+}
+
+.courses-grades {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.course-grade-card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+.course-grade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.course-grade-header h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.course-average {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.evaluations-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--spacing-xl);
+}
+
+.evaluations-table thead {
+  background: var(--bg-secondary);
+}
+
+.evaluations-table th,
+.evaluations-table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.evaluations-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.percentage-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.percentage-badge.high {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.percentage-badge.medium {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.percentage-badge.low {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.grade-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 2px solid var(--border-color);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+}
+
+.summary-row.highlight {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-lg);
+}
+
+@media (max-width: 768px) {
+  .evaluations-table {
+    font-size: var(--font-size-sm);
+  }
+
+  .evaluations-table th,
+  .evaluations-table td {
+    padding: var(--spacing-sm);
+  }
+}

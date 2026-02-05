@@ -1,0 +1,129 @@
+<div class="cursos-container">
+  <div class="page-header">
+    <h1 class="page-title">Mis Cursos</h1>
+    <div class="header-actions">
+      <select [(ngModel)]="filterPeriod" class="form-input" style="width: auto;">
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+      </select>
+      <input
+        type="text"
+        class="form-input"
+        placeholder="Buscar curso..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()"
+        style="width: 250px;"
+      />
+      <button class="btn btn-secondary" (click)="toggleView()">
+        {{ viewMode() === 'grid' ? '📋 Lista' : '🔲 Grid' }}
+      </button>
+    </div>
+  </div>
+
+  @if (filteredCourses().length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon">📚</span>
+      <h2>No tienes cursos asignados</h2>
+      <p>Contacta con la administración si crees que hay un error.</p>
+    </div>
+  } @else {
+    @if (viewMode() === 'grid') {
+      <div class="courses-grid grid grid-cols-3">
+        @for (course of filteredCourses(); track course.id) {
+          <div class="course-card">
+            <div class="course-header">
+              <span class="course-code">{{ course.code }}</span>
+              <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
+                {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
+              </span>
+            </div>
+            
+            <h3 class="course-name">{{ course.name }}</h3>
+            
+            <div class="teacher-info">
+              <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo">
+              <div>
+                <p class="teacher-name">{{ course.teacher }}</p>
+                <a href="mailto:teacher@colegio.edu" class="teacher-email">📧 Contactar</a>
+              </div>
+            </div>
+
+            <div class="course-metrics">
+              <div class="metric">
+                <span class="metric-label">Promedio</span>
+                <span class="metric-value">{{ course.average }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Tareas Pendientes</span>
+                <span class="metric-value badge badge-warning">{{ course.pendingTasks }}</span>
+              </div>
+            </div>
+
+            <div class="course-actions">
+              <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block">
+                Ver Detalle
+              </a>
+              <div class="action-buttons">
+                <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary">
+                  📁 Materiales
+                </a>
+                <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary">
+                  📝 Tareas
+                </a>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="courses-list">
+        <table class="courses-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Curso</th>
+              <th>Docente</th>
+              <th>Promedio</th>
+              <th>Tareas Pendientes</th>
+              <th>Próxima Evaluación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (course of filteredCourses(); track course.id) {
+              <tr>
+                <td>{{ course.code }}</td>
+                <td>
+                  <strong>{{ course.name }}</strong>
+                  <span class="badge" [class.badge-success]="course.status === 'active'">
+                    {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="teacher-cell">
+                    <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo-small">
+                    <span>{{ course.teacher }}</span>
+                  </div>
+                </td>
+                <td><strong>{{ course.average }}</strong></td>
+                <td>
+                  @if (course.pendingTasks > 0) {
+                    <span class="badge badge-warning">{{ course.pendingTasks }}</span>
+                  } @else {
+                    <span>-</span>
+                  }
+                </td>
+                <td>{{ course.nextEvaluation }}</td>
+                <td>
+                  <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">
+                    Ver
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

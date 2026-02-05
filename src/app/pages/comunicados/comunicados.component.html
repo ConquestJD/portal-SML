@@ -1,0 +1,94 @@
+<div class="comunicados-container">
+  <div class="page-header">
+    <h1 class="page-title">Comunicados y Avisos</h1>
+    <div class="header-actions">
+      <input
+        type="text"
+        class="form-input"
+        placeholder="Buscar comunicado..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()"
+        style="width: 250px;"
+      />
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-chip" [class.active]="filter() === 'todos'" (click)="setFilter('todos')">
+      Todos
+    </button>
+    <button class="filter-chip" [class.active]="filter() === 'institucionales'" (click)="setFilter('institucionales')">
+      Institucionales
+    </button>
+    <button class="filter-chip" [class.active]="filter() === 'grado'" (click)="setFilter('grado')">
+      Por Grado
+    </button>
+    <button class="filter-chip" [class.active]="filter() === 'seccion'" (click)="setFilter('seccion')">
+      Por Sección
+    </button>
+    <button class="filter-chip" [class.active]="filter() === 'urgentes'" (click)="setFilter('urgentes')">
+      Urgentes
+    </button>
+  </div>
+
+  <div class="summary-panel">
+    <div class="summary-item">
+      <span class="summary-label">No Leídos</span>
+      <span class="summary-value">{{ unreadCount() }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Urgentes</span>
+      <span class="summary-value error">{{ urgentCount() }}</span>
+    </div>
+  </div>
+
+  <div class="announcements-list">
+    @for (announcement of filteredAnnouncements(); track announcement.id) {
+      <div class="announcement-card" [class.unread]="!announcement.read">
+        <div class="announcement-header">
+          <div class="announcement-badges">
+            <span class="badge" [class.badge-info]="announcement.type === 'institucional'" [class.badge-success]="announcement.type === 'grado'">
+              {{ announcement.type === 'institucional' ? 'Institucional' : announcement.type === 'grado' ? 'Grado' : 'Sección' }}
+            </span>
+            @if (announcement.priority === 'urgente') {
+              <span class="badge badge-error">Urgente</span>
+            }
+            @if (!announcement.read) {
+              <span class="badge badge-info">Nuevo</span>
+            }
+          </div>
+          <span class="announcement-date">{{ announcement.date }}</span>
+        </div>
+        
+        <h3 class="announcement-title">{{ announcement.title }}</h3>
+        <p class="announcement-content">{{ announcement.content }}</p>
+        
+        <div class="announcement-footer">
+          <div class="announcement-meta">
+            @if (announcement.attachments > 0) {
+              <span class="attachment-info">📎 {{ announcement.attachments }} archivo(s)</span>
+            }
+          </div>
+          <div class="announcement-actions">
+            <button class="btn btn-primary btn-sm" (click)="markAsRead(announcement.id)">
+              Leer más
+            </button>
+            @if (!announcement.read) {
+              <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id)">
+                Marcar como leído
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (filteredAnnouncements().length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon">📢</span>
+      <h2>No hay comunicados</h2>
+      <p>No hay comunicados que coincidan con los filtros seleccionados.</p>
+    </div>
+  }
+</div>

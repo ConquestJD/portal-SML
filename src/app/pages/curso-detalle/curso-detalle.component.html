@@ -1,0 +1,146 @@
+<div class="curso-detalle-container">
+  <div class="breadcrumb">
+    <a routerLink="/cursos">Cursos</a> / <span>{{ course().name }}</span>
+  </div>
+
+  <div class="course-header">
+    <div>
+      <h1 class="course-title">{{ course().name }}</h1>
+      <p class="course-code">{{ course().code }} - {{ course().period }}</p>
+      <div class="teacher-info">
+        <img [src]="course().teacherPhoto" [alt]="course().teacher" class="teacher-photo">
+        <div>
+          <p class="teacher-name">{{ course().teacher }}</p>
+          <a href="mailto:teacher@colegio.edu" class="teacher-contact">📧 Contactar</a>
+        </div>
+      </div>
+    </div>
+    <div class="course-average">
+      <span class="average-label">Promedio</span>
+      <span class="average-value">{{ course().average }}</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">
+      Contenido
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'materiales'" (click)="setTab('materiales')">
+      Materiales
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
+      Tareas
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">
+      Calificaciones
+    </button>
+  </div>
+
+  <div class="tab-content">
+    @if (activeTab() === 'contenido') {
+      <div class="content-section">
+        <h2>Plan de Estudios</h2>
+        <div class="units-list">
+          <div class="unit-item">
+            <h3>Unidad 1: Álgebra Básica</h3>
+            <p>Introducción a ecuaciones lineales y sistemas de ecuaciones.</p>
+          </div>
+          <div class="unit-item">
+            <h3>Unidad 2: Geometría</h3>
+            <p>Áreas, perímetros y volúmenes de figuras geométricas.</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'materiales') {
+      <div class="materials-section">
+        <div class="materials-list">
+          @for (material of materials(); track material.id) {
+            <div class="material-item">
+              <div class="material-icon">
+                @if (material.type === 'PDF') { 📄 }
+                @if (material.type === 'Video') { 🎥 }
+              </div>
+              <div class="material-info">
+                <h4>{{ material.name }}</h4>
+                <p>{{ material.type }} • {{ material.size }} • {{ material.date }}</p>
+              </div>
+              <button class="btn btn-primary">⬇️ Descargar</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'tareas') {
+      <div class="tasks-section">
+        <div class="tasks-list">
+          @for (task of tasks(); track task.id) {
+            <div class="task-item">
+              <div class="task-info">
+                <h4>{{ task.name }}</h4>
+                <p>Fecha límite: {{ task.dueDate }}</p>
+                @if (task.grade) {
+                  <p>Calificación: <strong>{{ task.grade }}</strong></p>
+                }
+              </div>
+              <div class="task-status">
+                <span class="badge" [class.badge-success]="task.status === 'entregada'" [class.badge-warning]="task.status === 'pendiente'">
+                  {{ task.status === 'entregada' ? 'Entregada' : 'Pendiente' }}
+                </span>
+                <a [routerLink]="['/tareas', task.id]" class="btn btn-primary btn-sm">Ver Detalle</a>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'calificaciones') {
+      <div class="grades-section">
+        <table class="grades-table">
+          <thead>
+            <tr>
+              <th>Evaluación</th>
+              <th>Fecha</th>
+              <th>Puntos</th>
+              <th>Obtenidos</th>
+              <th>Porcentaje</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Examen Parcial 1</td>
+              <td>2024-03-10</td>
+              <td>100</td>
+              <td>85</td>
+              <td>85%</td>
+            </tr>
+            <tr>
+              <td>Tarea 1</td>
+              <td>2024-03-15</td>
+              <td>50</td>
+              <td>45</td>
+              <td>90%</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="grade-summary">
+          <div class="summary-item">
+            <span>Promedio de Exámenes:</span>
+            <strong>16.5</strong>
+          </div>
+          <div class="summary-item">
+            <span>Promedio de Tareas:</span>
+            <strong>17.0</strong>
+          </div>
+          <div class="summary-item highlight">
+            <span>Promedio Final:</span>
+            <strong>16.5</strong>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

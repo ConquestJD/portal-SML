@@ -1,0 +1,82 @@
+<div class="asistencia-container">
+  <div class="page-header">
+    <h1 class="page-title">Mi Asistencia</h1>
+    <div class="header-actions">
+      <input type="month" [(ngModel)]="selectedMonth" class="form-input">
+      <select [(ngModel)]="selectedCourse" class="form-input">
+        <option value="todos">Todos los cursos</option>
+        <option value="mat">Matemática</option>
+        <option value="len">Lengua</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="summary-cards grid grid-cols-4">
+    <div class="summary-card">
+      <span class="summary-icon">📊</span>
+      <span class="summary-label">Asistencia del Mes</span>
+      <span class="summary-value">{{ summary().attendancePercentage }}%</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-icon">✅</span>
+      <span class="summary-label">Días Asistidos</span>
+      <span class="summary-value">{{ summary().daysAttended }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-icon">❌</span>
+      <span class="summary-label">Faltas</span>
+      <span class="summary-value error">{{ summary().absences }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-icon">⏰</span>
+      <span class="summary-label">Tardanzas</span>
+      <span class="summary-value warning">{{ summary().tardies }}</span>
+    </div>
+  </div>
+
+  <div class="attendance-section">
+    <h2 class="section-title">Registro de Asistencia</h2>
+    <div class="attendance-table-wrapper">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Curso</th>
+            <th>Estado</th>
+            <th>Hora Ingreso</th>
+            <th>Hora Salida</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of attendanceRecords(); track $index) {
+            <tr>
+              <td>{{ record.date }}</td>
+              <td>{{ record.course }}</td>
+              <td>
+                <span class="badge"
+                  [class.badge-success]="record.status === 'presente'"
+                  [class.badge-error]="record.status === 'falta'"
+                  [class.badge-warning]="record.status === 'tardanza'">
+                  @if (record.status === 'presente') { ✅ Presente }
+                  @if (record.status === 'falta') { ❌ Falta }
+                  @if (record.status === 'tardanza') { ⏰ Tardanza }
+                </span>
+              </td>
+              <td>{{ record.timeIn }}</td>
+              <td>{{ record.timeOut }}</td>
+              <td>-</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (summary().absences > 3) {
+    <div class="alert alert-error">
+      <span>⚠️</span>
+      <span>Advertencia: Tienes más de 3 faltas. Contacta con la administración.</span>
+    </div>
+  }
+</div>
