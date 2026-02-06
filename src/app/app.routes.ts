@@ -67,6 +67,14 @@ export const routes: Routes = [
         path: 'profesor/cursos/:id',
         loadComponent: () => import('./pages/profesor/curso-detalle-profesor/curso-detalle-profesor.component').then(m => m.CursoDetalleProfesorComponent)
       },
+      {
+        path: 'profesor/cursos/:courseId/estudiantes/:studentId',
+        loadComponent: () => import('./pages/profesor/ficha-alumno/ficha-alumno.component').then(m => m.FichaAlumnoComponent)
+      },
+      {
+        path: 'profesor/cursos/:courseId/tareas/:taskId',
+        loadComponent: () => import('./pages/profesor/crear-tarea/crear-tarea.component').then(m => m.CrearTareaComponent)
+      },
       // Rutas para administradores
       {
         path: 'admin/dashboard',

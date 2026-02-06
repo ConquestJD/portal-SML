@@ -1,0 +1,149 @@
+<div class="crear-tarea-container">
+  <div class="breadcrumb">
+    <a [routerLink]="['/profesor/cursos', courseId()]" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver al Curso
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <a [routerLink]="['/profesor/cursos', courseId()]" class="breadcrumb-link">Tareas</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ isEditMode() ? 'Editar Tarea' : 'Nueva Tarea' }}</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">{{ isEditMode() ? 'Editar Tarea' : 'Crear Nueva Tarea' }}</h1>
+  </div>
+
+  <form (ngSubmit)="saveTask()" class="task-form">
+    <div class="form-section">
+      <h2 class="section-title">Información Básica</h2>
+      
+      <div class="form-group">
+        <label for="title" class="form-label">Título de la Tarea *</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            class="form-input"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            placeholder="Ej: Tarea 1 - Álgebra Lineal"
+            required
+          />
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Descripción</label>
+          <textarea
+            id="description"
+            name="description"
+            class="form-input"
+            rows="3"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+            placeholder="Breve descripción de la tarea"
+          ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="instructions" class="form-label">Instrucciones Detalladas *</label>
+          <textarea
+            id="instructions"
+            name="instructions"
+            class="form-input"
+            rows="6"
+            [ngModel]="instructions()"
+            (ngModelChange)="instructions.set($event)"
+            placeholder="Instrucciones completas para los estudiantes..."
+            required
+          ></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">Configuración de Entrega</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dueDate" class="form-label">Fecha Límite *</label>
+          <input
+            type="datetime-local"
+            id="dueDate"
+            name="dueDate"
+            class="form-input"
+            [ngModel]="dueDate()"
+            (ngModelChange)="dueDate.set($event)"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="deliveryType" class="form-label">Tipo de Entrega *</label>
+          <select
+            id="deliveryType"
+            name="deliveryType"
+            class="form-input"
+            [ngModel]="deliveryType()"
+            (ngModelChange)="deliveryType.set($event)"
+            required
+          >
+            <option value="archivo">Archivo</option>
+            <option value="texto">Texto en línea</option>
+            <option value="link">Enlace</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            name="allowLateDelivery"
+            [ngModel]="allowLateDelivery()"
+            (ngModelChange)="allowLateDelivery.set($event)"
+          />
+          <span>Permitir entregas tardías</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">Rúbrica y Criterios</h2>
+      
+      <div class="form-group">
+        <label for="rubric" class="form-label">Rúbrica de Evaluación</label>
+          <textarea
+            id="rubric"
+            name="rubric"
+            class="form-input"
+            rows="8"
+            [ngModel]="rubric()"
+            (ngModelChange)="rubric.set($event)"
+            placeholder="Describe los criterios de evaluación y la rúbrica..."
+          ></textarea>
+        <p class="form-hint">
+          <i class="fas fa-info-circle"></i> Especifica los criterios de evaluación y la escala de calificación
+        </p>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">Archivos Adjuntos</h2>
+      
+      <div class="form-group">
+        <button type="button" class="btn btn-secondary" (click)="addAttachment()">
+          <i class="fas fa-paperclip"></i> Agregar Archivo
+        </button>
+        <p class="form-hint">Puedes adjuntar archivos de referencia, plantillas o materiales adicionales</p>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a [routerLink]="['/profesor/cursos', courseId()]" class="btn btn-secondary">
+        Cancelar
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> {{ isEditMode() ? 'Actualizar' : 'Crear' }} Tarea
+      </button>
+    </div>
+  </form>
+</div>

@@ -12,7 +12,11 @@
   <div class="sidebar-content">
     <nav class="sidebar-nav">
       @for (item of navigationItems(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
+        <a 
+          [routerLink]="item.path" 
+          routerLinkActive="active" 
+          [routerLinkActiveOptions]="{exact: item.exact !== false}"
+          class="nav-link">
           <i [class]="item.icon + ' nav-icon'"></i>
           <span class="nav-text">{{ item.label }}</span>
         </a>

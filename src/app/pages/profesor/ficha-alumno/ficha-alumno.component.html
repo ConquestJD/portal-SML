@@ -1,0 +1,182 @@
+<div class="ficha-alumno-container">
+  <div class="breadcrumb">
+    <a [routerLink]="['/profesor/cursos', courseId()]" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver al Curso
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <a [routerLink]="['/profesor/cursos', courseId()]" [queryParams]="{tab: 'estudiantes'}" class="breadcrumb-link">Estudiantes</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ student().name }}</span>
+  </div>
+
+  <div class="student-header">
+    <div class="header-content">
+      <div class="student-avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="student-info">
+        <h1 class="student-name">{{ student().name }}</h1>
+        <p class="student-code">Código: {{ student().code }}</p>
+        <p class="course-name">{{ course().name }} - {{ course().grade }} {{ course().section }}</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ academicData().average }}</div>
+        <div class="stat-label">Promedio</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ academicData().attendancePercentage }}%</div>
+        <div class="stat-label">Asistencia</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ academicData().completedTasks }}/{{ academicData().totalTasks }}</div>
+        <div class="stat-label">Tareas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active">Resumen</button>
+    <button class="tab-btn">Tareas</button>
+    <button class="tab-btn">Evaluaciones</button>
+    <button class="tab-btn">Asistencia</button>
+    <button class="tab-btn">Observaciones</button>
+    <button class="tab-btn">Contacto</button>
+  </div>
+
+  <div class="content-section">
+    <!-- Resumen Académico -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3 class="card-title">Rendimiento Académico</h3>
+        <div class="card-content">
+          <div class="metric">
+            <span class="metric-label">Promedio General</span>
+            <span class="metric-value">{{ academicData().average }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Tareas Completadas</span>
+            <span class="metric-value">{{ academicData().completedTasks }} / {{ academicData().totalTasks }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Tareas Pendientes</span>
+            <span class="metric-value warning">{{ academicData().pendingTasks }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3 class="card-title">Asistencia</h3>
+        <div class="card-content">
+          <div class="metric">
+            <span class="metric-label">Porcentaje</span>
+            <span class="metric-value">{{ academicData().attendancePercentage }}%</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Faltas</span>
+            <span class="metric-value">{{ academicData().totalAbsences }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Tardanzas</span>
+            <span class="metric-value">{{ academicData().totalLates }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tareas Recientes -->
+    <div class="section">
+      <h2 class="section-title">Tareas Recientes</h2>
+      <div class="tasks-list">
+        @for (task of tasks(); track task.id) {
+          <div class="task-item">
+            <div class="task-info">
+              <h4 class="task-name">{{ task.title }}</h4>
+              <p class="task-meta">
+                Fecha límite: {{ task.dueDate }}
+                @if (task.submittedDate) {
+                  | Entregada: {{ task.submittedDate }}
+                }
+              </p>
+            </div>
+            <div class="task-status">
+              @if (task.status === 'entregada') {
+                <span class="badge badge-success">Entregada</span>
+                @if (task.grade) {
+                  <span class="grade">{{ task.grade }}</span>
+                }
+              } @else {
+                <span class="badge badge-warning">Pendiente</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Evaluaciones -->
+    <div class="section">
+      <h2 class="section-title">Evaluaciones</h2>
+      <div class="evaluations-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Evaluación</th>
+              <th>Tipo</th>
+              <th>Fecha</th>
+              <th>Ponderación</th>
+              <th>Nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (eval of evaluations(); track eval.id) {
+              <tr>
+                <td>{{ eval.name }}</td>
+                <td><span class="badge badge-info">{{ eval.type }}</span></td>
+                <td>{{ eval.date }}</td>
+                <td>{{ eval.weight }}%</td>
+                <td><strong>{{ eval.grade }}</strong></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Contacto -->
+    <div class="section">
+      <h2 class="section-title">Información de Contacto</h2>
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <div>
+            <strong>Email del Estudiante</strong>
+            <p>{{ student().email }}</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-user"></i>
+          <div>
+            <strong>Tutor/Apoderado</strong>
+            <p>{{ student().tutor }}</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <div>
+            <strong>Email del Tutor</strong>
+            <p>{{ student().tutorEmail }}</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <i class="fas fa-phone"></i>
+          <div>
+            <strong>Teléfono del Tutor</strong>
+            <p>{{ student().tutorPhone }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

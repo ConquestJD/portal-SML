@@ -28,31 +28,27 @@ export class NavbarComponent {
     
     if (role === 'profesor') {
       return [
-        { path: '/profesor/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-        { path: '/profesor/cursos', label: 'Mis Cursos', icon: 'fas fa-book' },
-        { path: '/profesor/tareas', label: 'Tareas', icon: 'fas fa-tasks' },
-        { path: '/profesor/notas', label: 'Calificaciones', icon: 'fas fa-chart-line' },
-        { path: '/profesor/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt' },
-        { path: '/profesor/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn' }
+        { path: '/profesor/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
+        { path: '/profesor/cursos', label: 'Mis Cursos', icon: 'fas fa-book', exact: false }
       ];
     } else if (role === 'admin') {
       return [
-        { path: '/admin/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-        { path: '/admin/estudiantes', label: 'Estudiantes', icon: 'fas fa-users' },
-        { path: '/admin/profesores', label: 'Profesores', icon: 'fas fa-chalkboard-teacher' },
-        { path: '/admin/cursos', label: 'Cursos', icon: 'fas fa-book' },
-        { path: '/admin/solicitudes', label: 'Solicitudes', icon: 'fas fa-exclamation-circle' },
-        { path: '/admin/reportes', label: 'Reportes', icon: 'fas fa-chart-bar' }
+        { path: '/admin/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
+        { path: '/admin/estudiantes', label: 'Estudiantes', icon: 'fas fa-users', exact: false },
+        { path: '/admin/profesores', label: 'Profesores', icon: 'fas fa-chalkboard-teacher', exact: false },
+        { path: '/admin/cursos', label: 'Cursos', icon: 'fas fa-book', exact: false },
+        { path: '/admin/solicitudes', label: 'Solicitudes', icon: 'fas fa-exclamation-circle', exact: false },
+        { path: '/admin/reportes', label: 'Reportes', icon: 'fas fa-chart-bar', exact: false }
       ];
     } else {
       // Estudiante (por defecto)
       return [
-        { path: '/dashboard', label: 'Inicio', icon: 'fas fa-home' },
-        { path: '/cursos', label: 'Mis Cursos', icon: 'fas fa-book' },
-        { path: '/tareas', label: 'Tareas', icon: 'fas fa-tasks' },
-        { path: '/notas', label: 'Notas', icon: 'fas fa-chart-line' },
-        { path: '/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt' },
-        { path: '/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn' }
+        { path: '/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
+        { path: '/cursos', label: 'Mis Cursos', icon: 'fas fa-book', exact: false },
+        { path: '/tareas', label: 'Tareas', icon: 'fas fa-tasks', exact: false },
+        { path: '/notas', label: 'Notas', icon: 'fas fa-chart-line', exact: false },
+        { path: '/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt', exact: false },
+        { path: '/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn', exact: false }
       ];
     }
   });
