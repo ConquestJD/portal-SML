@@ -59,7 +59,7 @@
         <span class="summary-label">Tareas Pendientes</span>
       </div>
       <div class="summary-value">{{ pendingGrading() }}</div>
-      <a [routerLink]="'/profesor/cursos'" class="summary-link">
+      <a [routerLink]="'/profesor/tareas'" class="summary-link">
         Ver tareas <i class="fas fa-arrow-right"></i>
       </a>
     </div>
@@ -70,8 +70,8 @@
         <span class="summary-label">Asistencias Pendientes</span>
       </div>
       <div class="summary-value">{{ attendancePending() }}</div>
-      <a [routerLink]="'/profesor/cursos'" class="summary-link">
-        Ver cursos <i class="fas fa-arrow-right"></i>
+      <a [routerLink]="'/profesor/asistencia'" class="summary-link">
+        Marcar asistencia <i class="fas fa-arrow-right"></i>
       </a>
     </div>
   </div>

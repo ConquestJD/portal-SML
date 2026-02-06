@@ -1,0 +1,69 @@
+<div class="comunicados-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Comunicados</h1>
+      <p class="page-subtitle">Gestiona los comunicados de tus cursos</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nuevo Comunicado
+      </button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button
+      class="filter-chip"
+      [class.active]="filter() === 'todos'"
+      (click)="filter.set('todos')"
+    >
+      Todos
+    </button>
+    <button
+      class="filter-chip"
+      [class.active]="filter() === 'publicados'"
+      (click)="filter.set('publicados')"
+    >
+      Publicados
+    </button>
+    <button
+      class="filter-chip"
+      [class.active]="filter() === 'borradores'"
+      (click)="filter.set('borradores')"
+    >
+      Borradores
+    </button>
+  </div>
+
+  <div class="comunicados-list">
+    @for (comunicado of comunicados(); track comunicado.id) {
+      <div class="comunicado-card">
+        <div class="comunicado-header">
+          <div class="comunicado-title-section">
+            <h3 class="comunicado-title">
+              {{ comunicado.title }}
+              @if (comunicado.urgent) {
+                <span class="badge badge-error">Urgente</span>
+              }
+            </h3>
+            <span class="comunicado-course">{{ comunicado.course }}</span>
+          </div>
+          <span class="badge" [class.badge-success]="comunicado.status === 'publicado'" [class.badge-secondary]="comunicado.status === 'borrador'">
+            {{ comunicado.status === 'publicado' ? 'Publicado' : 'Borrador' }}
+          </span>
+        </div>
+        <div class="comunicado-info">
+          <span><i class="fas fa-calendar-alt"></i> {{ comunicado.date }}</span>
+        </div>
+        <div class="comunicado-actions">
+          <a [routerLink]="['/profesor/cursos', comunicado.courseId]" [queryParams]="{tab: 'comunicados'}" class="btn btn-primary btn-sm">
+            <i class="fas fa-edit"></i> Editar
+          </a>
+          <a [routerLink]="['/profesor/cursos', comunicado.courseId]" class="btn btn-sm btn-outline">
+            <i class="fas fa-arrow-right"></i> Ver Curso
+          </a>
+        </div>
+      </div>
+    }
+  </div>
+</div>

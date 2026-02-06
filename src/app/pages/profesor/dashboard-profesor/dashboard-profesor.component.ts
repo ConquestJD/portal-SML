@@ -20,16 +20,16 @@ export class DashboardProfesorComponent {
 
   quickAccess = signal([
     { icon: 'fas fa-book', title: 'Mis Cursos', link: '/profesor/cursos', count: this.totalCourses() },
-    { icon: 'fas fa-tasks', title: 'Tareas', link: '/profesor/cursos', count: this.pendingGrading() },
-    { icon: 'fas fa-chart-line', title: 'Calificaciones', link: '/profesor/cursos' },
-    { icon: 'fas fa-calendar-alt', title: 'Asistencia', link: '/profesor/cursos', count: this.attendancePending() },
+    { icon: 'fas fa-tasks', title: 'Tareas', link: '/profesor/tareas', count: this.pendingGrading() },
+    { icon: 'fas fa-chart-line', title: 'Calificaciones', link: '/profesor/notas' },
+    { icon: 'fas fa-calendar-alt', title: 'Asistencia', link: '/profesor/asistencia', count: this.attendancePending() },
     { icon: 'fas fa-users', title: 'Estudiantes', link: '/profesor/cursos' },
-    { icon: 'fas fa-bullhorn', title: 'Comunicados', link: '/profesor/cursos', count: 2 }
+    { icon: 'fas fa-bullhorn', title: 'Comunicados', link: '/profesor/comunicados', count: 2 }
   ]);
 
   alerts = signal([
-    { type: 'warning', message: 'Tienes 8 asistencias pendientes de marcar', link: '/profesor/cursos' },
-    { type: 'info', message: '24 tareas esperan calificación', link: '/profesor/cursos' }
+    { type: 'warning', message: 'Tienes 8 asistencias pendientes de marcar', link: '/profesor/asistencia' },
+    { type: 'info', message: '24 tareas esperan calificación', link: '/profesor/tareas' }
   ]);
 
   recentActivity = signal([

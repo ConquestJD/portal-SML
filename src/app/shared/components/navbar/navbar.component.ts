@@ -29,7 +29,11 @@ export class NavbarComponent {
     if (role === 'profesor') {
       return [
         { path: '/profesor/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
-        { path: '/profesor/cursos', label: 'Mis Cursos', icon: 'fas fa-book', exact: false }
+        { path: '/profesor/cursos', label: 'Mis Cursos', icon: 'fas fa-book', exact: false },
+        { path: '/profesor/tareas', label: 'Tareas', icon: 'fas fa-tasks', exact: false },
+        { path: '/profesor/notas', label: 'Calificaciones', icon: 'fas fa-chart-line', exact: false },
+        { path: '/profesor/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt', exact: false },
+        { path: '/profesor/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn', exact: false }
       ];
     } else if (role === 'admin') {
       return [

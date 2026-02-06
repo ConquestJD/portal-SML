@@ -1,0 +1,52 @@
+<div class="notas-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Calificaciones</h1>
+      <p class="page-subtitle">Gestiona las calificaciones de todos tus cursos</p>
+    </div>
+    <div class="header-actions">
+      <select class="form-input" [(ngModel)]="selectedCourse" name="selectedCourse">
+        <option value="">Todos los cursos</option>
+        @for (course of courses(); track course.id) {
+          <option [value]="course.id">{{ course.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="courses-grid">
+    @for (course of courses(); track course.id) {
+      <div class="course-card">
+        <div class="course-header">
+          <h3 class="course-name">{{ course.name }}</h3>
+          <span class="course-code">{{ course.code }}</span>
+        </div>
+        <div class="course-stats">
+          <div class="stat">
+            <span class="stat-label">Estudiantes</span>
+            <span class="stat-value">30</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Promedio General</span>
+            <span class="stat-value">16.5</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <a [routerLink]="['/profesor/cursos', course.id]" [queryParams]="{tab: 'notas'}" class="btn btn-primary">
+            <i class="fas fa-chart-line"></i> Ver Libro de Notas
+          </a>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <i class="fas fa-info-circle"></i>
+      <div>
+        <h4>Libro de Notas</h4>
+        <p>Accede al detalle de cada curso para gestionar las calificaciones de los estudiantes, crear evaluaciones y registrar notas.</p>
+      </div>
+    </div>
+  </div>
+</div>

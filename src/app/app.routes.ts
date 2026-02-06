@@ -75,6 +75,22 @@ export const routes: Routes = [
         path: 'profesor/cursos/:courseId/tareas/:taskId',
         loadComponent: () => import('./pages/profesor/crear-tarea/crear-tarea.component').then(m => m.CrearTareaComponent)
       },
+      {
+        path: 'profesor/tareas',
+        loadComponent: () => import('./pages/profesor/tareas-profesor/tareas-profesor.component').then(m => m.TareasProfesorComponent)
+      },
+      {
+        path: 'profesor/notas',
+        loadComponent: () => import('./pages/profesor/notas-profesor/notas-profesor.component').then(m => m.NotasProfesorComponent)
+      },
+      {
+        path: 'profesor/asistencia',
+        loadComponent: () => import('./pages/profesor/asistencia-profesor/asistencia-profesor.component').then(m => m.AsistenciaProfesorComponent)
+      },
+      {
+        path: 'profesor/comunicados',
+        loadComponent: () => import('./pages/profesor/comunicados-profesor/comunicados-profesor.component').then(m => m.ComunicadosProfesorComponent)
+      },
       // Rutas para administradores
       {
         path: 'admin/dashboard',
