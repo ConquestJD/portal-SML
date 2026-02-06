@@ -1,0 +1,24 @@
+<div class="roles-permisos-container">
+  <div class="page-header">
+    <h1 class="page-title">Roles y Permisos</h1>
+    <p class="page-subtitle">Configura los permisos de cada rol del sistema</p>
+  </div>
+
+  <div class="roles-list">
+    @for (role of roles(); track role.id) {
+      <div class="role-card">
+        <div class="role-header">
+          <h3>{{ role.name }}</h3>
+        </div>
+        <div class="role-permissions">
+          <p><strong>Permisos:</strong> {{ role.permissions.join(', ') }}</p>
+        </div>
+        <div class="role-actions">
+          <button class="btn btn-sm btn-primary" (click)="savePermissions()">
+            <i class="fas fa-edit"></i> Configurar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

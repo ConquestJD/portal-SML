@@ -163,6 +163,55 @@ export const routes: Routes = [
       {
         path: 'admin/perfil',
         loadComponent: () => import('./pages/admin/perfil-admin/perfil-admin.component').then(m => m.PerfilAdminComponent)
+      },
+      // Rutas para padres de familia
+      {
+        path: 'padre/dashboard',
+        loadComponent: () => import('./pages/padre/dashboard-padre/dashboard-padre.component').then(m => m.DashboardPadreComponent)
+      },
+      {
+        path: 'padre/perfil-hijo',
+        loadComponent: () => import('./pages/padre/perfil-hijo/perfil-hijo.component').then(m => m.PerfilHijoComponent)
+      },
+      {
+        path: 'padre/cursos',
+        loadComponent: () => import('./pages/padre/cursos-padre/cursos-padre.component').then(m => m.CursosPadreComponent)
+      },
+      {
+        path: 'padre/cursos/:id',
+        loadComponent: () => import('./pages/padre/curso-detalle-padre/curso-detalle-padre.component').then(m => m.CursoDetallePadreComponent)
+      },
+      {
+        path: 'padre/tareas',
+        loadComponent: () => import('./pages/padre/tareas-padre/tareas-padre.component').then(m => m.TareasPadreComponent)
+      },
+      {
+        path: 'padre/notas',
+        loadComponent: () => import('./pages/padre/notas-padre/notas-padre.component').then(m => m.NotasPadreComponent)
+      },
+      {
+        path: 'padre/asistencia',
+        loadComponent: () => import('./pages/padre/asistencia-padre/asistencia-padre.component').then(m => m.AsistenciaPadreComponent)
+      },
+      {
+        path: 'padre/justificaciones',
+        loadComponent: () => import('./pages/padre/justificaciones/justificaciones.component').then(m => m.JustificacionesComponent)
+      },
+      {
+        path: 'padre/comunicados',
+        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+      },
+      {
+        path: 'padre/mensajeria',
+        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+      },
+      {
+        path: 'padre/pagos',
+        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+      },
+      {
+        path: 'padre/documentos',
+        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
       }
     ]
   }

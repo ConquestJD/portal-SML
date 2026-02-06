@@ -1,0 +1,80 @@
+<div class="cursos-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Cursos</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">Cursos del Hijo</h1>
+    <p class="page-subtitle">Lista de cursos matriculados</p>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <!-- Búsqueda -->
+  <div class="search-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Buscar curso, profesor..." 
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)">
+    </div>
+  </div>
+
+  <!-- Lista de Cursos -->
+  <div class="courses-grid">
+    @for (course of filteredCourses(); track course.id) {
+      <div class="course-card">
+        <div class="course-header">
+          <div class="course-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="course-info">
+            <h3>{{ course.name }}</h3>
+            <p class="course-code">{{ course.code }}</p>
+          </div>
+        </div>
+        <div class="course-details">
+          <div class="detail-item">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>{{ course.teacher }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-clock"></i>
+            <span>{{ course.schedule }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Promedio: {{ course.average }}</span>
+          </div>
+        </div>
+        <div class="course-actions">
+          <a [routerLink]="['/padre/cursos', course.id]" class="btn-primary">
+            <i class="fas fa-eye"></i>
+            Ver Detalle
+          </a>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (filteredCourses().length === 0) {
+    <div class="empty-state">
+      <i class="fas fa-book-open"></i>
+      <p>No se encontraron cursos</p>
+    </div>
+  }
+</div>

@@ -1,0 +1,37 @@
+<div class="anio-academico-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Gestión de Año Académico</h1>
+      <p class="page-subtitle">Administra los años académicos y periodos</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="createNewYear()">
+        <i class="fas fa-plus"></i> Nuevo Año Académico
+      </button>
+    </div>
+  </div>
+
+  <div class="years-list">
+    @for (year of academicYears(); track year.id) {
+      <div class="year-card">
+        <div class="year-header">
+          <h3>Año Académico {{ year.year }}</h3>
+          <span class="badge badge-success">{{ year.status }}</span>
+        </div>
+        <div class="year-info">
+          <p><strong>Inicio:</strong> {{ year.startDate }}</p>
+          <p><strong>Fin:</strong> {{ year.endDate }}</p>
+          <p><strong>Periodos:</strong> {{ year.periods }}</p>
+        </div>
+        <div class="year-actions">
+          <button class="btn btn-sm btn-primary">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-sm btn-secondary">
+            <i class="fas fa-calendar"></i> Gestionar Periodos
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

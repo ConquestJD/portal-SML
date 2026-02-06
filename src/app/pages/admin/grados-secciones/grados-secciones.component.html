@@ -1,0 +1,33 @@
+<div class="grados-secciones-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Niveles, Grados y Secciones</h1>
+      <p class="page-subtitle">Gestiona la estructura académica del colegio</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="createSection()">
+        <i class="fas fa-plus"></i> Nueva Sección
+      </button>
+    </div>
+  </div>
+
+  <div class="sections-list">
+    @for (section of sections(); track section.id) {
+      <div class="section-card">
+        <div class="section-header">
+          <h3>{{ section.grade }} {{ section.section }}</h3>
+          <span class="badge">{{ section.enrolled }}/{{ section.capacity }}</span>
+        </div>
+        <div class="section-info">
+          <p>Capacidad: {{ section.capacity }} estudiantes</p>
+          <p>Matriculados: {{ section.enrolled }} estudiantes</p>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-primary">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

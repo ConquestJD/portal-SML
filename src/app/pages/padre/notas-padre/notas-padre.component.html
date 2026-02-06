@@ -1,0 +1,73 @@
+<div class="notas-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Notas y Boleta</span>
+  </div>
+
+  <div class="page-header">
+    <div class="header-content">
+      <div>
+        <h1 class="page-title">Notas y Boleta</h1>
+        <p class="page-subtitle">Calificaciones por curso y periodo</p>
+      </div>
+      <button class="btn-download" (click)="downloadBoleta()">
+        <i class="fas fa-download"></i>
+        Descargar Boleta PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <!-- Promedio General -->
+  <div class="average-card">
+    <div class="average-icon">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <div class="average-content">
+      <h3>Promedio General</h3>
+      <p class="average-value">{{ overallAverage() }}</p>
+    </div>
+  </div>
+
+  <!-- Notas por Curso -->
+  <div class="courses-grades">
+    @for (course of courses(); track course.id) {
+      <div class="course-grade-card">
+        <div class="course-header">
+          <h3>{{ course.name }}</h3>
+          <span class="course-average">Promedio: {{ course.average }}</span>
+        </div>
+        <div class="periods-grid">
+          <div class="period-item">
+            <label>{{ periods()[0] }}</label>
+            <p>{{ course.period1 }}</p>
+          </div>
+          <div class="period-item">
+            <label>{{ periods()[1] }}</label>
+            <p>{{ course.period2 }}</p>
+          </div>
+          <div class="period-item">
+            <label>{{ periods()[2] }}</label>
+            <p>{{ course.period3 }}</p>
+          </div>
+          <div class="period-item">
+            <label>{{ periods()[3] }}</label>
+            <p>{{ course.period4 }}</p>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

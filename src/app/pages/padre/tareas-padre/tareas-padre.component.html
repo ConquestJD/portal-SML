@@ -1,0 +1,130 @@
+<div class="tareas-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Tareas y Actividades</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">Tareas y Actividades</h1>
+    <p class="page-subtitle">Seguimiento de tareas del hijo</p>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <!-- Resumen -->
+  <div class="summary-cards">
+    <div class="summary-card pending">
+      <i class="fas fa-clock"></i>
+      <div>
+        <h3>Pendientes</h3>
+        <p>{{ pendingCount() }}</p>
+      </div>
+    </div>
+    <div class="summary-card completed">
+      <i class="fas fa-check-circle"></i>
+      <div>
+        <h3>Entregadas</h3>
+        <p>{{ completedCount() }}</p>
+      </div>
+    </div>
+    <div class="summary-card overdue">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <h3>Vencidas</h3>
+        <p>{{ overdueCount() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        placeholder="Buscar tarea..." 
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)">
+    </div>
+    <div class="filter-buttons">
+      <button 
+        class="filter-btn" 
+        [class.active]="filterStatus() === 'todos'"
+        (click)="filterStatus.set('todos')">
+        Todas
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="filterStatus() === 'pendiente'"
+        (click)="filterStatus.set('pendiente')">
+        Pendientes
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="filterStatus() === 'entregada'"
+        (click)="filterStatus.set('entregada')">
+        Entregadas
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="filterStatus() === 'vencida'"
+        (click)="filterStatus.set('vencida')">
+        Vencidas
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Tareas -->
+  <div class="tasks-list">
+    @for (task of filteredTasks(); track task.id) {
+      <div class="task-card" [class.overdue]="task.status === 'vencida'">
+        <div class="task-status-icon" [class.pending]="task.status === 'pendiente'"
+                                      [class.completed]="task.status === 'entregada'"
+                                      [class.overdue]="task.status === 'vencida'">
+          @if (task.status === 'entregada') {
+            <i class="fas fa-check-circle"></i>
+          } @else if (task.status === 'vencida') {
+            <i class="fas fa-exclamation-circle"></i>
+          } @else {
+            <i class="fas fa-clock"></i>
+          }
+        </div>
+        <div class="task-content">
+          <div class="task-header">
+            <h3>{{ task.title }}</h3>
+            <span class="task-badge" [class.pending]="task.status === 'pendiente'"
+                                    [class.completed]="task.status === 'entregada'"
+                                    [class.overdue]="task.status === 'vencida'">
+              {{ task.status | titlecase }}
+            </span>
+          </div>
+          <div class="task-details">
+            <p><i class="fas fa-book"></i> {{ task.course }}</p>
+            <p><i class="fas fa-calendar"></i> Fecha límite: {{ task.dueDate }}</p>
+            @if (task.submitted && task.submittedDate) {
+              <p class="submitted"><i class="fas fa-check"></i> Entregada el {{ task.submittedDate }}</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (filteredTasks().length === 0) {
+    <div class="empty-state">
+      <i class="fas fa-tasks"></i>
+      <p>No se encontraron tareas</p>
+    </div>
+  }
+</div>

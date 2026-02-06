@@ -1,0 +1,140 @@
+<div class="perfil-hijo-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Perfil del Hijo</span>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectChild($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <div class="page-header">
+    <h1 class="page-title">Perfil del Hijo</h1>
+    <p class="page-subtitle">Información académica y de contacto</p>
+  </div>
+
+  <div class="profile-content">
+    <!-- Datos Básicos -->
+    <div class="info-card">
+      <h2 class="card-title">
+        <i class="fas fa-user"></i>
+        Datos Básicos
+      </h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Nombre Completo</label>
+          <p>{{ childData().name }}</p>
+        </div>
+        <div class="info-item">
+          <label>Código de Estudiante</label>
+          <p>{{ childData().code }}</p>
+        </div>
+        <div class="info-item">
+          <label>Grado</label>
+          <p>{{ childData().grade }}</p>
+        </div>
+        <div class="info-item">
+          <label>Sección</label>
+          <p>{{ childData().section }}</p>
+        </div>
+        <div class="info-item">
+          <label>Año Académico</label>
+          <p>{{ childData().academicYear }}</p>
+        </div>
+        <div class="info-item">
+          <label>Estado</label>
+          <span class="status-badge active">{{ childData().status }}</span>
+        </div>
+        <div class="info-item">
+          <label>Fecha de Matrícula</label>
+          <p>{{ childData().enrollmentDate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contactos del Colegio -->
+    <div class="info-card">
+      <h2 class="card-title">
+        <i class="fas fa-address-book"></i>
+        Contactos del Colegio
+      </h2>
+      <div class="contacts-grid">
+        <div class="contact-card">
+          <div class="contact-header">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <h3>Tutor de Sección</h3>
+          </div>
+          <div class="contact-info">
+            <p class="contact-name">{{ childData().tutor }}</p>
+            <p class="contact-email">
+              <i class="fas fa-envelope"></i>
+              {{ childData().tutorEmail }}
+            </p>
+            <p class="contact-phone">
+              <i class="fas fa-phone"></i>
+              {{ childData().tutorPhone }}
+            </p>
+            <a routerLink="/padre/mensajeria" class="contact-action">
+              <i class="fas fa-comment"></i>
+              Enviar Mensaje
+            </a>
+          </div>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-header">
+            <i class="fas fa-user-tie"></i>
+            <h3>Coordinador</h3>
+          </div>
+          <div class="contact-info">
+            <p class="contact-name">{{ childData().coordinator }}</p>
+            <p class="contact-email">
+              <i class="fas fa-envelope"></i>
+              {{ childData().coordinatorEmail }}
+            </p>
+            <p class="contact-phone">
+              <i class="fas fa-phone"></i>
+              {{ childData().coordinatorPhone }}
+            </p>
+            <a routerLink="/padre/mensajeria" class="contact-action">
+              <i class="fas fa-comment"></i>
+              Enviar Mensaje
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="quick-actions">
+      <h2 class="card-title">Acciones Rápidas</h2>
+      <div class="actions-grid">
+        <a routerLink="/padre/cursos" class="action-card">
+          <i class="fas fa-book"></i>
+          <span>Ver Cursos</span>
+        </a>
+        <a routerLink="/padre/tareas" class="action-card">
+          <i class="fas fa-tasks"></i>
+          <span>Ver Tareas</span>
+        </a>
+        <a routerLink="/padre/notas" class="action-card">
+          <i class="fas fa-chart-line"></i>
+          <span>Ver Notas</span>
+        </a>
+        <a routerLink="/padre/asistencia" class="action-card">
+          <i class="fas fa-calendar-alt"></i>
+          <span>Ver Asistencia</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

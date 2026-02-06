@@ -1,0 +1,275 @@
+.curso-detalle-padre-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+}
+
+.breadcrumb {
+  margin-bottom: var(--spacing-md);
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb span {
+  margin: 0 var(--spacing-xs);
+}
+
+.course-header {
+  background: white;
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-title {
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--primary);
+  font-size: 2rem;
+}
+
+.course-code {
+  margin: 0 0 var(--spacing-md) 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.course-meta span {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.course-meta i {
+  color: var(--primary);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #666;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  color: var(--primary);
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-content {
+  background: white;
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--primary);
+  font-size: 1.25rem;
+}
+
+.section-title i {
+  font-size: 1.5rem;
+}
+
+.materials-list,
+.tasks-list,
+.evaluations-list,
+.comunicados-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.material-item,
+.task-item,
+.evaluation-item,
+.comunicado-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.material-icon,
+.eval-icon,
+.comunicado-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: white;
+  font-size: 1.5rem;
+}
+
+.task-status {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  color: #666;
+  font-size: 1.5rem;
+}
+
+.task-item.completed .task-status {
+  background: #4CAF50;
+  color: white;
+}
+
+.material-info,
+.task-info,
+.eval-info,
+.comunicado-info {
+  flex: 1;
+}
+
+.material-info h3,
+.task-info h3,
+.eval-info h3,
+.comunicado-info h3 {
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.material-info p,
+.task-info p,
+.eval-info p,
+.comunicado-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.submitted-info {
+  color: #4CAF50 !important;
+  font-weight: 500;
+}
+
+.btn-download {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: background 0.3s ease;
+}
+
+.btn-download:hover:not(:disabled) {
+  background: #002244;
+}
+
+.btn-download:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.task-badge {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.task-badge.pending {
+  background: #FF9800;
+  color: white;
+}
+
+.task-badge.completed {
+  background: #4CAF50;
+  color: white;
+}
+
+.task-badge.overdue {
+  background: var(--error);
+  color: white;
+}
+
+.eval-type {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--primary);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.comunicado-item.unread {
+  background: #fff3cd;
+  border-color: #ffc107;
+}
+
+.unread-badge {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--error);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .curso-detalle-padre-container {
+    padding: var(--spacing-md);
+  }
+
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .course-meta {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}

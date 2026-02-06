@@ -44,6 +44,17 @@ export class NavbarComponent {
         { path: '/admin/solicitudes', label: 'Solicitudes', icon: 'fas fa-exclamation-circle', exact: false },
         { path: '/admin/reportes', label: 'Reportes', icon: 'fas fa-chart-bar', exact: false }
       ];
+    } else if (role === 'padre') {
+      return [
+        { path: '/padre/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
+        { path: '/padre/perfil-hijo', label: 'Perfil del Hijo', icon: 'fas fa-user', exact: false },
+        { path: '/padre/cursos', label: 'Cursos', icon: 'fas fa-book', exact: false },
+        { path: '/padre/tareas', label: 'Tareas', icon: 'fas fa-tasks', exact: false },
+        { path: '/padre/notas', label: 'Notas', icon: 'fas fa-chart-line', exact: false },
+        { path: '/padre/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt', exact: false },
+        { path: '/padre/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn', exact: false },
+        { path: '/padre/mensajeria', label: 'Mensajería', icon: 'fas fa-envelope', exact: false }
+      ];
     } else {
       // Estudiante (por defecto)
       return [

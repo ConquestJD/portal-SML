@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 
-export type UserRole = 'estudiante' | 'profesor' | 'admin';
+export type UserRole = 'estudiante' | 'profesor' | 'admin' | 'padre';
 
 export interface User {
   id: string;
@@ -44,6 +44,15 @@ export class AuthService {
       name: 'Administrador',
       email: 'admin@colegio.edu',
       role: 'admin',
+      photo: 'https://via.placeholder.com/40'
+    },
+    {
+      id: '4',
+      username: 'padre',
+      password: 'padre123',
+      name: 'Carlos Rodríguez',
+      email: 'padre@colegio.edu',
+      role: 'padre',
       photo: 'https://via.placeholder.com/40'
     }
   ];
@@ -114,6 +123,9 @@ export class AuthService {
         break;
       case 'admin':
         this.router.navigate(['/admin/dashboard']);
+        break;
+      case 'padre':
+        this.router.navigate(['/padre/dashboard']);
         break;
       default:
         this.router.navigate(['/login']);

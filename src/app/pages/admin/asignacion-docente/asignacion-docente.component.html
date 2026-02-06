@@ -1,0 +1,44 @@
+<div class="asignacion-docente-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Asignación Docente</h1>
+      <p class="page-subtitle">Gestiona la carga académica de los profesores</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="assignTeacher()">
+        <i class="fas fa-plus"></i> Nueva Asignación
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Profesor</th>
+          <th>Curso</th>
+          <th>Grado</th>
+          <th>Sección</th>
+          <th>Estudiantes</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (assignment of assignments(); track assignment.id) {
+          <tr>
+            <td>{{ assignment.teacher }}</td>
+            <td>{{ assignment.course }}</td>
+            <td>{{ assignment.grade }}</td>
+            <td>{{ assignment.section }}</td>
+            <td>{{ assignment.students }}</td>
+            <td>
+              <button class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

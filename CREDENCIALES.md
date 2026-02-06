@@ -22,6 +22,12 @@ Este documento contiene las credenciales de las cuentas de ejemplo para acceder 
 - **Rol:** Administrador
 - **Redirección:** `/admin/dashboard`
 
+### 4. Padre de Familia
+- **Usuario:** `padre`
+- **Contraseña:** `padre123`
+- **Rol:** Padre de Familia
+- **Redirección:** `/padre/dashboard`
+
 ## Notas
 
 - Las credenciales son de ejemplo y están almacenadas en el servicio de autenticación.
@@ -53,3 +59,16 @@ Este documento contiene las credenciales de las cuentas de ejemplo para acceder 
 - Revisar solicitudes
 - Ver reportes
 - Configuración del sistema
+
+### Padre de Familia
+- Ver información de sus hijos
+- Ver cursos de los hijos
+- Ver tareas y actividades
+- Ver notas y boletas
+- Ver asistencia
+- Justificar faltas/tardanzas
+- Ver comunicados institucionales y del tutor
+- Mensajería con el colegio
+- Solicitar reuniones
+- Ver pagos y estado de cuenta
+- Acceder a documentos

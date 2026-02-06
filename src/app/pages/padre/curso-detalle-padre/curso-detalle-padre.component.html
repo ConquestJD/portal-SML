@@ -1,0 +1,138 @@
+<div class="curso-detalle-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <a routerLink="/padre/cursos">Cursos</a>
+    <span>/</span>
+    <span>{{ course().name }}</span>
+  </div>
+
+  <div class="course-header">
+    <div class="course-info">
+      <h1 class="course-title">{{ course().name }}</h1>
+      <p class="course-code">{{ course().code }}</p>
+      <div class="course-meta">
+        <span><i class="fas fa-chalkboard-teacher"></i> {{ course().teacher }}</span>
+        <span><i class="fas fa-clock"></i> {{ course().schedule }}</span>
+        <span><i class="fas fa-chart-line"></i> Promedio: {{ course().average }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active">Materiales</button>
+    <button class="tab">Tareas</button>
+    <button class="tab">Evaluaciones</button>
+    <button class="tab">Comunicados</button>
+  </div>
+
+  <!-- Materiales -->
+  <div class="tab-content">
+    <h2 class="section-title">
+      <i class="fas fa-file-alt"></i>
+      Materiales Publicados
+    </h2>
+    <div class="materials-list">
+      @for (material of materials(); track material.id) {
+        <div class="material-item">
+          <div class="material-icon">
+            @switch (material.type) {
+              @case ('pdf') { <i class="fas fa-file-pdf"></i> }
+              @case ('ppt') { <i class="fas fa-file-powerpoint"></i> }
+              @default { <i class="fas fa-file"></i> }
+            }
+          </div>
+          <div class="material-info">
+            <h3>{{ material.title }}</h3>
+            <p>{{ material.date }} • {{ material.size }}</p>
+          </div>
+          <button class="btn-download" disabled>
+            <i class="fas fa-download"></i>
+            Descargar
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Tareas -->
+  <div class="tab-content">
+    <h2 class="section-title">
+      <i class="fas fa-tasks"></i>
+      Tareas Asignadas
+    </h2>
+    <div class="tasks-list">
+      @for (task of tasks(); track task.id) {
+        <div class="task-item" [class.completed]="task.status === 'entregada'">
+          <div class="task-status">
+            @if (task.status === 'entregada') {
+              <i class="fas fa-check-circle"></i>
+            } @else if (task.status === 'vencida') {
+              <i class="fas fa-exclamation-circle"></i>
+            } @else {
+              <i class="fas fa-clock"></i>
+            }
+          </div>
+          <div class="task-info">
+            <h3>{{ task.title }}</h3>
+            <p>Fecha límite: {{ task.dueDate }}</p>
+            @if (task.submitted) {
+              <p class="submitted-info">Entregada el {{ task.submittedDate }}</p>
+            }
+          </div>
+          <div class="task-badge" [class.pending]="task.status === 'pendiente'" 
+                                [class.completed]="task.status === 'entregada'"
+                                [class.overdue]="task.status === 'vencida'">
+            {{ task.status | titlecase }}
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Evaluaciones -->
+  <div class="tab-content">
+    <h2 class="section-title">
+      <i class="fas fa-clipboard-check"></i>
+      Evaluaciones Programadas
+    </h2>
+    <div class="evaluations-list">
+      @for (eval of evaluations(); track eval.id) {
+        <div class="evaluation-item">
+          <div class="eval-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div class="eval-info">
+            <h3>{{ eval.title }}</h3>
+            <p>{{ eval.date }}</p>
+          </div>
+          <span class="eval-type">{{ eval.type | titlecase }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Comunicados -->
+  <div class="tab-content">
+    <h2 class="section-title">
+      <i class="fas fa-bullhorn"></i>
+      Comunicados del Curso
+    </h2>
+    <div class="comunicados-list">
+      @for (comunicado of comunicados(); track comunicado.id) {
+        <div class="comunicado-item" [class.unread]="!comunicado.read">
+          <div class="comunicado-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="comunicado-info">
+            <h3>{{ comunicado.title }}</h3>
+            <p>{{ comunicado.date }}</p>
+          </div>
+          @if (!comunicado.read) {
+            <span class="unread-badge">Nuevo</span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

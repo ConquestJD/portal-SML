@@ -1,0 +1,33 @@
+<div class="comunicados-admin-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Comunicados Institucionales</h1>
+      <p class="page-subtitle">Gestiona los comunicados del colegio</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="createComunicado()">
+        <i class="fas fa-plus"></i> Nuevo Comunicado
+      </button>
+    </div>
+  </div>
+
+  <div class="comunicados-list">
+    @for (comunicado of comunicados(); track comunicado.id) {
+      <div class="comunicado-card">
+        <div class="comunicado-header">
+          <h3>{{ comunicado.title }}</h3>
+          <span class="badge badge-success">{{ comunicado.status }}</span>
+        </div>
+        <div class="comunicado-info">
+          <p><strong>Tipo:</strong> {{ comunicado.type }}</p>
+          <p><strong>Fecha:</strong> {{ comunicado.date }}</p>
+        </div>
+        <div class="comunicado-actions">
+          <button class="btn btn-sm btn-primary">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

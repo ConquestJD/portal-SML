@@ -1,0 +1,64 @@
+<div class="cursos-admin-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Catálogo de Cursos</h1>
+      <p class="page-subtitle">Gestiona el catálogo de cursos del colegio</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nuevo Curso
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-input search-input" placeholder="Buscar..." [(ngModel)]="searchQuery" (input)="onSearch()" name="searchQuery" />
+    </div>
+    <select [(ngModel)]="filterGrade" (change)="onSearch()" class="form-input" name="filterGrade">
+      <option value="todos">Todos los grados</option>
+      <option value="1ro">1ro</option>
+      <option value="2do">2do</option>
+      <option value="3ro">3ro</option>
+      <option value="4to">4to</option>
+      <option value="5to">5to</option>
+    </select>
+    <select [(ngModel)]="filterStatus" (change)="onSearch()" class="form-input" name="filterStatus">
+      <option value="todos">Todos</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+    </select>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Grado</th>
+          <th>Estudiantes</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (course of filteredCourses(); track course.id) {
+          <tr>
+            <td><strong>{{ course.code }}</strong></td>
+            <td>{{ course.name }}</td>
+            <td>{{ course.grade }}</td>
+            <td>{{ course.students }}</td>
+            <td><span class="badge badge-success">{{ course.status }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Editar
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

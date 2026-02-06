@@ -1,0 +1,87 @@
+<div class="justificaciones-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Justificaciones</span>
+  </div>
+
+  <div class="page-header">
+    <div class="header-content">
+      <div>
+        <h1 class="page-title">Justificaciones y Permisos</h1>
+        <p class="page-subtitle">Justificar faltas y tardanzas del hijo</p>
+      </div>
+      <button class="btn-primary" (click)="showForm.set(true)">
+        <i class="fas fa-plus"></i>
+        Nueva Justificación
+      </button>
+    </div>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <!-- Formulario -->
+  @if (showForm()) {
+    <div class="form-card">
+      <h2>Nueva Justificación</h2>
+      <form (ngSubmit)="submitJustification()">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" [value]="formData().date" (input)="updateDate($event)" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select [value]="formData().type" (change)="updateType($event)" required>
+            <option value="falta">Falta</option>
+            <option value="tardanza">Tardanza</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Motivo</label>
+          <textarea [value]="formData().reason" (input)="updateReason($event)" rows="4" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Documento (Opcional)</label>
+          <input type="file" (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="showForm.set(false)">Cancelar</button>
+          <button type="submit" class="btn-primary">Enviar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Lista de Justificaciones -->
+  <div class="justifications-list">
+    @for (justification of justifications(); track justification.id) {
+      <div class="justification-card">
+        <div class="justification-header">
+          <div>
+            <h3>{{ justification.date }}</h3>
+            <p>{{ justification.type | titlecase }}</p>
+          </div>
+          <span class="status-badge" [class.approved]="justification.status === 'aprobada'"
+                                    [class.pending]="justification.status === 'pendiente'"
+                                    [class.rejected]="justification.status === 'rechazada'">
+            {{ justification.status | titlecase }}
+          </span>
+        </div>
+        <div class="justification-content">
+          <p><strong>Motivo:</strong> {{ justification.reason }}</p>
+          <p><strong>Enviada:</strong> {{ justification.submittedDate }}</p>
+        </div>
+      </div>
+    }
+  </div>
+</div>

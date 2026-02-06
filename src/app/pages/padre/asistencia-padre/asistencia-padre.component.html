@@ -1,0 +1,91 @@
+<div class="asistencia-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/padre/dashboard">Inicio</a>
+    <span>/</span>
+    <span>Asistencia</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">Asistencia del Hijo</h1>
+    <p class="page-subtitle">Registro de asistencia y faltas</p>
+  </div>
+
+  <!-- Selector de Hijo -->
+  @if (children().length > 1) {
+    <div class="child-selector">
+      <label>Seleccionar Hijo:</label>
+      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+        @for (child of children(); track child.id) {
+          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <!-- Resumen -->
+  <div class="summary-cards">
+    <div class="summary-card present">
+      <i class="fas fa-check-circle"></i>
+      <div>
+        <h3>Presente</h3>
+        <p>{{ attendanceSummary().present }}</p>
+      </div>
+    </div>
+    <div class="summary-card absent">
+      <i class="fas fa-times-circle"></i>
+      <div>
+        <h3>Ausente</h3>
+        <p>{{ attendanceSummary().absent }}</p>
+      </div>
+    </div>
+    <div class="summary-card late">
+      <i class="fas fa-clock"></i>
+      <div>
+        <h3>Tardanzas</h3>
+        <p>{{ attendanceSummary().late }}</p>
+      </div>
+    </div>
+    <div class="summary-card percentage">
+      <i class="fas fa-percentage"></i>
+      <div>
+        <h3>Asistencia</h3>
+        <p>{{ attendanceSummary().percentage }}%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="actions-section">
+    <a routerLink="/padre/justificaciones" class="btn-primary">
+      <i class="fas fa-file-alt"></i>
+      Justificar Faltas/Tardanzas
+    </a>
+  </div>
+
+  <!-- Registro de Asistencia -->
+  <div class="attendance-table-section">
+    <h2 class="section-title">Registro de Asistencia</h2>
+    <div class="attendance-table">
+      <div class="table-header">
+        <div>Fecha</div>
+        <div>Estado</div>
+        <div>Hora</div>
+        <div>Observación</div>
+      </div>
+      @for (record of attendanceRecords(); track record.date) {
+        <div class="table-row">
+          <div>{{ record.date }}</div>
+          <div>
+            <span class="status-badge" [class.present]="record.status === 'presente'"
+                                  [class.absent]="record.status === 'ausente'"
+                                  [class.late]="record.status === 'tardanza'">
+              {{ record.status | titlecase }}
+            </span>
+          </div>
+          <div>{{ record.time }}</div>
+          <div>{{ record.observation || '-' }}</div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

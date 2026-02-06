@@ -1,0 +1,20 @@
+<div class="reportes-container">
+  <div class="page-header">
+    <h1 class="page-title">Reportes</h1>
+    <p class="page-subtitle">Genera y exporta reportes del sistema</p>
+  </div>
+
+  <div class="reports-grid">
+    @for (report of reportTypes(); track report.id) {
+      <div class="report-card" (click)="generateReport(report.id)">
+        <div class="report-icon">
+          <i [class]="report.icon"></i>
+        </div>
+        <h3>{{ report.name }}</h3>
+        <button class="btn btn-primary">
+          <i class="fas fa-download"></i> Generar
+        </button>
+      </div>
+    }
+  </div>
+</div>
