@@ -31,50 +31,123 @@
     </div>
   }
 
-  <!-- Resumen -->
-  <div class="summary-grid grid grid-cols-4">
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-users"></i></span>
-        <span class="summary-label">Total Estudiantes</span>
+  <!-- KPIs Principales -->
+  <div class="section">
+    <h2 class="section-title">Resumen General</h2>
+    <div class="summary-grid grid grid-cols-4">
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-users"></i></span>
+          <span class="summary-label">Total Estudiantes</span>
+        </div>
+        <div class="summary-value">{{ totalStudents() }}</div>
+        <a [routerLink]="'/admin/estudiantes'" class="summary-link">
+          Ver estudiantes <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
-      <div class="summary-value">{{ totalStudents() }}</div>
-      <a [routerLink]="'/admin/estudiantes'" class="summary-link">
-        Ver estudiantes <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-chalkboard-teacher"></i></span>
-        <span class="summary-label">Total Profesores</span>
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+          <span class="summary-label">Total Profesores</span>
+        </div>
+        <div class="summary-value">{{ totalTeachers() }}</div>
+        <a [routerLink]="'/admin/profesores'" class="summary-link">
+          Ver profesores <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
-      <div class="summary-value">{{ totalTeachers() }}</div>
-      <a [routerLink]="'/admin/profesores'" class="summary-link">
-        Ver profesores <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-book"></i></span>
-        <span class="summary-label">Total Cursos</span>
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-book"></i></span>
+          <span class="summary-label">Total Cursos</span>
+        </div>
+        <div class="summary-value">{{ totalCourses() }}</div>
+        <a [routerLink]="'/admin/cursos'" class="summary-link">
+          Ver cursos <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
-      <div class="summary-value">{{ totalCourses() }}</div>
-      <a [routerLink]="'/admin/cursos'" class="summary-link">
-        Ver cursos <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-exclamation-circle"></i></span>
-        <span class="summary-label">Solicitudes Pendientes</span>
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-exclamation-circle"></i></span>
+          <span class="summary-label">Solicitudes Pendientes</span>
+        </div>
+        <div class="summary-value">{{ pendingRequests() }}</div>
+        <a [routerLink]="'/admin/solicitudes'" class="summary-link">
+          Revisar <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
-      <div class="summary-value">{{ pendingRequests() }}</div>
-      <a [routerLink]="'/admin/solicitudes'" class="summary-link">
-        Revisar <i class="fas fa-arrow-right"></i>
-      </a>
+    </div>
+  </div>
+
+  <!-- KPIs Adicionales -->
+  <div class="section">
+    <h2 class="section-title">Indicadores del Día</h2>
+    <div class="summary-grid grid grid-cols-3">
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-calendar-check"></i></span>
+          <span class="summary-label">Asistencia Hoy</span>
+        </div>
+        <div class="summary-value">{{ attendanceToday() }}/{{ totalStudents() }}</div>
+        <span class="summary-text">{{ ((attendanceToday() / totalStudents()) * 100).toFixed(1) }}%</span>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-tasks"></i></span>
+          <span class="summary-label">Tareas Activas</span>
+        </div>
+        <div class="summary-value">{{ activeTasks() }}</div>
+        <a [routerLink]="'/admin/tareas'" class="summary-link">
+          Ver tareas <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-bullhorn"></i></span>
+          <span class="summary-label">Comunicados Recientes</span>
+        </div>
+        <div class="summary-value">{{ recentAnnouncements() }}</div>
+        <a [routerLink]="'/admin/comunicados'" class="summary-link">
+          Ver comunicados <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-exclamation-triangle"></i></span>
+          <span class="summary-label">Incidencias</span>
+        </div>
+        <div class="summary-value error">{{ incidents() }}</div>
+        <a [routerLink]="'/admin/incidencias'" class="summary-link">
+          Revisar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-user-plus"></i></span>
+          <span class="summary-label">Usuarios Creados (Hoy)</span>
+        </div>
+        <div class="summary-value">{{ usersCreated() }}</div>
+        <a [routerLink]="'/admin/usuarios'" class="summary-link">
+          Ver usuarios <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-header">
+          <span class="summary-icon"><i class="fas fa-book-open"></i></span>
+          <span class="summary-label">Cursos Activos</span>
+        </div>
+        <div class="summary-value">{{ activeCourses() }}</div>
+        <a [routerLink]="'/admin/cursos'" class="summary-link">
+          Ver cursos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -109,6 +182,7 @@
             @if (activity.type === 'user') { <i class="fas fa-user activity-icon"></i> }
             @if (activity.type === 'course') { <i class="fas fa-book activity-icon"></i> }
             @if (activity.type === 'request') { <i class="fas fa-file-alt activity-icon"></i> }
+            @if (activity.type === 'attendance') { <i class="fas fa-calendar-check activity-icon"></i> }
           </div>
           <div class="activity-content">
             <p class="activity-message">{{ activity.message }}</p>

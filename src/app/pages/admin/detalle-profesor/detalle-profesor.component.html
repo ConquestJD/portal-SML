@@ -1,0 +1,46 @@
+<div class="detalle-profesor-container">
+  <div class="breadcrumb">
+    <a routerLink="/admin/profesores" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a Profesores
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ profesor().name }}</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">{{ profesor().name }}</h1>
+    <p class="page-subtitle">{{ profesor().department }}</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">Perfil</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'cursos'" (click)="setTab('cursos')">Cursos</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'historial'" (click)="setTab('historial')">Historial</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'permisos'" (click)="setTab('permisos')">Permisos</button>
+  </div>
+
+  <div class="tab-content">
+    @if (activeTab() === 'perfil') {
+      <div class="content-section">
+        <div class="info-card">
+          <h3>Información del Profesor</h3>
+          <p>Email: {{ profesor().email }}</p>
+          <p>Estado: {{ profesor().status }}</p>
+          <p>Departamento: {{ profesor().department }}</p>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'cursos') {
+      <div class="content-section">
+        <h3>Cursos a Cargo</h3>
+        @for (course of courses(); track course.id) {
+          <div class="course-item">
+            <span>{{ course.name }}</span>
+            <span>{{ course.students }} estudiantes</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,114 @@
+<div class="detalle-estudiante-container">
+  <div class="breadcrumb">
+    <a routerLink="/admin/estudiantes" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a Estudiantes
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ student().name }}</span>
+  </div>
+
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">{{ student().name }}</h1>
+      <p class="page-subtitle">Código: {{ student().code }} | {{ student().grade }} {{ student().section }}</p>
+    </div>
+    <div class="header-actions">
+      <a [routerLink]="['/admin/usuarios', student().id, 'editar']" class="btn btn-primary">
+        <i class="fas fa-edit"></i> Editar
+      </a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
+      <i class="fas fa-user"></i> Perfil
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'academico'" (click)="setTab('academico')">
+      <i class="fas fa-graduation-cap"></i> Académico
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">
+      <i class="fas fa-chart-line"></i> Notas
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
+      <i class="fas fa-calendar-check"></i> Asistencia
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'documentos'" (click)="setTab('documentos')">
+      <i class="fas fa-file"></i> Documentos
+    </button>
+  </div>
+
+  <div class="tab-content">
+    @if (activeTab() === 'perfil') {
+      <div class="content-section">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>Información Personal</h3>
+            <div class="info-item">
+              <span class="label">DNI:</span>
+              <span class="value">{{ student().dni }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Email:</span>
+              <span class="value">{{ student().email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Teléfono:</span>
+              <span class="value">{{ student().phone }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Dirección:</span>
+              <span class="value">{{ student().address }}</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Información de Contacto</h3>
+            <div class="info-item">
+              <span class="label">Tutor:</span>
+              <span class="value">{{ student().tutor }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Teléfono Emergencia:</span>
+              <span class="value">{{ student().emergencyPhone }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'academico') {
+      <div class="content-section">
+        <div class="info-card">
+          <h3>Historial Académico</h3>
+          <p>Información sobre cursos, grados y secciones del estudiante.</p>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'notas') {
+      <div class="content-section">
+        <div class="info-card">
+          <h3>Calificaciones</h3>
+          <p>Historial completo de notas y evaluaciones.</p>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'asistencia') {
+      <div class="content-section">
+        <div class="info-card">
+          <h3>Registro de Asistencia</h3>
+          <p>Historial de asistencia del estudiante.</p>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'documentos') {
+      <div class="content-section">
+        <div class="info-card">
+          <h3>Documentos</h3>
+          <p>Documentos y archivos del estudiante.</p>
+        </div>
+      </div>
+    }
+  </div>
+</div>

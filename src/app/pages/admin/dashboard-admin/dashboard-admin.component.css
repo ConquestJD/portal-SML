@@ -188,6 +188,16 @@
   line-height: 1.2;
 }
 
+.summary-value.error {
+  color: var(--error);
+}
+
+.summary-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
 .summary-link {
   color: var(--primary);
   text-decoration: none;

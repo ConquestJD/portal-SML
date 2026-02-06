@@ -1,0 +1,125 @@
+<div class="usuarios-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Gestión de Usuarios</h1>
+      <p class="page-subtitle">Administra todos los usuarios del sistema</p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/admin/usuarios/crear" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nuevo Usuario
+      </a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'estudiantes'"
+      (click)="setTab('estudiantes')"
+    >
+      <i class="fas fa-user-graduate"></i> Estudiantes
+      <span class="badge">{{ estudiantes().length }}</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'profesores'"
+      (click)="setTab('profesores')"
+    >
+      <i class="fas fa-chalkboard-teacher"></i> Profesores
+      <span class="badge">{{ profesores().length }}</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'administrativos'"
+      (click)="setTab('administrativos')"
+    >
+      <i class="fas fa-user-shield"></i> Administrativos
+      <span class="badge">{{ administrativos().length }}</span>
+    </button>
+  </div>
+
+  <!-- Filtros y Búsqueda -->
+  <div class="filters-section">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input
+        type="text"
+        class="form-input search-input"
+        placeholder="Buscar por nombre o email..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearch()"
+        name="searchQuery"
+      />
+    </div>
+    <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-input" name="filterStatus">
+      <option value="todos">Todos los estados</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+      <option value="suspendido">Suspendido</option>
+    </select>
+  </div>
+
+  <!-- Tabla de Usuarios -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Último Acceso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of currentUsers(); track user.id) {
+          <tr>
+            <td>
+              <div class="user-info">
+                <div class="user-avatar">
+                  {{ user.name.charAt(0) }}
+                </div>
+                <span>{{ user.name }}</span>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="badge badge-info">
+                {{ user.role === 'estudiante' ? 'Estudiante' : user.role === 'profesor' ? 'Profesor' : user.role === 'admin' ? 'Admin' : 'Administrativo' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-success]="user.status === 'activo'" [class.badge-secondary]="user.status === 'inactivo'" [class.badge-error]="user.status === 'suspendido'">
+                {{ user.status === 'activo' ? 'Activo' : user.status === 'inactivo' ? 'Inactivo' : 'Suspendido' }}
+              </span>
+            </td>
+            <td>{{ user.lastLogin || 'Nunca' }}</td>
+            <td>
+              <div class="action-buttons">
+                <a [routerLink]="['/admin/usuarios', user.id, 'editar']" class="btn btn-sm btn-primary" title="Editar">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button class="btn btn-sm btn-secondary" title="Resetear Contraseña">
+                  <i class="fas fa-key"></i>
+                </button>
+                <button class="btn btn-sm" [class.btn-error]="user.status === 'activo'" [class.btn-success]="user.status !== 'activo'" [title]="user.status === 'activo' ? 'Desactivar' : 'Activar'">
+                  <i [class]="user.status === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (currentUsers().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-users empty-icon"></i>
+        <h2>No se encontraron usuarios</h2>
+        <p>Intenta ajustar los filtros de búsqueda.</p>
+      </div>
+    }
+  </div>
+</div>

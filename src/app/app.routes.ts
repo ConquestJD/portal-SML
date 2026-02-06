@@ -95,6 +95,74 @@ export const routes: Routes = [
       {
         path: 'admin/dashboard',
         loadComponent: () => import('./pages/admin/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent)
+      },
+      {
+        path: 'admin/usuarios',
+        loadComponent: () => import('./pages/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent)
+      },
+      {
+        path: 'admin/usuarios/crear',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent)
+      },
+      {
+        path: 'admin/usuarios/:id/editar',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent)
+      },
+      {
+        path: 'admin/estudiantes',
+        loadComponent: () => import('./pages/admin/estudiantes/estudiantes.component').then(m => m.EstudiantesComponent)
+      },
+      {
+        path: 'admin/estudiantes/:id',
+        loadComponent: () => import('./pages/admin/detalle-estudiante/detalle-estudiante.component').then(m => m.DetalleEstudianteComponent)
+      },
+      {
+        path: 'admin/profesores',
+        loadComponent: () => import('./pages/admin/profesores/profesores.component').then(m => m.ProfesoresComponent)
+      },
+      {
+        path: 'admin/profesores/:id',
+        loadComponent: () => import('./pages/admin/detalle-profesor/detalle-profesor.component').then(m => m.DetalleProfesorComponent)
+      },
+      {
+        path: 'admin/cursos',
+        loadComponent: () => import('./pages/admin/cursos-admin/cursos-admin.component').then(m => m.CursosAdminComponent)
+      },
+      {
+        path: 'admin/anio-academico',
+        loadComponent: () => import('./pages/admin/anio-academico/anio-academico.component').then(m => m.AnioAcademicoComponent)
+      },
+      {
+        path: 'admin/grados-secciones',
+        loadComponent: () => import('./pages/admin/grados-secciones/grados-secciones.component').then(m => m.GradosSeccionesComponent)
+      },
+      {
+        path: 'admin/matricula',
+        loadComponent: () => import('./pages/admin/matricula/matricula.component').then(m => m.MatriculaComponent)
+      },
+      {
+        path: 'admin/asignacion-docente',
+        loadComponent: () => import('./pages/admin/asignacion-docente/asignacion-docente.component').then(m => m.AsignacionDocenteComponent)
+      },
+      {
+        path: 'admin/comunicados',
+        loadComponent: () => import('./pages/admin/comunicados-admin/comunicados-admin.component').then(m => m.ComunicadosAdminComponent)
+      },
+      {
+        path: 'admin/roles-permisos',
+        loadComponent: () => import('./pages/admin/roles-permisos/roles-permisos.component').then(m => m.RolesPermisosComponent)
+      },
+      {
+        path: 'admin/reportes',
+        loadComponent: () => import('./pages/admin/reportes/reportes.component').then(m => m.ReportesComponent)
+      },
+      {
+        path: 'admin/configuracion',
+        loadComponent: () => import('./pages/admin/configuracion-admin/configuracion-admin.component').then(m => m.ConfiguracionAdminComponent)
+      },
+      {
+        path: 'admin/perfil',
+        loadComponent: () => import('./pages/admin/perfil-admin/perfil-admin.component').then(m => m.PerfilAdminComponent)
       }
     ]
   }
