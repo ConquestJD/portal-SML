@@ -36,7 +36,7 @@ export class CrearTareaComponent {
   instructions = signal('');
   dueDate = signal('');
   points = signal(20);
-  deliveryType = signal<'archivo' | 'texto' | 'ambos'>('archivo');
+  deliveryType = signal<'archivo' | 'texto' | 'ambos' | 'clase'>('archivo');
   
   // Opciones avanzadas (colapsables)
   showAdvanced = signal(false);
@@ -114,6 +114,12 @@ export class CrearTareaComponent {
     return this.rubricCriteria().reduce((sum, criterion) => sum + criterion.points, 0);
   });
 
+  remainingRubricPoints = computed(() => {
+    return Math.max(0, 20 - this.totalRubricPoints());
+  });
+
+  canAddCriterion = computed(() => this.totalRubricPoints() < 20);
+
 
   canSave = computed(() => {
     const hasRequiredFields = this.title().trim().length > 0 && 
@@ -125,6 +131,9 @@ export class CrearTareaComponent {
   });
 
   addRubricCriterion() {
+    if (!this.canAddCriterion()) {
+      return;
+    }
     const newCriterion: RubricCriterion = {
       id: Date.now().toString() + Math.random(),
       name: '',
@@ -158,15 +167,11 @@ export class CrearTareaComponent {
       // La suma total de TODOS los criterios no puede exceder 20
       const maxAllowed = 20 - otherPoints;
       
-      // NO permitir valores que excedan el máximo - rechazar completamente
-      if (numValue > maxAllowed || numValue < 0 || isNaN(numValue)) {
-        // Mantener el valor actual, no actualizar
-        return;
-      }
-      
-      // Actualizar el criterio con el valor válido
+      const validValue = Math.max(0, Math.min(isNaN(numValue) ? 0 : numValue, maxAllowed));
+
+      // Actualizar el criterio con el valor válido (clamp al máximo permitido)
       this.rubricCriteria.update(criteria =>
-        criteria.map(c => c.id === id ? { ...c, [field]: numValue } : c)
+        criteria.map(c => c.id === id ? { ...c, [field]: validValue } : c)
       );
       
       // Actualizar automáticamente los puntos de la tarea con la suma TOTAL de la rúbrica
@@ -181,24 +186,21 @@ export class CrearTareaComponent {
 
   onPointsInput(event: Event, criterionId: string) {
     const input = event.target as HTMLInputElement;
-    const value = +input.value;
-    
-    // Obtener puntos de otros criterios
+    const rawValue = +input.value;
     const otherPoints = this.rubricCriteria()
       .filter(c => c.id !== criterionId)
       .reduce((sum, c) => sum + c.points, 0);
-    
     const maxAllowed = 20 - otherPoints;
-    
-    // Si el valor excede el máximo o es inválido, revertir al valor actual
-    if (value > maxAllowed || value < 0 || isNaN(value)) {
-      const currentCriterion = this.rubricCriteria().find(c => c.id === criterionId);
-      if (currentCriterion) {
-        input.value = currentCriterion.points.toString();
-      } else {
-        input.value = '0';
-      }
+    const clampedValue = Math.max(0, Math.min(isNaN(rawValue) ? 0 : rawValue, maxAllowed));
+
+    if (input.value !== clampedValue.toString()) {
+      input.value = clampedValue.toString();
     }
+
+    this.rubricCriteria.update(criteria =>
+      criteria.map(c => c.id === criterionId ? { ...c, points: clampedValue } : c)
+    );
+    this.updatePointsFromRubric();
   }
 
   removeRubricCriterion(id: string) {
@@ -210,13 +212,8 @@ export class CrearTareaComponent {
   }
 
   private updatePointsFromRubric() {
-    const total = this.totalRubricPoints();
-    // Siempre actualizar los puntos de la tarea con la suma TOTAL de todos los criterios
-    // Esto se ejecuta cada vez que se modifica cualquier criterio
-    if (this.rubricCriteria().length > 0) {
-      // La suma total de todos los criterios se asigna automáticamente a los puntos de la tarea
-      this.points.set(total);
-    }
+    // La nota máxima siempre es 20
+    this.points.set(20);
   }
 
   getRubricText(): string {
