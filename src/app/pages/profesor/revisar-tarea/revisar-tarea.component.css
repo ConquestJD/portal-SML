@@ -735,3 +735,26 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.auto-calc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(0, 51, 102, 0.1);
+  color: var(--primary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  margin-left: var(--spacing-sm);
+}
+
+.auto-calc-badge i {
+  font-size: var(--font-size-xs);
+}
+
+.readonly-input {
+  background: var(--bg-secondary) !important;
+  cursor: not-allowed;
+  opacity: 0.9;
+}

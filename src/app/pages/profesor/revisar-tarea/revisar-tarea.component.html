@@ -291,31 +291,44 @@
           }
 
           <div class="form-group">
-            <label class="form-label">Calificación Final</label>
-            <input
-              type="number"
-              class="form-input"
-              [class.input-error]="gradingGrade() !== null && !canSaveGrading()"
-              [ngModel]="gradingGrade()"
-              (ngModelChange)="updateGrade(+$event)"
-              min="0"
-              [max]="getMaxGrade()"
-              step="0.5"
-            />
-            <p class="form-hint">
+            <label class="form-label">
+              Calificación Final
               @let taskRubricHint = task()!.rubric;
               @if (taskRubricHint && taskRubricHint.length > 0) {
-                Máximo: {{ getMaxGrade() }} puntos (según rúbrica: {{ getRubricTotal() }} / {{ task()!.points }})
-                @if (gradingGrade() !== null && gradingGrade()! > getRubricTotal()) {
-                  <span class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    La calificación no puede exceder el total de la rúbrica ({{ getRubricTotal() }})
-                  </span>
-                }
-              } @else {
-                Máximo: 20 puntos
+                <span class="auto-calc-badge">
+                  <i class="fas fa-calculator"></i> Calculada automáticamente
+                </span>
               }
-            </p>
+            </label>
+            @let taskRubricForGrade = task()!.rubric;
+            @if (taskRubricForGrade && taskRubricForGrade.length > 0) {
+              <input
+                type="number"
+                class="form-input readonly-input"
+                [ngModel]="gradingGrade()"
+                [readonly]="true"
+                [value]="getRubricTotal()"
+              />
+              <p class="form-hint">
+                <i class="fas fa-info-circle"></i>
+                La calificación se calcula automáticamente según los puntos asignados en la rúbrica: <strong>{{ getRubricTotal() }} / {{ task()!.points }}</strong>
+              </p>
+            } @else {
+              <input
+                type="number"
+                class="form-input"
+                [class.input-error]="gradingGrade() !== null && !canSaveGrading()"
+                [ngModel]="gradingGrade()"
+                (ngModelChange)="updateGrade(+$event)"
+                min="0"
+                [max]="getMaxGrade()"
+                step="0.5"
+              />
+              <p class="form-hint">
+                <i class="fas fa-info-circle"></i>
+                Máximo: 20 puntos
+              </p>
+            }
           </div>
 
           <div class="form-group">

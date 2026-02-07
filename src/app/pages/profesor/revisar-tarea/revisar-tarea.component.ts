@@ -86,78 +86,146 @@ export class RevisarTareaComponent implements OnInit {
     this.isLoading.set(true);
     // Simulación de carga de datos
     setTimeout(() => {
-      const mockTask: TaskDetail = {
-        id: this.taskId()!,
-        title: 'Proyecto de Matemática - Álgebra',
-        description: 'Este proyecto tiene como objetivo aplicar los conceptos de álgebra aprendidos en clase.',
-        instructions: 'Resuelve los problemas planteados y presenta tu trabajo de forma clara.',
-        courseId: this.courseId()!,
-        courseName: 'Matemática - 3ro A',
-        dueDate: '2024-03-25T23:59:00',
-        points: 20,
-        deliveryType: 'ambos',
-        rubric: [
-          { id: '1', name: 'Comprensión del Problema', description: 'Demuestra comprensión clara del problema', points: 5 },
-          { id: '2', name: 'Metodología', description: 'Aplica correctamente los métodos algebraicos', points: 7 },
-          { id: '3', name: 'Cálculos', description: 'Realiza los cálculos de forma correcta', points: 5 },
-          { id: '4', name: 'Presentación', description: 'Presenta el trabajo de forma clara y organizada', points: 3 }
-        ]
-      };
+      // Simular diferentes tareas según el taskId
+      let mockTask: TaskDetail;
+      
+      if (this.taskId() === '1' || this.taskId() === 'tarea-con-rubrica') {
+        // Tarea con rúbrica
+        mockTask = {
+          id: this.taskId()!,
+          title: 'Proyecto de Matemática - Álgebra',
+          description: 'Este proyecto tiene como objetivo aplicar los conceptos de álgebra aprendidos en clase.',
+          instructions: 'Resuelve los problemas planteados y presenta tu trabajo de forma clara.',
+          courseId: this.courseId()!,
+          courseName: 'Matemática - 3ro A',
+          dueDate: '2024-03-25T23:59:00',
+          points: 20,
+          deliveryType: 'ambos',
+          rubric: [
+            { id: '1', name: 'Comprensión del Problema', description: 'Demuestra comprensión clara del problema', points: 5 },
+            { id: '2', name: 'Metodología', description: 'Aplica correctamente los métodos algebraicos', points: 7 },
+            { id: '3', name: 'Cálculos', description: 'Realiza los cálculos de forma correcta', points: 5 },
+            { id: '4', name: 'Presentación', description: 'Presenta el trabajo de forma clara y organizada', points: 3 }
+          ]
+        };
+      } else {
+        // Tarea sin rúbrica
+        mockTask = {
+          id: this.taskId()!,
+          title: 'Ensayo sobre Historia del Perú',
+          description: 'Escribe un ensayo sobre un período histórico del Perú.',
+          instructions: 'El ensayo debe tener mínimo 3 páginas y máximo 5 páginas. Incluye bibliografía.',
+          courseId: this.courseId()!,
+          courseName: 'Historia - 3ro A',
+          dueDate: '2024-03-30T23:59:00',
+          points: 20,
+          deliveryType: 'archivo',
+          rubric: undefined // Sin rúbrica
+        };
+      }
 
-      const mockSubmissions: Submission[] = [
-        {
-          id: '1',
-          studentId: '1',
-          studentName: 'Juan Pérez',
-          studentCode: '2024001',
-          submittedAt: '2024-03-20T10:30:00',
-          status: 'entregada',
-          text: 'He completado todos los problemas según las instrucciones...',
-          files: [
-            { id: '1', name: 'solucion_problemas.pdf', size: '1.5 MB', type: 'PDF', url: '#' }
-          ]
-        },
-        {
-          id: '2',
-          studentId: '2',
-          studentName: 'María García',
-          studentCode: '2024002',
-          submittedAt: '2024-03-22T14:20:00',
-          status: 'calificada',
-          text: 'Presento mi trabajo completo...',
-          files: [
-            { id: '2', name: 'trabajo_algebra.pdf', size: '2.1 MB', type: 'PDF', url: '#' }
-          ],
-          grade: 18,
-          feedback: 'Excelente trabajo. Has demostrado un buen entendimiento de los conceptos.',
-          rubricScores: [
-            { criterionId: '1', criterionName: 'Comprensión del Problema', points: 5, maxPoints: 5 },
-            { criterionId: '2', criterionName: 'Metodología', points: 6, maxPoints: 7 },
-            { criterionId: '3', criterionName: 'Cálculos', points: 5, maxPoints: 5 },
-            { criterionId: '4', criterionName: 'Presentación', points: 2, maxPoints: 3 }
-          ]
-        },
-        {
-          id: '3',
-          studentId: '3',
-          studentName: 'Carlos López',
-          studentCode: '2024003',
-          submittedAt: '',
-          status: 'pendiente',
-        },
-        {
-          id: '4',
-          studentId: '4',
-          studentName: 'Ana Martínez',
-          studentCode: '2024004',
-          submittedAt: '2024-03-26T09:15:00',
-          status: 'vencida',
-          text: 'Entrega tardía...',
-          files: [
-            { id: '3', name: 'trabajo_tarde.pdf', size: '1.8 MB', type: 'PDF', url: '#' }
-          ]
-        }
-      ];
+      // Submissions según el tipo de tarea
+      let mockSubmissions: Submission[];
+      
+      if (this.taskId() === '1' || this.taskId() === 'tarea-con-rubrica') {
+        // Submissions para tarea con rúbrica
+        mockSubmissions = [
+          {
+            id: '1',
+            studentId: '1',
+            studentName: 'Juan Pérez',
+            studentCode: '2024001',
+            submittedAt: '2024-03-20T10:30:00',
+            status: 'entregada',
+            text: 'He completado todos los problemas según las instrucciones...',
+            files: [
+              { id: '1', name: 'solucion_problemas.pdf', size: '1.5 MB', type: 'PDF', url: '#' }
+            ]
+          },
+          {
+            id: '2',
+            studentId: '2',
+            studentName: 'María García',
+            studentCode: '2024002',
+            submittedAt: '2024-03-22T14:20:00',
+            status: 'calificada',
+            text: 'Presento mi trabajo completo...',
+            files: [
+              { id: '2', name: 'trabajo_algebra.pdf', size: '2.1 MB', type: 'PDF', url: '#' }
+            ],
+            grade: 18,
+            feedback: 'Excelente trabajo. Has demostrado un buen entendimiento de los conceptos.',
+            rubricScores: [
+              { criterionId: '1', criterionName: 'Comprensión del Problema', points: 5, maxPoints: 5 },
+              { criterionId: '2', criterionName: 'Metodología', points: 6, maxPoints: 7 },
+              { criterionId: '3', criterionName: 'Cálculos', points: 5, maxPoints: 5 },
+              { criterionId: '4', criterionName: 'Presentación', points: 2, maxPoints: 3 }
+            ]
+          },
+          {
+            id: '3',
+            studentId: '3',
+            studentName: 'Carlos López',
+            studentCode: '2024003',
+            submittedAt: '',
+            status: 'pendiente',
+          },
+          {
+            id: '4',
+            studentId: '4',
+            studentName: 'Ana Martínez',
+            studentCode: '2024004',
+            submittedAt: '2024-03-26T09:15:00',
+            status: 'vencida',
+            text: 'Entrega tardía...',
+            files: [
+              { id: '3', name: 'trabajo_tarde.pdf', size: '1.8 MB', type: 'PDF', url: '#' }
+            ]
+          }
+        ];
+      } else {
+        // Submissions para tarea sin rúbrica
+        mockSubmissions = [
+          {
+            id: '5',
+            studentId: '5',
+            studentName: 'Pedro Sánchez',
+            studentCode: '2024005',
+            submittedAt: '2024-03-28T11:45:00',
+            status: 'entregada',
+            text: 'He completado el ensayo sobre la independencia del Perú...',
+            files: [
+              { id: '4', name: 'ensayo_independencia.pdf', size: '2.3 MB', type: 'PDF', url: '#' }
+            ]
+          },
+          {
+            id: '6',
+            studentId: '6',
+            studentName: 'Laura Fernández',
+            studentCode: '2024006',
+            submittedAt: '2024-03-29T09:20:00',
+            status: 'calificada',
+            text: 'Ensayo sobre el período colonial...',
+            files: [
+              { id: '5', name: 'ensayo_colonial.pdf', size: '2.8 MB', type: 'PDF', url: '#' }
+            ],
+            grade: 17,
+            feedback: 'Buen trabajo. El ensayo está bien estructurado y argumentado. Podrías profundizar más en algunos aspectos.'
+          },
+          {
+            id: '7',
+            studentId: '7',
+            studentName: 'Roberto Torres',
+            studentCode: '2024007',
+            submittedAt: '2024-03-30T15:30:00',
+            status: 'entregada',
+            text: 'Ensayo sobre la república...',
+            files: [
+              { id: '6', name: 'ensayo_republica.pdf', size: '2.1 MB', type: 'PDF', url: '#' }
+            ]
+          }
+        ];
+      }
 
       this.task.set(mockTask);
       this.submissions.set(mockSubmissions);
@@ -194,7 +262,6 @@ export class RevisarTareaComponent implements OnInit {
 
   openGradingModal(submission: Submission) {
     this.selectedSubmission.set(submission);
-    this.gradingGrade.set(submission.grade || null);
     this.gradingFeedback.set(submission.feedback || '');
     
     // Inicializar puntajes de rúbrica
@@ -205,6 +272,16 @@ export class RevisarTareaComponent implements OnInit {
       });
     }
     this.gradingRubricScores.set(rubricScores);
+    
+    // Si hay rúbrica, calcular la calificación automáticamente
+    const rubric = this.task()?.rubric;
+    if (rubric && rubric.length > 0) {
+      const rubricTotal = this.getRubricTotal();
+      this.gradingGrade.set(rubricTotal > 0 ? rubricTotal : (submission.grade || 0));
+    } else {
+      // Si no hay rúbrica, usar la calificación existente o null
+      this.gradingGrade.set(submission.grade || null);
+    }
     
     this.showGradingModal.set(true);
   }
@@ -224,6 +301,13 @@ export class RevisarTareaComponent implements OnInit {
       ...scores,
       [criterionId]: validPoints
     }));
+    
+    // Si hay rúbrica, actualizar automáticamente la calificación final con la suma de la rúbrica
+    const rubric = this.task()?.rubric;
+    if (rubric && rubric.length > 0) {
+      const newTotal = this.getRubricTotal();
+      this.gradingGrade.set(newTotal);
+    }
   }
 
   getRubricTotal(): number {
