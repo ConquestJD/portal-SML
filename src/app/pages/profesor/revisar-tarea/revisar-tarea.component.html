@@ -295,13 +295,27 @@
             <input
               type="number"
               class="form-input"
+              [class.input-error]="gradingGrade() !== null && !canSaveGrading()"
               [ngModel]="gradingGrade()"
-              (ngModelChange)="gradingGrade.set(+$event)"
+              (ngModelChange)="updateGrade(+$event)"
               min="0"
-              [max]="task()!.points"
+              [max]="getMaxGrade()"
               step="0.5"
             />
-            <p class="form-hint">Máximo: {{ task()!.points }} puntos</p>
+            <p class="form-hint">
+              @let taskRubricHint = task()!.rubric;
+              @if (taskRubricHint && taskRubricHint.length > 0) {
+                Máximo: {{ getMaxGrade() }} puntos (según rúbrica: {{ getRubricTotal() }} / {{ task()!.points }})
+                @if (gradingGrade() !== null && gradingGrade()! > getRubricTotal()) {
+                  <span class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    La calificación no puede exceder el total de la rúbrica ({{ getRubricTotal() }})
+                  </span>
+                }
+              } @else {
+                Máximo: 20 puntos
+              }
+            </p>
           </div>
 
           <div class="form-group">
@@ -317,7 +331,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-outline" (click)="closeGradingModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveGrading()">
+          <button class="btn btn-primary" (click)="saveGrading()" [disabled]="!canSaveGrading()">
             <i class="fas fa-save"></i> Guardar Calificación
           </button>
         </div>

@@ -230,7 +230,57 @@ export class RevisarTareaComponent implements OnInit {
     return Object.values(this.gradingRubricScores()).reduce((sum, points) => sum + points, 0);
   }
 
+  getMaxGrade(): number {
+    // Si hay rúbrica, el máximo es el total de la rúbrica
+    const rubric = this.task()?.rubric;
+    if (rubric && rubric.length > 0) {
+      return this.task()!.points; // El total de puntos de la tarea (que debería ser igual a la suma de la rúbrica)
+    }
+    // Si no hay rúbrica, el máximo es 20
+    return 20;
+  }
+
+  updateGrade(value: number) {
+    let maxGrade = this.getMaxGrade();
+    
+    // Si hay rúbrica, el máximo no puede exceder el total de la rúbrica
+    const rubric = this.task()?.rubric;
+    if (rubric && rubric.length > 0) {
+      const rubricTotal = this.getRubricTotal();
+      maxGrade = Math.min(maxGrade, rubricTotal);
+    }
+    
+    const validGrade = Math.max(0, Math.min(value, maxGrade));
+    this.gradingGrade.set(validGrade);
+  }
+
+  canSaveGrading(): boolean {
+    const grade = this.gradingGrade();
+    if (grade === null || grade < 0) {
+      return false;
+    }
+    
+    const maxGrade = this.getMaxGrade();
+    if (grade > maxGrade) {
+      return false;
+    }
+
+    // Si hay rúbrica, verificar que la calificación no exceda el total de la rúbrica
+    const rubric = this.task()?.rubric;
+    if (rubric && rubric.length > 0) {
+      const rubricTotal = this.getRubricTotal();
+      if (grade > rubricTotal) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   saveGrading() {
+    if (!this.canSaveGrading()) {
+      return;
+    }
     const submission = this.selectedSubmission();
     if (!submission) return;
 

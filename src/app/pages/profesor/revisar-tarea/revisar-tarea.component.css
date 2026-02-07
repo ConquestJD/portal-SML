@@ -711,3 +711,27 @@
     flex-direction: column;
   }
 }
+
+.input-error {
+  border-color: var(--error) !important;
+  background: rgba(196, 30, 58, 0.05) !important;
+}
+
+.error-message {
+  display: block;
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.error-message i {
+  font-size: var(--font-size-xs);
+}
+
+.modal-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
