@@ -1,0 +1,332 @@
+<div class="tarea-detalle-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando tarea...</p>
+    </div>
+  } @else if (task()) {
+    <div class="task-detail">
+      <!-- Header con botón de regreso -->
+      <div class="detail-header">
+        <button class="btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Volver a Tareas
+        </button>
+      </div>
+
+      <!-- Información principal de la tarea -->
+      <div class="task-info-card">
+        <div class="task-header-info">
+          <div class="task-course-info">
+            <div class="course-badge-wrapper">
+              <i class="fas fa-book"></i>
+              <span class="course-badge">{{ task()!.courseCode }}</span>
+            </div>
+            <div class="course-details">
+              <span class="course-name">{{ task()!.course }}</span>
+              <span class="teacher-name">
+                <i class="fas fa-chalkboard-teacher"></i>
+                {{ task()!.teacher }}
+              </span>
+            </div>
+          </div>
+          <span class="badge" 
+            [class.badge-warning]="task()!.status === 'pendiente'"
+            [class.badge-error]="task()!.status === 'vencida'"
+            [class.badge-success]="task()!.status === 'entregada'"
+            [class.badge-info]="task()!.status === 'en-revision'">
+            @if (task()!.status === 'pendiente') { Pendiente }
+            @if (task()!.status === 'vencida') { Vencida }
+            @if (task()!.status === 'entregada') { Entregada }
+            @if (task()!.status === 'en-revision') { En Revisión }
+          </span>
+        </div>
+
+        <h1 class="task-title">{{ task()!.name }}</h1>
+
+        <div class="task-meta">
+          <div class="meta-item">
+            <div class="meta-icon-wrapper">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="meta-content">
+              <span class="meta-label">Fecha límite</span>
+              <span class="meta-value" [class.overdue]="task()!.status === 'vencida'">
+                {{ task()!.dueDate }}
+              </span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-icon-wrapper">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="meta-content">
+              <span class="meta-label">Asignada</span>
+              <span class="meta-value">{{ task()!.assignedDate }}</span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-icon-wrapper">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="meta-content">
+              <span class="meta-label">Puntos</span>
+              <span class="meta-value">{{ task()!.points }}</span>
+            </div>
+          </div>
+          @if (task()!.grade) {
+            <div class="meta-item">
+              <div class="meta-icon-wrapper success">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Calificación</span>
+                <span class="meta-value grade">{{ task()!.grade }} / {{ task()!.points }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Descripción e Instrucciones -->
+      <div class="info-section">
+        <h2 class="section-title">
+          <i class="fas fa-info-circle"></i>
+          Descripción
+        </h2>
+        <div class="section-content">
+          <p>{{ task()!.description }}</p>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h2 class="section-title">
+          <i class="fas fa-list-ol"></i>
+          Instrucciones
+        </h2>
+        <div class="section-content" [innerHTML]="task()!.instructions"></div>
+      </div>
+
+      <!-- Materiales de Referencia -->
+      @if (task()!.materials && task()!.materials.length > 0) {
+        <div class="info-section">
+          <h2 class="section-title">
+            <i class="fas fa-paperclip"></i>
+            Materiales de Referencia
+          </h2>
+          <div class="materials-list">
+            @for (material of task()!.materials; track material.id) {
+              <div class="material-item">
+                <div class="material-icon">
+                  @if (material.type === 'PDF') {
+                    <i class="fas fa-file-pdf"></i>
+                  } @else if (material.type === 'Video') {
+                    <i class="fas fa-file-video"></i>
+                  } @else {
+                    <i class="fas fa-file"></i>
+                  }
+                </div>
+                <div class="material-info">
+                  <span class="material-name">{{ material.name }}</span>
+                  <span class="material-meta">{{ material.type }} • {{ material.size }}</span>
+                </div>
+                <button class="btn-download" (click)="downloadMaterial(material)">
+                  <i class="fas fa-download"></i>
+                  Descargar
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Rúbrica -->
+      @if (task()!.rubric && task()!.rubric!.length > 0) {
+        @let rubric = task()!.rubric!;
+        <div class="info-section">
+          <h2 class="section-title">
+            <i class="fas fa-clipboard-list"></i>
+            Rúbrica de Evaluación
+          </h2>
+          <div class="rubric-list">
+            @for (item of rubric; track item.criterion) {
+              <div class="rubric-item">
+                <div class="rubric-header">
+                  <span class="rubric-criterion">{{ item.criterion }}</span>
+                  <span class="rubric-points">{{ item.points }} pts</span>
+                </div>
+                <p class="rubric-description">{{ item.description }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Área de Entrega -->
+      @if (canEdit()) {
+        <div class="submission-section">
+          <h2 class="section-title">
+            <i class="fas fa-paper-plane"></i>
+            Entregar Tarea
+          </h2>
+          <div class="submission-form">
+            <div class="form-group">
+              <label for="submission-text" class="form-label">Respuesta / Comentarios</label>
+              <textarea
+                id="submission-text"
+                class="form-textarea"
+                rows="8"
+                placeholder="Escribe tu respuesta aquí..."
+                [(ngModel)]="submissionText"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="file-upload" class="form-label">Archivos Adjuntos</label>
+              <div class="file-upload-area">
+                <input
+                  type="file"
+                  id="file-upload"
+                  class="file-input"
+                  multiple
+                  (change)="onFileSelected($event)"
+                />
+                <label for="file-upload" class="file-upload-label">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                  <span>Haz clic para seleccionar archivos o arrastra aquí</span>
+                  <small>Formatos permitidos: PDF, DOC, DOCX, JPG, PNG (Máx. 10MB por archivo)</small>
+                </label>
+              </div>
+
+              @if (uploadedFiles().length > 0) {
+                <div class="uploaded-files">
+                  @for (file of uploadedFiles(); track $index) {
+                    <div class="uploaded-file-item">
+                      <i class="fas fa-file"></i>
+                      <span class="file-name">{{ file.name }}</span>
+                      <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                      <button class="btn-remove-file" (click)="removeFile($index)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="submission-actions">
+              <button class="btn btn-primary btn-large" (click)="openSubmitConfirmation()" [disabled]="isSubmitting()">
+                @if (isSubmitting()) {
+                  <span class="spinner"></span>
+                  <span>Enviando...</span>
+                } @else {
+                  <i class="fas fa-paper-plane"></i>
+                  <span>Entregar Tarea</span>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Entrega Actual / Historial -->
+      @if (task()!.submission) {
+        <div class="submission-section">
+          <h2 class="section-title">
+            <i class="fas fa-check-circle"></i>
+            Mi Entrega
+          </h2>
+          <div class="submission-display">
+            <div class="submission-meta">
+              <span class="submission-date">
+                <i class="fas fa-clock"></i>
+                Entregada el {{ task()!.submission!.submittedAt | date:'short' }}
+              </span>
+              @if (task()!.submission!.status === 'graded') {
+                <span class="submission-status graded">
+                  <i class="fas fa-check-double"></i>
+                  Calificada
+                </span>
+              } @else {
+                <span class="submission-status pending">
+                  <i class="fas fa-hourglass-half"></i>
+                  En Revisión
+                </span>
+              }
+            </div>
+
+            <div class="submission-content">
+              <h3 class="submission-content-title">Respuesta:</h3>
+              <p class="submission-text">{{ task()!.submission!.text }}</p>
+            </div>
+
+            @if (task()!.submission!.files && task()!.submission!.files.length > 0) {
+              <div class="submission-files">
+                <h3 class="submission-content-title">Archivos Adjuntos:</h3>
+                <div class="files-list">
+                  @for (file of task()!.submission!.files; track file.id) {
+                    <div class="file-item">
+                      <i class="fas fa-file"></i>
+                      <span class="file-name">{{ file.name }}</span>
+                      <span class="file-size">{{ file.size }}</span>
+                      <a [href]="file.url" class="btn-download-small" download>
+                        <i class="fas fa-download"></i>
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (task()!.submission!.grade !== undefined) {
+              <div class="submission-grade">
+                <div class="grade-display">
+                  <span class="grade-label">Calificación:</span>
+                  <span class="grade-value">{{ task()!.submission!.grade }} / {{ task()!.points }}</span>
+                </div>
+              </div>
+            }
+
+            @if (task()!.submission!.feedback) {
+              <div class="submission-feedback">
+                <h3 class="submission-content-title">Retroalimentación del Docente:</h3>
+                <p class="feedback-text">{{ task()!.submission!.feedback }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal de Confirmación -->
+  @if (showSubmitConfirmation()) {
+    <div class="modal-overlay" (click)="cancelSubmit()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Confirmar Entrega</h3>
+          <button class="modal-close" (click)="cancelSubmit()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>¿Estás seguro de que deseas entregar esta tarea?</p>
+          <p class="modal-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Una vez entregada, no podrás modificarla.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cancelSubmit()">Cancelar</button>
+          <button class="btn btn-primary" (click)="submitTask()" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner"></span>
+              Enviando...
+            } @else {
+              Sí, Entregar
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

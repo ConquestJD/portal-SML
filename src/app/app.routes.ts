@@ -36,7 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'tareas/:id',
-        loadComponent: () => import('./pages/tareas/tareas.component').then(m => m.TareasComponent)
+        loadComponent: () => import('./pages/tareas/tarea-detalle/tarea-detalle.component').then(m => m.TareaDetalleComponent)
       },
       {
         path: 'notas',
@@ -49,6 +49,10 @@ export const routes: Routes = [
       {
         path: 'comunicados',
         loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+      },
+      {
+        path: 'comunicados/:id',
+        loadComponent: () => import('./pages/comunicados/comunicado-detalle/comunicado-detalle.component').then(m => m.ComunicadoDetalleComponent)
       },
       {
         path: 'configuracion',
