@@ -101,7 +101,7 @@
           <a [routerLink]="['/profesor/cursos', task.courseId, 'tareas', task.id]" class="btn btn-primary btn-sm">
             <i class="fas fa-edit"></i> Editar
           </a>
-          <a [routerLink]="['/profesor/cursos', task.courseId, 'tareas', task.id]" [queryParams]="{action: 'entregas'}" class="btn btn-secondary btn-sm">
+          <a [routerLink]="['/profesor/cursos', task.courseId, 'tareas', task.id, 'revisar']" class="btn btn-secondary btn-sm">
             <i class="fas fa-check"></i> Revisar ({{ task.submitted }})
           </a>
           <a [routerLink]="['/profesor/cursos', task.courseId]" class="btn btn-sm btn-outline">
