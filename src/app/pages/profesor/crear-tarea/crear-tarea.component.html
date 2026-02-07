@@ -86,6 +86,11 @@
         <div class="form-group">
           <label for="points" class="form-label">
             Nota Máxima
+            @if (rubricCriteria().length > 0) {
+              <span class="auto-sync-badge">
+                <i class="fas fa-sync-alt"></i> Sincronizado con rúbrica
+              </span>
+            }
           </label>
           <input
             type="number"
@@ -94,13 +99,19 @@
             class="form-input"
             [ngModel]="points()"
             (ngModelChange)="points.set(+$event)"
+            [readonly]="rubricCriteria().length > 0"
             min="1"
             max="20"
             placeholder="20"
+            [class.readonly-input]="rubricCriteria().length > 0"
           />
           <p class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Nota máxima: 20 puntos (sistema de calificación peruano)
+            @if (rubricCriteria().length > 0) {
+              La nota máxima se actualiza automáticamente según la suma de los criterios de la rúbrica ({{ totalRubricPoints() }} / 20)
+            } @else {
+              Nota máxima: 20 puntos (sistema de calificación peruano)
+            }
           </p>
         </div>
       </div>

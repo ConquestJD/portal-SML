@@ -114,6 +114,7 @@ export class CrearTareaComponent {
     return this.rubricCriteria().reduce((sum, criterion) => sum + criterion.points, 0);
   });
 
+
   canSave = computed(() => {
     const hasRequiredFields = this.title().trim().length > 0 && 
                               this.instructions().trim().length > 0 && 
@@ -132,13 +133,10 @@ export class CrearTareaComponent {
     };
     this.rubricCriteria.update(criteria => [...criteria, newCriterion]);
     this.showRubricBuilder.set(true);
+    // Actualizar puntos después de agregar un criterio
+    this.updatePointsFromRubric();
   }
 
-  removeRubricCriterion(id: string) {
-    this.rubricCriteria.update(criteria => 
-      criteria.filter(c => c.id !== id)
-    );
-  }
 
   updateCriterion(id: string, field: 'name' | 'description' | 'points', value: string | number) {
     if (field === 'points') {
@@ -157,10 +155,35 @@ export class CrearTareaComponent {
       this.rubricCriteria.update(criteria =>
         criteria.map(c => c.id === id ? { ...c, [field]: limitedValue } : c)
       );
+      
+      // Actualizar automáticamente los puntos de la tarea con la suma de la rúbrica
+      this.updatePointsFromRubric();
     } else {
       this.rubricCriteria.update(criteria =>
         criteria.map(c => c.id === id ? { ...c, [field]: value } : c)
       );
+    }
+  }
+
+  removeRubricCriterion(id: string) {
+    this.rubricCriteria.update(criteria => 
+      criteria.filter(c => c.id !== id)
+    );
+    // Actualizar puntos después de eliminar un criterio
+    this.updatePointsFromRubric();
+  }
+
+  private updatePointsFromRubric() {
+    const total = this.totalRubricPoints();
+    if (this.rubricCriteria().length > 0) {
+      // Siempre actualizar los puntos con la suma de la rúbrica
+      // Si el total es 0, mantenerlo en 0 hasta que se asignen puntos
+      if (total > 0 && total <= 20) {
+        this.points.set(total);
+      } else if (total === 0) {
+        // Si todos los criterios tienen 0 puntos, mantener el valor por defecto o 0
+        this.points.set(0);
+      }
     }
   }
 
