@@ -1,6 +1,7 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 interface Announcement {
   id: string;
@@ -23,6 +24,8 @@ interface Announcement {
 export class ComunicadosComponent {
   filter = signal<'todos' | 'institucionales' | 'grado' | 'seccion' | 'urgentes'>('todos');
   searchQuery = signal('');
+
+  constructor(private router: Router) {}
 
   announcements = signal<Announcement[]>([
     {
@@ -93,5 +96,9 @@ export class ComunicadosComponent {
       announcements.map(a => a.id === id ? { ...a, read: true } : a)
     );
     this.applyFilters();
+  }
+
+  viewDetail(id: string) {
+    this.router.navigate(['/comunicados', id]);
   }
 }

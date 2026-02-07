@@ -1,0 +1,175 @@
+<div class="comunicado-detalle-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando comunicado...</p>
+    </div>
+  } @else if (comunicado()) {
+    <div class="comunicado-detail">
+      <!-- Header con botón de regreso -->
+      <div class="detail-header">
+        <button class="btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Volver a Comunicados
+        </button>
+      </div>
+
+      <!-- Información principal del comunicado -->
+      <div class="comunicado-info-card">
+        <div class="comunicado-header-info">
+          <div class="comunicado-badges">
+            <span class="badge" 
+              [class.badge-info]="comunicado()!.type === 'institucional'"
+              [class.badge-success]="comunicado()!.type === 'grado'"
+              [class.badge-warning]="comunicado()!.type === 'seccion'">
+              @if (comunicado()!.type === 'institucional') {
+                <i class="fas fa-school"></i> Institucional
+              } @else if (comunicado()!.type === 'grado') {
+                <i class="fas fa-book"></i> Grado
+              } @else {
+                <i class="fas fa-user"></i> Sección
+              }
+            </span>
+            @if (comunicado()!.priority === 'urgente') {
+              <span class="badge badge-error">
+                <i class="fas fa-exclamation-triangle"></i> Urgente
+              </span>
+            } @else if (comunicado()!.priority === 'importante') {
+              <span class="badge badge-warning">
+                <i class="fas fa-info-circle"></i> Importante
+              </span>
+            }
+            @if (!comunicado()!.read) {
+              <span class="badge badge-info">
+                <i class="fas fa-bullhorn"></i> Nuevo
+              </span>
+            }
+          </div>
+          <div class="comunicado-date-wrapper">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="comunicado-date">{{ comunicado()!.date }}</span>
+          </div>
+        </div>
+
+        <h1 class="comunicado-title">{{ comunicado()!.title }}</h1>
+
+        <div class="comunicado-meta">
+          <div class="meta-item">
+            <div class="meta-icon-wrapper">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="meta-content">
+              <span class="meta-label">Remitente</span>
+              <span class="meta-value">{{ comunicado()!.author.name }}</span>
+              <span class="meta-subvalue">{{ comunicado()!.author.role }}</span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-icon-wrapper">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="meta-content">
+              <span class="meta-label">Publicado</span>
+              <span class="meta-value">{{ comunicado()!.publishedAt | date:'short' }}</span>
+            </div>
+          </div>
+          @if (comunicado()!.recipients) {
+            <div class="meta-item">
+              <div class="meta-icon-wrapper">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Destinatarios</span>
+                @if (comunicado()!.recipients!.grade) {
+                  <span class="meta-value">{{ comunicado()!.recipients!.grade }}</span>
+                }
+                @if (comunicado()!.recipients!.section) {
+                  <span class="meta-subvalue">{{ comunicado()!.recipients!.section }}</span>
+                }
+              </div>
+            </div>
+          }
+          @if (comunicado()!.readDeadline) {
+            <div class="meta-item">
+              <div class="meta-icon-wrapper warning">
+                <i class="fas fa-calendar-times"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Fecha límite de lectura</span>
+                <span class="meta-value">{{ comunicado()!.readDeadline }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Contenido completo -->
+      <div class="info-section">
+        <h2 class="section-title">
+          <i class="fas fa-file-alt"></i>
+          Contenido
+        </h2>
+        <div class="section-content" [innerHTML]="comunicado()!.fullContent"></div>
+      </div>
+
+      <!-- Archivos Adjuntos -->
+      @if (comunicado()!.attachments && comunicado()!.attachments.length > 0) {
+        <div class="info-section">
+          <div class="section-header-with-action">
+            <h2 class="section-title">
+              <i class="fas fa-paperclip"></i>
+              Archivos Adjuntos
+            </h2>
+            <button class="btn btn-secondary" (click)="downloadAllAttachments()">
+              <i class="fas fa-download"></i>
+              Descargar Todos
+            </button>
+          </div>
+          <div class="attachments-list">
+            @for (attachment of comunicado()!.attachments; track attachment.id) {
+              <div class="attachment-item">
+                <div class="attachment-icon">
+                  @if (attachment.type === 'PDF') {
+                    <i class="fas fa-file-pdf"></i>
+                  } @else if (attachment.type === 'DOC' || attachment.type === 'DOCX') {
+                    <i class="fas fa-file-word"></i>
+                  } @else if (attachment.type === 'XLS' || attachment.type === 'XLSX') {
+                    <i class="fas fa-file-excel"></i>
+                  } @else if (attachment.type === 'JPG' || attachment.type === 'PNG' || attachment.type === 'IMG') {
+                    <i class="fas fa-file-image"></i>
+                  } @else {
+                    <i class="fas fa-file"></i>
+                  }
+                </div>
+                <div class="attachment-info">
+                  <span class="attachment-name">{{ attachment.name }}</span>
+                  <span class="attachment-meta">{{ attachment.type }} • {{ attachment.size }}</span>
+                </div>
+                <button class="btn-download" (click)="downloadAttachment(attachment)">
+                  <i class="fas fa-download"></i>
+                  Descargar
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Acciones -->
+      <div class="actions-section">
+        <div class="actions-group">
+          @if (!comunicado()!.read) {
+            <button class="btn btn-primary" (click)="markAsRead()">
+              <i class="fas fa-check-circle"></i>
+              Marcar como Leído
+            </button>
+          } @else {
+            <span class="read-indicator">
+              <i class="fas fa-check-circle"></i>
+              Leído
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

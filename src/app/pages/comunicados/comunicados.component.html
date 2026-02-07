@@ -88,7 +88,7 @@
           </div>
         </div>
         
-        <h3 class="announcement-title">{{ announcement.title }}</h3>
+        <h3 class="announcement-title" (click)="viewDetail(announcement.id)" style="cursor: pointer;">{{ announcement.title }}</h3>
         <p class="announcement-content">{{ announcement.content }}</p>
         
         <div class="announcement-footer">
@@ -100,11 +100,11 @@
             }
           </div>
           <div class="announcement-actions">
-            <button class="btn btn-primary btn-sm" (click)="markAsRead(announcement.id)">
+            <button class="btn btn-primary btn-sm" (click)="viewDetail(announcement.id)">
               <i class="fas fa-arrow-right"></i> Leer más
             </button>
             @if (!announcement.read) {
-              <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id)">
+              <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id); $event.stopPropagation()">
                 <i class="fas fa-check-circle"></i> Marcar como leído
               </button>
             }
