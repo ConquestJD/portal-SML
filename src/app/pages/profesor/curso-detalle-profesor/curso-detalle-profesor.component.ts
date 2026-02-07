@@ -2,11 +2,12 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { MensajeriaCursoComponent } from '../../mensajeria-curso/mensajeria-curso.component';
 
 @Component({
   selector: 'app-curso-detalle-profesor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MensajeriaCursoComponent],
   templateUrl: './curso-detalle-profesor.component.html',
   styleUrl: './curso-detalle-profesor.component.css'
 })
