@@ -85,7 +85,7 @@
 
         <div class="form-group">
           <label for="points" class="form-label">
-            Puntos Totales
+            Nota Máxima
           </label>
           <input
             type="number"
@@ -95,12 +95,12 @@
             [ngModel]="points()"
             (ngModelChange)="points.set(+$event)"
             min="1"
-            max="1000"
-            placeholder="100"
+            max="20"
+            placeholder="20"
           />
           <p class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Valor por defecto: 100 puntos
+            Nota máxima: 20 puntos (sistema de calificación peruano)
           </p>
         </div>
       </div>
@@ -243,21 +243,121 @@
           </div>
 
           <div class="form-group">
-            <label for="rubric" class="form-label">
-              Rúbrica de Evaluación
-            </label>
-            <textarea
-              id="rubric"
-              name="rubric"
-              class="form-input"
-              rows="6"
-              [ngModel]="rubric()"
-              (ngModelChange)="rubric.set($event)"
-              placeholder="Ejemplo:&#10;• Comprensión del tema: 30 puntos&#10;• Metodología: 25 puntos&#10;• Presentación: 20 puntos&#10;• Originalidad: 25 puntos"
-            ></textarea>
+            <div class="rubric-header">
+              <label class="form-label">
+                Rúbrica de Evaluación
+              </label>
+              <button 
+                type="button" 
+                class="btn btn-secondary btn-sm" 
+                (click)="addRubricCriterion()"
+              >
+                <i class="fas fa-plus"></i> Agregar Criterio
+              </button>
+            </div>
+            
+            @if (rubricCriteria().length === 0) {
+              <div class="rubric-empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No hay criterios de evaluación definidos</p>
+                <p class="rubric-empty-hint">Haz clic en "Agregar Criterio" para crear la rúbrica</p>
+              </div>
+            } @else {
+              <div class="rubric-builder">
+                <div class="rubric-criteria-list">
+                  @for (criterion of rubricCriteria(); track criterion.id) {
+                    <div class="rubric-criterion-item">
+                      <div class="criterion-header">
+                        <div class="criterion-number">{{ $index + 1 }}</div>
+                        <button 
+                          type="button" 
+                          class="btn-remove-criterion" 
+                          (click)="removeRubricCriterion(criterion.id)"
+                          title="Eliminar criterio"
+                        >
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                      
+                      <div class="criterion-fields">
+                        <div class="form-group">
+                          <label class="form-label-sm">Nombre del Criterio</label>
+                          <input
+                            type="text"
+                            class="form-input"
+                            [ngModel]="criterion.name"
+                            (ngModelChange)="updateCriterion(criterion.id, 'name', $event)"
+                            placeholder="Ej: Comprensión del tema"
+                          />
+                        </div>
+                        
+                        <div class="form-group">
+                          <label class="form-label-sm">Descripción</label>
+                          <textarea
+                            class="form-input"
+                            rows="2"
+                            [ngModel]="criterion.description"
+                            (ngModelChange)="updateCriterion(criterion.id, 'description', $event)"
+                            placeholder="Describe qué se evaluará en este criterio..."
+                          ></textarea>
+                        </div>
+                        
+                        <div class="criterion-points">
+                          <label class="form-label-sm">Puntos</label>
+                          <div class="points-input-wrapper">
+                            <input
+                              type="number"
+                              class="form-input points-input"
+                              [ngModel]="criterion.points"
+                              (ngModelChange)="updateCriterion(criterion.id, 'points', +$event)"
+                              [max]="20 - (totalRubricPoints() - criterion.points)"
+                              min="0"
+                              placeholder="0"
+                            />
+                            <span class="points-label">/ 20</span>
+                          </div>
+                          @if (20 - (totalRubricPoints() - criterion.points) < 20) {
+                            <p class="points-hint">
+                              <i class="fas fa-info-circle"></i>
+                              Máximo disponible: {{ 20 - (totalRubricPoints() - criterion.points) }} puntos
+                            </p>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+                
+                <div class="rubric-summary">
+                  <div class="summary-item">
+                    <span class="summary-label">Total de Puntos:</span>
+                    <span class="summary-value" [class.summary-error]="totalRubricPoints() > 20">
+                      {{ totalRubricPoints() }} / 20
+                    </span>
+                  </div>
+                  @if (totalRubricPoints() > 20) {
+                    <div class="rubric-warning">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      <span>El total de puntos excede el máximo permitido (20). Ajusta los criterios.</span>
+                    </div>
+                  } @else if (totalRubricPoints() < 20 && rubricCriteria().length > 0) {
+                    <div class="rubric-info">
+                      <i class="fas fa-info-circle"></i>
+                      <span>Puedes agregar más criterios hasta completar 20 puntos.</span>
+                    </div>
+                  } @else if (totalRubricPoints() === 20) {
+                    <div class="rubric-success">
+                      <i class="fas fa-check-circle"></i>
+                      <span>¡Rúbrica completa! Total de puntos: 20/20</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+            
             <p class="form-hint">
               <i class="fas fa-lightbulb"></i>
-              Describe los criterios de evaluación y cómo se distribuyen los puntos. Esto ayuda a los estudiantes a entender cómo serán calificados.
+              Define los criterios de evaluación y asigna puntos a cada uno. La suma total debe ser 20 puntos.
             </p>
           </div>
         </div>

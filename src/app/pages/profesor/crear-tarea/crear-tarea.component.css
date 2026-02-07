@@ -527,6 +527,311 @@ textarea.form-input {
   flex-shrink: 0;
 }
 
+/* Rúbrica Mejorada - Diseño Amigable */
+.rubric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.btn-sm {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.btn-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.rubric-empty-state {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: linear-gradient(135deg, rgba(0, 51, 102, 0.02) 0%, rgba(0, 51, 102, 0.05) 100%);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-lg);
+  color: var(--text-secondary);
+  transition: all 0.3s;
+}
+
+.rubric-empty-state:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(0, 51, 102, 0.05) 0%, rgba(0, 51, 102, 0.08) 100%);
+}
+
+.rubric-empty-state i {
+  font-size: var(--font-size-4xl);
+  color: var(--primary);
+  margin-bottom: var(--spacing-md);
+  opacity: 0.6;
+  display: block;
+}
+
+.rubric-empty-state p {
+  margin: var(--spacing-xs) 0;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.rubric-empty-hint {
+  font-size: var(--font-size-sm) !important;
+  color: var(--text-tertiary) !important;
+  font-style: italic;
+}
+
+.rubric-builder {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+}
+
+.rubric-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.rubric-criterion-item {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--primary);
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.rubric-criterion-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.criterion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.criterion-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.btn-remove-criterion {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(196, 30, 58, 0.1);
+  border: 1px solid rgba(196, 30, 58, 0.2);
+  color: var(--error);
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove-criterion:hover {
+  background: var(--error);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(196, 30, 58, 0.3);
+}
+
+.criterion-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.criterion-points {
+  grid-column: 1 / -1;
+  background: var(--bg-secondary);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.form-label-sm {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.points-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--bg-primary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--primary);
+  max-width: 120px;
+}
+
+.points-input {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  padding: 0;
+}
+
+.points-input:focus {
+  outline: none;
+}
+
+.points-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  padding-left: var(--spacing-xs);
+  border-left: 1px solid var(--border-color);
+}
+
+.points-hint {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.points-hint i {
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+}
+
+.rubric-summary {
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, rgba(0, 51, 102, 0.05) 0%, rgba(0, 51, 102, 0.02) 100%);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--border-color);
+  margin-top: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+.summary-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.summary-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.summary-value {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: var(--font-size-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: rgba(0, 51, 102, 0.05);
+  border-radius: var(--border-radius);
+}
+
+.summary-value.summary-error {
+  color: var(--error);
+  background: rgba(196, 30, 58, 0.1);
+}
+
+.rubric-warning,
+.rubric-info,
+.rubric-success {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-md);
+  line-height: 1.6;
+  box-shadow: var(--shadow-sm);
+}
+
+.rubric-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.4);
+  color: var(--warning);
+}
+
+.rubric-info {
+  background: linear-gradient(135deg, rgba(0, 51, 102, 0.08) 0%, rgba(0, 51, 102, 0.03) 100%);
+  border: 2px solid rgba(0, 51, 102, 0.3);
+  color: var(--primary);
+}
+
+.rubric-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  color: var(--success);
+}
+
+.rubric-warning i,
+.rubric-info i,
+.rubric-success i {
+  flex-shrink: 0;
+  font-size: var(--font-size-xl);
+  margin-top: 2px;
+}
+
 @media (max-width: 768px) {
   .crear-tarea-container {
     padding: var(--spacing-md);
@@ -551,5 +856,24 @@ textarea.form-input {
 
   .form-section.essential {
     padding-left: var(--spacing-lg);
+  }
+
+  .criterion-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .criterion-points {
+    grid-column: 1;
+  }
+
+  .rubric-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .rubric-header .btn {
+    width: 100%;
+    justify-content: center;
   }
 }

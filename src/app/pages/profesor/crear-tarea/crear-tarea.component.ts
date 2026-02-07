@@ -11,6 +11,13 @@ interface AttachmentFile {
   file: File;
 }
 
+interface RubricCriterion {
+  id: string;
+  name: string;
+  description: string;
+  points: number;
+}
+
 @Component({
   selector: 'app-crear-tarea',
   standalone: true,
@@ -28,13 +35,16 @@ export class CrearTareaComponent {
   title = signal('');
   instructions = signal('');
   dueDate = signal('');
-  points = signal(100);
+  points = signal(20);
   deliveryType = signal<'archivo' | 'texto' | 'ambos'>('archivo');
   
   // Opciones avanzadas (colapsables)
   showAdvanced = signal(false);
   allowLateDelivery = signal(false);
-  rubric = signal('');
+  
+  // Rúbrica mejorada
+  rubricCriteria = signal<RubricCriterion[]>([]);
+  showRubricBuilder = signal(false);
   
   // Archivos adjuntos
   attachments = signal<AttachmentFile[]>([]);
@@ -100,11 +110,67 @@ export class CrearTareaComponent {
     this.showAdvanced.update(val => !val);
   }
 
-  canSave = computed(() => {
-    return this.title().trim().length > 0 && 
-           this.instructions().trim().length > 0 && 
-           this.dueDate().length > 0;
+  totalRubricPoints = computed(() => {
+    return this.rubricCriteria().reduce((sum, criterion) => sum + criterion.points, 0);
   });
+
+  canSave = computed(() => {
+    const hasRequiredFields = this.title().trim().length > 0 && 
+                              this.instructions().trim().length > 0 && 
+                              this.dueDate().length > 0;
+    const rubricValid = this.rubricCriteria().length === 0 || 
+                       (this.totalRubricPoints() > 0 && this.totalRubricPoints() <= 20);
+    return hasRequiredFields && rubricValid;
+  });
+
+  addRubricCriterion() {
+    const newCriterion: RubricCriterion = {
+      id: Date.now().toString() + Math.random(),
+      name: '',
+      description: '',
+      points: 0
+    };
+    this.rubricCriteria.update(criteria => [...criteria, newCriterion]);
+    this.showRubricBuilder.set(true);
+  }
+
+  removeRubricCriterion(id: string) {
+    this.rubricCriteria.update(criteria => 
+      criteria.filter(c => c.id !== id)
+    );
+  }
+
+  updateCriterion(id: string, field: 'name' | 'description' | 'points', value: string | number) {
+    if (field === 'points') {
+      const numValue = +value;
+      // Obtener puntos actuales de otros criterios
+      const otherPoints = this.rubricCriteria()
+        .filter(c => c.id !== id)
+        .reduce((sum, c) => sum + c.points, 0);
+      
+      // Calcular máximo permitido para este criterio
+      const maxAllowed = 20 - otherPoints;
+      
+      // Limitar el valor al máximo permitido
+      const limitedValue = Math.min(Math.max(0, numValue), maxAllowed);
+      
+      this.rubricCriteria.update(criteria =>
+        criteria.map(c => c.id === id ? { ...c, [field]: limitedValue } : c)
+      );
+    } else {
+      this.rubricCriteria.update(criteria =>
+        criteria.map(c => c.id === id ? { ...c, [field]: value } : c)
+      );
+    }
+  }
+
+  getRubricText(): string {
+    if (this.rubricCriteria().length === 0) return '';
+    
+    return this.rubricCriteria()
+      .map(c => `• ${c.name}: ${c.points} puntos\n  ${c.description || 'Sin descripción'}`)
+      .join('\n\n');
+  }
 
   saveTask() {
     if (!this.canSave()) {
@@ -120,7 +186,10 @@ export class CrearTareaComponent {
       points: this.points(),
       deliveryType: this.deliveryType(),
       allowLateDelivery: this.allowLateDelivery(),
-      rubric: this.rubric() || undefined,
+      rubric: this.rubricCriteria().length > 0 ? {
+        criteria: this.rubricCriteria(),
+        totalPoints: this.totalRubricPoints()
+      } : undefined,
       attachments: this.attachments().map(att => ({
         name: att.name,
         size: att.size,
