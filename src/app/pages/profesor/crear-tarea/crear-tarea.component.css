@@ -821,6 +821,48 @@ textarea.form-input {
   background: rgba(196, 30, 58, 0.1);
 }
 
+.summary-value.summary-synced {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.summary-value.summary-synced i {
+  margin-left: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  animation: spin-slow 2s linear infinite;
+}
+
+.summary-value.summary-success {
+  color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.points-sync {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+.summary-item.highlight {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.summary-item.highlight .summary-label {
+  color: white;
+}
+
+.summary-item.highlight .summary-label i {
+  color: white;
+}
+
+.summary-item.highlight .summary-value {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .rubric-warning,
 .rubric-info,
 .rubric-success {
