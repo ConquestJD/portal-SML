@@ -88,6 +88,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profesor/marcar-asistencia/marcar-asistencia.component').then(m => m.MarcarAsistenciaComponent)
       },
       {
+        path: 'profesor/cursos/:courseId/materiales/:materialId',
+        loadComponent: () => import('./pages/profesor/subir-material/subir-material.component').then(m => m.SubirMaterialComponent)
+      },
+      {
         path: 'profesor/tareas',
         loadComponent: () => import('./pages/profesor/tareas-profesor/tareas-profesor.component').then(m => m.TareasProfesorComponent)
       },

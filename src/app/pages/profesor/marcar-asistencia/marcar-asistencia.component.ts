@@ -27,7 +27,7 @@ interface Course {
 @Component({
   selector: 'app-marcar-asistencia',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './marcar-asistencia.component.html',
   styleUrl: './marcar-asistencia.component.css'
 })

@@ -1,0 +1,242 @@
+<div class="subir-material-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando información del curso...</p>
+    </div>
+  } @else {
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a (click)="cancel()" class="breadcrumb-link">
+        <i class="fas fa-arrow-left"></i> Volver al Curso
+      </a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">
+        @if (isEditMode()) {
+          Editar Material
+        } @else {
+          Subir Material
+        }
+      </span>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          @if (isEditMode()) {
+            Editar Material del Curso
+          } @else {
+            Subir Material del Curso
+          }
+        </h1>
+        <p class="page-subtitle">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</p>
+      </div>
+    </div>
+
+    <!-- Add Unit Section -->
+    <div class="add-unit-section">
+      <h2 class="section-title">
+        <i class="fas fa-layer-group"></i>
+        Unidades del Material
+      </h2>
+      <div class="add-unit-form">
+        <div class="form-group">
+          <label class="form-label">Nombre de la Unidad</label>
+          <input
+            type="text"
+            class="form-input"
+            [ngModel]="newUnitName()"
+            (ngModelChange)="newUnitName.set($event)"
+            placeholder="Ej: Unidad 1: Álgebra Básica"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción (Opcional)</label>
+          <textarea
+            class="form-input"
+            rows="2"
+            [ngModel]="newUnitDescription()"
+            (ngModelChange)="newUnitDescription.set($event)"
+            placeholder="Describe brevemente el contenido de esta unidad..."
+          ></textarea>
+        </div>
+        <button class="btn btn-primary" (click)="addUnit()" [disabled]="!newUnitName().trim()">
+          <i class="fas fa-plus"></i> Agregar Unidad
+        </button>
+      </div>
+    </div>
+
+    <!-- Units List -->
+    @if (units().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-layer-group empty-icon"></i>
+        <h2>No hay unidades creadas</h2>
+        <p>Comienza agregando una unidad para organizar tus materiales.</p>
+      </div>
+    } @else {
+      <div class="units-list">
+        @for (unit of units(); track unit.id) {
+          <div class="unit-card">
+            <div class="unit-header" (click)="toggleUnit(unit.id)">
+              <div class="unit-info">
+                <div class="unit-number">{{ $index + 1 }}</div>
+                <div class="unit-details">
+                  <h3 class="unit-name">{{ unit.name }}</h3>
+                  @if (unit.description) {
+                    <p class="unit-description">{{ unit.description }}</p>
+                  }
+                  <div class="unit-meta">
+                    <span class="meta-item">
+                      <i class="fas fa-file"></i>
+                      {{ unit.materials.length }} material(es)
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="unit-actions-header">
+                <i class="fas fa-chevron-down unit-toggle-icon" [class.rotated]="unit.expanded()"></i>
+                <button 
+                  class="btn btn-sm btn-danger"
+                  (click)="removeUnit(unit.id); $event.stopPropagation()"
+                  title="Eliminar unidad"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            @if (unit.expanded()) {
+              <div class="unit-content">
+                <!-- Add Materials Section -->
+                <div class="add-materials-section">
+                  <h4 class="subsection-title">
+                    <i class="fas fa-upload"></i>
+                    Agregar Materiales a esta Unidad
+                  </h4>
+                  
+                  <div class="add-materials-options">
+                    <!-- Upload File -->
+                    <div class="upload-option">
+                      <label class="upload-label">
+                        <i class="fas fa-file-upload"></i>
+                        Subir Archivo
+                        <input
+                          type="file"
+                          class="file-input"
+                          (change)="onFileSelected($event, unit.id)"
+                          multiple
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3"
+                        />
+                      </label>
+                      <p class="upload-hint">PDF, Word, PowerPoint, Excel, Imágenes, Videos</p>
+                    </div>
+
+                    <!-- Add Link -->
+                    <div class="link-option">
+                      <div class="form-group">
+                        <label class="form-label-sm">Agregar Enlace</label>
+                        <div class="link-input-group">
+                          <input
+                            type="text"
+                            class="form-input"
+                            #linkNameInput
+                            placeholder="Nombre del enlace"
+                          />
+                          <input
+                            type="url"
+                            class="form-input"
+                            #linkUrlInput
+                            placeholder="https://..."
+                          />
+                          <button
+                            class="btn btn-secondary"
+                            (click)="addLink(unit.id, linkNameInput.value, linkUrlInput.value); linkNameInput.value = ''; linkUrlInput.value = ''"
+                          >
+                            <i class="fas fa-link"></i> Agregar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Materials List -->
+                @if (unit.materials.length === 0) {
+                  <div class="empty-materials">
+                    <i class="fas fa-inbox"></i>
+                    <p>No hay materiales en esta unidad</p>
+                    <p class="hint">Sube archivos o agrega enlaces para comenzar</p>
+                  </div>
+                } @else {
+                  <div class="materials-list">
+                    <h4 class="subsection-title">
+                      <i class="fas fa-list"></i>
+                      Materiales de la Unidad ({{ unit.materials.length }})
+                    </h4>
+                    <div class="materials-grid">
+                      @for (material of unit.materials; track material.id) {
+                        <div class="material-item">
+                          <div class="material-icon-wrapper" [class.link]="material.isLink">
+                            <i class="fas" [ngClass]="getFileTypeIcon(material.type)"></i>
+                          </div>
+                          <div class="material-info">
+                            <h5 class="material-name">{{ material.name }}</h5>
+                            <div class="material-meta">
+                              @if (material.isLink) {
+                                <span class="material-type">
+                                  <i class="fas fa-link"></i> Enlace
+                                </span>
+                                <span class="material-url">{{ material.url }}</span>
+                              } @else {
+                                <span class="material-type">{{ material.type.split('/')[1]?.toUpperCase() || 'Archivo' }}</span>
+                                <span class="material-separator">•</span>
+                                <span class="material-size">{{ formatFileSize(material.size) }}</span>
+                              }
+                            </div>
+                          </div>
+                          <button
+                            class="btn btn-sm btn-danger"
+                            (click)="removeMaterial(unit.id, material.id)"
+                            title="Eliminar material"
+                          >
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Footer Actions -->
+    <div class="footer-actions">
+      <button class="btn btn-outline" (click)="cancel()">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="saveMaterial()"
+        [disabled]="!canSave() || isSaving()"
+      >
+        @if (isSaving()) {
+          <i class="fas fa-spinner fa-spin"></i> Guardando...
+        } @else {
+          <i class="fas fa-save"></i> Guardar Material
+        }
+      </button>
+    </div>
+
+    @if (!canSave() && units().length > 0) {
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Todas las unidades deben tener al menos un material antes de guardar.</span>
+      </div>
+    }
+  }
+</div>
