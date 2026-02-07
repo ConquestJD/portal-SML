@@ -1,70 +1,77 @@
 <div class="crear-tarea-container">
   <div class="breadcrumb">
-    <a [routerLink]="['/profesor/cursos', courseId()]" class="breadcrumb-link">
+    <button class="btn-back" (click)="cancel()">
       <i class="fas fa-arrow-left"></i> Volver al Curso
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <a [routerLink]="['/profesor/cursos', courseId()]" class="breadcrumb-link">Tareas</a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ isEditMode() ? 'Editar Tarea' : 'Nueva Tarea' }}</span>
+    </button>
   </div>
 
   <div class="page-header">
-    <h1 class="page-title">{{ isEditMode() ? 'Editar Tarea' : 'Crear Nueva Tarea' }}</h1>
+    <h1 class="page-title">
+      <i class="fas fa-plus-circle"></i>
+      {{ isEditMode() ? 'Editar Tarea' : 'Crear Nueva Tarea' }}
+    </h1>
+    <p class="page-subtitle">Completa los campos esenciales para crear la tarea. Los campos opcionales están al final.</p>
   </div>
 
   <form (ngSubmit)="saveTask()" class="task-form">
-    <div class="form-section">
-      <h2 class="section-title">Información Básica</h2>
+    <!-- Campos Esenciales -->
+    <div class="form-section essential">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-info-circle"></i>
+          Información Esencial
+        </h2>
+        <span class="section-badge">Requerido</span>
+      </div>
       
       <div class="form-group">
-        <label for="title" class="form-label">Título de la Tarea *</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            class="form-input"
-            [ngModel]="title()"
-            (ngModelChange)="title.set($event)"
-            placeholder="Ej: Tarea 1 - Álgebra Lineal"
-            required
-          />
+        <label for="title" class="form-label">
+          Título de la Tarea
+          <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-input"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="Ej: Tarea 1 - Resolución de Ecuaciones"
+          required
+        />
+        <p class="form-hint">
+          <i class="fas fa-lightbulb"></i>
+          Usa un título claro y descriptivo para que los estudiantes identifiquen fácilmente la tarea
+        </p>
       </div>
 
       <div class="form-group">
-        <label for="description" class="form-label">Descripción</label>
-          <textarea
-            id="description"
-            name="description"
-            class="form-input"
-            rows="3"
-            [ngModel]="description()"
-            (ngModelChange)="description.set($event)"
-            placeholder="Breve descripción de la tarea"
-          ></textarea>
+        <label for="instructions" class="form-label">
+          Instrucciones para los Estudiantes
+          <span class="required">*</span>
+        </label>
+        <textarea
+          id="instructions"
+          name="instructions"
+          class="form-input"
+          rows="8"
+          [ngModel]="instructions()"
+          (ngModelChange)="instructions.set($event)"
+          placeholder="Describe claramente qué deben hacer los estudiantes. Puedes incluir pasos, ejemplos o cualquier información relevante..."
+          required
+        ></textarea>
+        <p class="form-hint">
+          <i class="fas fa-lightbulb"></i>
+          Sé específico y claro. Los estudiantes agradecerán instrucciones detalladas
+        </p>
       </div>
 
-      <div class="form-group">
-        <label for="instructions" class="form-label">Instrucciones Detalladas *</label>
-          <textarea
-            id="instructions"
-            name="instructions"
-            class="form-input"
-            rows="6"
-            [ngModel]="instructions()"
-            (ngModelChange)="instructions.set($event)"
-            placeholder="Instrucciones completas para los estudiantes..."
-            required
-          ></textarea>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <h2 class="section-title">Configuración de Entrega</h2>
-      
       <div class="form-row">
         <div class="form-group">
-          <label for="dueDate" class="form-label">Fecha Límite *</label>
+          <label for="dueDate" class="form-label">
+            Fecha y Hora Límite
+            <span class="required">*</span>
+          </label>
           <input
             type="datetime-local"
             id="dueDate"
@@ -77,73 +84,211 @@
         </div>
 
         <div class="form-group">
-          <label for="deliveryType" class="form-label">Tipo de Entrega *</label>
-          <select
-            id="deliveryType"
-            name="deliveryType"
+          <label for="points" class="form-label">
+            Puntos Totales
+          </label>
+          <input
+            type="number"
+            id="points"
+            name="points"
             class="form-input"
-            [ngModel]="deliveryType()"
-            (ngModelChange)="deliveryType.set($event)"
-            required
-          >
-            <option value="archivo">Archivo</option>
-            <option value="texto">Texto en línea</option>
-            <option value="link">Enlace</option>
-          </select>
+            [ngModel]="points()"
+            (ngModelChange)="points.set(+$event)"
+            min="1"
+            max="1000"
+            placeholder="100"
+          />
+          <p class="form-hint">
+            <i class="fas fa-info-circle"></i>
+            Valor por defecto: 100 puntos
+          </p>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            name="allowLateDelivery"
-            [ngModel]="allowLateDelivery()"
-            (ngModelChange)="allowLateDelivery.set($event)"
-          />
-          <span>Permitir entregas tardías</span>
+        <label for="deliveryType" class="form-label">
+          Tipo de Entrega
         </label>
+        <div class="delivery-type-options">
+          <label class="delivery-option" [class.active]="deliveryType() === 'archivo'">
+            <input
+              type="radio"
+              name="deliveryType"
+              value="archivo"
+              [ngModel]="deliveryType()"
+              (ngModelChange)="deliveryType.set($event)"
+            />
+            <div class="option-content">
+              <i class="fas fa-file"></i>
+              <span>Archivo</span>
+              <small>PDF, Word, imágenes, etc.</small>
+            </div>
+          </label>
+          <label class="delivery-option" [class.active]="deliveryType() === 'texto'">
+            <input
+              type="radio"
+              name="deliveryType"
+              value="texto"
+              [ngModel]="deliveryType()"
+              (ngModelChange)="deliveryType.set($event)"
+            />
+            <div class="option-content">
+              <i class="fas fa-keyboard"></i>
+              <span>Texto en línea</span>
+              <small>Respuesta escrita directamente</small>
+            </div>
+          </label>
+          <label class="delivery-option" [class.active]="deliveryType() === 'ambos'">
+            <input
+              type="radio"
+              name="deliveryType"
+              value="ambos"
+              [ngModel]="deliveryType()"
+              (ngModelChange)="deliveryType.set($event)"
+            />
+            <div class="option-content">
+              <i class="fas fa-check-double"></i>
+              <span>Ambos</span>
+              <small>Archivo y texto</small>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
 
+    <!-- Archivos Adjuntos -->
     <div class="form-section">
-      <h2 class="section-title">Rúbrica y Criterios</h2>
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-paperclip"></i>
+          Materiales de Referencia
+        </h2>
+        <span class="section-badge optional">Opcional</span>
+      </div>
       
       <div class="form-group">
-        <label for="rubric" class="form-label">Rúbrica de Evaluación</label>
-          <textarea
-            id="rubric"
-            name="rubric"
-            class="form-input"
-            rows="8"
-            [ngModel]="rubric()"
-            (ngModelChange)="rubric.set($event)"
-            placeholder="Describe los criterios de evaluación y la rúbrica..."
-          ></textarea>
+        <div class="file-upload-area">
+          <input
+            type="file"
+            id="file-upload"
+            class="file-input"
+            multiple
+            (change)="onFileSelected($event)"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+          />
+          <label for="file-upload" class="file-upload-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Haz clic para seleccionar archivos o arrastra aquí</span>
+            <small>PDF, Word, PowerPoint, imágenes (Máx. 10MB por archivo)</small>
+          </label>
+        </div>
+
+        @if (attachments().length > 0) {
+          <div class="attachments-list">
+            @for (attachment of attachments(); track attachment.id) {
+              <div class="attachment-item">
+                <div class="attachment-icon">
+                  <i class="fas fa-file"></i>
+                </div>
+                <div class="attachment-info">
+                  <span class="attachment-name">{{ attachment.name }}</span>
+                  <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+                </div>
+                <button 
+                  type="button" 
+                  class="btn-remove-attachment" 
+                  (click)="removeAttachment(attachment.id)"
+                  title="Eliminar archivo"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
         <p class="form-hint">
-          <i class="fas fa-info-circle"></i> Especifica los criterios de evaluación y la escala de calificación
+          <i class="fas fa-info-circle"></i>
+          Puedes adjuntar plantillas, ejemplos, guías o cualquier material de referencia para los estudiantes
         </p>
       </div>
     </div>
 
-    <div class="form-section">
-      <h2 class="section-title">Archivos Adjuntos</h2>
-      
-      <div class="form-group">
-        <button type="button" class="btn btn-secondary" (click)="addAttachment()">
-          <i class="fas fa-paperclip"></i> Agregar Archivo
+    <!-- Opciones Avanzadas (Colapsable) -->
+    <div class="form-section advanced">
+      <div class="section-header clickable" (click)="toggleAdvanced()">
+        <h2 class="section-title">
+          <i class="fas fa-cog"></i>
+          Opciones Avanzadas
+        </h2>
+        <button type="button" class="toggle-advanced">
+          <i class="fas" [class.fa-chevron-down]="!showAdvanced()" [class.fa-chevron-up]="showAdvanced()"></i>
         </button>
-        <p class="form-hint">Puedes adjuntar archivos de referencia, plantillas o materiales adicionales</p>
       </div>
+
+      @if (showAdvanced()) {
+        <div class="advanced-content">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="allowLateDelivery"
+                [ngModel]="allowLateDelivery()"
+                (ngModelChange)="allowLateDelivery.set($event)"
+              />
+              <div class="checkbox-content">
+                <span class="checkbox-title">Permitir entregas tardías</span>
+                <span class="checkbox-description">Los estudiantes podrán entregar después de la fecha límite</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label for="rubric" class="form-label">
+              Rúbrica de Evaluación
+            </label>
+            <textarea
+              id="rubric"
+              name="rubric"
+              class="form-input"
+              rows="6"
+              [ngModel]="rubric()"
+              (ngModelChange)="rubric.set($event)"
+              placeholder="Ejemplo:&#10;• Comprensión del tema: 30 puntos&#10;• Metodología: 25 puntos&#10;• Presentación: 20 puntos&#10;• Originalidad: 25 puntos"
+            ></textarea>
+            <p class="form-hint">
+              <i class="fas fa-lightbulb"></i>
+              Describe los criterios de evaluación y cómo se distribuyen los puntos. Esto ayuda a los estudiantes a entender cómo serán calificados.
+            </p>
+          </div>
+        </div>
+      }
     </div>
 
+    <!-- Acciones -->
     <div class="form-actions">
-      <a [routerLink]="['/profesor/cursos', courseId()]" class="btn btn-secondary">
-        Cancelar
-      </a>
-      <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> {{ isEditMode() ? 'Actualizar' : 'Crear' }} Tarea
+      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving()">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        [disabled]="!canSave() || isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="spinner"></span>
+          <span>Guardando...</span>
+        } @else {
+          <i class="fas fa-save"></i>
+          <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} Tarea</span>
+        }
       </button>
     </div>
+
+    @if (!canSave()) {
+      <div class="form-validation-hint">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Completa los campos requeridos (marcados con *) para poder crear la tarea</span>
+      </div>
+    }
   </form>
 </div>
