@@ -84,6 +84,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profesor/revisar-tarea/revisar-tarea.component').then(m => m.RevisarTareaComponent)
       },
       {
+        path: 'profesor/cursos/:courseId/asistencia/marcar',
+        loadComponent: () => import('./pages/profesor/marcar-asistencia/marcar-asistencia.component').then(m => m.MarcarAsistenciaComponent)
+      },
+      {
         path: 'profesor/tareas',
         loadComponent: () => import('./pages/profesor/tareas-profesor/tareas-profesor.component').then(m => m.TareasProfesorComponent)
       },

@@ -159,9 +159,9 @@
       <div class="content-section">
         <div class="section-header">
           <h2 class="section-title">Asistencia</h2>
-          <button class="btn btn-primary">
+          <a [routerLink]="['/profesor/cursos', courseId(), 'asistencia', 'marcar']" class="btn btn-primary">
             <i class="fas fa-calendar-check"></i> Marcar Asistencia
-          </button>
+          </a>
         </div>
         <p class="info-text">Registra y gestiona la asistencia de los estudiantes.</p>
       </div>

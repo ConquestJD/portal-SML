@@ -1,0 +1,188 @@
+<div class="marcar-asistencia-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando estudiantes...</p>
+    </div>
+  } @else {
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a (click)="cancel()" class="breadcrumb-link">
+        <i class="fas fa-arrow-left"></i> Volver al Curso
+      </a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">Marcar Asistencia</span>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Marcar Asistencia</h1>
+        <p class="page-subtitle">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</p>
+      </div>
+    </div>
+
+    <!-- Date Selector and Summary -->
+    <div class="attendance-controls">
+      <div class="date-selector">
+        <label class="form-label">
+          <i class="fas fa-calendar-alt"></i>
+          Fecha de Asistencia
+        </label>
+        <input
+          type="date"
+          class="form-input"
+          [ngModel]="attendanceDate()"
+          (ngModelChange)="attendanceDate.set($event); onDateChange()"
+        />
+      </div>
+
+      <div class="summary-panel">
+        <div class="summary-item">
+          <div class="summary-icon-wrapper success">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Presentes</span>
+            <span class="summary-value success">{{ attendanceSummary().present }}</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon-wrapper warning">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Tardes</span>
+            <span class="summary-value warning">{{ attendanceSummary().late }}</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon-wrapper error">
+            <i class="fas fa-times-circle"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Faltas</span>
+            <span class="summary-value error">{{ attendanceSummary().absent }}</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon-wrapper secondary">
+            <i class="fas fa-question-circle"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Sin Marcar</span>
+            <span class="summary-value secondary">{{ attendanceSummary().unmarked }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="btn btn-success btn-sm" (click)="markAllPresent()">
+        <i class="fas fa-check-double"></i> Marcar Todos Presentes
+      </button>
+      <button class="btn btn-danger btn-sm" (click)="markAllAbsent()">
+        <i class="fas fa-times"></i> Marcar Todos Faltas
+      </button>
+      <button class="btn btn-outline btn-sm" (click)="clearAll()">
+        <i class="fas fa-eraser"></i> Limpiar Todo
+      </button>
+    </div>
+
+    <!-- Students List -->
+    <div class="students-attendance-list">
+      @for (student of students(); track student.id) {
+        @let status = getAttendanceStatus(student.id);
+        <div class="student-attendance-card">
+          <div class="student-info">
+            <div class="student-avatar">
+              {{ student.name.charAt(0) }}
+            </div>
+            <div class="student-details">
+              <h3 class="student-name">{{ student.name }}</h3>
+              <p class="student-code">Código: {{ student.code }}</p>
+            </div>
+          </div>
+
+          <div class="attendance-actions">
+            <div class="status-buttons">
+              <button
+                class="btn-status"
+                [class.active]="status === 'presente'"
+                [class.btn-success]="status === 'presente'"
+                (click)="setAttendance(student.id, 'presente')"
+              >
+                <i class="fas fa-check"></i>
+                Presente
+              </button>
+              <button
+                class="btn-status"
+                [class.active]="status === 'tarde'"
+                [class.btn-warning]="status === 'tarde'"
+                (click)="setAttendance(student.id, 'tarde')"
+              >
+                <i class="fas fa-clock"></i>
+                Tarde
+              </button>
+              <button
+                class="btn-status"
+                [class.active]="status === 'falta'"
+                [class.btn-danger]="status === 'falta'"
+                (click)="setAttendance(student.id, 'falta')"
+              >
+                <i class="fas fa-times"></i>
+                Falta
+              </button>
+            </div>
+
+            @if (status) {
+              <div class="observation-field">
+                <input
+                  type="text"
+                  class="form-input observation-input"
+                  placeholder="Observación (opcional)..."
+                  [value]="getObservation(student.id)"
+                  (input)="updateObservation(student.id, $any($event.target).value)"
+                />
+              </div>
+            }
+          </div>
+
+          @if (status) {
+            <div class="status-badge-display">
+              <span class="badge" [class]="getStatusBadgeClass(status)">
+                {{ getStatusLabel(status) }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="footer-actions">
+      <button class="btn btn-outline" (click)="cancel()">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="saveAttendance()"
+        [disabled]="!canSave() || isSaving()"
+      >
+        @if (isSaving()) {
+          <i class="fas fa-spinner fa-spin"></i> Guardando...
+        } @else {
+          <i class="fas fa-save"></i> Guardar Asistencia
+        }
+      </button>
+    </div>
+
+    @if (attendanceSummary().unmarked > 0) {
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Faltan {{ attendanceSummary().unmarked }} estudiante(s) por marcar. Debes marcar a todos los estudiantes antes de guardar.</span>
+      </div>
+    }
+  }
+</div>
