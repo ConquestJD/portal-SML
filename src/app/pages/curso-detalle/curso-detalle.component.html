@@ -45,9 +45,6 @@
     <button class="tab-btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">
       <i class="fas fa-book"></i> Contenido
     </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'materiales'" (click)="setTab('materiales')">
-      <i class="fas fa-file"></i> Materiales
-    </button>
     <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
       <i class="fas fa-tasks"></i> Tareas
     </button>
@@ -65,51 +62,62 @@
           </h2>
         </div>
         <div class="units-list">
-          <div class="unit-item">
-            <div class="unit-number">01</div>
-            <div class="unit-content">
-              <h3>Unidad 1: Álgebra Básica</h3>
-              <p>Introducción a ecuaciones lineales y sistemas de ecuaciones.</p>
-            </div>
-          </div>
-          <div class="unit-item">
-            <div class="unit-number">02</div>
-            <div class="unit-content">
-              <h3>Unidad 2: Geometría</h3>
-              <p>Áreas, perímetros y volúmenes de figuras geométricas.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'materiales') {
-      <div class="materials-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-file"></i> Materiales de Estudio
-          </h2>
-        </div>
-        <div class="materials-list">
-          @for (material of materials(); track material.id) {
-            <div class="material-item">
-              <div class="material-icon-wrapper" [class.pdf]="material.type === 'PDF'" [class.video]="material.type === 'Video'">
-                @if (material.type === 'PDF') { <i class="fas fa-file-pdf"></i> }
-                @if (material.type === 'Video') { <i class="fas fa-video"></i> }
-              </div>
-              <div class="material-info">
-                <h4>{{ material.name }}</h4>
-                <div class="material-meta">
-                  <span class="material-type">{{ material.type }}</span>
-                  <span class="material-separator">•</span>
-                  <span class="material-size">{{ material.size }}</span>
-                  <span class="material-separator">•</span>
-                  <span class="material-date">{{ material.date }}</span>
+          @for (unit of units(); track unit.id) {
+            <div class="unit-item" [class.expanded]="unit.isExpanded">
+              <div class="unit-header" (click)="toggleUnit(unit.id)">
+                <div class="unit-number">{{ unit.number.toString().padStart(2, '0') }}</div>
+                <div class="unit-content">
+                  <h3>{{ unit.title }}</h3>
+                  <p>{{ unit.description }}</p>
+                </div>
+                <div class="unit-toggle">
+                  <i class="fas" [class.fa-chevron-down]="!unit.isExpanded" [class.fa-chevron-up]="unit.isExpanded"></i>
                 </div>
               </div>
-              <button class="btn btn-primary">
-                <i class="fas fa-download"></i> Descargar
-              </button>
+              @if (unit.isExpanded) {
+                <div class="unit-materials">
+                  <h4 class="materials-title">
+                    <i class="fas fa-file"></i> Materiales de la Unidad
+                  </h4>
+                  @if (unit.materials && unit.materials.length > 0) {
+                    <div class="materials-list">
+                      @for (material of unit.materials; track material.id) {
+                        <div class="material-item">
+                          <div class="material-icon-wrapper" 
+                            [class.pdf]="material.type === 'PDF'" 
+                            [class.video]="material.type === 'Video'"
+                            [class.documento]="material.type === 'Documento'"
+                            [class.imagen]="material.type === 'Imagen'">
+                            @if (material.type === 'PDF') { <i class="fas fa-file-pdf"></i> }
+                            @if (material.type === 'Video') { <i class="fas fa-video"></i> }
+                            @if (material.type === 'Documento') { <i class="fas fa-file-word"></i> }
+                            @if (material.type === 'Imagen') { <i class="fas fa-file-image"></i> }
+                            @if (material.type === 'Otro') { <i class="fas fa-file"></i> }
+                          </div>
+                          <div class="material-info">
+                            <h4>{{ material.name }}</h4>
+                            <div class="material-meta">
+                              <span class="material-type">{{ material.type }}</span>
+                              <span class="material-separator">•</span>
+                              <span class="material-size">{{ material.size }}</span>
+                              <span class="material-separator">•</span>
+                              <span class="material-date">{{ material.date }}</span>
+                            </div>
+                          </div>
+                          <button class="btn btn-primary" (click)="downloadMaterial(material)">
+                            <i class="fas fa-download"></i> Descargar
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="empty-materials">
+                      <i class="fas fa-folder-open"></i>
+                      <p>No hay materiales disponibles para esta unidad.</p>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
         </div>
