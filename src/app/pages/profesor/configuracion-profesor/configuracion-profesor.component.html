@@ -1,0 +1,126 @@
+<div class="configuracion-profesor-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando configuración...</p>
+    </div>
+  } @else {
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <i class="fas fa-cog"></i>
+          Configuración
+        </h1>
+        <p class="page-subtitle">Gestiona tus preferencias y configuraciones</p>
+      </div>
+    </div>
+
+    <!-- Formulario de Configuración -->
+    <form (ngSubmit)="saveSettings()" class="settings-form">
+      <!-- Notificaciones -->
+      <div class="form-section">
+        <h2 class="section-title">
+          <i class="fas fa-bell"></i>
+          Notificaciones
+        </h2>
+        <p class="section-description">
+          Configura cómo y cuándo recibir notificaciones importantes.
+        </p>
+
+        <div class="settings-list">
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Notificaciones por Email</span>
+              <span class="setting-description">Recibe notificaciones importantes por correo electrónico</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().emailNotifications"
+              (ngModelChange)="updateEmailNotifications($event)"
+              name="emailNotifications"
+            />
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Notificaciones por SMS</span>
+              <span class="setting-description">Recibe alertas importantes por mensaje de texto</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().smsNotifications"
+              (ngModelChange)="updateSmsNotifications($event)"
+              name="smsNotifications"
+            />
+          </label>
+
+          <div class="setting-divider"></div>
+
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Nuevas Tareas</span>
+              <span class="setting-description">Notificarme cuando se creen nuevas tareas en mis cursos</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().newTasks"
+              (ngModelChange)="updateNewTasks($event)"
+              name="newTasks"
+            />
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Entregas de Tareas</span>
+              <span class="setting-description">Notificarme cuando los estudiantes entreguen tareas</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().taskSubmissions"
+              (ngModelChange)="updateTaskSubmissions($event)"
+              name="taskSubmissions"
+            />
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Comunicados Urgentes</span>
+              <span class="setting-description">Recibir notificaciones de comunicados marcados como urgentes</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().urgentAnnouncements"
+              (ngModelChange)="updateUrgentAnnouncements($event)"
+              name="urgentAnnouncements"
+            />
+          </label>
+
+          <label class="setting-item">
+            <div class="setting-content">
+              <span class="setting-title">Mensajes de Estudiantes</span>
+              <span class="setting-description">Notificarme cuando reciba mensajes de estudiantes</span>
+            </div>
+            <input 
+              type="checkbox"
+              [ngModel]="notifications().studentMessages"
+              (ngModelChange)="updateStudentMessages($event)"
+              name="studentMessages"
+            />
+          </label>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <i class="fas fa-spinner fa-spin"></i> Guardando...
+          } @else {
+            <i class="fas fa-save"></i> Guardar Configuración
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>
