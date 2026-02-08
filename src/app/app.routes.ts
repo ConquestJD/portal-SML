@@ -96,6 +96,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profesor/crear-comunicado/crear-comunicado.component').then(m => m.CrearComunicadoComponent)
       },
       {
+        path: 'profesor/perfil',
+        loadComponent: () => import('./pages/profesor/perfil-profesor/perfil-profesor.component').then(m => m.PerfilProfesorComponent)
+      },
+      {
         path: 'profesor/cursos/:courseId/mensajeria',
         loadComponent: () => import('./pages/mensajeria-curso/mensajeria-curso.component').then(m => m.MensajeriaCursoComponent)
       },

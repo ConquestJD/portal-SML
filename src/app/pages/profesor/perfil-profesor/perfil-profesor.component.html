@@ -1,0 +1,471 @@
+<div class="perfil-profesor-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando perfil...</p>
+    </div>
+  } @else {
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <i class="fas fa-user-circle"></i>
+          Mi Perfil
+        </h1>
+        <p class="page-subtitle">Gestiona tu información personal y configuración</p>
+      </div>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="stats-grid">
+      @for (stat of statistics(); track stat.label) {
+        <div class="stat-card" [class]="'stat-' + stat.color">
+          <div class="stat-icon">
+            <i [class]="stat.icon"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ stat.value }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'perfil'" 
+        (click)="setTab('perfil')"
+      >
+        <i class="fas fa-user"></i> Perfil
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'cursos'" 
+        (click)="setTab('cursos')"
+      >
+        <i class="fas fa-book"></i> Cursos
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'configuracion'" 
+        (click)="setTab('configuracion')"
+      >
+        <i class="fas fa-cog"></i> Configuración
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'seguridad'" 
+        (click)="setTab('seguridad')"
+      >
+        <i class="fas fa-shield-alt"></i> Seguridad
+      </button>
+    </div>
+
+    <!-- Contenido de Pestañas -->
+    <div class="tab-content">
+      <!-- Pestaña Perfil -->
+      @if (activeTab() === 'perfil') {
+        <div class="content-section">
+          <div class="profile-header">
+            <div class="photo-section">
+              <div class="photo-wrapper">
+                <img [src]="profileData().photo" [alt]="profileData().name" class="profile-photo">
+                @if (isEditing()) {
+                  <label class="photo-upload-btn">
+                    <i class="fas fa-camera"></i>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      (change)="onPhotoSelected($event)"
+                      class="file-input"
+                    />
+                  </label>
+                }
+              </div>
+              <div class="profile-info">
+                <h2 class="profile-name">{{ profileData().name }}</h2>
+                <p class="profile-department">
+                  <i class="fas fa-building"></i>
+                  {{ profileData().department }}
+                </p>
+                <p class="profile-specialization">
+                  <i class="fas fa-graduation-cap"></i>
+                  {{ profileData().specialization }}
+                </p>
+              </div>
+            </div>
+            <div class="profile-actions">
+              @if (!isEditing()) {
+                <button class="btn btn-primary" (click)="startEditing()">
+                  <i class="fas fa-edit"></i> Editar Perfil
+                </button>
+              } @else {
+                <div class="action-buttons">
+                  <button class="btn btn-outline" (click)="cancelEditing()" [disabled]="isSaving()">
+                    <i class="fas fa-times"></i> Cancelar
+                  </button>
+                  <button class="btn btn-primary" (click)="saveProfile()" [disabled]="isSaving()">
+                    @if (isSaving()) {
+                      <i class="fas fa-spinner fa-spin"></i> Guardando...
+                    } @else {
+                      <i class="fas fa-save"></i> Guardar Cambios
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+
+          <form (ngSubmit)="saveProfile()" class="profile-form">
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Información Personal
+              </h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    [ngModel]="profileData().name"
+                    (ngModelChange)="updateName($event)"
+                    [readonly]="!isEditing()"
+                    name="name"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Correo Electrónico</label>
+                  <input 
+                    type="email" 
+                    class="form-input" 
+                    [ngModel]="profileData().email"
+                    (ngModelChange)="updateEmail($event)"
+                    [readonly]="!isEditing()"
+                    name="email"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Teléfono</label>
+                  <input 
+                    type="tel" 
+                    class="form-input" 
+                    [ngModel]="profileData().phone"
+                    (ngModelChange)="updatePhone($event)"
+                    [readonly]="!isEditing()"
+                    name="phone"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Dirección</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    [ngModel]="profileData().address"
+                    (ngModelChange)="updateAddress($event)"
+                    [readonly]="!isEditing()"
+                    name="address"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha de Nacimiento</label>
+                  <input 
+                    type="date" 
+                    class="form-input" 
+                    [ngModel]="profileData().birthDate"
+                    (ngModelChange)="updateBirthDate($event)"
+                    [readonly]="!isEditing()"
+                    name="birthDate"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha de Contratación</label>
+                  <input 
+                    type="date" 
+                    class="form-input" 
+                    [ngModel]="profileData().hireDate"
+                    (ngModelChange)="updateHireDate($event)"
+                    [readonly]="!isEditing()"
+                    name="hireDate"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-briefcase"></i>
+                Información Profesional
+              </h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Departamento</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    [ngModel]="profileData().department"
+                    (ngModelChange)="updateDepartment($event)"
+                    [readonly]="!isEditing()"
+                    name="department"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Especialización</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    [ngModel]="profileData().specialization"
+                    (ngModelChange)="updateSpecialization($event)"
+                    [readonly]="!isEditing()"
+                    name="specialization"
+                  />
+                </div>
+                <div class="form-group full-width">
+                  <label class="form-label">Biografía</label>
+                  <textarea 
+                    class="form-input" 
+                    rows="4"
+                    [ngModel]="profileData().bio"
+                    (ngModelChange)="updateBio($event)"
+                    [readonly]="!isEditing()"
+                    name="bio"
+                    placeholder="Escribe una breve descripción sobre ti..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Pestaña Cursos -->
+      @if (activeTab() === 'cursos') {
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-book"></i>
+              Cursos a Cargo
+            </h2>
+            <div class="filter-tabs">
+              <button 
+                class="filter-chip"
+                [class.active]="true"
+              >
+                Activos ({{ activeCourses().length }})
+              </button>
+              <button 
+                class="filter-chip"
+                [class.active]="false"
+              >
+                Finalizados ({{ finishedCourses().length }})
+              </button>
+            </div>
+          </div>
+
+          <div class="courses-grid">
+            @for (course of activeCourses(); track course.id) {
+              <div class="course-card">
+                <div class="course-header">
+                  <div class="course-icon">
+                    <i class="fas fa-book"></i>
+                  </div>
+                  <div class="course-info">
+                    <h3 class="course-name">{{ course.name }}</h3>
+                    <p class="course-code">{{ course.code }} - {{ course.grade }} {{ course.section }}</p>
+                  </div>
+                </div>
+                <div class="course-stats">
+                  <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span>{{ course.students }} estudiantes</span>
+                  </div>
+                  <div class="stat-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>{{ course.period }}</span>
+                  </div>
+                </div>
+                <div class="course-actions">
+                  <a [routerLink]="['/profesor/cursos', course.id]" class="btn btn-primary btn-sm">
+                    <i class="fas fa-arrow-right"></i> Ver Curso
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (activeCourses().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-book-open"></i>
+              <p>No tienes cursos activos</p>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Pestaña Configuración -->
+      @if (activeTab() === 'configuracion') {
+        <div class="content-section">
+          <form (ngSubmit)="saveSettings()" class="settings-form">
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-bell"></i>
+                Notificaciones
+              </h3>
+              <div class="settings-list">
+                <label class="setting-item">
+                  <div class="setting-content">
+                    <span class="setting-title">Notificaciones por Email</span>
+                    <span class="setting-description">Recibe notificaciones importantes por correo electrónico</span>
+                  </div>
+                  <input 
+                    type="checkbox"
+                    [ngModel]="settings().emailNotifications"
+                    (ngModelChange)="updateEmailNotifications($event)"
+                    name="emailNotifications"
+                  />
+                </label>
+                <label class="setting-item">
+                  <div class="setting-content">
+                    <span class="setting-title">Notificaciones por SMS</span>
+                    <span class="setting-description">Recibe alertas importantes por mensaje de texto</span>
+                  </div>
+                  <input 
+                    type="checkbox"
+                    [ngModel]="settings().smsNotifications"
+                    (ngModelChange)="updateSmsNotifications($event)"
+                    name="smsNotifications"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-envelope"></i>
+                Mensajería
+              </h3>
+              <div class="form-group">
+                <label class="form-label">Firma de Mensajes</label>
+                <textarea 
+                  class="form-input" 
+                  rows="4"
+                  [ngModel]="settings().messageSignature"
+                  (ngModelChange)="updateMessageSignature($event)"
+                  name="messageSignature"
+                  placeholder="Esta firma se agregará automáticamente a tus mensajes..."
+                ></textarea>
+                <p class="form-hint">
+                  <i class="fas fa-info-circle"></i>
+                  Esta firma se agregará automáticamente al final de tus mensajes a estudiantes y tutores.
+                </p>
+              </div>
+              <label class="setting-item">
+                <div class="setting-content">
+                  <span class="setting-title">Respuesta Automática</span>
+                  <span class="setting-description">Activar respuesta automática cuando no estés disponible</span>
+                </div>
+                <input 
+                  type="checkbox"
+                  [ngModel]="settings().autoReply"
+                  (ngModelChange)="updateAutoReply($event)"
+                  name="autoReply"
+                />
+              </label>
+              @if (settings().autoReply) {
+                <div class="form-group">
+                  <label class="form-label">Mensaje de Respuesta Automática</label>
+                  <textarea 
+                    class="form-input" 
+                    rows="3"
+                    [ngModel]="settings().autoReplyMessage"
+                    (ngModelChange)="updateAutoReplyMessage($event)"
+                    name="autoReplyMessage"
+                    placeholder="Escribe el mensaje que se enviará automáticamente..."
+                  ></textarea>
+                </div>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+                @if (isSaving()) {
+                  <i class="fas fa-spinner fa-spin"></i> Guardando...
+                } @else {
+                  <i class="fas fa-save"></i> Guardar Configuración
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Pestaña Seguridad -->
+      @if (activeTab() === 'seguridad') {
+        <div class="content-section">
+          <form (ngSubmit)="changePassword()" class="security-form">
+            <div class="form-section">
+              <h3 class="section-title">
+                <i class="fas fa-key"></i>
+                Cambiar Contraseña
+              </h3>
+              <p class="section-description">
+                Para cambiar tu contraseña, ingresa tu contraseña actual y la nueva contraseña.
+              </p>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Contraseña Actual</label>
+                  <input 
+                    type="password" 
+                    class="form-input" 
+                    [ngModel]="passwordData().currentPassword"
+                    (ngModelChange)="updateCurrentPassword($event)"
+                    name="currentPassword"
+                    placeholder="Ingresa tu contraseña actual"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nueva Contraseña</label>
+                  <input 
+                    type="password" 
+                    class="form-input" 
+                    [ngModel]="passwordData().newPassword"
+                    (ngModelChange)="updateNewPassword($event)"
+                    name="newPassword"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <p class="form-hint">
+                    <i class="fas fa-info-circle"></i>
+                    La contraseña debe tener al menos 6 caracteres.
+                  </p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirmar Nueva Contraseña</label>
+                  <input 
+                    type="password" 
+                    class="form-input" 
+                    [ngModel]="passwordData().confirmPassword"
+                    (ngModelChange)="updateConfirmPassword($event)"
+                    name="confirmPassword"
+                    placeholder="Confirma tu nueva contraseña"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+                @if (isSaving()) {
+                  <i class="fas fa-spinner fa-spin"></i> Cambiando...
+                } @else {
+                  <i class="fas fa-key"></i> Cambiar Contraseña
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+    </div>
+  }
+</div>
