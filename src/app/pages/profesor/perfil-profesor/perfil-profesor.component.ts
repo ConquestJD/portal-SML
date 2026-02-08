@@ -4,23 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
-interface Course {
-  id: string;
-  name: string;
-  code: string;
-  grade: string;
-  section: string;
-  students: number;
-  period: string;
-  status: 'active' | 'finished';
-}
-
-interface Statistic {
-  label: string;
-  value: number | string;
-  icon: string;
-  color: string;
-}
 
 @Component({
   selector: 'app-perfil-profesor',
@@ -30,7 +13,7 @@ interface Statistic {
   styleUrl: './perfil-profesor.component.css'
 })
 export class PerfilProfesorComponent implements OnInit {
-  activeTab = signal<'perfil' | 'cursos' | 'configuracion' | 'seguridad'>('perfil');
+  activeTab = signal<'perfil' | 'seguridad'>('perfil');
   isEditing = signal(false);
   isSaving = signal(false);
   isLoading = signal(true);
@@ -51,11 +34,6 @@ export class PerfilProfesorComponent implements OnInit {
     status: 'active' as 'active' | 'inactive'
   });
 
-  // Cursos a cargo
-  courses = signal<Course[]>([]);
-
-  // Estadísticas
-  statistics = signal<Statistic[]>([]);
 
   // Configuración
   settings = signal({
@@ -101,87 +79,13 @@ export class PerfilProfesorComponent implements OnInit {
         status: 'active'
       });
 
-      this.courses.set([
-        {
-          id: '1',
-          name: 'Matemática',
-          code: 'MAT-2024',
-          grade: '3ro',
-          section: 'A',
-          students: 30,
-          period: '2024-I',
-          status: 'active'
-        },
-        {
-          id: '2',
-          name: 'Matemática',
-          code: 'MAT-2024',
-          grade: '3ro',
-          section: 'B',
-          students: 28,
-          period: '2024-I',
-          status: 'active'
-        },
-        {
-          id: '3',
-          name: 'Matemática',
-          code: 'MAT-2024',
-          grade: '4to',
-          section: 'A',
-          students: 32,
-          period: '2024-I',
-          status: 'active'
-        },
-        {
-          id: '4',
-          name: 'Álgebra',
-          code: 'ALG-2023',
-          grade: '5to',
-          section: 'A',
-          students: 25,
-          period: '2023-II',
-          status: 'finished'
-        }
-      ]);
-
-      this.statistics.set([
-        {
-          label: 'Cursos Activos',
-          value: this.courses().filter(c => c.status === 'active').length,
-          icon: 'fas fa-book',
-          color: 'primary'
-        },
-        {
-          label: 'Total Estudiantes',
-          value: this.courses().reduce((sum, c) => sum + c.students, 0),
-          icon: 'fas fa-users',
-          color: 'success'
-        },
-        {
-          label: 'Años de Experiencia',
-          value: this.calculateYearsOfExperience(),
-          icon: 'fas fa-calendar-alt',
-          color: 'info'
-        },
-        {
-          label: 'Tareas Pendientes',
-          value: 24,
-          icon: 'fas fa-tasks',
-          color: 'warning'
-        }
-      ]);
 
       this.isLoading.set(false);
     }, 500);
   }
 
-  calculateYearsOfExperience(): number {
-    const hireDate = new Date(this.profileData().hireDate);
-    const today = new Date();
-    return Math.floor((today.getTime() - hireDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
-  }
 
-  setTab(tab: 'perfil' | 'cursos' | 'configuracion' | 'seguridad') {
+  setTab(tab: 'perfil' | 'seguridad') {
     this.activeTab.set(tab);
   }
 
@@ -207,14 +111,6 @@ export class PerfilProfesorComponent implements OnInit {
     }, 1000);
   }
 
-  saveSettings() {
-    this.isSaving.set(true);
-    
-    setTimeout(() => {
-      console.log('Guardando configuración:', this.settings());
-      this.isSaving.set(false);
-    }, 1000);
-  }
 
   changePassword() {
     const passwordData = this.passwordData();
@@ -258,13 +154,6 @@ export class PerfilProfesorComponent implements OnInit {
     }
   }
 
-  activeCourses = computed(() => 
-    this.courses().filter(c => c.status === 'active')
-  );
-
-  finishedCourses = computed(() => 
-    this.courses().filter(c => c.status === 'finished')
-  );
 
   // Métodos auxiliares para actualizar datos del perfil
   updateName(value: string) { this.profileData.update(d => ({ ...d, name: value })); }
@@ -277,11 +166,6 @@ export class PerfilProfesorComponent implements OnInit {
   updateSpecialization(value: string) { this.profileData.update(d => ({ ...d, specialization: value })); }
   updateBio(value: string) { this.profileData.update(d => ({ ...d, bio: value })); }
 
-  updateEmailNotifications(value: boolean) { this.settings.update(s => ({ ...s, emailNotifications: value })); }
-  updateSmsNotifications(value: boolean) { this.settings.update(s => ({ ...s, smsNotifications: value })); }
-  updateMessageSignature(value: string) { this.settings.update(s => ({ ...s, messageSignature: value })); }
-  updateAutoReply(value: boolean) { this.settings.update(s => ({ ...s, autoReply: value })); }
-  updateAutoReplyMessage(value: string) { this.settings.update(s => ({ ...s, autoReplyMessage: value })); }
 
   updateCurrentPassword(value: string) { this.passwordData.update(p => ({ ...p, currentPassword: value })); }
   updateNewPassword(value: string) { this.passwordData.update(p => ({ ...p, newPassword: value })); }

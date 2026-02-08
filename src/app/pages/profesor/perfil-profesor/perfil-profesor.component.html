@@ -12,23 +12,8 @@
           <i class="fas fa-user-circle"></i>
           Mi Perfil
         </h1>
-        <p class="page-subtitle">Gestiona tu información personal y configuración</p>
+        <p class="page-subtitle">Gestiona tu información personal</p>
       </div>
-    </div>
-
-    <!-- Estadísticas Rápidas -->
-    <div class="stats-grid">
-      @for (stat of statistics(); track stat.label) {
-        <div class="stat-card" [class]="'stat-' + stat.color">
-          <div class="stat-icon">
-            <i [class]="stat.icon"></i>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">{{ stat.value }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
-          </div>
-        </div>
-      }
     </div>
 
     <!-- Pestañas -->
@@ -39,20 +24,6 @@
         (click)="setTab('perfil')"
       >
         <i class="fas fa-user"></i> Perfil
-      </button>
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'cursos'" 
-        (click)="setTab('cursos')"
-      >
-        <i class="fas fa-book"></i> Cursos
-      </button>
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'configuracion'" 
-        (click)="setTab('configuracion')"
-      >
-        <i class="fas fa-cog"></i> Configuración
       </button>
       <button 
         class="tab-btn" 
@@ -235,167 +206,6 @@
                   ></textarea>
                 </div>
               </div>
-            </div>
-          </form>
-        </div>
-      }
-
-      <!-- Pestaña Cursos -->
-      @if (activeTab() === 'cursos') {
-        <div class="content-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-book"></i>
-              Cursos a Cargo
-            </h2>
-            <div class="filter-tabs">
-              <button 
-                class="filter-chip"
-                [class.active]="true"
-              >
-                Activos ({{ activeCourses().length }})
-              </button>
-              <button 
-                class="filter-chip"
-                [class.active]="false"
-              >
-                Finalizados ({{ finishedCourses().length }})
-              </button>
-            </div>
-          </div>
-
-          <div class="courses-grid">
-            @for (course of activeCourses(); track course.id) {
-              <div class="course-card">
-                <div class="course-header">
-                  <div class="course-icon">
-                    <i class="fas fa-book"></i>
-                  </div>
-                  <div class="course-info">
-                    <h3 class="course-name">{{ course.name }}</h3>
-                    <p class="course-code">{{ course.code }} - {{ course.grade }} {{ course.section }}</p>
-                  </div>
-                </div>
-                <div class="course-stats">
-                  <div class="stat-item">
-                    <i class="fas fa-users"></i>
-                    <span>{{ course.students }} estudiantes</span>
-                  </div>
-                  <div class="stat-item">
-                    <i class="fas fa-calendar"></i>
-                    <span>{{ course.period }}</span>
-                  </div>
-                </div>
-                <div class="course-actions">
-                  <a [routerLink]="['/profesor/cursos', course.id]" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right"></i> Ver Curso
-                  </a>
-                </div>
-              </div>
-            }
-          </div>
-
-          @if (activeCourses().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-book-open"></i>
-              <p>No tienes cursos activos</p>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Pestaña Configuración -->
-      @if (activeTab() === 'configuracion') {
-        <div class="content-section">
-          <form (ngSubmit)="saveSettings()" class="settings-form">
-            <div class="form-section">
-              <h3 class="section-title">
-                <i class="fas fa-bell"></i>
-                Notificaciones
-              </h3>
-              <div class="settings-list">
-                <label class="setting-item">
-                  <div class="setting-content">
-                    <span class="setting-title">Notificaciones por Email</span>
-                    <span class="setting-description">Recibe notificaciones importantes por correo electrónico</span>
-                  </div>
-                  <input 
-                    type="checkbox"
-                    [ngModel]="settings().emailNotifications"
-                    (ngModelChange)="updateEmailNotifications($event)"
-                    name="emailNotifications"
-                  />
-                </label>
-                <label class="setting-item">
-                  <div class="setting-content">
-                    <span class="setting-title">Notificaciones por SMS</span>
-                    <span class="setting-description">Recibe alertas importantes por mensaje de texto</span>
-                  </div>
-                  <input 
-                    type="checkbox"
-                    [ngModel]="settings().smsNotifications"
-                    (ngModelChange)="updateSmsNotifications($event)"
-                    name="smsNotifications"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">
-                <i class="fas fa-envelope"></i>
-                Mensajería
-              </h3>
-              <div class="form-group">
-                <label class="form-label">Firma de Mensajes</label>
-                <textarea 
-                  class="form-input" 
-                  rows="4"
-                  [ngModel]="settings().messageSignature"
-                  (ngModelChange)="updateMessageSignature($event)"
-                  name="messageSignature"
-                  placeholder="Esta firma se agregará automáticamente a tus mensajes..."
-                ></textarea>
-                <p class="form-hint">
-                  <i class="fas fa-info-circle"></i>
-                  Esta firma se agregará automáticamente al final de tus mensajes a estudiantes y tutores.
-                </p>
-              </div>
-              <label class="setting-item">
-                <div class="setting-content">
-                  <span class="setting-title">Respuesta Automática</span>
-                  <span class="setting-description">Activar respuesta automática cuando no estés disponible</span>
-                </div>
-                <input 
-                  type="checkbox"
-                  [ngModel]="settings().autoReply"
-                  (ngModelChange)="updateAutoReply($event)"
-                  name="autoReply"
-                />
-              </label>
-              @if (settings().autoReply) {
-                <div class="form-group">
-                  <label class="form-label">Mensaje de Respuesta Automática</label>
-                  <textarea 
-                    class="form-input" 
-                    rows="3"
-                    [ngModel]="settings().autoReplyMessage"
-                    (ngModelChange)="updateAutoReplyMessage($event)"
-                    name="autoReplyMessage"
-                    placeholder="Escribe el mensaje que se enviará automáticamente..."
-                  ></textarea>
-                </div>
-              }
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-                @if (isSaving()) {
-                  <i class="fas fa-spinner fa-spin"></i> Guardando...
-                } @else {
-                  <i class="fas fa-save"></i> Guardar Configuración
-                }
-              </button>
             </div>
           </form>
         </div>
