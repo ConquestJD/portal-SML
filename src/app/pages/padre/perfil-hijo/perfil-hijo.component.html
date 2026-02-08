@@ -1,140 +1,432 @@
 <div class="perfil-hijo-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Perfil del Hijo</span>
-  </div>
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando perfil...</p>
+    </div>
+  } @else {
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a routerLink="/padre/dashboard" class="breadcrumb-link">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+      </a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">Perfil del Hijo</span>
+    </div>
 
-  <!-- Selector de Hijo -->
-  @if (children().length > 1) {
-    <div class="child-selector">
-      <label>Seleccionar Hijo:</label>
-      <select [value]="selectedChild()" (change)="selectChild($any($event.target).value)">
-        @for (child of children(); track child.id) {
-          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+    <!-- Selector de Hijos -->
+    @if (children().length > 1) {
+      <div class="child-selector-section">
+        <h2 class="selector-title">
+          <i class="fas fa-users"></i>
+          Seleccionar Hijo
+        </h2>
+        <div class="children-grid">
+          @for (child of children(); track child.id) {
+            <button 
+              class="child-card"
+              [class.active]="selectedChildId() === child.id"
+              (click)="selectChild(child.id)"
+            >
+              <div class="child-photo-wrapper">
+                @if (child.photo) {
+                  <img [src]="child.photo" [alt]="child.name" class="child-photo">
+                } @else {
+                  <div class="child-photo-placeholder">
+                    {{ getInitial(child.name) }}
+                  </div>
+                }
+              </div>
+              <div class="child-info">
+                <h3 class="child-name">{{ child.name }}</h3>
+                <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+                <p class="child-code">{{ child.code }}</p>
+              </div>
+              @if (selectedChildId() === child.id) {
+                <div class="child-check">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (childProfile()) {
+      @let profile = childProfile()!;
+      <!-- Header del Perfil -->
+      <div class="profile-header">
+        <div class="profile-photo-section">
+          @if (selectedChild()?.photo) {
+            <img [src]="selectedChild()!.photo" [alt]="profile.name" class="profile-photo-large">
+          } @else {
+            <div class="profile-photo-placeholder-large">
+              {{ getInitial(profile.name) }}
+            </div>
+          }
+        </div>
+        <div class="profile-header-content">
+          <h1 class="profile-name">{{ profile.name }}</h1>
+          <p class="profile-subtitle">
+            {{ profile.grade }} - Sección {{ profile.section }} | {{ profile.code }}
+          </p>
+          <div class="profile-badges">
+            <span class="status-badge" [class.active]="profile.status === 'Activo'">
+              <i class="fas fa-circle"></i>
+              {{ profile.status }}
+            </span>
+            <span class="academic-year-badge">
+              <i class="fas fa-calendar"></i>
+              Año Académico {{ profile.academicYear }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas Rápidas -->
+      <div class="stats-grid">
+        <div class="stat-card stat-primary">
+          <div class="stat-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ profile.academicSummary.overallAverage }}</span>
+            <span class="stat-label">Promedio General</span>
+          </div>
+        </div>
+        <div class="stat-card stat-success">
+          <div class="stat-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ profile.academicSummary.completedTasks }}/{{ profile.academicSummary.totalTasks }}</span>
+            <span class="stat-label">Tareas Completadas</span>
+          </div>
+        </div>
+        <div class="stat-card stat-info">
+          <div class="stat-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ profile.academicSummary.attendancePercentage }}%</span>
+            <span class="stat-label">Asistencia</span>
+          </div>
+        </div>
+        <div class="stat-card stat-warning">
+          <div class="stat-icon">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value">{{ profile.academicSummary.totalCourses }}</span>
+            <span class="stat-label">Cursos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestañas -->
+      <div class="tabs">
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab() === 'resumen'" 
+          (click)="setTab('resumen')"
+        >
+          <i class="fas fa-home"></i> Resumen
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab() === 'academico'" 
+          (click)="setTab('academico')"
+        >
+          <i class="fas fa-graduation-cap"></i> Académico
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="activeTab() === 'contacto'" 
+          (click)="setTab('contacto')"
+        >
+          <i class="fas fa-address-book"></i> Contacto
+        </button>
+      </div>
+
+      <!-- Contenido de Pestañas -->
+      <div class="tab-content">
+        <!-- Pestaña Resumen -->
+        @if (activeTab() === 'resumen') {
+          <div class="content-section">
+            <div class="info-grid">
+              <div class="info-card">
+                <h3 class="card-title">
+                  <i class="fas fa-info-circle"></i>
+                  Información Básica
+                </h3>
+                <div class="info-list">
+                  <div class="info-item">
+                    <span class="info-label">Nombre Completo</span>
+                    <span class="info-value">{{ profile.name }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Código de Estudiante</span>
+                    <span class="info-value">{{ profile.code }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Grado</span>
+                    <span class="info-value">{{ profile.grade }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Sección</span>
+                    <span class="info-value">{{ profile.section }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Año Académico</span>
+                    <span class="info-value">{{ profile.academicYear }}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Fecha de Matrícula</span>
+                    <span class="info-value">{{ profile.enrollmentDate | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h3 class="card-title">
+                  <i class="fas fa-chart-bar"></i>
+                  Resumen Académico
+                </h3>
+                <div class="summary-list">
+                  <div class="summary-item">
+                    <span class="summary-label">Promedio General</span>
+                    <span class="summary-value highlight">{{ profile.academicSummary.overallAverage }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Total de Cursos</span>
+                    <span class="summary-value">{{ profile.academicSummary.totalCourses }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Tareas Totales</span>
+                    <span class="summary-value">{{ profile.academicSummary.totalTasks }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Tareas Completadas</span>
+                    <span class="summary-value success">{{ profile.academicSummary.completedTasks }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Tareas Pendientes</span>
+                    <span class="summary-value warning">{{ profile.academicSummary.pendingTasks }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Porcentaje de Asistencia</span>
+                    <span class="summary-value">{{ profile.academicSummary.attendancePercentage }}%</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Faltas</span>
+                    <span class="summary-value danger">{{ profile.academicSummary.totalAbsences }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Tardanzas</span>
+                    <span class="summary-value warning">{{ profile.academicSummary.totalLates }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="quick-actions-card">
+              <h3 class="card-title">
+                <i class="fas fa-bolt"></i>
+                Acciones Rápidas
+              </h3>
+              <div class="actions-grid">
+                <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}" class="action-card">
+                  <i class="fas fa-book"></i>
+                  <span>Ver Cursos</span>
+                </a>
+                <a [routerLink]="['/padre/tareas']" [queryParams]="{childId: selectedChildId()}" class="action-card">
+                  <i class="fas fa-tasks"></i>
+                  <span>Ver Tareas</span>
+                </a>
+                <a [routerLink]="['/padre/notas']" [queryParams]="{childId: selectedChildId()}" class="action-card">
+                  <i class="fas fa-chart-line"></i>
+                  <span>Ver Notas</span>
+                </a>
+                <a [routerLink]="['/padre/asistencia']" [queryParams]="{childId: selectedChildId()}" class="action-card">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>Ver Asistencia</span>
+                </a>
+              </div>
+            </div>
+          </div>
         }
-      </select>
-    </div>
+
+        <!-- Pestaña Académico -->
+        @if (activeTab() === 'academico') {
+          <div class="content-section">
+            <div class="academic-details">
+              <div class="detail-card">
+                <h3 class="card-title">
+                  <i class="fas fa-chart-line"></i>
+                  Rendimiento Académico
+                </h3>
+                <div class="performance-metrics">
+                  <div class="metric-item">
+                    <div class="metric-header">
+                      <span class="metric-label">Promedio General</span>
+                      <span class="metric-value large">{{ profile.academicSummary.overallAverage }}</span>
+                    </div>
+                    <div class="metric-bar">
+                      <div class="metric-fill" [style.width.%]="(profile.academicSummary.overallAverage / 20) * 100"></div>
+                    </div>
+                    <p class="metric-hint">Escala de 0 a 20</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <h3 class="card-title">
+                  <i class="fas fa-tasks"></i>
+                  Estado de Tareas
+                </h3>
+                <div class="tasks-summary">
+                  <div class="task-stat">
+                    <div class="task-stat-icon completed">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="task-stat-content">
+                      <span class="task-stat-value">{{ profile.academicSummary.completedTasks }}</span>
+                      <span class="task-stat-label">Completadas</span>
+                    </div>
+                  </div>
+                  <div class="task-stat">
+                    <div class="task-stat-icon pending">
+                      <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="task-stat-content">
+                      <span class="task-stat-value">{{ profile.academicSummary.pendingTasks }}</span>
+                      <span class="task-stat-label">Pendientes</span>
+                    </div>
+                  </div>
+                  <div class="task-stat">
+                    <div class="task-stat-icon total">
+                      <i class="fas fa-list"></i>
+                    </div>
+                    <div class="task-stat-content">
+                      <span class="task-stat-value">{{ profile.academicSummary.totalTasks }}</span>
+                      <span class="task-stat-label">Total</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <h3 class="card-title">
+                  <i class="fas fa-calendar-check"></i>
+                  Asistencia
+                </h3>
+                <div class="attendance-summary">
+                  <div class="attendance-stat">
+                    <span class="attendance-label">Porcentaje de Asistencia</span>
+                    <div class="attendance-circle">
+                      <svg class="progress-ring" width="120" height="120">
+                        <circle
+                          class="progress-ring-circle-bg"
+                          stroke="#e0e0e0"
+                          stroke-width="8"
+                          fill="transparent"
+                          r="52"
+                          cx="60"
+                          cy="60"
+                        />
+                        <circle
+                          class="progress-ring-circle"
+                          stroke="var(--primary)"
+                          stroke-width="8"
+                          fill="transparent"
+                          r="52"
+                          cx="60"
+                          cy="60"
+                          [style.stroke-dasharray]="326.73"
+                          [style.stroke-dashoffset]="326.73 - (326.73 * profile.academicSummary.attendancePercentage / 100)"
+                          transform="rotate(-90 60 60)"
+                        />
+                      </svg>
+                      <span class="attendance-percentage">{{ profile.academicSummary.attendancePercentage }}%</span>
+                    </div>
+                  </div>
+                  <div class="attendance-details">
+                    <div class="attendance-detail-item">
+                      <i class="fas fa-times-circle danger"></i>
+                      <span>Faltas: {{ profile.academicSummary.totalAbsences }}</span>
+                    </div>
+                    <div class="attendance-detail-item">
+                      <i class="fas fa-clock warning"></i>
+                      <span>Tardanzas: {{ profile.academicSummary.totalLates }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Pestaña Contacto -->
+        @if (activeTab() === 'contacto') {
+          <div class="content-section">
+            <div class="contacts-grid">
+              <div class="contact-card">
+                <div class="contact-header">
+                  <div class="contact-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                  </div>
+                  <h3>Tutor de Sección</h3>
+                </div>
+                <div class="contact-body">
+                  <p class="contact-name">{{ profile.tutor.name }}</p>
+                  <div class="contact-details">
+                    <a [href]="'mailto:' + profile.tutor.email" class="contact-link">
+                      <i class="fas fa-envelope"></i>
+                      {{ profile.tutor.email }}
+                    </a>
+                    <a [href]="'tel:' + profile.tutor.phone" class="contact-link">
+                      <i class="fas fa-phone"></i>
+                      {{ profile.tutor.phone }}
+                    </a>
+                  </div>
+                  <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'tutor', childId: selectedChildId()}" class="contact-action-btn">
+                    <i class="fas fa-comment"></i>
+                    Enviar Mensaje
+                  </a>
+                </div>
+              </div>
+
+              <div class="contact-card">
+                <div class="contact-header">
+                  <div class="contact-icon">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <h3>Coordinador</h3>
+                </div>
+                <div class="contact-body">
+                  <p class="contact-name">{{ profile.coordinator.name }}</p>
+                  <div class="contact-details">
+                    <a [href]="'mailto:' + profile.coordinator.email" class="contact-link">
+                      <i class="fas fa-envelope"></i>
+                      {{ profile.coordinator.email }}
+                    </a>
+                    <a [href]="'tel:' + profile.coordinator.phone" class="contact-link">
+                      <i class="fas fa-phone"></i>
+                      {{ profile.coordinator.phone }}
+                    </a>
+                  </div>
+                  <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'coordinator', childId: selectedChildId()}" class="contact-action-btn">
+                    <i class="fas fa-comment"></i>
+                    Enviar Mensaje
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
   }
-
-  <div class="page-header">
-    <h1 class="page-title">Perfil del Hijo</h1>
-    <p class="page-subtitle">Información académica y de contacto</p>
-  </div>
-
-  <div class="profile-content">
-    <!-- Datos Básicos -->
-    <div class="info-card">
-      <h2 class="card-title">
-        <i class="fas fa-user"></i>
-        Datos Básicos
-      </h2>
-      <div class="info-grid">
-        <div class="info-item">
-          <label>Nombre Completo</label>
-          <p>{{ childData().name }}</p>
-        </div>
-        <div class="info-item">
-          <label>Código de Estudiante</label>
-          <p>{{ childData().code }}</p>
-        </div>
-        <div class="info-item">
-          <label>Grado</label>
-          <p>{{ childData().grade }}</p>
-        </div>
-        <div class="info-item">
-          <label>Sección</label>
-          <p>{{ childData().section }}</p>
-        </div>
-        <div class="info-item">
-          <label>Año Académico</label>
-          <p>{{ childData().academicYear }}</p>
-        </div>
-        <div class="info-item">
-          <label>Estado</label>
-          <span class="status-badge active">{{ childData().status }}</span>
-        </div>
-        <div class="info-item">
-          <label>Fecha de Matrícula</label>
-          <p>{{ childData().enrollmentDate }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Contactos del Colegio -->
-    <div class="info-card">
-      <h2 class="card-title">
-        <i class="fas fa-address-book"></i>
-        Contactos del Colegio
-      </h2>
-      <div class="contacts-grid">
-        <div class="contact-card">
-          <div class="contact-header">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <h3>Tutor de Sección</h3>
-          </div>
-          <div class="contact-info">
-            <p class="contact-name">{{ childData().tutor }}</p>
-            <p class="contact-email">
-              <i class="fas fa-envelope"></i>
-              {{ childData().tutorEmail }}
-            </p>
-            <p class="contact-phone">
-              <i class="fas fa-phone"></i>
-              {{ childData().tutorPhone }}
-            </p>
-            <a routerLink="/padre/mensajeria" class="contact-action">
-              <i class="fas fa-comment"></i>
-              Enviar Mensaje
-            </a>
-          </div>
-        </div>
-
-        <div class="contact-card">
-          <div class="contact-header">
-            <i class="fas fa-user-tie"></i>
-            <h3>Coordinador</h3>
-          </div>
-          <div class="contact-info">
-            <p class="contact-name">{{ childData().coordinator }}</p>
-            <p class="contact-email">
-              <i class="fas fa-envelope"></i>
-              {{ childData().coordinatorEmail }}
-            </p>
-            <p class="contact-phone">
-              <i class="fas fa-phone"></i>
-              {{ childData().coordinatorPhone }}
-            </p>
-            <a routerLink="/padre/mensajeria" class="contact-action">
-              <i class="fas fa-comment"></i>
-              Enviar Mensaje
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Acciones Rápidas -->
-    <div class="quick-actions">
-      <h2 class="card-title">Acciones Rápidas</h2>
-      <div class="actions-grid">
-        <a routerLink="/padre/cursos" class="action-card">
-          <i class="fas fa-book"></i>
-          <span>Ver Cursos</span>
-        </a>
-        <a routerLink="/padre/tareas" class="action-card">
-          <i class="fas fa-tasks"></i>
-          <span>Ver Tareas</span>
-        </a>
-        <a routerLink="/padre/notas" class="action-card">
-          <i class="fas fa-chart-line"></i>
-          <span>Ver Notas</span>
-        </a>
-        <a routerLink="/padre/asistencia" class="action-card">
-          <i class="fas fa-calendar-alt"></i>
-          <span>Ver Asistencia</span>
-        </a>
-      </div>
-    </div>
-  </div>
 </div>
