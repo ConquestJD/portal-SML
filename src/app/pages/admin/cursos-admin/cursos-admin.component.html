@@ -11,54 +11,105 @@
     </div>
   </div>
 
-  <div class="filters-section">
-    <div class="search-wrapper">
-      <i class="fas fa-search"></i>
-      <input type="text" class="form-input search-input" placeholder="Buscar..." [(ngModel)]="searchQuery" (input)="onSearch()" name="searchQuery" />
-    </div>
-    <select [(ngModel)]="filterGrade" (change)="onSearch()" class="form-input" name="filterGrade">
-      <option value="todos">Todos los grados</option>
-      <option value="1ro">1ro</option>
-      <option value="2do">2do</option>
-      <option value="3ro">3ro</option>
-      <option value="4to">4to</option>
-      <option value="5to">5to</option>
-    </select>
-    <select [(ngModel)]="filterStatus" (change)="onSearch()" class="form-input" name="filterStatus">
-      <option value="todos">Todos</option>
-      <option value="activo">Activo</option>
-      <option value="inactivo">Inactivo</option>
-    </select>
-  </div>
-
-  <div class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nombre</th>
-          <th>Grado</th>
-          <th>Estudiantes</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (course of filteredCourses(); track course.id) {
-          <tr>
-            <td><strong>{{ course.code }}</strong></td>
-            <td>{{ course.name }}</td>
-            <td>{{ course.grade }}</td>
-            <td>{{ course.students }}</td>
-            <td><span class="badge badge-success">{{ course.status }}</span></td>
-            <td>
-              <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-primary">
-                <i class="fas fa-edit"></i> Editar
-              </a>
-            </td>
-          </tr>
+  @if (!selectedGrade()) {
+    <div class="grades-section">
+      <h2 class="section-title">Selecciona un Grado</h2>
+      <div class="grades-grid">
+        @for (grade of availableGrades(); track grade) {
+          <button class="grade-card" (click)="selectGrade(grade)">
+            <div class="grade-icon">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="grade-info">
+              <h3>{{ grade }}</h3>
+              <p>{{ getCoursesCountByGrade(grade) }} cursos activos</p>
+            </div>
+            <i class="fas fa-chevron-right grade-arrow"></i>
+          </button>
         }
-      </tbody>
-    </table>
-  </div>
+      </div>
+    </div>
+  } @else {
+    <div class="selected-grade-header">
+      <button class="btn-back" (click)="selectedGrade.set('')">
+        <i class="fas fa-arrow-left"></i> Volver a Grados
+      </button>
+      <h2 class="selected-grade-title">Grado {{ selectedGrade() }}</h2>
+    </div>
+
+    <div class="courses-calendar-section">
+      <div class="courses-list-section">
+        <h3 class="subsection-title">Cursos del Grado</h3>
+        <div class="courses-list">
+          @if (filteredCourses().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-book"></i>
+              <p>No hay cursos activos para este grado</p>
+            </div>
+          } @else {
+            @for (course of filteredCourses(); track course.id) {
+              <div class="course-card">
+                <div class="course-header">
+                  <h4>{{ course.name }}</h4>
+                  <span class="course-code">{{ course.code }}</span>
+                </div>
+                <div class="course-details">
+                  <div class="detail-item">
+                    <i class="fas fa-door-open"></i>
+                    <span>{{ course.classroom || 'Sin aula asignada' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <i class="fas fa-users"></i>
+                    <span>{{ course.students }} estudiantes</span>
+                  </div>
+                </div>
+                <div class="course-actions">
+                  <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i> Editar
+                  </a>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="calendar-section">
+        <h3 class="subsection-title">Calendario Semanal</h3>
+        <div class="weekly-calendar">
+          <div class="calendar-header">
+            <div class="time-column"></div>
+            @for (day of weekDays; track day) {
+              <div class="day-header">{{ day }}</div>
+            }
+          </div>
+          <div class="calendar-body">
+            @for (time of timeSlots; track time) {
+              <div class="time-row">
+                <div class="time-slot">{{ formatTime(time) }}</div>
+                @for (day of weekDays; track day) {
+                  <div class="calendar-cell">
+                    @let course = getCourseForTimeSlot(day, time);
+                    @if (course && isCourseStart(day, time, course)) {
+                      @let span = getCourseSpan(day, course);
+                      @let schedule = getScheduleForDay(course, day);
+                      <div class="course-block" [style.height.px]="span * 60">
+                        <div class="course-block-content">
+                          <strong>{{ course.name }}</strong>
+                          @if (schedule) {
+                            <span class="course-time">{{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}</span>
+                          }
+                          <span class="course-classroom">{{ course.classroom }}</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>
