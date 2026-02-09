@@ -40,6 +40,7 @@ export class NavbarComponent {
         { path: '/admin/dashboard', label: 'Inicio', icon: 'fas fa-home', exact: true },
         { path: '/admin/estudiantes', label: 'Estudiantes', icon: 'fas fa-users', exact: false },
         { path: '/admin/profesores', label: 'Profesores', icon: 'fas fa-chalkboard-teacher', exact: false },
+        { path: '/admin/padres', label: 'Padres de Familia', icon: 'fas fa-user-friends', exact: false },
         { path: '/admin/cursos', label: 'Cursos', icon: 'fas fa-book', exact: false },
         { path: '/admin/solicitudes', label: 'Solicitudes', icon: 'fas fa-exclamation-circle', exact: false },
         { path: '/admin/reportes', label: 'Reportes', icon: 'fas fa-chart-bar', exact: false }

@@ -1,7 +1,7 @@
 <div class="crear-usuario-container">
   <div class="breadcrumb">
-    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : '/admin/usuarios'" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : isProfessorMode() ? 'Profesores' : 'Usuarios' }}
+    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : isParentMode() ? '/admin/padres' : '/admin/usuarios'" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : isProfessorMode() ? 'Profesores' : isParentMode() ? 'Padres de Familia' : 'Usuarios' }}
     </a>
     <span class="breadcrumb-separator">/</span>
     <span class="breadcrumb-current">{{ pageTitle() }}</span>
@@ -155,7 +155,7 @@
             <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
             <input type="password" class="form-input" [(ngModel)]="formData().password" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
           </div>
-          @if (!isStudentMode() && !isProfessorMode()) {
+          @if (!isStudentMode() && !isProfessorMode() && !isParentMode()) {
             <div class="form-group">
               <label class="form-label">Rol *</label>
               <select class="form-input" [(ngModel)]="formData().role" name="role" required>
@@ -179,9 +179,9 @@
     }
 
     <div class="form-actions">
-      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
+      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : isParentMode() ? '/admin/padres' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
       <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : isProfessorMode() ? 'Crear Profesor' : 'Crear Usuario') }}
+        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : isProfessorMode() ? 'Crear Profesor' : isParentMode() ? 'Crear Padre de Familia' : 'Crear Usuario') }}
       </button>
     </div>
   </form>

@@ -15,13 +15,14 @@ export class CrearUsuarioComponent {
   userId = signal('');
   isStudentMode = signal(false);
   isProfessorMode = signal(false);
+  isParentMode = signal(false);
 
   formData = signal({
     name: '',
     email: '',
     username: '',
     password: '',
-    role: 'estudiante' as 'estudiante' | 'profesor' | 'admin' | 'administrativo',
+    role: 'estudiante' as 'estudiante' | 'profesor' | 'admin' | 'administrativo' | 'padre',
     status: 'activo' as 'activo' | 'inactivo' | 'suspendido',
     level: '' as '' | 'secundaria' | 'primaria' | 'inicial',
     grade: '',
@@ -37,7 +38,7 @@ export class CrearUsuarioComponent {
   });
 
   constructor(private route: ActivatedRoute) {
-    // Detectar si viene desde estudiantes o profesores
+    // Detectar si viene desde estudiantes, profesores o padres
     this.route.queryParams.subscribe(params => {
       if (params['tipo'] === 'estudiante' || this.route.snapshot.url.some(segment => segment.path === 'estudiantes')) {
         this.isStudentMode.set(true);
@@ -45,6 +46,9 @@ export class CrearUsuarioComponent {
       } else if (params['tipo'] === 'profesor' || this.route.snapshot.url.some(segment => segment.path === 'profesores')) {
         this.isProfessorMode.set(true);
         this.formData.update(d => ({ ...d, role: 'profesor', department: '', specialization: '', degree: '', university: '' }));
+      } else if (params['tipo'] === 'padre' || this.route.snapshot.url.some(segment => segment.path === 'padres')) {
+        this.isParentMode.set(true);
+        this.formData.update(d => ({ ...d, role: 'padre', department: '', specialization: '', degree: '', university: '' }));
       }
     });
 
@@ -203,6 +207,8 @@ export class CrearUsuarioComponent {
       return this.isEditMode() ? 'Editar Estudiante' : 'Nuevo Estudiante';
     } else if (this.isProfessorMode()) {
       return this.isEditMode() ? 'Editar Profesor' : 'Nuevo Profesor';
+    } else if (this.isParentMode()) {
+      return this.isEditMode() ? 'Editar Padre de Familia' : 'Nuevo Padre de Familia';
     }
     return this.isEditMode() ? 'Editar Usuario' : 'Nuevo Usuario';
   });
@@ -212,6 +218,8 @@ export class CrearUsuarioComponent {
       return this.isEditMode() ? 'Modifica la información del estudiante' : 'Registra un nuevo estudiante en el sistema';
     } else if (this.isProfessorMode()) {
       return this.isEditMode() ? 'Modifica la información del profesor' : 'Registra un nuevo profesor en el sistema';
+    } else if (this.isParentMode()) {
+      return this.isEditMode() ? 'Modifica la información del padre de familia' : 'Registra un nuevo padre de familia en el sistema';
     }
     return this.isEditMode() ? 'Modifica la información del usuario' : 'Registra un nuevo usuario en el sistema';
   });
