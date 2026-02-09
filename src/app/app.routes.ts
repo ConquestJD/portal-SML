@@ -239,7 +239,7 @@ export const routes: Routes = [
       },
       {
         path: 'padre/mensajeria',
-        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+        loadComponent: () => import('./pages/padre/mensajeria-padre/mensajeria-padre.component').then(m => m.MensajeriaPadreComponent)
       },
       {
         path: 'padre/pagos',
