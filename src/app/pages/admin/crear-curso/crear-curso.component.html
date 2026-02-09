@@ -34,7 +34,7 @@
         @if (formData().level) {
           <div class="form-group">
             <label class="form-label">Grado *</label>
-            <select class="form-input" [(ngModel)]="formData().grade" (ngModelChange)="onGradeOrSectionChange()" name="grade" required>
+            <select class="form-input" [(ngModel)]="formData().grade" (ngModelChange)="onGradeChange()" name="grade" required>
               <option value="">Seleccionar grado</option>
               @for (grade of availableGrades(); track grade) {
                 <option [value]="grade">{{ grade }}</option>
@@ -42,22 +42,11 @@
             </select>
           </div>
         }
-        @if (formData().level) {
-          <div class="form-group">
-            <label class="form-label">Sección *</label>
-            <select class="form-input" [(ngModel)]="formData().section" (ngModelChange)="onGradeOrSectionChange()" name="section" required>
-              <option value="">Seleccionar sección</option>
-              @for (section of availableSections; track section) {
-                <option [value]="section">{{ section }}</option>
-              }
-            </select>
-          </div>
-        }
         <div class="form-group">
           <label class="form-label">Código del Curso *</label>
           <div class="input-with-action">
-            <input type="text" class="form-input" [(ngModel)]="formData().code" name="code" required placeholder="Ej: MAT-2024-3A">
-            <button type="button" class="btn btn-secondary btn-sm" (click)="generateCode()" [disabled]="!formData().name || !formData().level || !formData().grade || !formData().section || !formData().academicYear">
+            <input type="text" class="form-input" [(ngModel)]="formData().code" name="code" required placeholder="Ej: MAT-2024-3">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="generateCode()" [disabled]="!formData().name || !formData().level || !formData().grade || !formData().academicYear">
               <i class="fas fa-magic"></i> Generar
             </button>
           </div>

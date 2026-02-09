@@ -25,7 +25,6 @@ export class CrearCursoComponent {
     name: '',
     level: '' as '' | 'secundaria' | 'primaria' | 'inicial',
     grade: '',
-    section: '',
     classroom: '',
     academicYear: '',
     status: 'activo' as 'activo' | 'inactivo',
@@ -50,7 +49,6 @@ export class CrearCursoComponent {
     return [];
   });
 
-  availableSections = ['A', 'B', 'C', 'D', 'E'];
   weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   academicYears = ['2024', '2025', '2026'];
 
@@ -81,11 +79,10 @@ export class CrearCursoComponent {
     setTimeout(() => {
       const coursesData: Record<string, any> = {
         '1': {
-          code: 'MAT-2024-3A',
+          code: 'MAT-2024-3',
           name: 'Matemática',
           level: 'secundaria',
           grade: '3ro',
-          section: 'A',
           classroom: 'Aula 201',
           academicYear: '2024',
           status: 'activo',
@@ -96,11 +93,10 @@ export class CrearCursoComponent {
           ]
         },
         '2': {
-          code: 'LEN-2024-3A',
+          code: 'LEN-2024-3',
           name: 'Lengua y Literatura',
           level: 'secundaria',
           grade: '3ro',
-          section: 'A',
           classroom: 'Aula 202',
           academicYear: '2024',
           status: 'activo',
@@ -118,7 +114,6 @@ export class CrearCursoComponent {
           name: courseData.name || '',
           level: courseData.level || '',
           grade: courseData.grade || '',
-          section: courseData.section || '',
           classroom: courseData.classroom || '',
           academicYear: courseData.academicYear || '',
           status: courseData.status || 'activo',
@@ -157,7 +152,7 @@ export class CrearCursoComponent {
   onSubmit() {
     // Validar formulario
     if (!this.formData().code || !this.formData().name || !this.formData().level || 
-        !this.formData().grade || !this.formData().section || !this.formData().academicYear) {
+        !this.formData().grade || !this.formData().academicYear) {
       alert('Por favor completa todos los campos obligatorios');
       return;
     }
@@ -174,15 +169,14 @@ export class CrearCursoComponent {
   generateCode() {
     const level = this.formData().level;
     const grade = this.formData().grade;
-    const section = this.formData().section;
     const academicYear = this.formData().academicYear;
     const name = this.formData().name;
 
-    if (level && grade && section && academicYear && name) {
-      // Generar código: [PRIMERAS 3 LETRAS DEL NOMBRE]-[AÑO]-[GRADO][SECCIÓN]
+    if (level && grade && academicYear && name) {
+      // Generar código: [PRIMERAS 3 LETRAS DEL NOMBRE]-[AÑO]-[GRADO]
       const namePrefix = name.substring(0, 3).toUpperCase();
       const gradeShort = grade.replace('ro', '').replace('to', '').replace(' años', '');
-      const code = `${namePrefix}-${academicYear}-${gradeShort}${section}`;
+      const code = `${namePrefix}-${academicYear}-${gradeShort}`;
       
       this.formData.update(d => ({ ...d, code }));
     }
@@ -193,8 +187,8 @@ export class CrearCursoComponent {
     this.formData.update(d => ({ ...d, grade: '', code: '' }));
   }
 
-  onGradeOrSectionChange() {
-    // Regenerar código si cambia grado o sección
+  onGradeChange() {
+    // Regenerar código si cambia grado
     if (this.formData().code) {
       this.generateCode();
     }
