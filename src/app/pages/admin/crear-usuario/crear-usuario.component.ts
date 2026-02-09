@@ -14,6 +14,7 @@ export class CrearUsuarioComponent {
   isEditMode = signal(false);
   userId = signal('');
   isStudentMode = signal(false);
+  isProfessorMode = signal(false);
 
   formData = signal({
     name: '',
@@ -27,15 +28,23 @@ export class CrearUsuarioComponent {
     dni: '',
     phone: '',
     emergencyPhone: '',
-    address: ''
+    address: '',
+    // Campos específicos para profesores
+    department: '',
+    specialization: '',
+    degree: '',
+    university: ''
   });
 
   constructor(private route: ActivatedRoute) {
-    // Detectar si viene desde estudiantes
+    // Detectar si viene desde estudiantes o profesores
     this.route.queryParams.subscribe(params => {
       if (params['tipo'] === 'estudiante' || this.route.snapshot.url.some(segment => segment.path === 'estudiantes')) {
         this.isStudentMode.set(true);
-        this.formData.update(d => ({ ...d, role: 'estudiante' }));
+        this.formData.update(d => ({ ...d, role: 'estudiante', department: '', specialization: '', degree: '', university: '' }));
+      } else if (params['tipo'] === 'profesor' || this.route.snapshot.url.some(segment => segment.path === 'profesores')) {
+        this.isProfessorMode.set(true);
+        this.formData.update(d => ({ ...d, role: 'profesor', department: '', specialization: '', degree: '', university: '' }));
       }
     });
 
@@ -131,7 +140,11 @@ export class CrearUsuarioComponent {
           dni: studentData.dni || '',
           phone: studentData.phone || '',
           emergencyPhone: studentData.emergencyPhone || '',
-          address: studentData.address || ''
+          address: studentData.address || '',
+          department: '',
+          specialization: '',
+          degree: '',
+          university: ''
         });
       }
     }, 300);
@@ -188,6 +201,8 @@ export class CrearUsuarioComponent {
   pageTitle = computed(() => {
     if (this.isStudentMode()) {
       return this.isEditMode() ? 'Editar Estudiante' : 'Nuevo Estudiante';
+    } else if (this.isProfessorMode()) {
+      return this.isEditMode() ? 'Editar Profesor' : 'Nuevo Profesor';
     }
     return this.isEditMode() ? 'Editar Usuario' : 'Nuevo Usuario';
   });
@@ -195,6 +210,8 @@ export class CrearUsuarioComponent {
   pageSubtitle = computed(() => {
     if (this.isStudentMode()) {
       return this.isEditMode() ? 'Modifica la información del estudiante' : 'Registra un nuevo estudiante en el sistema';
+    } else if (this.isProfessorMode()) {
+      return this.isEditMode() ? 'Modifica la información del profesor' : 'Registra un nuevo profesor en el sistema';
     }
     return this.isEditMode() ? 'Modifica la información del usuario' : 'Registra un nuevo usuario en el sistema';
   });

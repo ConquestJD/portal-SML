@@ -1,7 +1,7 @@
 <div class="crear-usuario-container">
   <div class="breadcrumb">
-    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : '/admin/usuarios'" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : 'Usuarios' }}
+    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : '/admin/usuarios'" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : isProfessorMode() ? 'Profesores' : 'Usuarios' }}
     </a>
     <span class="breadcrumb-separator">/</span>
     <span class="breadcrumb-current">{{ pageTitle() }}</span>
@@ -99,6 +99,40 @@
       </div>
     </div>
 
+    @if (isProfessorMode() || formData().role === 'profesor') {
+      <div class="form-section">
+        <h2 class="section-title">Información Profesional</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Departamento *</label>
+            <select class="form-input" [(ngModel)]="formData().department" name="department" required>
+              <option value="">Seleccionar departamento</option>
+              <option value="Matemática">Matemática</option>
+              <option value="Lengua y Literatura">Lengua y Literatura</option>
+              <option value="Ciencias">Ciencias</option>
+              <option value="Historia">Historia</option>
+              <option value="Inglés">Inglés</option>
+              <option value="Educación Física">Educación Física</option>
+              <option value="Arte">Arte</option>
+              <option value="Música">Música</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Especialización</label>
+            <input type="text" class="form-input" [(ngModel)]="formData().specialization" name="specialization" placeholder="Ej: Álgebra y Geometría">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Título Profesional *</label>
+            <input type="text" class="form-input" [(ngModel)]="formData().degree" name="degree" required placeholder="Ej: Licenciado en Matemáticas">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Universidad</label>
+            <input type="text" class="form-input" [(ngModel)]="formData().university" name="university" placeholder="Ej: Universidad Nacional Mayor de San Marcos">
+          </div>
+        </div>
+      </div>
+    }
+
     @if (!isStudentMode() || requiresCredentials()) {
       <div class="form-section">
         <h2 class="section-title">Credenciales de Acceso</h2>
@@ -121,7 +155,7 @@
             <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
             <input type="password" class="form-input" [(ngModel)]="formData().password" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
           </div>
-          @if (!isStudentMode()) {
+          @if (!isStudentMode() && !isProfessorMode()) {
             <div class="form-group">
               <label class="form-label">Rol *</label>
               <select class="form-input" [(ngModel)]="formData().role" name="role" required>
@@ -145,9 +179,9 @@
     }
 
     <div class="form-actions">
-      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
+      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
       <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : 'Crear Usuario') }}
+        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : isProfessorMode() ? 'Crear Profesor' : 'Crear Usuario') }}
       </button>
     </div>
   </form>
