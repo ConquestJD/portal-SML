@@ -85,7 +85,6 @@ export class PerfilHijoComponent implements OnInit {
           code: 'EST-2024-001',
           grade: '3ro',
           section: 'A',
-          photo: 'https://via.placeholder.com/100',
           academicYear: '2024',
           enrollmentDate: '2024-03-01',
           status: 'Activo'
@@ -96,7 +95,6 @@ export class PerfilHijoComponent implements OnInit {
           code: 'EST-2024-002',
           grade: '1ro',
           section: 'B',
-          photo: 'https://via.placeholder.com/100',
           academicYear: '2024',
           enrollmentDate: '2024-03-01',
           status: 'Activo'

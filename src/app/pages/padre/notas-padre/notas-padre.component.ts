@@ -38,14 +38,12 @@ export class NotasPadreComponent implements OnInit {
       name: 'María Rodríguez', 
       grade: '3ro', 
       section: 'A',
-      photo: 'https://via.placeholder.com/60'
     },
     { 
       id: '2', 
       name: 'Pedro Rodríguez', 
       grade: '1ro', 
       section: 'B',
-      photo: 'https://via.placeholder.com/60'
     }
   ]);
 

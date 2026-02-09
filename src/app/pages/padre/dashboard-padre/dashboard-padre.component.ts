@@ -31,8 +31,8 @@ export class DashboardPadreComponent {
   selectedChild = signal<string>('1');
   
   children = signal<Child[]>([
-    { id: '1', name: 'María Rodríguez', grade: '3ro', section: 'A', photo: 'https://via.placeholder.com/40' },
-    { id: '2', name: 'Pedro Rodríguez', grade: '1ro', section: 'B', photo: 'https://via.placeholder.com/40' }
+    { id: '1', name: 'María Rodríguez', grade: '3ro', section: 'A' },
+    { id: '2', name: 'Pedro Rodríguez', grade: '1ro', section: 'B' }
   ]);
 
   alerts = signal<Alert[]>([

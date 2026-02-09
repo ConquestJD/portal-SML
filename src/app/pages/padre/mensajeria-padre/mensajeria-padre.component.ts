@@ -63,14 +63,12 @@ export class MensajeriaPadreComponent implements OnInit {
       name: 'María Rodríguez', 
       grade: '3ro', 
       section: 'A',
-      photo: 'https://via.placeholder.com/60'
     },
     { 
       id: '2', 
       name: 'Pedro Rodríguez', 
       grade: '1ro', 
       section: 'B',
-      photo: 'https://via.placeholder.com/60'
     }
   ]);
 
@@ -114,7 +112,6 @@ export class MensajeriaPadreComponent implements OnInit {
           participantName: 'Prof. Ana Martínez',
           participantRole: 'profesor',
           participantTitle: 'Prof. de Matemática',
-          participantAvatar: 'https://via.placeholder.com/40',
           childId: '1',
           childName: 'María Rodríguez',
           lastMessage: 'Gracias por su consulta, le responderé pronto.',
@@ -147,7 +144,6 @@ export class MensajeriaPadreComponent implements OnInit {
           participantName: 'Prof. Carlos López',
           participantRole: 'tutor',
           participantTitle: 'Tutor de Sección',
-          participantAvatar: 'https://via.placeholder.com/40',
           childId: '1',
           childName: 'María Rodríguez',
           lastMessage: 'La reunión de padres será el próximo viernes.',
@@ -175,7 +171,6 @@ export class MensajeriaPadreComponent implements OnInit {
           participantName: 'Prof. Juan Pérez',
           participantRole: 'profesor',
           participantTitle: 'Prof. de Matemática',
-          participantAvatar: 'https://via.placeholder.com/40',
           childId: '2',
           childName: 'Pedro Rodríguez',
           lastMessage: 'Pedro está mejorando mucho en la materia.',
@@ -208,7 +203,6 @@ export class MensajeriaPadreComponent implements OnInit {
           participantName: 'Lic. Carlos López',
           participantRole: 'coordinador',
           participantTitle: 'Coordinador Académico',
-          participantAvatar: 'https://via.placeholder.com/40',
           childId: '2',
           childName: 'Pedro Rodríguez',
           lastMessage: 'Gracias por contactarnos.',
@@ -289,12 +283,10 @@ export class MensajeriaPadreComponent implements OnInit {
       'prof1': { 
         name: 'Prof. Ana Martínez', 
         title: 'Prof. de Matemática',
-        avatar: 'https://via.placeholder.com/40'
       },
       'prof2': { 
         name: 'Prof. Juan Pérez', 
         title: 'Prof. de Matemática',
-        avatar: 'https://via.placeholder.com/40'
       }
     };
 
