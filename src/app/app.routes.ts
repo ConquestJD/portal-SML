@@ -243,7 +243,7 @@ export const routes: Routes = [
       },
       {
         path: 'padre/pagos',
-        loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
+        loadComponent: () => import('./pages/padre/pagos/pagos.component').then(m => m.PagosComponent)
       },
       {
         path: 'padre/documentos',

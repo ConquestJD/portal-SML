@@ -53,6 +53,7 @@ export class NavbarComponent {
         { path: '/padre/notas', label: 'Notas', icon: 'fas fa-chart-line', exact: false },
         { path: '/padre/asistencia', label: 'Asistencia', icon: 'fas fa-calendar-alt', exact: false },
         { path: '/padre/comunicados', label: 'Comunicados', icon: 'fas fa-bullhorn', exact: false },
+        { path: '/padre/pagos', label: 'Pagos', icon: 'fas fa-dollar-sign', exact: false },
         { path: '/padre/mensajeria', label: 'Mensajería', icon: 'fas fa-envelope', exact: false }
       ];
     } else {
