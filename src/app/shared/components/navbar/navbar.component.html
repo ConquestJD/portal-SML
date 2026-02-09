@@ -1,6 +1,6 @@
 <aside class="sidebar" [class.collapsed]="isMenuOpen()">
   <div class="sidebar-header">
-    <a [routerLink]="userRole() === 'profesor' ? '/profesor/dashboard' : userRole() === 'admin' ? '/admin/dashboard' : '/dashboard'" class="logo-link">
+    <a [routerLink]="userRole() === 'profesor' ? '/profesor/dashboard' : userRole() === 'admin' ? '/admin/dashboard' : userRole() === 'padre' ? '/padre/dashboard' : '/dashboard'" class="logo-link">
       <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
       <span class="logo-text">Portal SML</span>
     </a>
@@ -33,6 +33,8 @@
               Profesor
             } @else if (userRole() === 'admin') {
               Administrador
+            } @else if (userRole() === 'padre') {
+              Padre de Familia
             } @else {
               Estudiante
             }
@@ -40,10 +42,10 @@
         </div>
       </div>
       <div class="sidebar-actions">
-        <a [routerLink]="userRole() === 'profesor' ? '/profesor/perfil' : userRole() === 'admin' ? '/admin/perfil' : '/perfil'" class="action-link" title="Mi Perfil">
+        <a [routerLink]="userRole() === 'profesor' ? '/profesor/perfil' : userRole() === 'admin' ? '/admin/perfil' : userRole() === 'padre' ? '/padre/perfil-hijo' : '/perfil'" class="action-link" title="Mi Perfil">
           <i class="fas fa-user"></i>
         </a>
-        <a [routerLink]="userRole() === 'profesor' ? '/profesor/configuracion' : userRole() === 'admin' ? '/admin/configuracion' : '/configuracion'" class="action-link" title="Configuración">
+        <a [routerLink]="userRole() === 'profesor' ? '/profesor/configuracion' : userRole() === 'admin' ? '/admin/configuracion' : userRole() === 'padre' ? '/padre/configuracion' : '/configuracion'" class="action-link" title="Configuración">
           <i class="fas fa-cog"></i>
         </a>
         <a (click)="logout()" class="action-link" title="Cerrar Sesión" style="cursor: pointer;">
