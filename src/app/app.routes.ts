@@ -165,6 +165,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/cursos-admin/cursos-admin.component').then(m => m.CursosAdminComponent)
       },
       {
+        path: 'admin/cursos/crear',
+        loadComponent: () => import('./pages/admin/crear-curso/crear-curso.component').then(m => m.CrearCursoComponent)
+      },
+      {
+        path: 'admin/cursos/:id/editar',
+        loadComponent: () => import('./pages/admin/crear-curso/crear-curso.component').then(m => m.CrearCursoComponent)
+      },
+      {
         path: 'admin/anio-academico',
         loadComponent: () => import('./pages/admin/anio-academico/anio-academico.component').then(m => m.AnioAcademicoComponent)
       },

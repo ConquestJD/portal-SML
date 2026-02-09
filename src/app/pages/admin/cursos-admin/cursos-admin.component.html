@@ -5,9 +5,9 @@
       <p class="page-subtitle">Gestiona el catálogo de cursos del colegio</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-primary">
+      <a routerLink="/admin/cursos/crear" class="btn btn-primary">
         <i class="fas fa-plus"></i> Nuevo Curso
-      </button>
+      </a>
     </div>
   </div>
 
@@ -52,9 +52,9 @@
             <td>{{ course.students }}</td>
             <td><span class="badge badge-success">{{ course.status }}</span></td>
             <td>
-              <button class="btn btn-sm btn-primary">
+              <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-primary">
                 <i class="fas fa-edit"></i> Editar
-              </button>
+              </a>
             </td>
           </tr>
         }

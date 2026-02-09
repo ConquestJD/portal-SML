@@ -1,0 +1,154 @@
+<div class="crear-curso-container">
+  <div class="breadcrumb">
+    <a routerLink="/admin/cursos" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a Cursos
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ pageTitle() }}</span>
+  </div>
+
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">{{ pageTitle() }}</h1>
+      <p class="page-subtitle">{{ pageSubtitle() }}</p>
+    </div>
+  </div>
+
+  <form (ngSubmit)="onSubmit()" class="course-form">
+    <div class="form-section">
+      <h2 class="section-title">Información General</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nombre del Curso *</label>
+          <input type="text" class="form-input" [(ngModel)]="formData().name" name="name" required placeholder="Ej: Matemática">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nivel *</label>
+          <select class="form-input" [(ngModel)]="formData().level" (ngModelChange)="onLevelChange()" name="level" required>
+            <option value="">Seleccionar nivel</option>
+            <option value="secundaria">Secundaria</option>
+            <option value="primaria">Primaria</option>
+            <option value="inicial">Inicial</option>
+          </select>
+        </div>
+        @if (formData().level) {
+          <div class="form-group">
+            <label class="form-label">Grado *</label>
+            <select class="form-input" [(ngModel)]="formData().grade" (ngModelChange)="onGradeOrSectionChange()" name="grade" required>
+              <option value="">Seleccionar grado</option>
+              @for (grade of availableGrades(); track grade) {
+                <option [value]="grade">{{ grade }}</option>
+              }
+            </select>
+          </div>
+        }
+        @if (formData().level) {
+          <div class="form-group">
+            <label class="form-label">Sección *</label>
+            <select class="form-input" [(ngModel)]="formData().section" (ngModelChange)="onGradeOrSectionChange()" name="section" required>
+              <option value="">Seleccionar sección</option>
+              @for (section of availableSections; track section) {
+                <option [value]="section">{{ section }}</option>
+              }
+            </select>
+          </div>
+        }
+        <div class="form-group">
+          <label class="form-label">Código del Curso *</label>
+          <div class="input-with-action">
+            <input type="text" class="form-input" [(ngModel)]="formData().code" name="code" required placeholder="Ej: MAT-2024-3A">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="generateCode()" [disabled]="!formData().name || !formData().level || !formData().grade || !formData().section || !formData().academicYear">
+              <i class="fas fa-magic"></i> Generar
+            </button>
+          </div>
+          <span class="field-hint">
+            <i class="fas fa-info-circle"></i>
+            El código se genera automáticamente o puedes ingresarlo manualmente
+          </span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Año Académico *</label>
+          <select class="form-input" [(ngModel)]="formData().academicYear" name="academicYear" required>
+            <option value="">Seleccionar año</option>
+            @for (year of academicYears; track year) {
+              <option [value]="year">{{ year }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aula</label>
+          <input type="text" class="form-input" [(ngModel)]="formData().classroom" name="classroom" placeholder="Ej: Aula 201">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado *</label>
+          <select class="form-input" [(ngModel)]="formData().status" name="status" required>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">Horario</h2>
+      <div class="schedule-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Día</label>
+            <select class="form-input" [(ngModel)]="newSchedule().day" name="scheduleDay">
+              <option value="">Seleccionar día</option>
+              @for (day of weekDays; track day) {
+                <option [value]="day">{{ day }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora de Inicio</label>
+            <input type="time" class="form-input" [(ngModel)]="newSchedule().startTime" name="scheduleStartTime">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora de Fin</label>
+            <input type="time" class="form-input" [(ngModel)]="newSchedule().endTime" name="scheduleEndTime">
+          </div>
+          <div class="form-group">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary" (click)="addSchedule()">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (formData().schedule.length > 0) {
+        <div class="schedule-list">
+          <h3>Horarios Configurados</h3>
+          <div class="schedule-items">
+            @for (schedule of formData().schedule; track $index) {
+              <div class="schedule-item">
+                <div class="schedule-info">
+                  <span class="schedule-day">{{ schedule.day }}</span>
+                  <span class="schedule-time">{{ schedule.startTime }} - {{ schedule.endTime }}</span>
+                </div>
+                <button type="button" class="btn-icon btn-danger" (click)="removeSchedule($index)" title="Eliminar">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="empty-schedule">
+          <i class="fas fa-calendar-times"></i>
+          <p>No hay horarios configurados. Agrega al menos uno.</p>
+        </div>
+      }
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/admin/cursos" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : 'Crear Curso' }}
+      </button>
+    </div>
+  </form>
+</div>
