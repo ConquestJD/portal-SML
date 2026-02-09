@@ -15,8 +15,10 @@ export class ProfesoresComponent {
   filterStatus = signal<'todos' | 'activo' | 'inactivo'>('todos');
 
   profesores = signal([
-    { id: '1', name: 'Prof. Ana Martínez', email: 'ana@colegio.edu', status: 'activo', courses: 3, students: 90 },
-    { id: '2', name: 'Prof. Luis Rodríguez', email: 'luis@colegio.edu', status: 'activo', courses: 2, students: 60 }
+    { id: '1', name: 'Prof. Ana Martínez', email: 'ana.martinez@colegio.edu', status: 'activo', courses: 2, students: 58, department: 'Matemática' },
+    { id: '2', name: 'Prof. Luis Rodríguez', email: 'luis.rodriguez@colegio.edu', status: 'activo', courses: 3, students: 85, department: 'Lengua y Literatura' },
+    { id: '3', name: 'Prof. María González', email: 'maria.gonzalez@colegio.edu', status: 'activo', courses: 2, students: 61, department: 'Ciencias' },
+    { id: '4', name: 'Prof. Carlos López', email: 'carlos.lopez@colegio.edu', status: 'activo', courses: 1, students: 30, department: 'Historia' }
   ]);
 
   filteredProfesores = signal(this.profesores());
