@@ -10,15 +10,52 @@
     <p class="page-subtitle">Lista de cursos matriculados</p>
   </div>
 
-  <!-- Selector de Hijo -->
+  <!-- Selector de Hijos -->
   @if (children().length > 1) {
-    <div class="child-selector">
-      <label>Seleccionar Hijo:</label>
-      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+    <div class="child-selector-section">
+      <h2 class="selector-title">
+        <i class="fas fa-users"></i>
+        Seleccionar Hijo
+      </h2>
+      <div class="children-grid">
         @for (child of children(); track child.id) {
-          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+          <button 
+            class="child-card"
+            [class.active]="selectedChildId() === child.id"
+            (click)="selectChild(child.id)"
+          >
+            <div class="child-photo-wrapper">
+              @if (child.photo) {
+                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+              } @else {
+                <div class="child-photo-placeholder">
+                  {{ getInitial(child.name) }}
+                </div>
+              }
+            </div>
+            <div class="child-info">
+              <h3 class="child-name">{{ child.name }}</h3>
+              <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+            </div>
+            @if (selectedChildId() === child.id) {
+              <div class="child-check">
+                <i class="fas fa-check-circle"></i>
+              </div>
+            }
+          </button>
         }
-      </select>
+      </div>
+    </div>
+  }
+
+  @if (selectedChild()) {
+    <div class="child-header">
+      <h2 class="child-header-title">
+        Cursos de {{ selectedChild()!.name }}
+      </h2>
+      <p class="child-header-subtitle">
+        {{ selectedChild()!.grade }} - Sección {{ selectedChild()!.section }}
+      </p>
     </div>
   }
 
@@ -35,8 +72,14 @@
   </div>
 
   <!-- Lista de Cursos -->
-  <div class="courses-grid">
-    @for (course of filteredCourses(); track course.id) {
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando cursos...</p>
+    </div>
+  } @else {
+    <div class="courses-grid">
+      @for (course of filteredCourses(); track course.id) {
       <div class="course-card">
         <div class="course-header">
           <div class="course-icon">
@@ -62,19 +105,25 @@
           </div>
         </div>
         <div class="course-actions">
-          <a [routerLink]="['/padre/cursos', course.id]" class="btn-primary">
+          <a [routerLink]="['/padre/cursos', course.id]" [queryParams]="{childId: selectedChildId()}" class="btn-primary">
             <i class="fas fa-eye"></i>
             Ver Detalle
           </a>
         </div>
+        </div>
+      }
+    </div>
+
+    @if (filteredCourses().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-book-open"></i>
+        <p>No se encontraron cursos</p>
+        @if (searchQuery()) {
+          <p class="empty-hint">Intenta con otros términos de búsqueda</p>
+        } @else {
+          <p class="empty-hint">Este hijo no tiene cursos asignados</p>
+        }
       </div>
     }
-  </div>
-
-  @if (filteredCourses().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-book-open"></i>
-      <p>No se encontraron cursos</p>
-    </div>
   }
 </div>

@@ -1,138 +1,309 @@
 <div class="curso-detalle-padre-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <a routerLink="/padre/cursos">Cursos</a>
-    <span>/</span>
-    <span>{{ course().name }}</span>
-  </div>
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando información del curso...</p>
+    </div>
+  } @else {
+    <div class="breadcrumb">
+      <a routerLink="/padre/dashboard">Inicio</a>
+      <span>/</span>
+      <a routerLink="/padre/cursos">Cursos</a>
+      <span>/</span>
+      <span>{{ course().name }}</span>
+    </div>
 
-  <div class="course-header">
-    <div class="course-info">
-      <h1 class="course-title">{{ course().name }}</h1>
-      <p class="course-code">{{ course().code }}</p>
-      <div class="course-meta">
-        <span><i class="fas fa-chalkboard-teacher"></i> {{ course().teacher }}</span>
-        <span><i class="fas fa-clock"></i> {{ course().schedule }}</span>
-        <span><i class="fas fa-chart-line"></i> Promedio: {{ course().average }}</span>
+    <!-- Header del Curso -->
+    <div class="course-header">
+      <div class="course-header-content">
+        <div class="course-title-wrapper">
+          <div class="course-code-badge">
+            <i class="fas fa-book"></i>
+            <span>{{ course().code }}</span>
+          </div>
+          <h1 class="course-title">{{ course().name }}</h1>
+          <p class="course-period">Año Académico {{ course().academicYear }}</p>
+        </div>
+        <div class="course-stats">
+          <div class="stat-item">
+            <i class="fas fa-chart-line"></i>
+            <div class="stat-content">
+              <span class="stat-label">Promedio</span>
+              <span class="stat-value">{{ course().average }}</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-graduation-cap"></i>
+            <div class="stat-content">
+              <span class="stat-label">Créditos</span>
+              <span class="stat-value">{{ course().credits }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="tabs">
-    <button class="tab active">Materiales</button>
-    <button class="tab">Tareas</button>
-    <button class="tab">Evaluaciones</button>
-    <button class="tab">Comunicados</button>
-  </div>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'informacion'" 
+        (click)="setTab('informacion')"
+      >
+        <i class="fas fa-info-circle"></i> Información
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'materiales'" 
+        (click)="setTab('materiales')"
+      >
+        <i class="fas fa-book"></i> Materiales
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'tareas'" 
+        (click)="setTab('tareas')"
+      >
+        <i class="fas fa-tasks"></i> Tareas
+      </button>
+    </div>
 
-  <!-- Materiales -->
-  <div class="tab-content">
-    <h2 class="section-title">
-      <i class="fas fa-file-alt"></i>
-      Materiales Publicados
-    </h2>
-    <div class="materials-list">
-      @for (material of materials(); track material.id) {
-        <div class="material-item">
-          <div class="material-icon">
-            @switch (material.type) {
-              @case ('pdf') { <i class="fas fa-file-pdf"></i> }
-              @case ('ppt') { <i class="fas fa-file-powerpoint"></i> }
-              @default { <i class="fas fa-file"></i> }
-            }
+    <!-- Contenido de Tabs -->
+    <div class="tab-content">
+      <!-- Tab: Información -->
+      @if (activeTab() === 'informacion') {
+        <div class="content-section">
+          <!-- Información del Profesor -->
+          <div class="info-card">
+            <h2 class="card-title">
+              <i class="fas fa-chalkboard-teacher"></i>
+              Información del Profesor
+            </h2>
+            <div class="teacher-card">
+              <div class="teacher-photo-wrapper">
+                <div class="teacher-photo-placeholder">
+                  {{ course().teacher.charAt(0) }}
+                </div>
+              </div>
+              <div class="teacher-details">
+                <h3 class="teacher-name">{{ course().teacher }}</h3>
+                <div class="teacher-contact-info">
+                  <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <a [href]="'mailto:' + course().teacherEmail">{{ course().teacherEmail }}</a>
+                  </div>
+                  <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <a [href]="'tel:' + course().teacherPhone">{{ course().teacherPhone }}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="material-info">
-            <h3>{{ material.title }}</h3>
-            <p>{{ material.date }} • {{ material.size }}</p>
+
+          <!-- Horarios y Aula -->
+          <div class="info-card">
+            <h2 class="card-title">
+              <i class="fas fa-calendar-alt"></i>
+              Horarios y Aula
+            </h2>
+            <div class="schedule-info">
+              <div class="schedule-list">
+                @for (scheduleItem of course().schedule; track scheduleItem.day) {
+                  <div class="schedule-item">
+                    <div class="schedule-day">
+                      <i class="fas fa-calendar-day"></i>
+                      <span>{{ scheduleItem.day }}</span>
+                    </div>
+                    <div class="schedule-time">
+                      <i class="fas fa-clock"></i>
+                      <span>{{ scheduleItem.time }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="classroom-info">
+                <i class="fas fa-door-open"></i>
+                <span><strong>Aula:</strong> {{ course().classroom }}</span>
+              </div>
+            </div>
           </div>
-          <button class="btn-download" disabled>
-            <i class="fas fa-download"></i>
-            Descargar
-          </button>
+
+          <!-- Información General del Curso -->
+          <div class="info-card">
+            <h2 class="card-title">
+              <i class="fas fa-info-circle"></i>
+              Información General
+            </h2>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Código del Curso</label>
+                <p>{{ course().code }}</p>
+              </div>
+              <div class="info-item">
+                <label>Año Académico</label>
+                <p>{{ course().academicYear }}</p>
+              </div>
+              <div class="info-item">
+                <label>Créditos</label>
+                <p>{{ course().credits }}</p>
+              </div>
+              <div class="info-item">
+                <label>Promedio Actual</label>
+                <p class="highlight-value">{{ course().average }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       }
-    </div>
-  </div>
 
-  <!-- Tareas -->
-  <div class="tab-content">
-    <h2 class="section-title">
-      <i class="fas fa-tasks"></i>
-      Tareas Asignadas
-    </h2>
-    <div class="tasks-list">
-      @for (task of tasks(); track task.id) {
-        <div class="task-item" [class.completed]="task.status === 'entregada'">
-          <div class="task-status">
-            @if (task.status === 'entregada') {
-              <i class="fas fa-check-circle"></i>
-            } @else if (task.status === 'vencida') {
-              <i class="fas fa-exclamation-circle"></i>
-            } @else {
-              <i class="fas fa-clock"></i>
-            }
+      <!-- Tab: Materiales -->
+      @if (activeTab() === 'materiales') {
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-book"></i>
+              Materiales del Curso
+            </h2>
+            <p class="section-description">
+              Materiales organizados por unidades del plan de estudios
+            </p>
           </div>
-          <div class="task-info">
-            <h3>{{ task.title }}</h3>
-            <p>Fecha límite: {{ task.dueDate }}</p>
-            @if (task.submitted) {
-              <p class="submitted-info">Entregada el {{ task.submittedDate }}</p>
+
+          <div class="units-list">
+            @for (unit of units(); track unit.id) {
+              <div class="unit-item" [class.expanded]="unit.isExpanded">
+                <div class="unit-header" (click)="toggleUnit(unit.id)">
+                  <div class="unit-number">{{ unit.number.toString().padStart(2, '0') }}</div>
+                  <div class="unit-content">
+                    <h3>{{ unit.title }}</h3>
+                    <p>{{ unit.description }}</p>
+                  </div>
+                  <div class="unit-toggle">
+                    <i class="fas" [class.fa-chevron-down]="!unit.isExpanded" [class.fa-chevron-up]="unit.isExpanded"></i>
+                  </div>
+                </div>
+                @if (unit.isExpanded) {
+                  <div class="unit-materials">
+                    @if (unit.materials && unit.materials.length > 0) {
+                      <div class="materials-list">
+                        @for (material of unit.materials; track material.id) {
+                          <div class="material-item">
+                            <div class="material-icon-wrapper" 
+                              [class.pdf]="material.type === 'PDF'" 
+                              [class.video]="material.type === 'Video'"
+                              [class.documento]="material.type === 'Documento'"
+                              [class.imagen]="material.type === 'Imagen'"
+                              [class.link]="material.type === 'Link'">
+                              <i class="fas" [ngClass]="getMaterialIcon(material.type)"></i>
+                            </div>
+                            <div class="material-info">
+                              <h4>{{ material.name }}</h4>
+                              <div class="material-meta">
+                                <span class="material-type">{{ material.type }}</span>
+                                @if (material.size) {
+                                  <span class="material-size">{{ material.size }}</span>
+                                }
+                                <span class="material-date">{{ material.date | date:'shortDate' }}</span>
+                              </div>
+                            </div>
+                            <button 
+                              class="btn-download" 
+                              (click)="downloadMaterial(material)"
+                              [title]="material.type === 'Link' ? 'Abrir enlace' : 'Descargar'"
+                            >
+                              @if (material.type === 'Link') {
+                                <i class="fas fa-external-link-alt"></i>
+                                Abrir
+                              } @else {
+                                <i class="fas fa-download"></i>
+                                Descargar
+                              }
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="empty-materials">
+                        <i class="fas fa-folder-open"></i>
+                        <p>No hay materiales disponibles para esta unidad</p>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
             }
-          </div>
-          <div class="task-badge" [class.pending]="task.status === 'pendiente'" 
-                                [class.completed]="task.status === 'entregada'"
-                                [class.overdue]="task.status === 'vencida'">
-            {{ task.status | titlecase }}
           </div>
         </div>
       }
-    </div>
-  </div>
 
-  <!-- Evaluaciones -->
-  <div class="tab-content">
-    <h2 class="section-title">
-      <i class="fas fa-clipboard-check"></i>
-      Evaluaciones Programadas
-    </h2>
-    <div class="evaluations-list">
-      @for (eval of evaluations(); track eval.id) {
-        <div class="evaluation-item">
-          <div class="eval-icon">
-            <i class="fas fa-clipboard-list"></i>
+      <!-- Tab: Tareas -->
+      @if (activeTab() === 'tareas') {
+        <div class="content-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-tasks"></i>
+              Tareas Asignadas
+            </h2>
+            <p class="section-description">
+              Lista de tareas asignadas para este curso
+            </p>
           </div>
-          <div class="eval-info">
-            <h3>{{ eval.title }}</h3>
-            <p>{{ eval.date }}</p>
-          </div>
-          <span class="eval-type">{{ eval.type | titlecase }}</span>
-        </div>
-      }
-    </div>
-  </div>
 
-  <!-- Comunicados -->
-  <div class="tab-content">
-    <h2 class="section-title">
-      <i class="fas fa-bullhorn"></i>
-      Comunicados del Curso
-    </h2>
-    <div class="comunicados-list">
-      @for (comunicado of comunicados(); track comunicado.id) {
-        <div class="comunicado-item" [class.unread]="!comunicado.read">
-          <div class="comunicado-icon">
-            <i class="fas fa-file-alt"></i>
+          <div class="tasks-list">
+            @for (task of tasks(); track task.id) {
+              <div class="task-item" [class.completed]="task.status === 'entregada'">
+                <div class="task-status" 
+                     [class.status-entregada]="task.status === 'entregada'"
+                     [class.status-pendiente]="task.status === 'pendiente'"
+                     [class.status-vencida]="task.status === 'vencida'">
+                  @if (task.status === 'entregada') {
+                    <i class="fas fa-check-circle"></i>
+                  } @else if (task.status === 'vencida') {
+                    <i class="fas fa-exclamation-circle"></i>
+                  } @else {
+                    <i class="fas fa-clock"></i>
+                  }
+                </div>
+                <div class="task-info">
+                  <h3>{{ task.title }}</h3>
+                  <div class="task-meta">
+                    <span class="task-due-date">
+                      <i class="fas fa-calendar"></i>
+                      Fecha límite: {{ task.dueDate | date:'longDate' }}
+                    </span>
+                    @if (task.submitted && task.submittedDate) {
+                      <span class="task-submitted">
+                        <i class="fas fa-check"></i>
+                        Entregada el {{ task.submittedDate | date:'shortDate' }}
+                      </span>
+                    }
+                    @if (task.grade !== undefined && task.grade !== null) {
+                      <span class="task-grade">
+                        <i class="fas fa-star"></i>
+                        Calificación: {{ task.grade }}/20
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="task-badge" 
+                     [class.badge-pending]="task.status === 'pendiente'" 
+                     [class.badge-completed]="task.status === 'entregada'"
+                     [class.badge-overdue]="task.status === 'vencida'">
+                  {{ task.status | titlecase }}
+                </div>
+              </div>
+            }
           </div>
-          <div class="comunicado-info">
-            <h3>{{ comunicado.title }}</h3>
-            <p>{{ comunicado.date }}</p>
-          </div>
-          @if (!comunicado.read) {
-            <span class="unread-badge">Nuevo</span>
+
+          @if (tasks().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-tasks"></i>
+              <p>No hay tareas asignadas para este curso</p>
+            </div>
           }
         </div>
       }
     </div>
-  </div>
+  }
 </div>
