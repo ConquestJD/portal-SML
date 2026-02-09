@@ -264,9 +264,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
   font-size: var(--font-size-2xl);
   border: 3px solid var(--border-color);
+}
+
+.teacher-photo-placeholder i {
+  font-size: var(--font-size-2xl);
 }
 
 .teacher-details {

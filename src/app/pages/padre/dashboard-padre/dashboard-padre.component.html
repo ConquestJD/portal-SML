@@ -9,7 +9,13 @@
             class="child-card" 
             [class.active]="selectedChild() === child.id"
             (click)="selectChild(child.id)">
-            <img [src]="child.photo || 'https://via.placeholder.com/40'" [alt]="child.name" class="child-photo">
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="child.name" class="child-photo">
+            } @else {
+              <div class="child-photo-placeholder">
+                <i class="fas fa-user"></i>
+              </div>
+            }
             <div class="child-info">
               <h3>{{ child.name }}</h3>
               <p>{{ child.grade }} - Sección {{ child.section }}</p>

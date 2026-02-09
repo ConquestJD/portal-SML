@@ -131,9 +131,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
   font-size: var(--font-size-xl);
   border: 2px solid var(--border-color);
+}
+
+.child-photo-placeholder i {
+  font-size: var(--font-size-xl);
 }
 
 .child-card.active .child-photo-placeholder {
@@ -279,9 +282,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
   font-size: var(--font-size-lg);
   border: 2px solid var(--border-color);
+}
+
+.participant-avatar i {
+  font-size: var(--font-size-lg);
 }
 
 .participant-avatar img {

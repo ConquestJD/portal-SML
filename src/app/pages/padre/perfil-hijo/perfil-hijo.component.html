@@ -31,9 +31,9 @@
               <div class="child-photo-wrapper">
                 @if (child.photo) {
                   <img [src]="child.photo" [alt]="child.name" class="child-photo">
-                } @else {
+                }                 @else {
                   <div class="child-photo-placeholder">
-                    {{ getInitial(child.name) }}
+                    <i class="fas fa-user"></i>
                   </div>
                 }
               </div>
@@ -62,7 +62,7 @@
             <img [src]="selectedChild()!.photo" [alt]="profile.name" class="profile-photo-large">
           } @else {
             <div class="profile-photo-placeholder-large">
-              {{ getInitial(profile.name) }}
+              <i class="fas fa-user"></i>
             </div>
           }
         </div>

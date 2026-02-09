@@ -32,7 +32,7 @@
                 <img [src]="child.photo" [alt]="child.name" class="child-photo">
               } @else {
                 <div class="child-photo-placeholder">
-                  {{ getInitial(child.name) }}
+                  <i class="fas fa-user"></i>
                 </div>
               }
             </div>
@@ -82,7 +82,7 @@
                   @if (conv.participantAvatar) {
                     <img [src]="conv.participantAvatar" [alt]="conv.participantName">
                   } @else {
-                    {{ getParticipantInitial(conv.participantName) }}
+                    <i class="fas fa-user"></i>
                   }
                 </div>
                 <div class="conversation-info">
@@ -120,7 +120,7 @@
               @if (selectedConversation()!.participantAvatar) {
                 <img [src]="selectedConversation()!.participantAvatar" [alt]="selectedConversation()!.participantName">
               } @else {
-                {{ getParticipantInitial(selectedConversation()!.participantName) }}
+                <i class="fas fa-user"></i>
               }
             </div>
             <div class="header-info">
