@@ -13,7 +13,7 @@
       <p class="page-subtitle">Código: {{ student().code }} | {{ student().grade }} {{ student().section }}</p>
     </div>
     <div class="header-actions">
-      <a [routerLink]="['/admin/usuarios', student().id, 'editar']" class="btn btn-primary">
+      <a [routerLink]="['/admin/usuarios', student().id, 'editar']" [queryParams]="{ tipo: 'estudiante' }" class="btn btn-primary">
         <i class="fas fa-edit"></i> Editar
       </a>
     </div>
@@ -31,6 +31,9 @@
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
       <i class="fas fa-calendar-check"></i> Asistencia
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'padres'" (click)="setTab('padres')">
+      <i class="fas fa-users"></i> Padres de Familia
     </button>
     <button class="tab-btn" [class.active]="activeTab() === 'documentos'" (click)="setTab('documentos')">
       <i class="fas fa-file"></i> Documentos
@@ -71,6 +74,23 @@
               <span class="value">{{ student().emergencyPhone }}</span>
             </div>
           </div>
+          <div class="info-card">
+            <h3>Credenciales de Acceso</h3>
+            <div class="info-item">
+              <span class="label">Usuario:</span>
+              <span class="value">{{ student().username }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Estado:</span>
+              <span class="value">
+                <span class="badge badge-success">{{ student().status === 'activo' ? 'Activo' : student().status }}</span>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="label">Fecha de Matrícula:</span>
+              <span class="value">{{ student().enrollmentDate | date:'longDate' }}</span>
+            </div>
+          </div>
         </div>
       </div>
     }
@@ -78,26 +98,199 @@
     @if (activeTab() === 'academico') {
       <div class="content-section">
         <div class="info-card">
-          <h3>Historial Académico</h3>
-          <p>Información sobre cursos, grados y secciones del estudiante.</p>
+          <h3>Historial Académico en el Colegio</h3>
+          <div class="history-table">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Año</th>
+                  <th>Nivel</th>
+                  <th>Grado</th>
+                  <th>Sección</th>
+                  <th>Estado</th>
+                  <th>Promedio</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (record of academicHistory(); track record.year) {
+                  <tr>
+                    <td><strong>{{ record.year }}</strong></td>
+                    <td>{{ record.level }}</td>
+                    <td>{{ record.grade }}</td>
+                    <td>{{ record.section }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="record.status === 'Aprobado' || record.status === 'En curso'" [class.badge-warning]="record.status === 'En curso'">
+                        {{ record.status }}
+                      </span>
+                    </td>
+                    <td><strong>{{ record.average | number:'1.1-1' }}</strong></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     }
 
     @if (activeTab() === 'notas') {
       <div class="content-section">
-        <div class="info-card">
-          <h3>Calificaciones</h3>
-          <p>Historial completo de notas y evaluaciones.</p>
+        <div class="grades-container">
+          @for (grade of grades(); track grade.course) {
+            <div class="grade-card">
+              <div class="grade-header">
+                <h3>{{ grade.course }}</h3>
+                <div class="grade-teacher">
+                  <i class="fas fa-chalkboard-teacher"></i>
+                  {{ grade.teacher }}
+                </div>
+                <div class="grade-average">
+                  <span class="average-label">Promedio:</span>
+                  <span class="average-value">{{ grade.average | number:'1.1-1' }}</span>
+                </div>
+              </div>
+              <div class="evaluations-list">
+                <table class="evaluations-table">
+                  <thead>
+                    <tr>
+                      <th>Evaluación</th>
+                      <th>Fecha</th>
+                      <th>Nota</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (eval of grade.evaluations; track eval.name) {
+                      <tr>
+                        <td>{{ eval.name }}</td>
+                        <td>{{ eval.date | date:'shortDate' }}</td>
+                        <td><strong>{{ eval.grade }}/{{ eval.maxGrade }}</strong></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
         </div>
       </div>
     }
 
     @if (activeTab() === 'asistencia') {
       <div class="content-section">
-        <div class="info-card">
-          <h3>Registro de Asistencia</h3>
-          <p>Historial de asistencia del estudiante.</p>
+        <div class="attendance-stats">
+          <div class="stat-card">
+            <div class="stat-icon present">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ attendanceStats().present }}</h3>
+              <p>Presentes</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon late">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ attendanceStats().late }}</h3>
+              <p>Tardanzas</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon absent">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ attendanceStats().absent }}</h3>
+              <p>Faltas</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon percentage">
+              <i class="fas fa-percentage"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ attendanceStats().percentage }}%</h3>
+              <p>Asistencia</p>
+            </div>
+          </div>
+        </div>
+        <div class="attendance-table">
+          <h3>Registro Detallado</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of attendance(); track record.date) {
+                <tr>
+                  <td>{{ record.date | date:'longDate' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusBadgeClass(record.status)">
+                      {{ getStatusLabel(record.status) }}
+                    </span>
+                  </td>
+                  <td>{{ record.observations || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'padres') {
+      <div class="content-section">
+        <div class="parents-container">
+          @for (parent of parents(); track parent.id) {
+            <div class="parent-card">
+              <div class="parent-header">
+                <div class="parent-avatar">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="parent-info">
+                  <h3>{{ parent.name }}</h3>
+                  <span class="parent-relationship">
+                    <i class="fas fa-tag"></i>
+                    {{ getRelationshipLabel(parent.relationship) }}
+                  </span>
+                </div>
+                <div class="parent-status">
+                  <span class="badge" [class.badge-success]="parent.isActive" [class.badge-secondary]="!parent.isActive">
+                    {{ parent.isActive ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </div>
+              </div>
+              <div class="parent-details">
+                <div class="detail-row">
+                  <i class="fas fa-envelope"></i>
+                  <span>{{ parent.email }}</span>
+                </div>
+                <div class="detail-row">
+                  <i class="fas fa-phone"></i>
+                  <span>{{ parent.phone }}</span>
+                </div>
+                <div class="detail-row">
+                  <i class="fas fa-id-card"></i>
+                  <span>DNI: {{ parent.dni }}</span>
+                </div>
+                <div class="detail-row">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>{{ parent.address }}</span>
+                </div>
+              </div>
+            </div>
+          }
+          @if (parents().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-users"></i>
+              <p>No hay padres de familia vinculados</p>
+            </div>
+          }
         </div>
       </div>
     }
