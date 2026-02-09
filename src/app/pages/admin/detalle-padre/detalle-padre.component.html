@@ -1,0 +1,194 @@
+<div class="detalle-padre-container">
+  <div class="breadcrumb">
+    <a routerLink="/admin/padres" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a Padres de Familia
+    </a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">{{ padre().name }}</span>
+  </div>
+
+  <div class="page-header">
+    <h1 class="page-title">{{ padre().name }}</h1>
+    <p class="page-subtitle">Padre de Familia</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
+      <i class="fas fa-user"></i> Perfil
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'hijos'" (click)="setTab('hijos')">
+      <i class="fas fa-child"></i> Hijos ({{ children().length }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'pagos'" (click)="setTab('pagos')">
+      <i class="fas fa-dollar-sign"></i> Pagos
+    </button>
+  </div>
+
+  <div class="tab-content">
+    @if (activeTab() === 'perfil') {
+      <div class="content-section">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>Información Personal</h3>
+            <div class="info-item">
+              <span class="label">Nombre Completo:</span>
+              <span class="value">{{ padre().name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">DNI:</span>
+              <span class="value">{{ padre().dni }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Email:</span>
+              <span class="value">{{ padre().email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Teléfono:</span>
+              <span class="value">{{ padre().phone }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Dirección:</span>
+              <span class="value">{{ padre().address }}</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Información de Cuenta</h3>
+            <div class="info-item">
+              <span class="label">Usuario:</span>
+              <span class="value">{{ padre().username }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Fecha de Registro:</span>
+              <span class="value">{{ padre().registrationDate | date:'longDate' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Estado:</span>
+              <span class="value">
+                <span class="badge badge-success">{{ padre().status === 'activo' ? 'Activo' : 'Inactivo' }}</span>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="label">Hijos Vinculados:</span>
+              <span class="value">
+                <span class="badge badge-info">{{ children().length }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'hijos') {
+      <div class="content-section">
+        <div class="children-header">
+          <h3>Hijos Vinculados</h3>
+          <span class="children-count">{{ children().length }} hijo(s)</span>
+        </div>
+        <div class="children-list">
+          @if (children().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-child"></i>
+              <p>No hay hijos vinculados a este padre de familia</p>
+            </div>
+          } @else {
+            @for (child of children(); track child.id) {
+              <div class="child-card">
+                <div class="child-header">
+                  <div class="child-info">
+                    <h4>{{ child.name }}</h4>
+                    <div class="child-meta">
+                      <span class="child-grade">{{ child.grade }}</span>
+                      <span class="child-level">{{ getLevelLabel(child.level) }}</span>
+                      <span class="child-relationship">{{ child.relationship }}</span>
+                    </div>
+                  </div>
+                  <div class="child-status">
+                    <span class="badge" [class.badge-success]="child.status === 'activo'" [class.badge-secondary]="child.status === 'inactivo'">
+                      {{ child.status === 'activo' ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="child-details">
+                  <div class="detail-section">
+                    <h5><i class="fas fa-calendar-alt"></i> Fecha de Matrícula</h5>
+                    <p>{{ child.enrollmentDate | date:'longDate' }}</p>
+                  </div>
+                </div>
+                <div class="child-actions">
+                  <a [routerLink]="['/admin/estudiantes', child.id]" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i> Ver Detalles
+                  </a>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'pagos') {
+      <div class="content-section">
+        <div class="payments-summary">
+          <div class="summary-card">
+            <div class="summary-icon success">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="summary-content">
+              <h4>Total Pagado</h4>
+              <p class="summary-amount">S/ {{ totalPaid().toFixed(2) }}</p>
+              <span class="summary-count">{{ paidPayments().length }} pago(s)</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon warning">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="summary-content">
+              <h4>Total Pendiente</h4>
+              <p class="summary-amount">S/ {{ totalPending().toFixed(2) }}</p>
+              <span class="summary-count">{{ pendingPayments().length }} pago(s)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="payments-tabs">
+          <button class="payment-tab-btn" [class.active]="true">
+            <i class="fas fa-clock"></i> Pendientes ({{ pendingPayments().length }})
+          </button>
+          <button class="payment-tab-btn" [class.active]="false">
+            <i class="fas fa-check"></i> Pagados ({{ paidPayments().length }})
+          </button>
+        </div>
+
+        <div class="payments-list">
+          @if (pendingPayments().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-check-circle"></i>
+              <p>No hay pagos pendientes</p>
+            </div>
+          } @else {
+            @for (payment of pendingPayments(); track payment.id) {
+              <div class="payment-item">
+                <div class="payment-info">
+                  <h4>{{ payment.concept }}</h4>
+                  <div class="payment-details">
+                    <span class="payment-amount">S/ {{ payment.amount.toFixed(2) }}</span>
+                    <span class="payment-date">
+                      <i class="fas fa-calendar"></i>
+                      Vence: {{ payment.dueDate | date:'shortDate' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="payment-status">
+                  <span class="badge" [ngClass]="getPaymentStatusClass(payment.status)">
+                    {{ getPaymentStatusLabel(payment.status) }}
+                  </span>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
