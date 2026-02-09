@@ -288,4 +288,72 @@ export class PagosComponent implements OnInit {
     console.log('Descargar recibo:', payment.receiptNumber);
     // En producción, esto descargaría el recibo PDF
   }
+
+  getDaysUntilDue(dueDate: string): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    const diff = due.getTime() - today.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }
+
+  getReminderMessage(payment: Payment): string {
+    const days = this.getDaysUntilDue(payment.dueDate);
+    
+    if (payment.status === 'vencido') {
+      const daysOverdue = Math.abs(days);
+      return `Este pago está vencido hace ${daysOverdue} día${daysOverdue > 1 ? 's' : ''}. Por favor, realice el pago lo antes posible.`;
+    } else if (payment.status === 'pendiente') {
+      if (days < 0) {
+        const daysOverdue = Math.abs(days);
+        return `Este pago está vencido hace ${daysOverdue} día${daysOverdue > 1 ? 's' : ''}. Por favor, realice el pago lo antes posible.`;
+      } else if (days === 0) {
+        return 'Este pago vence hoy. Por favor, realice el pago a la brevedad.';
+      } else if (days <= 3) {
+        return `Este pago vence en ${days} día${days > 1 ? 's' : ''}. Por favor, realice el pago pronto.`;
+      } else {
+        return `Este pago vence el ${new Date(payment.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
+      }
+    } else if (payment.status === 'proximo') {
+      return `Este pago está programado para el ${new Date(payment.dueDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.`;
+    }
+    return '';
+  }
+
+  getReminderIcon(payment: Payment): string {
+    if (payment.status === 'vencido') {
+      return 'fa-exclamation-triangle';
+    } else if (payment.status === 'pendiente') {
+      const days = this.getDaysUntilDue(payment.dueDate);
+      if (days <= 0) {
+        return 'fa-exclamation-triangle';
+      } else if (days <= 3) {
+        return 'fa-clock';
+      } else {
+        return 'fa-info-circle';
+      }
+    } else if (payment.status === 'proximo') {
+      return 'fa-calendar-alt';
+    }
+    return 'fa-info-circle';
+  }
+
+  getReminderClass(payment: Payment): string {
+    if (payment.status === 'vencido') {
+      return 'reminder-urgent';
+    } else if (payment.status === 'pendiente') {
+      const days = this.getDaysUntilDue(payment.dueDate);
+      if (days <= 0) {
+        return 'reminder-urgent';
+      } else if (days <= 3) {
+        return 'reminder-warning';
+      } else {
+        return 'reminder-info';
+      }
+    } else if (payment.status === 'proximo') {
+      return 'reminder-info';
+    }
+    return 'reminder-info';
+  }
 }

@@ -271,11 +271,11 @@
                 <i class="fas fa-download"></i>
                 Descargar Recibo
               </button>
-            } @else if (payment.status === 'pendiente' || payment.status === 'vencido') {
-              <button class="btn btn-primary">
-                <i class="fas fa-credit-card"></i>
-                Realizar Pago
-              </button>
+            } @else if (payment.status === 'pendiente' || payment.status === 'vencido' || payment.status === 'proximo') {
+              <div class="payment-reminder" [class]="getReminderClass(payment)">
+                <i class="fas" [ngClass]="getReminderIcon(payment)"></i>
+                <span>{{ getReminderMessage(payment) }}</span>
+              </div>
             }
           </div>
         </div>
