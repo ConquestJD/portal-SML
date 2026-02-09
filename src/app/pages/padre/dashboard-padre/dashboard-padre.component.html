@@ -1,25 +1,36 @@
 <div class="dashboard-padre-container">
-  <!-- Selector de Hijo -->
+  <!-- Selector de Hijos -->
   @if (children().length > 1) {
-    <div class="child-selector">
-      <h2>Seleccionar Hijo</h2>
-      <div class="children-list">
+    <div class="child-selector-section">
+      <h2 class="selector-title">
+        <i class="fas fa-users"></i>
+        Seleccionar Hijo
+      </h2>
+      <div class="children-grid">
         @for (child of children(); track child.id) {
           <button 
-            class="child-card" 
+            class="child-card"
             [class.active]="selectedChild() === child.id"
-            (click)="selectChild(child.id)">
-            @if (child.photo) {
-              <img [src]="child.photo" [alt]="child.name" class="child-photo">
-            } @else {
-              <div class="child-photo-placeholder">
-                <i class="fas fa-user"></i>
+            (click)="selectChild(child.id)"
+          >
+            <div class="child-photo-wrapper">
+              @if (child.photo) {
+                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+              } @else {
+                <div class="child-photo-placeholder">
+                  <i class="fas fa-user"></i>
+                </div>
+              }
+            </div>
+            <div class="child-info">
+              <h3 class="child-name">{{ child.name }}</h3>
+              <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+            </div>
+            @if (selectedChild() === child.id) {
+              <div class="child-check">
+                <i class="fas fa-check-circle"></i>
               </div>
             }
-            <div class="child-info">
-              <h3>{{ child.name }}</h3>
-              <p>{{ child.grade }} - Sección {{ child.section }}</p>
-            </div>
           </button>
         }
       </div>
