@@ -19,7 +19,7 @@ export class NavbarComponent {
   // Computed signals basados en el servicio de autenticación
   user = computed(() => this.authService.user());
   userName = computed(() => this.user()?.name || 'Usuario');
-  userPhoto = computed(() => this.user()?.photo || 'https://via.placeholder.com/40');
+  userPhoto = computed(() => this.user()?.photo);
   userRole = computed(() => this.user()?.role || 'estudiante');
 
   // Navegación según el rol

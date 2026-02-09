@@ -26,7 +26,6 @@ export class AuthService {
       name: 'Juan Pérez',
       email: 'alumno@colegio.edu',
       role: 'estudiante',
-      photo: 'https://via.placeholder.com/40'
     },
     {
       id: '2',
@@ -35,7 +34,6 @@ export class AuthService {
       name: 'Prof. María González',
       email: 'profesor@colegio.edu',
       role: 'profesor',
-      photo: 'https://via.placeholder.com/40'
     },
     {
       id: '3',
@@ -44,7 +42,6 @@ export class AuthService {
       name: 'Administrador',
       email: 'admin@colegio.edu',
       role: 'admin',
-      photo: 'https://via.placeholder.com/40'
     },
     {
       id: '4',
@@ -53,7 +50,6 @@ export class AuthService {
       name: 'Carlos Rodríguez',
       email: 'padre@colegio.edu',
       role: 'padre',
-      photo: 'https://via.placeholder.com/40'
     }
   ];
 
