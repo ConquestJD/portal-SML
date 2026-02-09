@@ -129,6 +129,20 @@
   opacity: 0.8;
 }
 
+.field-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-xs);
+}
+
+.field-hint i {
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+}
+
 .input-with-info {
   display: flex;
   flex-direction: column;
