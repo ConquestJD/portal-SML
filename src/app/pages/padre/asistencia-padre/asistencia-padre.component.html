@@ -10,20 +10,63 @@
     <p class="page-subtitle">Registro de asistencia y faltas</p>
   </div>
 
-  <!-- Selector de Hijo -->
+  <!-- Selector de Hijos -->
   @if (children().length > 1) {
-    <div class="child-selector">
-      <label>Seleccionar Hijo:</label>
-      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+    <div class="child-selector-section">
+      <h2 class="selector-title">
+        <i class="fas fa-users"></i>
+        Seleccionar Hijo
+      </h2>
+      <div class="children-grid">
         @for (child of children(); track child.id) {
-          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+          <button 
+            class="child-card"
+            [class.active]="selectedChildId() === child.id"
+            (click)="selectChild(child.id)"
+          >
+            <div class="child-photo-wrapper">
+              @if (child.photo) {
+                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+              } @else {
+                <div class="child-photo-placeholder">
+                  {{ getInitial(child.name) }}
+                </div>
+              }
+            </div>
+            <div class="child-info">
+              <h3 class="child-name">{{ child.name }}</h3>
+              <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+            </div>
+            @if (selectedChildId() === child.id) {
+              <div class="child-check">
+                <i class="fas fa-check-circle"></i>
+              </div>
+            }
+          </button>
         }
-      </select>
+      </div>
     </div>
   }
 
-  <!-- Resumen -->
-  <div class="summary-cards">
+  @if (selectedChild()) {
+    <div class="child-header">
+      <h2 class="child-header-title">
+        Asistencia de {{ selectedChild()!.name }}
+      </h2>
+      <p class="child-header-subtitle">
+        {{ selectedChild()!.grade }} - Sección {{ selectedChild()!.section }}
+      </p>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Cargando asistencia...</p>
+    </div>
+  } @else {
+    <!-- Resumen -->
+    <div class="summary-cards">
     <div class="summary-card present">
       <i class="fas fa-check-circle"></i>
       <div>
@@ -74,7 +117,7 @@
       </div>
       @for (record of attendanceRecords(); track record.date) {
         <div class="table-row">
-          <div>{{ record.date }}</div>
+          <div>{{ record.date | date:'shortDate' }}</div>
           <div>
             <span class="status-badge" [class.present]="record.status === 'presente'"
                                   [class.absent]="record.status === 'ausente'"
@@ -86,6 +129,13 @@
           <div>{{ record.observation || '-' }}</div>
         </div>
       }
+      @if (attendanceRecords().length === 0) {
+        <div class="empty-state">
+          <i class="fas fa-calendar-check"></i>
+          <p>No hay registros de asistencia disponibles</p>
+        </div>
+      }
     </div>
   </div>
+  }
 </div>
