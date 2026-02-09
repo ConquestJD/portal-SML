@@ -82,22 +82,30 @@ export class MensajeriaPadreComponent implements OnInit {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    // Leer query params si existe childId
+    // Leer query params
     this.route.queryParams.subscribe(params => {
       if (params['childId']) {
         this.selectedChildId.set(params['childId']);
       } else if (this.children().length > 0) {
         this.selectedChildId.set(this.children()[0].id);
       }
-    });
 
-    this.loadConversations();
+      // Si hay teacherId, cargar conversaciones y seleccionar esa conversación
+      if (params['teacherId']) {
+        this.loadConversations().then(() => {
+          this.selectConversationByTeacherId(params['teacherId'], params['courseId']);
+        });
+      } else {
+        this.loadConversations();
+      }
+    });
   }
 
-  loadConversations() {
+  loadConversations(): Promise<void> {
     this.isLoading.set(true);
     
-    setTimeout(() => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
       // Conversaciones para María (3ro A)
       const mariaConversations: Conversation[] = [
         {
@@ -222,16 +230,75 @@ export class MensajeriaPadreComponent implements OnInit {
 
       this.conversations.set([...mariaConversations, ...pedroConversations]);
       
-      // Seleccionar primera conversación del hijo seleccionado si existe
+      // Seleccionar primera conversación del hijo seleccionado si existe (solo si no hay teacherId en params)
       if (this.selectedChildId()) {
-        const firstConv = this.conversations().find(c => c.childId === this.selectedChildId());
-        if (firstConv) {
-          this.selectConversation(firstConv);
+        const params = this.route.snapshot.queryParams;
+        if (!params['teacherId']) {
+          const firstConv = this.conversations().find(c => c.childId === this.selectedChildId());
+          if (firstConv) {
+            this.selectConversation(firstConv);
+          }
         }
       }
       
       this.isLoading.set(false);
+      resolve();
     }, 500);
+    });
+  }
+
+  selectConversationByTeacherId(teacherId: string, courseId?: string) {
+    // Buscar conversación existente con ese profesor para el hijo seleccionado
+    let conversation = this.conversations().find(
+      c => c.participantId === teacherId && c.childId === this.selectedChildId()
+    );
+
+    // Si no existe, crear una nueva conversación
+    if (!conversation) {
+      const teacher = this.getTeacherInfo(teacherId, courseId);
+      if (teacher) {
+        const newConversation: Conversation = {
+          id: `conv-${teacherId}-${this.selectedChildId()}`,
+          participantId: teacherId,
+          participantName: teacher.name,
+          participantRole: 'profesor',
+          participantTitle: teacher.title,
+          participantAvatar: teacher.avatar,
+          childId: this.selectedChildId(),
+          childName: this.selectedChild()?.name || '',
+          lastMessage: '',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+          messages: []
+        };
+        
+        // Agregar la nueva conversación
+        this.conversations.update(convs => [...convs, newConversation]);
+        conversation = newConversation;
+      }
+    }
+
+    if (conversation) {
+      this.selectConversation(conversation);
+    }
+  }
+
+  getTeacherInfo(teacherId: string, courseId?: string): { name: string; title: string; avatar?: string } | null {
+    // Mapeo de profesores (en producción esto vendría de una API)
+    const teachers: Record<string, { name: string; title: string; avatar?: string }> = {
+      'prof1': { 
+        name: 'Prof. Ana Martínez', 
+        title: 'Prof. de Matemática',
+        avatar: 'https://via.placeholder.com/40'
+      },
+      'prof2': { 
+        name: 'Prof. Juan Pérez', 
+        title: 'Prof. de Matemática',
+        avatar: 'https://via.placeholder.com/40'
+      }
+    };
+
+    return teachers[teacherId] || null;
   }
 
   selectChild(childId: string) {

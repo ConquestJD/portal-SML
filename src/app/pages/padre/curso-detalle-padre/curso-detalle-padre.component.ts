@@ -1,6 +1,6 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 
 interface UnitMaterial {
   id: string;
@@ -48,6 +48,7 @@ export class CursoDetallePadreComponent implements OnInit {
     code: 'MAT-2024',
     name: 'Matemática',
     teacher: 'Prof. Ana Martínez',
+    teacherId: 'prof1',
     teacherEmail: 'ana.martinez@colegio.edu',
     teacherPhone: '+51 987654321',
     schedule: [
@@ -107,7 +108,8 @@ export class CursoDetallePadreComponent implements OnInit {
   ]);
 
   constructor(
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -161,5 +163,17 @@ export class CursoDetallePadreComponent implements OnInit {
       case 'Link': return 'fa-external-link-alt';
       default: return 'fa-file';
     }
+  }
+
+  sendMessageToTeacher() {
+    // Navegar a mensajería con los parámetros necesarios
+    const childId = this.route.snapshot.queryParams['childId'] || '1';
+    this.router.navigate(['/padre/mensajeria'], {
+      queryParams: {
+        childId: childId,
+        teacherId: this.course().teacherId,
+        courseId: this.course().id
+      }
+    });
   }
 }

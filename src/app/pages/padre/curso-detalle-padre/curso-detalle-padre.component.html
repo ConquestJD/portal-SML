@@ -90,6 +90,12 @@
                     <a [href]="'tel:' + course().teacherPhone">{{ course().teacherPhone }}</a>
                   </div>
                 </div>
+                <div class="teacher-actions">
+                  <button class="btn-send-message" (click)="sendMessageToTeacher()">
+                    <i class="fas fa-comment"></i>
+                    Enviar Mensaje
+                  </button>
+                </div>
               </div>
             </div>
           </div>
