@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 interface AcademicHistory {
   year: string;
@@ -40,10 +41,21 @@ interface Parent {
   isActive: boolean;
 }
 
+interface Document {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  uploadDate: string;
+  uploadedBy: string;
+  category: 'academico' | 'personal' | 'medico' | 'legal' | 'otro';
+  url?: string;
+}
+
 @Component({
   selector: 'app-detalle-estudiante',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe],
+  imports: [CommonModule, RouterLink, DatePipe, FormsModule],
   templateUrl: './detalle-estudiante.component.html',
   styleUrl: './detalle-estudiante.component.css'
 })
@@ -152,6 +164,45 @@ export class DetalleEstudianteComponent {
     percentage: 83.3
   });
 
+  documents = signal<Document[]>([
+    {
+      id: '1',
+      name: 'Partida de Nacimiento.pdf',
+      type: 'PDF',
+      size: '245 KB',
+      uploadDate: '2024-01-15',
+      uploadedBy: 'Admin',
+      category: 'legal',
+      url: '#'
+    },
+    {
+      id: '2',
+      name: 'Certificado Médico.pdf',
+      type: 'PDF',
+      size: '180 KB',
+      uploadDate: '2024-01-20',
+      uploadedBy: 'Admin',
+      category: 'medico',
+      url: '#'
+    },
+    {
+      id: '3',
+      name: 'Boletín de Notas 2023.pdf',
+      type: 'PDF',
+      size: '320 KB',
+      uploadDate: '2024-02-10',
+      uploadedBy: 'Prof. Ana Martínez',
+      category: 'academico',
+      url: '#'
+    }
+  ]);
+
+  showUploadModal = signal(false);
+  selectedFile: File | null = null;
+  documentCategory = signal<'academico' | 'personal' | 'medico' | 'legal' | 'otro'>('academico');
+  documentName = signal('');
+  isUploading = signal(false);
+
   constructor(private route: ActivatedRoute) {
     this.route.params.subscribe(params => {
       this.studentId.set(params['id']);
@@ -195,5 +246,99 @@ export class DetalleEstudianteComponent {
       'tutor': 'Tutor'
     };
     return labels[relationship] || relationship;
+  }
+
+  getCategoryLabel(category: string): string {
+    const labels: Record<string, string> = {
+      'academico': 'Académico',
+      'personal': 'Personal',
+      'medico': 'Médico',
+      'legal': 'Legal',
+      'otro': 'Otro'
+    };
+    return labels[category] || category;
+  }
+
+  getCategoryIcon(category: string): string {
+    const icons: Record<string, string> = {
+      'academico': 'fa-graduation-cap',
+      'personal': 'fa-user',
+      'medico': 'fa-heartbeat',
+      'legal': 'fa-file-contract',
+      'otro': 'fa-file'
+    };
+    return icons[category] || 'fa-file';
+  }
+
+  openUploadModal() {
+    this.showUploadModal.set(true);
+    this.selectedFile = null;
+    this.documentName.set('');
+    this.documentCategory.set('academico');
+  }
+
+  closeUploadModal() {
+    this.showUploadModal.set(false);
+    this.selectedFile = null;
+    this.documentName.set('');
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+      if (!this.documentName()) {
+        this.documentName.set(this.selectedFile.name);
+      }
+    }
+  }
+
+  uploadDocument() {
+    if (!this.selectedFile) {
+      alert('Por favor selecciona un archivo');
+      return;
+    }
+
+    this.isUploading.set(true);
+
+    // Simular subida de archivo
+    setTimeout(() => {
+      const newDocument: Document = {
+        id: Date.now().toString(),
+        name: this.documentName() || this.selectedFile!.name,
+        type: this.selectedFile!.type || 'PDF',
+        size: this.formatFileSize(this.selectedFile!.size),
+        uploadDate: new Date().toISOString().split('T')[0],
+        uploadedBy: 'Admin',
+        category: this.documentCategory(),
+        url: '#'
+      };
+
+      this.documents.update(docs => [...docs, newDocument]);
+      this.isUploading.set(false);
+      this.closeUploadModal();
+    }, 1000);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  deleteDocument(documentId: string) {
+    if (confirm('¿Estás seguro de eliminar este documento?')) {
+      this.documents.update(docs => docs.filter(doc => doc.id !== documentId));
+    }
+  }
+
+  downloadDocument(document: Document) {
+    console.log('Descargar documento:', document.name);
+    // En producción, esto descargaría el archivo real
+    if (document.url) {
+      window.open(document.url, '_blank');
+    }
   }
 }
