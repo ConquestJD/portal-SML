@@ -57,8 +57,7 @@ export class CursoDetallePadreComponent implements OnInit {
     ],
     classroom: 'Aula 201',
     average: 15.5,
-    academicYear: '2024',
-    credits: 3
+    academicYear: '2024'
   });
 
   units = signal<Unit[]>([
