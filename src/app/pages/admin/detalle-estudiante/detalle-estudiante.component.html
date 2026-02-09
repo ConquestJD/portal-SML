@@ -245,6 +245,12 @@
 
     @if (activeTab() === 'padres') {
       <div class="content-section">
+        <div class="parents-header">
+          <h3>Padres de Familia</h3>
+          <button class="btn btn-primary" (click)="openAssignParentModal()">
+            <i class="fas fa-user-plus"></i> Asignar Padre de Familia
+          </button>
+        </div>
         <div class="parents-container">
           @for (parent of parents(); track parent.id) {
             <div class="parent-card">
@@ -283,12 +289,18 @@
                   <span>{{ parent.address }}</span>
                 </div>
               </div>
+              <div class="parent-actions">
+                <button class="btn-icon btn-danger" (click)="removeParent(parent.id)" title="Desasignar">
+                  <i class="fas fa-user-minus"></i>
+                </button>
+              </div>
             </div>
           }
           @if (parents().length === 0) {
             <div class="empty-state">
               <i class="fas fa-users"></i>
               <p>No hay padres de familia vinculados</p>
+              <p class="empty-hint">Haz clic en "Asignar Padre de Familia" para vincular uno</p>
             </div>
           }
         </div>
@@ -410,6 +422,72 @@
               } @else {
                 <i class="fas fa-upload"></i> Subir Documento
               }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal de Asignar Padre de Familia -->
+    @if (showAssignParentModal()) {
+      <div class="modal-overlay" (click)="closeAssignParentModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Asignar Padre de Familia</h3>
+            <button class="modal-close" (click)="closeAssignParentModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Seleccionar Padre de Familia *</label>
+              <select class="form-input" [(ngModel)]="selectedParentId" name="parentId" required>
+                <option value="">Seleccionar padre de familia</option>
+                @for (parent of availableParentsForAssignment(); track parent.id) {
+                  <option [value]="parent.id">
+                    {{ parent.name }} - {{ getRelationshipLabel(parent.relationship) }} ({{ parent.email }})
+                  </option>
+                }
+              </select>
+              @if (availableParentsForAssignment().length === 0) {
+                <p class="form-hint">
+                  <i class="fas fa-info-circle"></i>
+                  No hay padres de familia disponibles para asignar
+                </p>
+              }
+            </div>
+            @if (selectedParent()) {
+              <div class="parent-preview">
+                <h4>Información del Padre de Familia</h4>
+                <div class="preview-info">
+                  <div class="preview-item">
+                    <strong>Nombre:</strong> {{ selectedParent()!.name }}
+                  </div>
+                  <div class="preview-item">
+                    <strong>Relación:</strong> {{ getRelationshipLabel(selectedParent()!.relationship) }}
+                  </div>
+                  <div class="preview-item">
+                    <strong>Email:</strong> {{ selectedParent()!.email }}
+                  </div>
+                  <div class="preview-item">
+                    <strong>Teléfono:</strong> {{ selectedParent()!.phone }}
+                  </div>
+                  <div class="preview-item">
+                    <strong>DNI:</strong> {{ selectedParent()!.dni }}
+                  </div>
+                  <div class="preview-item">
+                    <strong>Dirección:</strong> {{ selectedParent()!.address }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeAssignParentModal()">
+              Cancelar
+            </button>
+            <button class="btn btn-primary" (click)="assignParent()" [disabled]="!selectedParentId()">
+              <i class="fas fa-user-plus"></i> Asignar
             </button>
           </div>
         </div>

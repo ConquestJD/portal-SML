@@ -29,9 +29,12 @@ export class EstudiantesComponent {
 
   students = signal<Student[]>([
     { id: '1', name: 'Juan Pérez', code: '2024001', email: 'juan@colegio.edu', grade: '3ro', section: 'A', status: 'activo', enrollmentDate: '2024-01-15' },
-    { id: '2', name: 'María García', code: '2024002', email: 'maria@colegio.edu', grade: '3ro', section: 'A', status: 'activo', enrollmentDate: '2024-01-16' },
-    { id: '3', name: 'Carlos López', code: '2024003', email: 'carlos@colegio.edu', grade: '3ro', section: 'B', status: 'activo', enrollmentDate: '2024-01-17' },
-    { id: '4', name: 'Ana Martínez', code: '2024004', email: 'ana@colegio.edu', grade: '4to', section: 'A', status: 'retirado', enrollmentDate: '2024-01-18' }
+    { id: '2', name: 'María García', code: '2024002', email: 'maria@colegio.edu', grade: '2do', section: 'B', status: 'activo', enrollmentDate: '2024-01-16' },
+    { id: '3', name: 'Carlos López', code: '2024003', email: 'carlos@colegio.edu', grade: '5to', section: 'C', status: 'activo', enrollmentDate: '2024-01-17' },
+    { id: '4', name: 'Ana Martínez', code: '2024004', email: 'ana@colegio.edu', grade: '4to', section: 'A', status: 'retirado', enrollmentDate: '2024-01-18' },
+    { id: '5', name: 'Pedro Ramírez', code: '2024005', email: 'pedro@colegio.edu', grade: '1ro', section: 'A', status: 'activo', enrollmentDate: '2024-02-01' },
+    { id: '6', name: 'Sofía Torres', code: '2024006', email: 'sofia@colegio.edu', grade: '6to', section: 'B', status: 'activo', enrollmentDate: '2024-02-05' },
+    { id: '7', name: 'Luis Fernández', code: '2024007', email: '', grade: '', section: '', status: 'activo', enrollmentDate: '2024-03-10' }
   ]);
 
   filteredStudents = computed(() => {
