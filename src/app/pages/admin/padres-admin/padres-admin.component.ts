@@ -1,7 +1,13 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+
+interface Child {
+  id: string;
+  name: string;
+  grade: string;
+}
 
 interface Parent {
   id: string;
@@ -13,6 +19,7 @@ interface Parent {
   status: 'activo' | 'inactivo';
   children: number;
   relationship: string[];
+  childrenList: Child[];
 }
 
 @Component({
@@ -23,6 +30,7 @@ interface Parent {
   styleUrl: './padres-admin.component.css'
 })
 export class PadresAdminComponent {
+  selectedGrade = signal<string>('');
   searchQuery = signal('');
   filterStatus = signal<'todos' | 'activo' | 'inactivo'>('todos');
 
@@ -36,7 +44,11 @@ export class PadresAdminComponent {
       address: 'Av. Principal 123, Lima',
       status: 'activo',
       children: 2,
-      relationship: ['Madre', 'Madre']
+      relationship: ['Madre', 'Madre'],
+      childrenList: [
+        { id: '1', name: 'Juan González', grade: '3ro' },
+        { id: '2', name: 'Ana González', grade: '5to' }
+      ]
     },
     {
       id: '2',
@@ -47,7 +59,10 @@ export class PadresAdminComponent {
       address: 'Jr. Los Olivos 456, San Isidro',
       status: 'activo',
       children: 1,
-      relationship: ['Padre']
+      relationship: ['Padre'],
+      childrenList: [
+        { id: '3', name: 'Pedro Rodríguez', grade: '3ro' }
+      ]
     },
     {
       id: '3',
@@ -58,7 +73,12 @@ export class PadresAdminComponent {
       address: 'Av. Libertad 789, Miraflores',
       status: 'activo',
       children: 3,
-      relationship: ['Madre', 'Madre', 'Madre']
+      relationship: ['Madre', 'Madre', 'Madre'],
+      childrenList: [
+        { id: '4', name: 'Luis Martínez', grade: '4to' },
+        { id: '5', name: 'Carmen Martínez', grade: '2do' },
+        { id: '6', name: 'Sofía Martínez', grade: '1ro' }
+      ]
     },
     {
       id: '4',
@@ -69,7 +89,10 @@ export class PadresAdminComponent {
       address: 'Calle Real 321, Surco',
       status: 'activo',
       children: 1,
-      relationship: ['Padre']
+      relationship: ['Padre'],
+      childrenList: [
+        { id: '7', name: 'Diego Fernández', grade: '4to' }
+      ]
     },
     {
       id: '5',
@@ -80,16 +103,37 @@ export class PadresAdminComponent {
       address: 'Av. Brasil 654, La Molina',
       status: 'inactivo',
       children: 2,
-      relationship: ['Madre', 'Madre']
+      relationship: ['Madre', 'Madre'],
+      childrenList: [
+        { id: '8', name: 'María López', grade: '2do' },
+        { id: '9', name: 'José López', grade: '5to' }
+      ]
     }
   ]);
 
-  filteredPadres = signal(this.padres());
+  availableGrades = computed(() => {
+    const grades = new Set<string>();
+    this.padres().forEach(padre => {
+      padre.childrenList.forEach(child => {
+        grades.add(child.grade);
+      });
+    });
+    return Array.from(grades).sort();
+  });
 
-  onSearch() {
+  filteredPadres = computed(() => {
+    if (!this.selectedGrade()) {
+      return [];
+    }
+    
+    let result = this.padres().filter(p => {
+      // Filtrar padres que tienen al menos un hijo en el grado seleccionado
+      return p.childrenList.some(child => child.grade === this.selectedGrade());
+    });
+
+    // Aplicar filtros de búsqueda y estado
     const query = this.searchQuery().toLowerCase();
     const status = this.filterStatus();
-    let result = this.padres();
 
     if (query) {
       result = result.filter(p => 
@@ -102,7 +146,19 @@ export class PadresAdminComponent {
     if (status !== 'todos') {
       result = result.filter(p => p.status === status);
     }
-    this.filteredPadres.set(result);
+
+    return result;
+  });
+
+  selectGrade(grade: string) {
+    this.selectedGrade.set(grade);
+  }
+
+  getParentsCountByGrade(grade: string): number {
+    return this.padres().filter(p => 
+      p.status === 'activo' && 
+      p.childrenList.some(child => child.grade === grade)
+    ).length;
   }
 
   getRelationshipLabel(relationships: string[]): string {
@@ -111,5 +167,9 @@ export class PadresAdminComponent {
     const unique = [...new Set(relationships)];
     if (unique.length === 1) return unique[0];
     return `${unique.join(' / ')}`;
+  }
+
+  getChildrenInGrade(parent: Parent, grade: string): Child[] {
+    return parent.childrenList.filter(child => child.grade === grade);
   }
 }

@@ -14,81 +14,106 @@
     </div>
   </div>
 
-  <div class="filters-section">
-    <div class="search-wrapper">
-      <i class="fas fa-search"></i>
-      <input
-        type="text"
-        class="form-input search-input"
-        placeholder="Buscar por nombre, código o email..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-        name="searchQuery"
-      />
-    </div>
-    <select [(ngModel)]="filterGrade" (change)="onFilterChange()" class="form-input" name="filterGrade">
-      <option value="todos">Todos los grados</option>
-      <option value="1ro">1ro</option>
-      <option value="2do">2do</option>
-      <option value="3ro">3ro</option>
-      <option value="4to">4to</option>
-      <option value="5to">5to</option>
-    </select>
-    <select [(ngModel)]="filterSection" (change)="onFilterChange()" class="form-input" name="filterSection">
-      <option value="todos">Todas las secciones</option>
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="C">C</option>
-    </select>
-    <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="form-input" name="filterStatus">
-      <option value="todos">Todos los estados</option>
-      <option value="activo">Activo</option>
-      <option value="retirado">Retirado</option>
-      <option value="suspendido">Suspendido</option>
-    </select>
-  </div>
-
-  <div class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Grado</th>
-          <th>Sección</th>
-          <th>Estado</th>
-          <th>Fecha Matrícula</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (student of filteredStudents(); track student.id) {
-          <tr>
-            <td><strong>{{ student.code }}</strong></td>
-            <td>{{ student.name }}</td>
-            <td>{{ student.email }}</td>
-            <td>{{ student.grade }}</td>
-            <td>{{ student.section }}</td>
-            <td>
-              <span class="badge" [class.badge-success]="student.status === 'activo'" [class.badge-secondary]="student.status === 'retirado'" [class.badge-error]="student.status === 'suspendido'">
-                {{ student.status === 'activo' ? 'Activo' : student.status === 'retirado' ? 'Retirado' : 'Suspendido' }}
-              </span>
-            </td>
-            <td>{{ student.enrollmentDate }}</td>
-            <td>
-              <div class="action-buttons">
-                <a [routerLink]="['/admin/estudiantes', student.id]" class="btn btn-sm btn-primary" title="Ver Detalle">
-                  <i class="fas fa-eye"></i>
-                </a>
-                <a [routerLink]="['/admin/usuarios', student.id, 'editar']" [queryParams]="{ tipo: 'estudiante' }" class="btn btn-sm btn-secondary" title="Editar">
-                  <i class="fas fa-edit"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
+  @if (!selectedGrade()) {
+    <div class="grades-section">
+      <h2 class="section-title">Selecciona un Grado</h2>
+      <div class="grades-grid">
+        @for (grade of availableGrades(); track grade) {
+          <button class="grade-card" (click)="selectGrade(grade)">
+            <div class="grade-icon">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="grade-info">
+              <h3>{{ grade }}</h3>
+              <p>{{ getStudentsCountByGrade(grade) }} estudiante(s) activo(s)</p>
+            </div>
+            <i class="fas fa-chevron-right grade-arrow"></i>
+          </button>
         }
-      </tbody>
-    </table>
-  </div>
+      </div>
+    </div>
+  } @else {
+    <div class="selected-grade-header">
+      <button class="btn-back" (click)="selectedGrade.set('')">
+        <i class="fas fa-arrow-left"></i> Volver a Grados
+      </button>
+      <h2 class="selected-grade-title">Estudiantes - Grado {{ selectedGrade() }}</h2>
+    </div>
+
+    <div class="filters-section">
+      <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          class="form-input search-input"
+          placeholder="Buscar por nombre, código o email..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+        />
+      </div>
+      <select [(ngModel)]="filterSection" class="form-input" name="filterSection">
+        <option value="todos">Todas las secciones</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+      <select [(ngModel)]="filterStatus" class="form-input" name="filterStatus">
+        <option value="todos">Todos los estados</option>
+        <option value="activo">Activo</option>
+        <option value="retirado">Retirado</option>
+        <option value="suspendido">Suspendido</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Sección</th>
+            <th>Estado</th>
+            <th>Fecha Matrícula</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (filteredStudents().length === 0) {
+            <tr>
+              <td colspan="7" class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>No se encontraron estudiantes para este grado</p>
+              </td>
+            </tr>
+          } @else {
+            @for (student of filteredStudents(); track student.id) {
+              <tr>
+                <td><strong>{{ student.code }}</strong></td>
+                <td>{{ student.name }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.section }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="student.status === 'activo'" [class.badge-secondary]="student.status === 'retirado'" [class.badge-error]="student.status === 'suspendido'">
+                    {{ student.status === 'activo' ? 'Activo' : student.status === 'retirado' ? 'Retirado' : 'Suspendido' }}
+                  </span>
+                </td>
+                <td>{{ student.enrollmentDate }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <a [routerLink]="['/admin/estudiantes', student.id]" class="btn btn-sm btn-primary" title="Ver Detalle">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a [routerLink]="['/admin/usuarios', student.id, 'editar']" [queryParams]="{ tipo: 'estudiante' }" class="btn btn-sm btn-secondary" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>

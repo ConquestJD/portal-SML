@@ -22,8 +22,8 @@ interface Student {
   styleUrl: './estudiantes.component.css'
 })
 export class EstudiantesComponent {
+  selectedGrade = signal<string>('');
   searchQuery = signal('');
-  filterGrade = signal('todos');
   filterSection = signal('todos');
   filterStatus = signal<'todos' | 'activo' | 'retirado' | 'suspendido'>('todos');
 
@@ -37,10 +37,18 @@ export class EstudiantesComponent {
     { id: '7', name: 'Luis Fernández', code: '2024007', email: '', grade: '', section: '', status: 'activo', enrollmentDate: '2024-03-10' }
   ]);
 
+  availableGrades = computed(() => {
+    const grades = new Set(this.students().map(s => s.grade).filter(g => g));
+    return Array.from(grades).sort();
+  });
+
   filteredStudents = computed(() => {
-    let result = this.students();
+    if (!this.selectedGrade()) {
+      return [];
+    }
+
+    let result = this.students().filter(s => s.grade === this.selectedGrade());
     const query = this.searchQuery().toLowerCase();
-    const grade = this.filterGrade();
     const section = this.filterSection();
     const status = this.filterStatus();
 
@@ -50,10 +58,6 @@ export class EstudiantesComponent {
         s.code.toLowerCase().includes(query) ||
         s.email.toLowerCase().includes(query)
       );
-    }
-
-    if (grade !== 'todos') {
-      result = result.filter(s => s.grade === grade);
     }
 
     if (section !== 'todos') {
@@ -67,8 +71,13 @@ export class EstudiantesComponent {
     return result;
   });
 
-  onSearch() {}
-  onFilterChange() {}
+  selectGrade(grade: string) {
+    this.selectedGrade.set(grade);
+  }
+
+  getStudentsCountByGrade(grade: string): number {
+    return this.students().filter(s => s.grade === grade && s.status === 'activo').length;
+  }
   importStudents() {
     console.log('Importar estudiantes desde Excel/CSV');
   }
