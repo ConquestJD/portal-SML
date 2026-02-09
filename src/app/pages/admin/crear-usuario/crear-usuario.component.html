@@ -1,16 +1,16 @@
 <div class="crear-usuario-container">
   <div class="breadcrumb">
-    <a routerLink="/admin/usuarios" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a Usuarios
+    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : '/admin/usuarios'" class="breadcrumb-link">
+      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : 'Usuarios' }}
     </a>
     <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ isEditMode() ? 'Editar Usuario' : 'Nuevo Usuario' }}</span>
+    <span class="breadcrumb-current">{{ pageTitle() }}</span>
   </div>
 
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">{{ isEditMode() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h1>
-      <p class="page-subtitle">{{ isEditMode() ? 'Modifica la información del usuario' : 'Registra un nuevo usuario en el sistema' }}</p>
+      <h1 class="page-title">{{ pageTitle() }}</h1>
+      <p class="page-subtitle">{{ pageSubtitle() }}</p>
     </div>
     @if (isEditMode()) {
       <button class="btn btn-secondary" (click)="resetPassword()">
@@ -46,59 +46,82 @@
       </div>
     </div>
 
-    <div class="form-section">
-      <h2 class="section-title">Credenciales de Acceso</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Usuario *</label>
-          <input type="text" class="form-input" [(ngModel)]="formData().username" name="username" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
-          <input type="password" class="form-input" [(ngModel)]="formData().password" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Rol *</label>
-          <select class="form-input" [(ngModel)]="formData().role" name="role" required>
-            <option value="estudiante">Estudiante</option>
-            <option value="profesor">Profesor</option>
-            <option value="administrativo">Administrativo</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Estado *</label>
-          <select class="form-input" [(ngModel)]="formData().status" name="status" required>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="suspendido">Suspendido</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    @if (formData().role === 'estudiante') {
+    @if (isStudentMode() || formData().role === 'estudiante') {
       <div class="form-section">
         <h2 class="section-title">Información Académica</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Grado</label>
-            <select class="form-input" [(ngModel)]="formData().grade" name="grade">
-              <option value="">Seleccionar grado</option>
-              <option value="1ro">1ro</option>
-              <option value="2do">2do</option>
-              <option value="3ro">3ro</option>
-              <option value="4to">4to</option>
-              <option value="5to">5to</option>
+            <label class="form-label">Nivel *</label>
+            <select class="form-input" [(ngModel)]="formData().level" (ngModelChange)="onLevelChange()" name="level" required>
+              <option value="">Seleccionar nivel</option>
+              <option value="secundaria">Secundaria</option>
+              <option value="primaria">Primaria</option>
+              <option value="inicial">Inicial</option>
             </select>
           </div>
+          @if (formData().level) {
+            <div class="form-group">
+              <label class="form-label">Grado *</label>
+              <select class="form-input" [(ngModel)]="formData().grade" (ngModelChange)="onGradeChange()" name="grade" required>
+                <option value="">Seleccionar grado</option>
+                @for (grade of availableGrades(); track grade) {
+                  <option [value]="grade">{{ grade }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        @if (formData().level === 'inicial') {
+          <div class="info-box">
+            <i class="fas fa-info-circle"></i>
+            <div class="info-content">
+              <p><strong>Nota:</strong> Para estudiantes de inicial no se requiere crear usuario y contraseña en este momento.</p>
+              <p>La cuenta de acceso será creada posteriormente junto con la cuenta del padre de familia.</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isStudentMode() || requiresCredentials()) {
+      <div class="form-section">
+        <h2 class="section-title">Credenciales de Acceso</h2>
+        <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Sección</label>
-            <select class="form-input" [(ngModel)]="formData().section" name="section">
-              <option value="">Seleccionar sección</option>
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
+            <label class="form-label">Usuario *</label>
+            @if (isStudentMode() && !isEditMode()) {
+              <div class="input-with-info">
+                <input type="text" class="form-input" [(ngModel)]="formData().username" name="username" [readonly]="true" required>
+                <span class="input-hint">
+                  <i class="fas fa-info-circle"></i>
+                  Generado automáticamente
+                </span>
+              </div>
+            } @else {
+              <input type="text" class="form-input" [(ngModel)]="formData().username" name="username" required>
+            }
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
+            <input type="password" class="form-input" [(ngModel)]="formData().password" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
+          </div>
+          @if (!isStudentMode()) {
+            <div class="form-group">
+              <label class="form-label">Rol *</label>
+              <select class="form-input" [(ngModel)]="formData().role" name="role" required>
+                <option value="estudiante">Estudiante</option>
+                <option value="profesor">Profesor</option>
+                <option value="administrativo">Administrativo</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          }
+          <div class="form-group">
+            <label class="form-label">Estado *</label>
+            <select class="form-input" [(ngModel)]="formData().status" name="status" required>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="suspendido">Suspendido</option>
             </select>
           </div>
         </div>
@@ -106,9 +129,9 @@
     }
 
     <div class="form-actions">
-      <a routerLink="/admin/usuarios" class="btn btn-secondary">Cancelar</a>
+      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
       <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : 'Crear Usuario' }}
+        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : 'Crear Usuario') }}
       </button>
     </div>
   </form>
