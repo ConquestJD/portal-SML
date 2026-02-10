@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   username = signal('');
   password = signal('');
   rememberMe = signal(false);
@@ -18,22 +18,75 @@ export class LoginComponent {
   isLoading = signal(false);
   error = signal('');
 
+  // Field-level validation
+  usernameTouched = signal(false);
+  passwordTouched = signal(false);
+
+  // Animation
+  isVisible = signal(false);
+
+  currentYear = new Date().getFullYear();
+
+  usernameError = computed(() => {
+    if (!this.usernameTouched()) return '';
+    if (!this.username().trim()) return 'El usuario o email es obligatorio';
+    if (this.username().includes('@') && !this.isValidEmail(this.username())) {
+      return 'Ingresa un email válido';
+    }
+    return '';
+  });
+
+  passwordError = computed(() => {
+    if (!this.passwordTouched()) return '';
+    if (!this.password()) return 'La contraseña es obligatoria';
+    if (this.password().length < 4) return 'Mínimo 4 caracteres';
+    return '';
+  });
+
+  isFormValid = computed(() => {
+    return this.username().trim().length > 0
+      && this.password().length >= 4
+      && !this.usernameError()
+      && !this.passwordError();
+  });
+
   constructor(private authService: AuthService) {}
 
+  ngOnInit() {
+    // Trigger entrance animation
+    requestAnimationFrame(() => {
+      this.isVisible.set(true);
+    });
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   togglePasswordVisibility() {
-    this.showPassword.update(value => !value);
+    this.showPassword.update(v => !v);
+  }
+
+  onUsernameBlur() {
+    this.usernameTouched.set(true);
+  }
+
+  onPasswordBlur() {
+    this.passwordTouched.set(true);
   }
 
   onSubmit() {
-    if (!this.username() || !this.password()) {
-      this.error.set('Por favor completa todos los campos');
+    this.usernameTouched.set(true);
+    this.passwordTouched.set(true);
+
+    if (!this.isFormValid()) {
+      this.error.set('Por favor corrige los errores del formulario');
       return;
     }
 
     this.isLoading.set(true);
     this.error.set('');
 
-    // Simular delay de red
     setTimeout(() => {
       const result = this.authService.login(
         this.username(),
@@ -44,14 +97,12 @@ export class LoginComponent {
       this.isLoading.set(false);
 
       if (!result.success) {
-        this.error.set(result.message || 'Error al iniciar sesión');
+        this.error.set(result.message || 'Credenciales incorrectas. Intenta de nuevo.');
       }
-      // Si es exitoso, el servicio redirige automáticamente
     }, 800);
   }
 
   forgotPassword() {
-    // Lógica para recuperar contraseña
     console.log('Forgot password clicked');
   }
 }
