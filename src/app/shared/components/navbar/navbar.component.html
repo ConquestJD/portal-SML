@@ -1,63 +1,168 @@
-<aside class="sidebar" [class.collapsed]="isMenuOpen()">
-  <div class="sidebar-header">
-    <a [routerLink]="userRole() === 'profesor' ? '/profesor/dashboard' : userRole() === 'admin' ? '/admin/dashboard' : userRole() === 'padre' ? '/padre/dashboard' : '/dashboard'" class="logo-link">
-      <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
-      <span class="logo-text">Portal SML</span>
-    </a>
-    <button class="sidebar-toggle" (click)="toggleMenu()" aria-label="Toggle sidebar">
+@if (authenticated()) {
+  <!-- Mobile Top Bar -->
+  @if (isMobile()) {
+  <header class="mobile-top-bar">
+    <button 
+      class="mobile-menu-button" 
+      (click)="toggleSidebar()"
+      [attr.aria-expanded]="isDrawerOpen()"
+      aria-label="Abrir menú"
+      type="button">
       <i class="fas fa-bars"></i>
     </button>
-  </div>
+    
+    <a [routerLink]="dashboardRoute()" class="mobile-logo">
+      <img src="/only-logo.png" alt="Santa María Laura" class="mobile-logo-image">
+      <span class="mobile-logo-text">Portal SML</span>
+    </a>
+    
+    <div class="mobile-actions">
+      <button 
+        class="mobile-notifications" 
+        aria-label="Notificaciones"
+        type="button">
+        <i class="fas fa-bell"></i>
+        @if (notificationsCount() > 0) {
+          <span class="notification-badge">{{ notificationsCount() }}</span>
+        }
+      </button>
+      
+      <button 
+        class="mobile-user-trigger"
+        (click)="toggleUserDropdown()"
+        [attr.aria-expanded]="isUserDropdownOpen()"
+        aria-label="Menú de usuario"
+        type="button">
+        @if (userPhoto()) {
+          <img [src]="userPhoto()" [alt]="userName()" class="mobile-avatar">
+        } @else {
+          <div class="mobile-avatar-placeholder">
+            {{ getInitials(userName()) }}
+          </div>
+        }
+      </button>
+    </div>
+  </header>
+  }
 
-  <div class="sidebar-content">
-    <nav class="sidebar-nav">
-      @for (item of navigationItems(); track item.path) {
-        <a 
-          [routerLink]="item.path" 
-          routerLinkActive="active" 
-          [routerLinkActiveOptions]="{exact: item.exact !== false}"
-          class="nav-link">
-          <i [class]="item.icon + ' nav-icon'"></i>
-          <span class="nav-text">{{ item.label }}</span>
-        </a>
+  <!-- Drawer Overlay (Mobile) -->
+  @if (isMobile() && isDrawerOpen()) {
+    <div 
+      class="drawer-overlay" 
+      (click)="closeDrawer()"
+      [attr.aria-hidden]="!isDrawerOpen()">
+    </div>
+  }
+
+  <!-- Sidebar -->
+  <aside 
+    class="sidebar"
+    [class.collapsed]="!isMobile() && isCollapsed()"
+    [class.drawer-open]="isMobile() && isDrawerOpen()"
+    [attr.aria-hidden]="isMobile() && !isDrawerOpen()">
+    
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+      <a [routerLink]="dashboardRoute()" class="logo-link" (click)="closeDrawer()">
+        <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
+        <span class="logo-text">Portal SML</span>
+      </a>
+      
+      @if (!isMobile()) {
+        <button 
+          class="sidebar-toggle" 
+          (click)="toggleSidebar()"
+          [attr.aria-label]="isCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+          [attr.aria-expanded]="!isCollapsed()"
+          type="button">
+          <i [class]="isCollapsed() ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+        </button>
+      } @else {
+        <button 
+          class="sidebar-close" 
+          (click)="closeDrawer()"
+          aria-label="Cerrar menú"
+          type="button">
+          <i class="fas fa-times"></i>
+        </button>
+      }
+    </div>
+
+    <!-- User Section -->
+    <div class="user-section">
+      @if (userPhoto()) {
+        <img [src]="userPhoto()" [alt]="userName()" class="user-avatar">
+      } @else {
+        <div class="user-avatar-placeholder">
+          {{ getInitials(userName()) }}
+        </div>
+      }
+      
+      <div class="user-info" [class.hidden]="isCollapsed() && !isMobile()">
+        <span class="user-name">{{ userName() }}</span>
+        <span class="user-role-chip" [attr.data-role]="userRole()">
+          {{ roleLabel() }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" role="navigation" aria-label="Navegación principal">
+      @for (group of navigationGroups(); track group.label) {
+        <div class="nav-group" [class.hidden]="isCollapsed() && !isMobile()">
+          <h3 class="nav-group-label">{{ group.label }}</h3>
+        </div>
+        
+        @for (item of group.items; track item.path) {
+          <a 
+            [routerLink]="item.path" 
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: item.exact !== false}"
+            class="nav-link"
+            (click)="closeDrawer()"
+            [attr.aria-current]="false">
+            <i [class]="item.icon + ' nav-icon'"></i>
+            <span class="nav-text">{{ item.label }}</span>
+            @if (isCollapsed() && !isMobile()) {
+              <span class="nav-tooltip">{{ item.label }}</span>
+            }
+          </a>
+        }
       }
     </nav>
 
+    <!-- Sidebar Footer -->
     <div class="sidebar-footer">
-      <div class="user-section">
-        @if (userPhoto()) {
-          <img [src]="userPhoto()" [alt]="userName()" class="user-avatar">
-        } @else {
-          <div class="user-avatar-placeholder">
-            <i class="fas fa-user"></i>
-          </div>
-        }
-        <div class="user-info">
-          <span class="user-name">{{ userName() }}</span>
-          <span class="user-role">
-            @if (userRole() === 'profesor') {
-              Profesor
-            } @else if (userRole() === 'admin') {
-              Administrador
-            } @else if (userRole() === 'padre') {
-              Padre de Familia
-            } @else {
-              Estudiante
-            }
-          </span>
+      <button 
+        class="logout-button"
+        (click)="logout()"
+        type="button"
+        aria-label="Cerrar sesión">
+        <i class="fas fa-sign-out-alt"></i>
+        <span [class.hidden]="isCollapsed() && !isMobile()">Cerrar sesión</span>
+      </button>
+      
+      @if (!isCollapsed() || isMobile()) {
+        <div class="sidebar-version">
+          <span class="version-text">v1.0.0</span>
         </div>
-      </div>
-      <div class="sidebar-actions">
-        <a [routerLink]="userRole() === 'profesor' ? '/profesor/perfil' : userRole() === 'admin' ? '/admin/perfil' : userRole() === 'padre' ? '/padre/perfil-hijo' : '/perfil'" class="action-link" title="Mi Perfil">
-          <i class="fas fa-user"></i>
-        </a>
-        <a [routerLink]="userRole() === 'profesor' ? '/profesor/configuracion' : userRole() === 'admin' ? '/admin/configuracion' : userRole() === 'padre' ? '/padre/configuracion' : '/configuracion'" class="action-link" title="Configuración">
-          <i class="fas fa-cog"></i>
-        </a>
-        <a (click)="logout()" class="action-link" title="Cerrar Sesión" style="cursor: pointer;">
-          <i class="fas fa-sign-out-alt"></i>
-        </a>
-      </div>
+      }
     </div>
-  </div>
-</aside>
+  </aside>
+} @else {
+  <!-- No autenticado: mostrar solo logo -->
+  <aside class="sidebar sidebar-unauthenticated">
+    <div class="sidebar-header">
+      <a routerLink="/login" class="logo-link">
+        <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
+        <span class="logo-text">Portal SML</span>
+      </a>
+    </div>
+    <div class="sidebar-content-unauthenticated">
+      <a routerLink="/login" class="login-prompt">
+        <i class="fas fa-sign-in-alt"></i>
+        <span>Iniciar sesión</span>
+      </a>
+    </div>
+  </aside>
+}

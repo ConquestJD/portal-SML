@@ -3,19 +3,31 @@
 }
 
 .main-content {
-  margin-left: 260px;
+  margin-left: 280px;
   min-height: 100vh;
-  padding: var(--spacing-xl);
-  transition: margin-left 0.3s ease;
+  padding: var(--spacing-xl, 2rem);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Cuando el sidebar está colapsado, ajustar el contenido */
+/* Cuando el sidebar está colapsado (desktop) */
 :host-context(.sidebar.collapsed) .main-content {
   margin-left: 80px;
 }
 
-@media (max-width: 768px) {
+/* Mobile: el sidebar es un drawer, no ocupa espacio */
+@media (max-width: 1023px) {
   .main-content {
-    margin-left: 80px;
+    margin-left: 0;
+    padding-top: calc(64px + var(--spacing-xl, 2rem));
+    padding-left: var(--spacing-md, 1rem);
+    padding-right: var(--spacing-md, 1rem);
+  }
+}
+
+/* Tablet: ajuste fino */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content {
+    padding-left: var(--spacing-lg, 1.5rem);
+    padding-right: var(--spacing-lg, 1.5rem);
   }
 }
