@@ -1,120 +1,270 @@
-<div class="dashboard-container">
-  <div class="dashboard-header">
+<div class="dashboard-page">
+  <!-- Page Header Premium -->
+  <header class="dashboard-header">
     <div class="header-content">
-      <div class="welcome-section">
-        <h1 class="welcome-title">Bienvenido, {{ studentName() }}</h1>
-        <p class="welcome-subtitle">{{ grade() }} Grado - Sección {{ section() }}</p>
+      <div class="header-greeting">
+        <h1 class="header-title">Hola, {{ studentName() }}</h1>
+        <p class="header-subtitle">
+          <span class="grade-info">{{ grade() }} Grado - Sección {{ section() }}</span>
+          <span class="separator">•</span>
+          <span class="period-info">Período {{ currentPeriod() }}</span>
+          <span class="separator">•</span>
+          <span class="date-info">{{ getCurrentDate() }}</span>
+        </p>
+      </div>
+      <div class="header-actions">
+        <a [routerLink]="'/cursos'" class="header-action-btn" aria-label="Ver horario">
+          <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+          <span>Horario</span>
+        </a>
+        <a [routerLink]="'/cursos/1/mensajeria'" class="header-action-btn" aria-label="Mensajes">
+          <i class="fas fa-comments" aria-hidden="true"></i>
+          <span>Mensajes</span>
+        </a>
+        <a [routerLink]="'/comunicados'" class="header-action-btn" aria-label="Comunicados">
+          <i class="fas fa-bullhorn" aria-hidden="true"></i>
+          <span>Comunicados</span>
+          @if (newCommunications() > 0) {
+            <span class="action-badge">{{ newCommunications() }}</span>
+          }
+        </a>
       </div>
     </div>
-    <div class="current-date">
-      <i class="fas fa-calendar-alt"></i>
-      <span class="date-text">{{ getCurrentDate() }}</span>
-    </div>
-  </div>
+  </header>
 
-  <!-- Alertas -->
+  <!-- Hero Banner Institucional -->
+  @if (heroBanner()) {
+    <section class="hero-banner" [attr.data-type]="heroBanner()!.type" role="banner">
+      <div class="hero-content">
+        <div class="hero-icon">
+          @if (heroBanner()!.type === 'urgent') {
+            <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+          } @else if (heroBanner()!.type === 'warning') {
+            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          } @else {
+            <i class="fas fa-info-circle" aria-hidden="true"></i>
+          }
+        </div>
+        <div class="hero-text">
+          <div class="hero-header">
+            <h2 class="hero-title">{{ heroBanner()!.title }}</h2>
+            @if (heroBanner()!.badge) {
+              <app-badge [label]="heroBanner()!.badge!" variant="primary" size="sm" class="hero-badge"></app-badge>
+            }
+          </div>
+          @if (heroBanner()!.description) {
+            <p class="hero-description">{{ heroBanner()!.description }}</p>
+          }
+        </div>
+        <a [routerLink]="heroBanner()!.link" class="hero-cta">
+          Ver comunicado
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+    </section>
+  }
+
+  <!-- Alertas Críticas (solo si hay) -->
   @if (alerts().length > 0) {
-    <div class="alerts-section">
+    <section class="alerts-section" aria-label="Alertas importantes">
       @for (alert of alerts(); track $index) {
-        <div class="alert alert-{{ alert.type }}">
-          <span class="alert-icon">
-            @if (alert.type === 'warning') { <i class="fas fa-exclamation-triangle"></i> }
-            @if (alert.type === 'info') { <i class="fas fa-info-circle"></i> }
-            @if (alert.type === 'error') { <i class="fas fa-times-circle"></i> }
-          </span>
-          <span class="alert-message">{{ alert.message }}</span>
+        <div class="alert-critical" [attr.data-type]="alert.type" role="alert">
+          <i class="fas fa-exclamation-triangle alert-icon" aria-hidden="true"></i>
+          <p class="alert-message">{{ alert.message }}</p>
           <a [routerLink]="alert.link" class="alert-link">
-            Ver más <i class="fas fa-arrow-right"></i>
+            Ver
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
           </a>
         </div>
       }
-    </div>
+    </section>
   }
 
-  <!-- Resumen Académico -->
-  <div class="summary-grid grid grid-cols-4">
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-chart-line"></i></span>
-        <span class="summary-label">Promedio General</span>
+  <!-- KPIs Grid Premium -->
+  <section class="kpis-section" aria-label="Resumen académico">
+    @if (loading()) {
+      <div class="kpis-grid">
+        @for (item of [1,2,3,4]; track $index) {
+          <app-skeleton width="100%" height="160px" variant="rectangular"></app-skeleton>
+        }
       </div>
-      <div class="summary-value">{{ averageGrade() }}</div>
-      <div class="summary-trend">
-        <i class="fas fa-arrow-up"></i>
-        <span class="trend-text">+0.5 vs período anterior</span>
-      </div>
-    </div>
+    } @else {
+      <div class="kpis-grid">
+        <app-stat-card
+          label="Promedio General"
+          [value]="averageGrade()"
+          icon="fas fa-chart-line"
+          color="primary"
+          [trend]="{ direction: 'up', value: '+0.5', label: 'vs período anterior' }"
+          [action]="{ label: 'Ver detalles', route: '/notas' }">
+        </app-stat-card>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-tasks"></i></span>
-        <span class="summary-label">Tareas Pendientes</span>
-      </div>
-      <div class="summary-value">{{ pendingTasks() }}</div>
-      <a [routerLink]="'/tareas'" class="summary-link">
-        Ver tareas <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
+        <app-stat-card
+          label="Tareas Pendientes"
+          [value]="pendingTasks()"
+          icon="fas fa-tasks"
+          color="warning"
+          [action]="{ label: 'Ver tareas', route: '/tareas' }">
+        </app-stat-card>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-calendar-check"></i></span>
-        <span class="summary-label">Asistencia del Mes</span>
-      </div>
-      <div class="summary-value">{{ attendancePercentage() }}%</div>
-      <div class="progress-bar">
-        <div class="progress-fill" [style.width.%]="attendancePercentage()"></div>
-      </div>
-    </div>
+        <app-stat-card
+          label="Asistencia del Mes"
+          [value]="attendancePercentage() + '%'"
+          icon="fas fa-calendar-check"
+          color="success"
+          [progress]="attendancePercentage()"
+          [action]="{ label: 'Ver asistencia', route: '/asistencia' }">
+        </app-stat-card>
 
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-clipboard-list"></i></span>
-        <span class="summary-label">Próximas Evaluaciones</span>
+        <app-stat-card
+          label="Próximas Evaluaciones"
+          [value]="upcomingEvaluations()"
+          icon="fas fa-clipboard-list"
+          color="info"
+          [action]="{ label: 'Ver calendario', route: '/cursos' }">
+        </app-stat-card>
       </div>
-      <div class="summary-value">{{ upcomingEvaluations() }}</div>
-      <span class="summary-text">En los próximos 7 días</span>
-    </div>
-  </div>
+    }
+  </section>
 
-  <!-- Accesos Rápidos -->
-  <div class="section">
-    <h2 class="section-title">Accesos Rápidos</h2>
-    <div class="quick-access-grid grid grid-cols-3">
-      @for (item of quickAccess(); track item.title) {
-        <a [routerLink]="item.link" class="quick-access-card">
-          <div class="quick-access-icon-wrapper">
-            <i [class]="item.icon"></i>
-          </div>
-          <div class="quick-access-content">
-            <h3 class="quick-access-title">{{ item.title }}</h3>
-            @if (item.count !== undefined) {
-              <span class="quick-access-count">{{ item.count }}</span>
-            }
-          </div>
-          <i class="fas fa-arrow-right quick-access-arrow"></i>
-        </a>
-      }
-    </div>
-  </div>
-
-  <!-- Actividad Reciente -->
-  <div class="section">
-    <h2 class="section-title">Actividad Reciente</h2>
-    <div class="activity-list">
-      @for (activity of recentActivity(); track $index) {
-        <div class="activity-item">
-          <div class="activity-icon-wrapper">
-            @if (activity.type === 'task') { <i class="fas fa-check-circle activity-icon"></i> }
-            @if (activity.type === 'grade') { <i class="fas fa-chart-bar activity-icon"></i> }
-            @if (activity.type === 'announcement') { <i class="fas fa-bullhorn activity-icon"></i> }
-          </div>
-          <div class="activity-content">
-            <p class="activity-message">{{ activity.message }}</p>
-            <span class="activity-time">{{ activity.time }}</span>
-          </div>
+  <!-- Main Content Grid (2 columnas desktop) -->
+  <div class="main-content-grid">
+    <!-- Columna Izquierda: Accesos Rápidos -->
+    <section class="quick-access-section" aria-label="Accesos rápidos">
+      <div class="section-header">
+        <h2 class="section-title">Accesos Rápidos</h2>
+        <p class="section-subtitle">Navegación rápida a las secciones principales</p>
+      </div>
+      @if (loading()) {
+        <div class="quick-access-skeleton">
+          @for (item of [1,2,3,4,5,6]; track $index) {
+            <app-skeleton width="100%" height="100px" variant="rectangular"></app-skeleton>
+          }
+        </div>
+      } @else {
+        <div class="quick-access-grid">
+          @for (item of quickAccess(); track item.title) {
+            <a [routerLink]="item.link" class="quick-access-tile" [attr.aria-label]="'Ir a ' + item.title">
+              <div class="tile-icon-wrapper" [attr.data-color]="$index % 4">
+                <i [class]="item.icon" aria-hidden="true"></i>
+              </div>
+              <div class="tile-content">
+                <h3 class="tile-title">{{ item.title }}</h3>
+                <p class="tile-description">
+                  @if (item.title === 'Mis Cursos') {
+                    Ver todos tus cursos
+                  } @else if (item.title === 'Tareas') {
+                    Gestiona tus tareas
+                  } @else if (item.title === 'Notas') {
+                    Consulta tus calificaciones
+                  } @else if (item.title === 'Asistencia') {
+                    Revisa tu asistencia
+                  } @else if (item.title === 'Comunicados') {
+                    Mensajes institucionales
+                  } @else {
+                    Tu información personal
+                  }
+                </p>
+              </div>
+              @if (item.count !== undefined) {
+                <app-badge
+                  [label]="item.count.toString()"
+                  variant="primary"
+                  size="sm"
+                  class="tile-badge">
+                </app-badge>
+              }
+              <i class="fas fa-chevron-right tile-arrow" aria-hidden="true"></i>
+            </a>
+          }
         </div>
       }
-    </div>
+    </section>
+
+    <!-- Columna Derecha: Próximas Evaluaciones -->
+    <aside class="evaluations-sidebar" aria-label="Próximas evaluaciones">
+      <div class="section-header">
+        <h2 class="section-title">Próximas Evaluaciones</h2>
+        <a [routerLink]="'/cursos'" class="section-link">
+          Ver todas
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+      @if (loading()) {
+        <div class="evaluations-skeleton">
+          @for (item of [1,2,3]; track $index) {
+            <app-skeleton width="100%" height="80px" variant="rectangular"></app-skeleton>
+          }
+        </div>
+      } @else if (upcomingEvaluationsList().length === 0) {
+        <app-empty-state
+          icon="fas fa-calendar-check"
+          title="No hay evaluaciones próximas"
+          description="No tienes evaluaciones programadas">
+        </app-empty-state>
+      } @else {
+        <div class="evaluations-list">
+          @for (eval of upcomingEvaluationsList(); track eval.title) {
+            <div class="evaluation-item">
+              <div class="eval-icon">
+                <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+              </div>
+              <div class="eval-content">
+                <h3 class="eval-title">{{ eval.title }}</h3>
+                <p class="eval-meta">
+                  <span class="eval-course">{{ eval.course }}</span>
+                  <span class="eval-separator">•</span>
+                  <span class="eval-date">{{ eval.date }}</span>
+                  <span class="eval-time">{{ eval.time }}</span>
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </aside>
   </div>
+
+  <!-- Actividad Reciente (Timeline Premium) -->
+  <section class="activity-section" aria-label="Actividad reciente">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Actividad Reciente</h2>
+        <p class="section-subtitle">Últimas acciones y actualizaciones en tu cuenta</p>
+      </div>
+      <a [routerLink]="'/tareas'" class="section-link">
+        Ver todo
+        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    @if (loading()) {
+      <div class="activity-skeleton">
+        @for (item of [1,2,3]; track $index) {
+          <app-skeleton [lines]="2" variant="text"></app-skeleton>
+        }
+      </div>
+    } @else if (recentActivity().length === 0) {
+      <app-empty-state
+        icon="fas fa-inbox"
+        title="No hay actividad reciente"
+        description="Las acciones recientes aparecerán aquí">
+      </app-empty-state>
+    } @else {
+      <div class="activity-timeline">
+        @for (activity of recentActivity(); track $index) {
+          <div class="timeline-item">
+            <div class="timeline-marker" [attr.data-type]="activity.type">
+              <div class="marker-dot"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="activity-header">
+                <h3 class="activity-title">{{ activity.message }}</h3>
+                <span class="activity-time">{{ activity.time }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
 </div>

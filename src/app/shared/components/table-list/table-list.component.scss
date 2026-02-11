@@ -1,0 +1,119 @@
+.table-list-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.table-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.table-header {
+  background: var(--surface-2);
+  border-bottom: 2px solid var(--border);
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, auto-fit), minmax(0, 1fr));
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-bottom: 1px solid var(--border);
+  transition: background-color var(--transition-fast);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-2);
+    }
+
+    &:active {
+      background: var(--border);
+    }
+  }
+}
+
+.table-row-header {
+  background: var(--surface-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+}
+
+.table-cell {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  word-break: break-word;
+  overflow: hidden;
+}
+
+.table-cell-header {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-6);
+}
+
+@media (max-width: 768px) {
+  .table-list {
+    display: block;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .table-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4);
+    border-bottom: 2px solid var(--border);
+    margin-bottom: var(--spacing-4);
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+  }
+
+  .table-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--spacing-2) 0;
+
+    &::before {
+      content: attr(data-label);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-right: var(--spacing-4);
+      flex-shrink: 0;
+    }
+  }
+
+  .table-cell-header {
+    display: none;
+  }
+}

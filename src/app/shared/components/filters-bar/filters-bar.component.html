@@ -1,0 +1,51 @@
+<div class="filters-bar">
+  <div class="filters-search">
+    <div class="search-input-wrapper">
+      <i class="fas fa-search search-icon" aria-hidden="true"></i>
+      <input
+        type="text"
+        class="search-input"
+        [placeholder]="searchPlaceholder"
+        [value]="searchValue"
+        (input)="onSearchChange($any($event.target).value)"
+        aria-label="Buscar">
+    </div>
+  </div>
+
+  @if (chips && chips.length > 0) {
+    <div class="filters-chips">
+      @for (chip of chips; track chip.id) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="chip.active"
+          (click)="onChipToggle(chip.id)"
+          [attr.aria-pressed]="chip.active">
+          {{ chip.label }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (selects && selects.length > 0) {
+    <div class="filters-selects">
+      @for (select of selects; track select.id) {
+        <div class="filter-select-wrapper">
+          <label [for]="'select-' + select.id" class="filter-select-label">
+            {{ select.label }}
+          </label>
+          <select
+            [id]="'select-' + select.id"
+            class="filter-select"
+            [value]="select.value || ''"
+            (change)="onSelectChange(select.id, $any($event.target).value)">
+            <option value="">Todos</option>
+            @for (option of select.options; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  }
+</div>

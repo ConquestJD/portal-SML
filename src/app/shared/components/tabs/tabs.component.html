@@ -1,0 +1,26 @@
+<nav class="tabs" role="tablist" [attr.aria-label]="'Navegación por pestañas'">
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="activeTab === tab.id"
+      [attr.aria-controls]="'tabpanel-' + tab.id"
+      [attr.aria-disabled]="tab.disabled"
+      [class.active]="activeTab === tab.id"
+      [class.disabled]="tab.disabled"
+      (click)="selectTab(tab.id)"
+      class="tab-button">
+      @if (tab.icon) {
+        <i [class]="tab.icon" class="tab-icon" aria-hidden="true"></i>
+      }
+      <span class="tab-label">{{ tab.label }}</span>
+      @if (tab.badge !== undefined) {
+        <app-badge 
+          [label]="tab.badge.toString()" 
+          variant="primary" 
+          size="sm"
+          class="tab-badge"></app-badge>
+      }
+    </button>
+  }
+</nav>

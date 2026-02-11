@@ -1,0 +1,27 @@
+<div class="empty-state">
+  @if (icon) {
+    <div class="empty-icon">
+      <i [class]="icon"></i>
+    </div>
+  }
+  <h3 class="empty-title">{{ title }}</h3>
+  @if (description) {
+    <p class="empty-description">{{ description }}</p>
+  }
+  @if (action) {
+    <div class="empty-action">
+      @if (action.route) {
+        <a [routerLink]="action.route" [class]="'btn btn-' + (action.variant || 'primary')">
+          {{ action.label }}
+        </a>
+      } @else if (action.action) {
+        <button 
+          type="button"
+          [class]="'btn btn-' + (action.variant || 'primary')"
+          (click)="action.action!()">
+          {{ action.label }}
+        </button>
+      }
+    </div>
+  }
+</div>

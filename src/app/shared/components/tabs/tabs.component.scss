@@ -1,0 +1,72 @@
+.tabs {
+  display: flex;
+  gap: var(--spacing-2);
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  position: relative;
+  margin-bottom: -2px;
+
+  &:hover:not(.disabled) {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+
+  &.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.tab-icon {
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.tab-label {
+  line-height: 1;
+}
+
+.tab-badge {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .tab-button {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+}

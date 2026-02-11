@@ -1,0 +1,50 @@
+<div class="stat-card" [attr.data-color]="color || 'primary'">
+  <div class="stat-header">
+    @if (icon) {
+      <div class="stat-icon">
+        <i [class]="icon"></i>
+      </div>
+    }
+    <span class="stat-label">{{ label }}</span>
+  </div>
+
+  <div class="stat-value">{{ value }}</div>
+
+  @if (trend) {
+    <div class="stat-trend" [attr.data-direction]="trend.direction">
+      <i class="fas" 
+         [class.fa-arrow-up]="trend.direction === 'up'"
+         [class.fa-arrow-down]="trend.direction === 'down'"
+         [class.fa-minus]="trend.direction === 'neutral'"
+         aria-hidden="true"></i>
+      <span class="trend-value">{{ trend.value }}</span>
+      @if (trend.label) {
+        <span class="trend-label">{{ trend.label }}</span>
+      }
+    </div>
+  }
+
+  @if (progress !== undefined) {
+    <div class="stat-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progress"></div>
+      </div>
+    </div>
+  }
+
+  @if (action) {
+    <div class="stat-action">
+      @if (action.route) {
+        <a [routerLink]="action.route" class="stat-link">
+          {{ action.label }}
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      } @else if (action.action) {
+        <button type="button" class="stat-link" (click)="action.action!()">
+          {{ action.label }}
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
+      }
+    </div>
+  }
+</div>

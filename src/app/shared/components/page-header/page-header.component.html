@@ -1,0 +1,60 @@
+<header class="page-header">
+  @if (breadcrumbs && breadcrumbs.length > 0) {
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol class="breadcrumb-list">
+        @for (crumb of breadcrumbs; track $index) {
+          <li class="breadcrumb-item">
+            @if (crumb.route && $index < breadcrumbs.length - 1) {
+              <a [routerLink]="crumb.route" class="breadcrumb-link">{{ crumb.label }}</a>
+            } @else {
+              <span class="breadcrumb-current" [attr.aria-current]="$index === breadcrumbs.length - 1 ? 'page' : null">
+                {{ crumb.label }}
+              </span>
+            }
+            @if ($index < breadcrumbs.length - 1) {
+              <i class="fas fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+            }
+          </li>
+        }
+      </ol>
+    </nav>
+  }
+
+  <div class="header-content">
+    <div class="header-text">
+      <h1 class="header-title">{{ title }}</h1>
+      @if (subtitle) {
+        <p class="header-subtitle">{{ subtitle }}</p>
+      }
+    </div>
+
+    @if (actions && actions.length > 0) {
+      <div class="header-actions">
+        @for (action of actions; track $index) {
+          @if (action.route) {
+            <a 
+              [routerLink]="action.route"
+              [class]="'btn btn-' + (action.variant || 'primary')"
+              [attr.aria-label]="action.label">
+              @if (action.icon) {
+                <i [class]="action.icon"></i>
+              }
+              {{ action.label }}
+            </a>
+          } @else if (action.action) {
+            <button 
+              type="button"
+              [class]="'btn btn-' + (action.variant || 'primary')"
+              (click)="action.action!()"
+              [attr.aria-label]="action.label">
+              @if (action.icon) {
+                <i [class]="action.icon"></i>
+              }
+              {{ action.label }}
+            </button>
+          }
+        }
+      </div>
+    }
+  </div>
+</header>

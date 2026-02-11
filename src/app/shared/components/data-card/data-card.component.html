@@ -1,0 +1,41 @@
+<div class="data-card">
+  @if (title || subtitle || icon || actions) {
+    <div class="card-header">
+      <div class="card-header-content">
+        @if (icon) {
+          <div class="card-icon">
+            <i [class]="icon"></i>
+          </div>
+        }
+        <div class="card-title-group">
+          @if (title) {
+            <h3 class="card-title">{{ title }}</h3>
+          }
+          @if (subtitle) {
+            <p class="card-subtitle">{{ subtitle }}</p>
+          }
+        </div>
+      </div>
+      @if (actions && actions.length > 0) {
+        <div class="card-actions">
+          @for (action of actions; track $index) {
+            <button
+              type="button"
+              [class]="'btn btn-' + (action.variant || 'ghost')"
+              (click)="action.action()"
+              [attr.aria-label]="action.label">
+              @if (action.icon) {
+                <i [class]="action.icon"></i>
+              }
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <div class="card-content">
+    <ng-content></ng-content>
+  </div>
+</div>

@@ -222,10 +222,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     
     // Efecto para bloquear scroll del body cuando el drawer está abierto
     effect(() => {
-      if (this.isDrawerOpen()) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
+      if (typeof document !== 'undefined') {
+        if (this.isDrawerOpen()) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = '';
+        }
       }
     });
   }
@@ -242,7 +244,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', this.handleResize.bind(this));
     }
-    document.body.style.overflow = '';
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
   }
   
   @HostListener('window:resize')

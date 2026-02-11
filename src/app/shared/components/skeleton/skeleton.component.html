@@ -1,0 +1,19 @@
+@if (variant === 'text' && lines) {
+  <div class="skeleton-text">
+    @for (line of [].constructor(lines); track $index) {
+      <div class="skeleton-line" 
+           [style.width]="$index === lines - 1 ? '60%' : '100%'"
+           [style.height]="height || '1rem'"></div>
+    }
+  </div>
+} @else {
+  <div class="skeleton" 
+       [class.skeleton-circular]="variant === 'circular'"
+       [class.skeleton-rectangular]="variant === 'rectangular'"
+       [style.width]="width"
+       [style.height]="height || (variant === 'circular' ? width : '1rem')"
+       [attr.aria-label]="'Cargando...'"
+       role="status">
+    <span class="sr-only">Cargando...</span>
+  </div>
+}
