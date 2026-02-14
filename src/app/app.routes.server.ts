@@ -1,8 +1,53 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  {
-    path: '**',
-    renderMode: RenderMode.Prerender
-  }
+  // Rutas estáticas (sin parámetros) → prerender
+  { path: 'login', renderMode: RenderMode.Prerender },
+  { path: 'dashboard', renderMode: RenderMode.Prerender },
+  { path: 'cursos', renderMode: RenderMode.Prerender },
+  { path: 'tareas', renderMode: RenderMode.Prerender },
+  { path: 'notas', renderMode: RenderMode.Prerender },
+  { path: 'asistencia', renderMode: RenderMode.Prerender },
+  { path: 'comunicados', renderMode: RenderMode.Prerender },
+  { path: 'configuracion', renderMode: RenderMode.Prerender },
+  { path: 'perfil', renderMode: RenderMode.Prerender },
+  { path: 'profesor/dashboard', renderMode: RenderMode.Prerender },
+  { path: 'profesor/cursos', renderMode: RenderMode.Prerender },
+  { path: 'profesor/perfil', renderMode: RenderMode.Prerender },
+  { path: 'profesor/configuracion', renderMode: RenderMode.Prerender },
+  { path: 'profesor/tareas', renderMode: RenderMode.Prerender },
+  { path: 'profesor/notas', renderMode: RenderMode.Prerender },
+  { path: 'profesor/asistencia', renderMode: RenderMode.Prerender },
+  { path: 'profesor/comunicados', renderMode: RenderMode.Prerender },
+  { path: 'admin/dashboard', renderMode: RenderMode.Prerender },
+  { path: 'admin/usuarios', renderMode: RenderMode.Prerender },
+  { path: 'admin/usuarios/crear', renderMode: RenderMode.Prerender },
+  { path: 'admin/estudiantes', renderMode: RenderMode.Prerender },
+  { path: 'admin/profesores', renderMode: RenderMode.Prerender },
+  { path: 'admin/padres', renderMode: RenderMode.Prerender },
+  { path: 'admin/cursos', renderMode: RenderMode.Prerender },
+  { path: 'admin/cursos/crear', renderMode: RenderMode.Prerender },
+  { path: 'admin/anio-academico', renderMode: RenderMode.Prerender },
+  { path: 'admin/grados-secciones', renderMode: RenderMode.Prerender },
+  { path: 'admin/matricula', renderMode: RenderMode.Prerender },
+  { path: 'admin/asignacion-docente', renderMode: RenderMode.Prerender },
+  { path: 'admin/comunicados', renderMode: RenderMode.Prerender },
+  { path: 'admin/roles-permisos', renderMode: RenderMode.Prerender },
+  { path: 'admin/reportes', renderMode: RenderMode.Prerender },
+  { path: 'admin/configuracion', renderMode: RenderMode.Prerender },
+  { path: 'admin/perfil', renderMode: RenderMode.Prerender },
+  { path: 'padre/dashboard', renderMode: RenderMode.Prerender },
+  { path: 'padre/perfil-hijo', renderMode: RenderMode.Prerender },
+  { path: 'padre/cursos', renderMode: RenderMode.Prerender },
+  { path: 'padre/tareas', renderMode: RenderMode.Prerender },
+  { path: 'padre/notas', renderMode: RenderMode.Prerender },
+  { path: 'padre/asistencia', renderMode: RenderMode.Prerender },
+  { path: 'padre/justificaciones', renderMode: RenderMode.Prerender },
+  { path: 'padre/comunicados', renderMode: RenderMode.Prerender },
+  { path: 'padre/mensajeria', renderMode: RenderMode.Prerender },
+  { path: 'padre/pagos', renderMode: RenderMode.Prerender },
+  { path: 'padre/documentos', renderMode: RenderMode.Prerender },
+
+  // Todas las rutas con parámetros dinámicos → client-side rendering
+  { path: '**', renderMode: RenderMode.Client }
 ];
