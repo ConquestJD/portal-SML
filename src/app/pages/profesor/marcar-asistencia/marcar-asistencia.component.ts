@@ -1,236 +1,126 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { TeacherService, AttendanceRecord } from '../../../services/teacher.service';
 
-interface Student {
-  id: string;
-  name: string;
-  code: string;
-  photo?: string;
-}
+type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'JUSTIFIED';
 
-interface AttendanceRecord {
+interface StudentAttendance {
   studentId: string;
-  status: 'presente' | 'tarde' | 'falta';
-  observation?: string;
-}
-
-interface Course {
-  id: string;
   name: string;
-  code: string;
-  grade: string;
-  section: string;
+  studentCode: string;
+  status: AttendanceStatus;
+  notes: string;
 }
 
 @Component({
   selector: 'app-marcar-asistencia',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './marcar-asistencia.component.html',
   styleUrl: './marcar-asistencia.component.css'
 })
 export class MarcarAsistenciaComponent implements OnInit {
-  courseId = signal<string | null>(null);
-  course = signal<Course | null>(null);
-  students = signal<Student[]>([]);
-  attendanceDate = signal<string>(new Date().toISOString().split('T')[0]);
-  attendanceRecords = signal<{ [studentId: string]: AttendanceRecord }>({});
-  observations = signal<{ [studentId: string]: string }>({});
-  isLoading = signal(true);
-  isSaving = signal(false);
-  hasChanges = signal(false);
+  courseId = signal('');
+  selectedDate = signal(new Date().toISOString().split('T')[0]);
+  loading = signal(true);
+  saving = signal(false);
+  error = signal('');
+  success = signal('');
+  readonly isLoading = this.loading;
+
+  students = signal<StudentAttendance[]>([]);
+
+  attendanceSummary = computed(() => {
+    const list = this.students();
+    const present = list.filter(s => s.status === 'PRESENT').length;
+    const absent = list.filter(s => s.status === 'ABSENT').length;
+    const late = list.filter(s => s.status === 'LATE').length;
+    const total = list.length;
+    return { present, absent, late, total, percentage: total > 0 ? Math.round(present / total * 100) : 0 };
+  });
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private teacherService: TeacherService
   ) {}
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
-      this.courseId.set(params['courseId']);
-      this.loadCourse();
-    });
+    this.courseId.set(this.route.snapshot.paramMap.get('courseId') ?? '');
+    this.loadStudents();
+  }
 
-    // Leer fecha de query params si existe
-    this.route.queryParams.subscribe(params => {
-      if (params['fecha']) {
-        this.attendanceDate.set(params['fecha']);
+  loadStudents() {
+    this.loading.set(true);
+    this.teacherService.getStudentsInCourse(this.courseId()).subscribe({
+      next: (data: any[]) => {
+        this.students.set(data.map(s => ({
+          studentId: s.id,
+          name: `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`,
+          studentCode: s.studentCode ?? '',
+          status: 'PRESENT' as AttendanceStatus,
+          notes: ''
+        })));
+        this.loading.set(false);
+        this.loadExistingAttendance();
+      },
+      error: () => { this.error.set('Error al cargar estudiantes'); this.loading.set(false); }
+    });
+  }
+
+  loadExistingAttendance() {
+    this.teacherService.getAttendanceByDate(this.courseId(), this.selectedDate()).subscribe({
+      next: (existing: any[]) => {
+        if (existing?.length) {
+          this.students.update(list => list.map(s => {
+            const match = existing.find((e: any) => e.student?.id === s.studentId);
+            if (match) return { ...s, status: match.status, notes: match.notes ?? '' };
+            return s;
+          }));
+        }
       }
     });
   }
 
-  loadCourse() {
-    this.isLoading.set(true);
-    // Simulación de carga de datos
-    setTimeout(() => {
-      const mockCourse: Course = {
-        id: this.courseId()!,
-        name: 'Matemática',
-        code: 'MAT-2024',
-        grade: '3ro',
-        section: 'A'
-      };
+  onDateChange() { this.loadExistingAttendance(); }
 
-      const mockStudents: Student[] = [
-        { id: '1', name: 'Juan Pérez', code: '2024001' },
-        { id: '2', name: 'María García', code: '2024002' },
-        { id: '3', name: 'Carlos López', code: '2024003' },
-        { id: '4', name: 'Ana Martínez', code: '2024004' },
-        { id: '5', name: 'Pedro Sánchez', code: '2024005' },
-        { id: '6', name: 'Laura Fernández', code: '2024006' },
-        { id: '7', name: 'Roberto Torres', code: '2024007' },
-        { id: '8', name: 'Sofía Ramírez', code: '2024008' },
-        { id: '9', name: 'Diego Morales', code: '2024009' },
-        { id: '10', name: 'Carmen Vargas', code: '2024010' }
-      ];
-
-      // Cargar asistencia existente si existe para esta fecha
-      const existingAttendance: { [studentId: string]: AttendanceRecord } = {
-        '1': { studentId: '1', status: 'presente' },
-        '2': { studentId: '2', status: 'presente' },
-        '3': { studentId: '3', status: 'tarde', observation: 'Llegó 15 minutos tarde' },
-        '4': { studentId: '4', status: 'presente' }
-      };
-
-      this.course.set(mockCourse);
-      this.students.set(mockStudents);
-      this.attendanceRecords.set(existingAttendance);
-      this.isLoading.set(false);
-    }, 500);
+  setStatus(studentId: string, status: AttendanceStatus) {
+    this.students.update(list => list.map(s => s.studentId === studentId ? { ...s, status } : s));
   }
 
-  setAttendance(studentId: string, status: 'presente' | 'tarde' | 'falta') {
-    this.attendanceRecords.update(records => ({
-      ...records,
-      [studentId]: {
-        ...records[studentId],
-        studentId,
-        status
-      }
+  setNotes(studentId: string, notes: string) {
+    this.students.update(list => list.map(s => s.studentId === studentId ? { ...s, notes } : s));
+  }
+
+  setAllPresent() {
+    this.students.update(list => list.map(s => ({ ...s, status: 'PRESENT' as AttendanceStatus })));
+  }
+
+  save() {
+    this.saving.set(true);
+    this.error.set('');
+    const records: AttendanceRecord[] = this.students().map(s => ({
+      studentId: s.studentId,
+      date: this.selectedDate(),
+      status: s.status,
+      notes: s.notes || undefined
     }));
-    this.hasChanges.set(true);
-  }
-
-  getAttendanceStatus(studentId: string): 'presente' | 'tarde' | 'falta' | null {
-    return this.attendanceRecords()[studentId]?.status || null;
-  }
-
-  updateObservation(studentId: string, observation: string) {
-    this.observations.update(obs => ({
-      ...obs,
-      [studentId]: observation
-    }));
-    this.attendanceRecords.update(records => ({
-      ...records,
-      [studentId]: {
-        ...records[studentId] || { studentId, status: 'presente' },
-        observation: observation || undefined
+    this.teacherService.saveAttendance(this.courseId(), records).subscribe({
+      next: () => {
+        this.success.set('Asistencia guardada correctamente');
+        this.saving.set(false);
+        setTimeout(() => this.router.navigate([`/profesor/cursos/${this.courseId()}`]), 1500);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'Error al guardar asistencia');
+        this.saving.set(false);
       }
-    }));
-    this.hasChanges.set(true);
-  }
-
-  getObservation(studentId: string): string {
-    return this.observations()[studentId] || this.attendanceRecords()[studentId]?.observation || '';
-  }
-
-  onDateChange() {
-    // Recargar asistencia para la nueva fecha
-    this.loadCourse();
-    this.hasChanges.set(false);
-  }
-
-  markAllPresent() {
-    this.students().forEach(student => {
-      this.setAttendance(student.id, 'presente');
     });
   }
 
-  markAllAbsent() {
-    this.students().forEach(student => {
-      this.setAttendance(student.id, 'falta');
-    });
-  }
-
-  clearAll() {
-    this.attendanceRecords.set({});
-    this.observations.set({});
-    this.hasChanges.set(true);
-  }
-
-  attendanceSummary = computed(() => {
-    const records = this.attendanceRecords();
-    const present = Object.values(records).filter(r => r.status === 'presente').length;
-    const late = Object.values(records).filter(r => r.status === 'tarde').length;
-    const absent = Object.values(records).filter(r => r.status === 'falta').length;
-    const total = this.students().length;
-    const unmarked = total - (present + late + absent);
-
-    return { present, late, absent, total, unmarked };
-  });
-
-  canSave(): boolean {
-    const summary = this.attendanceSummary();
-    return summary.unmarked === 0 && this.hasChanges();
-  }
-
-  saveAttendance() {
-    if (!this.canSave()) {
-      return;
-    }
-
-    this.isSaving.set(true);
-
-    // Simulación de guardado
-    setTimeout(() => {
-      const attendanceData = {
-        courseId: this.courseId()!,
-        date: this.attendanceDate(),
-        records: Object.values(this.attendanceRecords()).map(record => ({
-          studentId: record.studentId,
-          status: record.status,
-          observation: record.observation || this.observations()[record.studentId] || undefined
-        }))
-      };
-
-      console.log('Guardando asistencia:', attendanceData);
-      
-      this.isSaving.set(false);
-      this.hasChanges.set(false);
-      
-      // Mostrar mensaje de éxito y redirigir
-      alert('Asistencia guardada correctamente');
-      this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'asistencia' } });
-    }, 1000);
-  }
-
-  cancel() {
-    if (this.hasChanges()) {
-      if (confirm('¿Estás seguro de que deseas salir sin guardar los cambios?')) {
-        this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'asistencia' } });
-      }
-    } else {
-      this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'asistencia' } });
-    }
-  }
-
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'presente': return 'badge-success';
-      case 'tarde': return 'badge-warning';
-      case 'falta': return 'badge-error';
-      default: return 'badge-secondary';
-    }
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'presente': return 'Presente';
-      case 'tarde': return 'Tarde';
-      case 'falta': return 'Falta';
-      default: return 'Sin marcar';
-    }
-  }
+  getPresentCount(): number { return this.students().filter(s => s.status === 'PRESENT').length; }
+  getAbsentCount(): number { return this.students().filter(s => s.status === 'ABSENT').length; }
+  getLateCount(): number { return this.students().filter(s => s.status === 'LATE').length; }
 }

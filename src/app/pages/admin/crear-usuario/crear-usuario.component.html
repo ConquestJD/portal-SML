@@ -26,7 +26,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Nivel *</label>
-            <select class="form-input" [(ngModel)]="formData().level" (ngModelChange)="onLevelChange()" name="level" required>
+            <select class="form-input" [ngModel]="formData().level" (ngModelChange)="onLevelChange($event)" name="level" required>
               <option value="">Seleccionar nivel</option>
               <option value="secundaria">Secundaria</option>
               <option value="primaria">Primaria</option>
@@ -36,7 +36,7 @@
           @if (formData().level) {
             <div class="form-group">
               <label class="form-label">Grado *</label>
-              <select class="form-input" [(ngModel)]="formData().grade" (ngModelChange)="onGradeChange()" name="grade" required>
+              <select class="form-input" [ngModel]="formData().grade" (ngModelChange)="onGradeChange($event)" name="grade" required>
                 <option value="">Seleccionar grado</option>
                 @for (grade of availableGrades(); track grade) {
                   <option [value]="grade">{{ grade }}</option>
@@ -61,12 +61,16 @@
       <h2 class="section-title">Información Personal</h2>
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">Nombre Completo *</label>
-          <input type="text" class="form-input" [(ngModel)]="formData().name" name="name" required>
+          <label class="form-label">Nombre *</label>
+          <input type="text" class="form-input" [ngModel]="formData().firstName" (ngModelChange)="update('firstName', $event)" name="firstName" placeholder="Ej: Ana" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido *</label>
+          <input type="text" class="form-input" [ngModel]="formData().lastName" (ngModelChange)="update('lastName', $event)" name="lastName" placeholder="Ej: García" required>
         </div>
         <div class="form-group">
           <label class="form-label">Email *</label>
-          <input type="email" class="form-input" [(ngModel)]="formData().email" name="email" required>
+          <input type="email" class="form-input" [ngModel]="formData().email" (ngModelChange)="update('email', $event)" name="email" required>
           @if (isStudentMode() || formData().role === 'estudiante') {
             <span class="field-hint">
               <i class="fas fa-info-circle"></i>
@@ -76,16 +80,16 @@
         </div>
         <div class="form-group">
           <label class="form-label">DNI</label>
-          <input type="text" class="form-input" [(ngModel)]="formData().dni" name="dni">
+          <input type="text" class="form-input" [ngModel]="formData().dni" (ngModelChange)="update('dni', $event)" name="dni">
         </div>
         <div class="form-group">
           <label class="form-label">Teléfono</label>
-          <input type="tel" class="form-input" [(ngModel)]="formData().phone" name="phone">
+          <input type="tel" class="form-input" [ngModel]="formData().phone" (ngModelChange)="update('phone', $event)" name="phone">
         </div>
         @if (isStudentMode() || formData().role === 'estudiante') {
           <div class="form-group">
             <label class="form-label">Número de Emergencia *</label>
-            <input type="tel" class="form-input" [(ngModel)]="formData().emergencyPhone" name="emergencyPhone" required>
+            <input type="tel" class="form-input" [ngModel]="formData().emergencyPhone" (ngModelChange)="update('emergencyPhone', $event)" name="emergencyPhone" required>
             <span class="field-hint">
               <i class="fas fa-phone-alt"></i>
               Número de contacto en caso de emergencia
@@ -94,7 +98,7 @@
         }
         <div class="form-group full-width">
           <label class="form-label">Dirección</label>
-          <input type="text" class="form-input" [(ngModel)]="formData().address" name="address">
+          <input type="text" class="form-input" [ngModel]="formData().address" (ngModelChange)="update('address', $event)" name="address">
         </div>
       </div>
     </div>
@@ -105,7 +109,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Departamento *</label>
-            <select class="form-input" [(ngModel)]="formData().department" name="department" required>
+            <select class="form-input" [ngModel]="formData().department" (ngModelChange)="update('department', $event)" name="department" required>
               <option value="">Seleccionar departamento</option>
               <option value="Matemática">Matemática</option>
               <option value="Lengua y Literatura">Lengua y Literatura</option>
@@ -119,15 +123,15 @@
           </div>
           <div class="form-group">
             <label class="form-label">Especialización</label>
-            <input type="text" class="form-input" [(ngModel)]="formData().specialization" name="specialization" placeholder="Ej: Álgebra y Geometría">
+            <input type="text" class="form-input" [ngModel]="formData().specialization" (ngModelChange)="update('specialization', $event)" name="specialization" placeholder="Ej: Álgebra y Geometría">
           </div>
           <div class="form-group">
             <label class="form-label">Título Profesional *</label>
-            <input type="text" class="form-input" [(ngModel)]="formData().degree" name="degree" required placeholder="Ej: Licenciado en Matemáticas">
+            <input type="text" class="form-input" [ngModel]="formData().degree" (ngModelChange)="update('degree', $event)" name="degree" required placeholder="Ej: Licenciado en Matemáticas">
           </div>
           <div class="form-group">
             <label class="form-label">Universidad</label>
-            <input type="text" class="form-input" [(ngModel)]="formData().university" name="university" placeholder="Ej: Universidad Nacional Mayor de San Marcos">
+            <input type="text" class="form-input" [ngModel]="formData().university" (ngModelChange)="update('university', $event)" name="university" placeholder="Ej: Universidad Nacional Mayor de San Marcos">
           </div>
         </div>
       </div>
@@ -141,37 +145,36 @@
             <label class="form-label">Usuario *</label>
             @if (isStudentMode() && !isEditMode()) {
               <div class="input-with-info">
-                <input type="text" class="form-input" [(ngModel)]="formData().username" name="username" [readonly]="true" required>
+                <input type="text" class="form-input" [ngModel]="formData().username" (ngModelChange)="update('username', $event)" name="username" [readonly]="true" required>
                 <span class="input-hint">
                   <i class="fas fa-info-circle"></i>
                   Generado automáticamente
                 </span>
               </div>
             } @else {
-              <input type="text" class="form-input" [(ngModel)]="formData().username" name="username" required>
+              <input type="text" class="form-input" [ngModel]="formData().username" (ngModelChange)="update('username', $event)" name="username" required>
             }
           </div>
           <div class="form-group">
             <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
-            <input type="password" class="form-input" [(ngModel)]="formData().password" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
+            <input type="password" class="form-input" [ngModel]="formData().password" (ngModelChange)="update('password', $event)" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
           </div>
           @if (!isStudentMode() && !isProfessorMode() && !isParentMode()) {
             <div class="form-group">
               <label class="form-label">Rol *</label>
-              <select class="form-input" [(ngModel)]="formData().role" name="role" required>
-                <option value="estudiante">Estudiante</option>
-                <option value="profesor">Profesor</option>
-                <option value="administrativo">Administrativo</option>
-                <option value="admin">Administrador</option>
+              <select class="form-input" [ngModel]="formData().role" (ngModelChange)="update('role', $event)" name="role" required>
+                <option value="STUDENT">Estudiante</option>
+                <option value="TEACHER">Profesor</option>
+                <option value="ADMIN">Administrador</option>
               </select>
             </div>
           }
           <div class="form-group">
             <label class="form-label">Estado *</label>
-            <select class="form-input" [(ngModel)]="formData().status" name="status" required>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-              <option value="suspendido">Suspendido</option>
+            <select class="form-input" [ngModel]="formData().status" (ngModelChange)="update('status', $event)" name="status" required>
+              <option value="ACTIVE">Activo</option>
+              <option value="INACTIVE">Inactivo</option>
+              <option value="SUSPENDED">Suspendido</option>
             </select>
           </div>
         </div>

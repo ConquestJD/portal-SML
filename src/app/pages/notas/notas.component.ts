@@ -1,29 +1,55 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { StudentService, StudentGrade } from '../../services/student.service';
 
 @Component({
   selector: 'app-notas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './notas.component.html',
   styleUrl: './notas.component.css'
 })
-export class NotasComponent {
-  selectedPeriod = signal('2024');
-  selectedCourse = signal('todos');
+export class NotasComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  selectedPeriod = signal('');
+  selectedCourse = signal('');
+  grades = signal<StudentGrade[]>([]);
+  courses = signal<any[]>([]);
 
-  generalAverage = signal(16.5);
-  previousAverage = signal(16.0);
+  filterPeriod = this.selectedPeriod;
+  filterCourse = this.selectedCourse;
 
-  courses = signal([
-    { id: '1', name: 'Matemática', average: 16.5 },
-    { id: '2', name: 'Lengua y Literatura', average: 18.0 },
-    { id: '3', name: 'Ciencias', average: 17.2 }
-  ]);
+  generalAverage = computed(() => this.getAverage());
+  previousAverage = signal(0);
 
-  evaluations = signal([
-    { type: 'Examen Parcial', description: 'Unidad 1-3', date: '2024-03-10', points: 100, obtained: 85, percentage: 85 },
-    { type: 'Tarea', description: 'Proyecto Final', date: '2024-03-15', points: 50, obtained: 45, percentage: 90 }
-  ]);
+  constructor(private studentService: StudentService) {}
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.studentService.getGrades({
+      period: this.selectedPeriod() || undefined,
+      courseId: this.selectedCourse() || undefined
+    }).subscribe({
+      next: (data) => { this.grades.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar notas'); this.loading.set(false); }
+    });
+  }
+
+  exportGrades() {
+    window.open(this.studentService.getGradesExportUrl(this.selectedPeriod() || undefined));
+  }
+
+  onFilterChange() { this.load(); }
+
+  getAverage(): number {
+    const g = this.grades();
+    if (!g.length) return 0;
+    const sum = g.reduce((acc, cur) => acc + cur.score, 0);
+    return Math.round((sum / g.length) * 10) / 10;
+  }
 }

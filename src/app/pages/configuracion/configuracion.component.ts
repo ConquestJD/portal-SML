@@ -1,7 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { StudentService, StudentSettings } from '../../services/student.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -10,65 +12,55 @@ import { RouterLink } from '@angular/router';
   templateUrl: './configuracion.component.html',
   styleUrl: './configuracion.component.css'
 })
-export class ConfiguracionComponent {
-  activeTab = signal<'cuenta' | 'preferencias' | 'notificaciones'>('cuenta');
+export class ConfiguracionComponent implements OnInit {
+  loading = signal(true);
+  saving = signal(false);
+  error = signal('');
+  success = signal('');
+  activeTab = signal('cuenta');
+  setTab(t: string) { this.activeTab.set(t); }
 
-  // Cuenta
-  currentPassword = signal('');
-  newPassword = signal('');
-  confirmPassword = signal('');
+  settings = signal<StudentSettings>({ notifications: true, language: 'es', theme: 'light' });
 
-  // Preferencias
-  language = signal('es');
-  theme = signal('light');
-  dateFormat = signal('DD/MM/YYYY');
+  changePasswordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  passwordError = signal('');
+  passwordSuccess = signal('');
 
-  // Notificaciones
-  notifications = signal({
-    newTasks: true,
-    grades: true,
-    urgentAnnouncements: true,
-    taskReminders: true,
-    teacherMessages: true,
-    attendanceChanges: false
-  });
+  constructor(private studentService: StudentService, private authService: AuthService) {}
 
-  setTab(tab: 'cuenta' | 'preferencias' | 'notificaciones') {
-    this.activeTab.set(tab);
+  ngOnInit() {
+    this.studentService.getSettings().subscribe({
+      next: (data) => { this.settings.set(data); this.loading.set(false); },
+      error: () => { this.loading.set(false); }
+    });
   }
 
-  savePassword() {
-    if (this.newPassword() !== this.confirmPassword()) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-    // Lógica de guardado
-    alert('Contraseña actualizada correctamente');
+  saveSettings() {
+    this.saving.set(true);
+    this.studentService.updateSettings(this.settings()).subscribe({
+      next: (data) => {
+        this.settings.set(data);
+        this.success.set('Configuración guardada');
+        this.saving.set(false);
+        setTimeout(() => this.success.set(''), 3000);
+      },
+      error: () => this.saving.set(false)
+    });
   }
 
-  savePreferences() {
-    // Lógica de guardado
-    alert('Preferencias guardadas');
+  changePassword() {
+    const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm();
+    if (newPassword !== confirmPassword) { this.passwordError.set('Las contraseñas no coinciden'); return; }
+    this.passwordError.set('');
+    this.authService.changePassword(currentPassword, newPassword).subscribe({
+      next: () => {
+        this.passwordSuccess.set('Contraseña actualizada');
+        this.changePasswordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      },
+      error: (err) => this.passwordError.set(err?.error?.error?.message ?? 'Error al cambiar contraseña')
+    });
   }
 
-  saveNotifications() {
-    // Lógica de guardado
-    alert('Configuración de notificaciones guardada');
-  }
-
-  toggleNewTasks() {
-    this.notifications.update(n => ({...n, newTasks: !n.newTasks}));
-  }
-
-  toggleGrades() {
-    this.notifications.update(n => ({...n, grades: !n.grades}));
-  }
-
-  toggleUrgentAnnouncements() {
-    this.notifications.update(n => ({...n, urgentAnnouncements: !n.urgentAnnouncements}));
-  }
-
-  toggleTaskReminders() {
-    this.notifications.update(n => ({...n, taskReminders: !n.taskReminders}));
-  }
+  updateSetting(field: string, value: unknown) { this.settings.update(s => ({ ...s, [field]: value })); }
+  updatePwForm(field: string, value: string) { this.changePasswordForm.update(d => ({ ...d, [field]: value })); }
 }

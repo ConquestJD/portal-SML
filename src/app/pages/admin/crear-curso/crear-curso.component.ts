@@ -1,13 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-
-interface Schedule {
-  day: string;
-  startTime: string;
-  endTime: string;
-}
+import { AdminService, AcademicYearItem } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-crear-curso',
@@ -16,181 +11,124 @@ interface Schedule {
   templateUrl: './crear-curso.component.html',
   styleUrl: './crear-curso.component.css'
 })
-export class CrearCursoComponent {
-  courseId = signal('');
+export class CrearCursoComponent implements OnInit {
   isEditMode = signal(false);
+  courseId = signal('');
+  isLoading = signal(false);
+  error = signal('');
+  success = signal('');
+
+  pageTitle = computed(() => this.isEditMode() ? 'Editar Curso' : 'Crear Curso');
+  pageSubtitle = computed(() => this.isEditMode() ? 'Modifica los datos del curso' : 'Completa los datos del nuevo curso');
+
+  academicYears: AcademicYearItem[] = [];
+  weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+  newSchedule = signal({ day: '', startTime: '', endTime: '' });
 
   formData = signal({
-    code: '',
     name: '',
-    level: '' as '' | 'secundaria' | 'primaria' | 'inicial',
+    code: '',
+    description: '',
+    level: '',
     grade: '',
-    classroom: '',
+    hours: 4,
     academicYear: '',
-    status: 'activo' as 'activo' | 'inactivo',
-    schedule: [] as Schedule[]
-  });
-
-  newSchedule = signal<Schedule>({
-    day: '',
-    startTime: '',
-    endTime: ''
+    classroom: '',
+    status: 'ACTIVE',
+    schedule: [] as { day: string; startTime: string; endTime: string }[]
   });
 
   availableGrades = computed(() => {
     const level = this.formData().level;
-    if (level === 'secundaria') {
-      return ['1ro', '2do', '3ro', '4to', '5to'];
-    } else if (level === 'primaria') {
-      return ['1ro', '2do', '3ro', '4to', '5to', '6to'];
-    } else if (level === 'inicial') {
-      return ['3 años', '4 años', '5 años'];
-    }
+    if (level === 'Secundaria') return ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria'];
+    if (level === 'Primaria') return ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'];
+    if (level === 'Inicial') return ['3 años', '4 años', '5 años'];
     return [];
-  });
-
-  weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  academicYears = ['2024', '2025', '2026'];
-
-  pageTitle = computed(() => {
-    return this.isEditMode() ? 'Editar Curso' : 'Nuevo Curso';
-  });
-
-  pageSubtitle = computed(() => {
-    return this.isEditMode() ? 'Modifica la información del curso' : 'Registra un nuevo curso en el catálogo';
   });
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
-  ) {
-    // Detectar si está en modo edición
+    private router: Router,
+    private adminService: AdminService
+  ) {}
+
+  ngOnInit() {
+    this.adminService.getAcademicYears().subscribe({ next: d => { this.academicYears = d; } });
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode.set(true);
         this.courseId.set(params['id']);
-        this.loadCourseData(params['id']);
+        this.loadCourse(params['id']);
       }
     });
   }
 
-  loadCourseData(id: string) {
-    // Simular carga de datos del curso
-    setTimeout(() => {
-      const coursesData: Record<string, any> = {
-        '1': {
-          code: 'MAT-2024-3',
-          name: 'Matemática',
-          level: 'secundaria',
-          grade: '3ro',
-          classroom: 'Aula 201',
-          academicYear: '2024',
-          status: 'activo',
-          schedule: [
-            { day: 'Lunes', startTime: '08:00', endTime: '09:30' },
-            { day: 'Miércoles', startTime: '08:00', endTime: '09:30' },
-            { day: 'Viernes', startTime: '08:00', endTime: '09:30' }
-          ]
-        },
-        '2': {
-          code: 'LEN-2024-3',
-          name: 'Lengua y Literatura',
-          level: 'secundaria',
-          grade: '3ro',
-          classroom: 'Aula 202',
-          academicYear: '2024',
-          status: 'activo',
-          schedule: [
-            { day: 'Martes', startTime: '10:00', endTime: '11:30' },
-            { day: 'Jueves', startTime: '10:00', endTime: '11:30' }
-          ]
-        }
-      };
-
-      const courseData = coursesData[id];
-      if (courseData) {
-        this.formData.set({
-          code: courseData.code || '',
-          name: courseData.name || '',
-          level: courseData.level || '',
-          grade: courseData.grade || '',
-          classroom: courseData.classroom || '',
-          academicYear: courseData.academicYear || '',
-          status: courseData.status || 'activo',
-          schedule: courseData.schedule || []
-        });
+  loadCourse(id: string) {
+    this.adminService.getCourse(id).subscribe({
+      next: (data) => {
+        this.formData.update(d => ({
+          ...d,
+          name: data.name, code: data.code,
+          description: data.description ?? '',
+          level: data.level ?? '', grade: data.grade ?? '',
+          hours: data.hours ?? 4, status: data.status ?? 'ACTIVE'
+        }));
       }
-    }, 300);
+    });
+  }
+
+  onLevelChange() { this.formData.update(d => ({ ...d, grade: '' })); }
+  onGradeChange() {}
+  generateCode() {
+    const d = this.formData();
+    const code = (d.grade.substring(0, 3) + '-' + d.name.substring(0, 3)).toUpperCase().replace(/\s/g, '');
+    this.formData.update(f => ({ ...f, code }));
   }
 
   addSchedule() {
-    if (this.newSchedule().day && this.newSchedule().startTime && this.newSchedule().endTime) {
-      // Verificar que no se duplique el día
-      const existingDay = this.formData().schedule.find(s => s.day === this.newSchedule().day);
-      if (existingDay) {
-        alert('Ya existe un horario para este día. Por favor, edítalo o elimínalo primero.');
-        return;
-      }
-
-      this.formData.update(d => ({
-        ...d,
-        schedule: [...d.schedule, { ...this.newSchedule() }]
-      }));
-
-      // Resetear el formulario de horario
-      this.newSchedule.set({ day: '', startTime: '', endTime: '' });
-    }
+    const s = this.newSchedule();
+    if (!s.day || !s.startTime || !s.endTime) return;
+    this.formData.update(d => ({ ...d, schedule: [...d.schedule, { ...s }] }));
+    this.newSchedule.set({ day: '', startTime: '', endTime: '' });
   }
 
   removeSchedule(index: number) {
-    this.formData.update(d => ({
-      ...d,
-      schedule: d.schedule.filter((_, i) => i !== index)
-    }));
+    this.formData.update(d => ({ ...d, schedule: d.schedule.filter((_, i) => i !== index) }));
   }
+
+  updateSchedule(field: string, value: string) { this.newSchedule.update(s => ({ ...s, [field]: value })); }
 
   onSubmit() {
-    // Validar formulario
-    if (!this.formData().code || !this.formData().name || !this.formData().level || 
-        !this.formData().grade || !this.formData().academicYear) {
-      alert('Por favor completa todos los campos obligatorios');
-      return;
-    }
+    this.isLoading.set(true);
+    this.error.set('');
+    const d = this.formData();
+    const dto = {
+      name: d.name, code: d.code,
+      description: d.description || undefined,
+      grade: d.grade || undefined,
+      level: d.level || undefined,
+      hours: d.hours
+    };
 
-    // Simular guardado
-    console.log('Guardando curso:', this.formData());
-    
-    setTimeout(() => {
-      alert(this.isEditMode() ? 'Curso actualizado correctamente' : 'Curso creado correctamente');
-      this.router.navigate(['/admin/cursos']);
-    }, 500);
+    const obs = this.isEditMode()
+      ? this.adminService.updateCourse(this.courseId(), dto)
+      : this.adminService.createCourse(dto);
+
+    obs.subscribe({
+      next: () => {
+        this.success.set(this.isEditMode() ? 'Curso actualizado' : 'Curso creado');
+        this.isLoading.set(false);
+        this.router.navigate(['/admin/cursos']);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'Error al guardar el curso');
+        this.isLoading.set(false);
+      }
+    });
   }
 
-  generateCode() {
-    const level = this.formData().level;
-    const grade = this.formData().grade;
-    const academicYear = this.formData().academicYear;
-    const name = this.formData().name;
-
-    if (level && grade && academicYear && name) {
-      // Generar código: [PRIMERAS 3 LETRAS DEL NOMBRE]-[AÑO]-[GRADO]
-      const namePrefix = name.substring(0, 3).toUpperCase();
-      const gradeShort = grade.replace('ro', '').replace('to', '').replace(' años', '');
-      const code = `${namePrefix}-${academicYear}-${gradeShort}`;
-      
-      this.formData.update(d => ({ ...d, code }));
-    }
-  }
-
-  onLevelChange() {
-    // Limpiar grado cuando cambia el nivel
-    this.formData.update(d => ({ ...d, grade: '', code: '' }));
-  }
-
-  onGradeChange() {
-    // Regenerar código si cambia grado
-    if (this.formData().code) {
-      this.generateCode();
-    }
+  update(field: string, value: unknown) {
+    this.formData.update(d => ({ ...d, [field]: value }));
   }
 }

@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ParentService, Child, ParentJustification } from '../../../services/parent.service';
 
 @Component({
   selector: 'app-justificaciones',
@@ -10,57 +11,62 @@ import { RouterLink } from '@angular/router';
   templateUrl: './justificaciones.component.html',
   styleUrl: './justificaciones.component.css'
 })
-export class JustificacionesComponent {
-  selectedChild = signal('1');
+export class JustificacionesComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
   showForm = signal(false);
-  
-  children = signal([
-    { id: '1', name: 'María Rodríguez', grade: '3ro', section: 'A' }
-  ]);
+  saving = signal(false);
+  success = signal('');
+  selectedChildId = signal('');
+  children = signal<Child[]>([]);
+  justifications = signal<ParentJustification[]>([]);
 
-  formData = signal({
-    date: '',
-    type: 'falta',
-    reason: '',
-    document: null as File | null
-  });
+  formData = signal({ reason: '', date: '' });
+  selectedFile: File | null = null;
 
-  justifications = signal([
-    { id: '1', date: '2024-03-09', type: 'falta', reason: 'Enfermedad', status: 'aprobada', submittedDate: '2024-03-09' },
-    { id: '2', date: '2024-03-08', type: 'tardanza', reason: 'Tráfico', status: 'pendiente', submittedDate: '2024-03-08' }
-  ]);
+  constructor(private parentService: ParentService) {}
 
-  submitJustification() {
-    console.log('Enviar justificación', this.formData());
-    this.showForm.set(false);
-    // Reset form
-    this.formData.set({
-      date: '',
-      type: 'falta',
-      reason: '',
-      document: null
+  ngOnInit() {
+    this.parentService.getChildren().subscribe({
+      next: (data) => {
+        this.children.set(data);
+        if (data.length) { this.selectedChildId.set(data[0].id); this.load(data[0].id); }
+        this.loading.set(false);
+      }
+    });
+  }
+
+  selectChild(id: string) { this.selectedChildId.set(id); this.load(id); }
+
+  load(childId: string) {
+    this.parentService.getJustifications(childId).subscribe({
+      next: (data) => this.justifications.set(data)
     });
   }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      this.formData.update(data => ({ ...data, document: input.files![0] }));
-    }
+    this.selectedFile = input.files?.[0] ?? null;
   }
 
-  updateDate(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.formData.update(data => ({ ...data, date: input.value }));
+  submit() {
+    const childId = this.selectedChildId();
+    const { reason, date } = this.formData();
+    if (!reason || !date) return;
+    this.saving.set(true);
+    this.parentService.submitJustification(childId, reason, date, this.selectedFile ?? undefined).subscribe({
+      next: () => {
+        this.success.set('Justificación enviada');
+        this.showForm.set(false);
+        this.formData.set({ reason: '', date: '' });
+        this.selectedFile = null;
+        this.saving.set(false);
+        this.load(childId);
+      },
+      error: () => this.saving.set(false)
+    });
   }
 
-  updateType(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.formData.update(data => ({ ...data, type: select.value }));
-  }
-
-  updateReason(event: Event) {
-    const textarea = event.target as HTMLTextAreaElement;
-    this.formData.update(data => ({ ...data, reason: textarea.value }));
-  }
+  getChildName(c: Child): string { return `${c.user.firstName} ${c.user.lastName}`; }
+  update(field: string, value: string) { this.formData.update(d => ({ ...d, [field]: value })); }
 }

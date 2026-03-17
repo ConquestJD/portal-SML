@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { DashboardService, TeacherDashboard } from '../../../services/dashboard.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard-profesor',
@@ -9,41 +11,60 @@ import { RouterLink } from '@angular/router';
   templateUrl: './dashboard-profesor.component.html',
   styleUrl: './dashboard-profesor.component.css'
 })
-export class DashboardProfesorComponent {
-  teacherName = signal('Prof. María González');
-  department = signal('Matemática');
-  
-  totalCourses = signal(6);
-  totalStudents = signal(180);
-  pendingGrading = signal(24);
-  attendancePending = signal(8);
+export class DashboardProfesorComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+
+  teacherName = signal('Profesor');
+  specialty = signal('');
+  department = signal('');
+  totalCourses = signal(0);
+  totalStudents = signal(0);
+  pendingGrading = signal(0);
+  attendancePending = signal(0);
+  alerts = signal<unknown[]>([]);
+  recentActivity = signal<unknown[]>([]);
 
   quickAccess = signal([
-    { icon: 'fas fa-book', title: 'Mis Cursos', link: '/profesor/cursos', count: this.totalCourses() },
-    { icon: 'fas fa-tasks', title: 'Tareas', link: '/profesor/tareas', count: this.pendingGrading() },
+    { icon: 'fas fa-book', title: 'Mis Cursos', link: '/profesor/cursos', count: 0 },
+    { icon: 'fas fa-tasks', title: 'Tareas', link: '/profesor/tareas', count: 0 },
     { icon: 'fas fa-chart-line', title: 'Calificaciones', link: '/profesor/notas' },
-    { icon: 'fas fa-calendar-alt', title: 'Asistencia', link: '/profesor/asistencia', count: this.attendancePending() },
+    { icon: 'fas fa-calendar-alt', title: 'Asistencia', link: '/profesor/asistencia', count: 0 },
     { icon: 'fas fa-users', title: 'Estudiantes', link: '/profesor/cursos' },
-    { icon: 'fas fa-bullhorn', title: 'Comunicados', link: '/profesor/comunicados', count: 2 }
+    { icon: 'fas fa-bullhorn', title: 'Comunicados', link: '/comunicados' }
   ]);
 
-  alerts = signal([
-    { type: 'warning', message: 'Tienes 8 asistencias pendientes de marcar', link: '/profesor/asistencia' },
-    { type: 'info', message: '24 tareas esperan calificación', link: '/profesor/tareas' }
-  ]);
+  constructor(
+    private dashboardService: DashboardService,
+    private authService: AuthService
+  ) {}
 
-  recentActivity = signal([
-    { type: 'grade', message: 'Calificaste 15 tareas de Matemática', time: 'Hace 1 hora' },
-    { type: 'attendance', message: 'Marcaste asistencia para 3ro A', time: 'Hace 2 horas' },
-    { type: 'task', message: 'Creaste nueva tarea "Álgebra Lineal"', time: 'Hace 1 día' }
-  ]);
+  ngOnInit() {
+    const user = this.authService.user();
+    if (user) this.teacherName.set(user.name);
+
+    this.dashboardService.getTeacherDashboard().subscribe({
+      next: (data: TeacherDashboard) => {
+        this.totalCourses.set(data.summary.totalCourses);
+        this.totalStudents.set(data.summary.totalStudents);
+        this.pendingGrading.set(data.summary.pendingGrading);
+        this.attendancePending.set(data.summary.attendancePending);
+        if (data.teacher?.specialty) this.specialty.set(data.teacher.specialty);
+        this.quickAccess.update(qa => qa.map(item => {
+          if (item.title === 'Mis Cursos') return { ...item, count: data.summary.totalCourses };
+          if (item.title === 'Tareas') return { ...item, count: data.summary.pendingGrading };
+          if (item.title === 'Asistencia') return { ...item, count: data.summary.attendancePending };
+          return item;
+        }));
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar dashboard'); this.loading.set(false); }
+    });
+  }
 
   getCurrentDate() {
     return new Date().toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
   }
 }

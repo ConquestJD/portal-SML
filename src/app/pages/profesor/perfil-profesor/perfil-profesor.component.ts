@@ -1,9 +1,9 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TeacherService, TeacherProfile } from '../../../services/teacher.service';
 import { AuthService } from '../../../services/auth.service';
-
 
 @Component({
   selector: 'app-perfil-profesor',
@@ -13,161 +13,73 @@ import { AuthService } from '../../../services/auth.service';
   styleUrl: './perfil-profesor.component.css'
 })
 export class PerfilProfesorComponent implements OnInit {
-  activeTab = signal<'perfil' | 'seguridad'>('perfil');
-  isEditing = signal(false);
-  isSaving = signal(false);
-  isLoading = signal(true);
+  loading = signal(true);
+  error = signal('');
+  saving = signal(false);
+  success = signal('');
+  activeTab = signal('perfil');
+  readonly isLoading = this.loading;
 
-  // Datos del perfil
-  profileData = signal({
-    id: '',
-    name: '',
-    email: '',
-    phone: '',
-    department: '',
-    specialization: '',
-    bio: '',
-    photo: '',
-    address: '',
-    birthDate: '',
-    hireDate: '',
-    status: 'active' as 'active' | 'inactive'
-  });
+  profile = signal<TeacherProfile | null>(null);
+  formData = signal({ bio: '', specialty: '', phone: '' });
 
+  changePasswordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  passwordError = signal('');
+  passwordSuccess = signal('');
 
-  // Configuración
-  settings = signal({
-    emailNotifications: true,
-    smsNotifications: false,
-    messageSignature: 'Prof. María González\nDepartamento de Matemática',
-    autoReply: false,
-    autoReplyMessage: ''
-  });
-
-  // Cambio de contraseña
-  passwordData = signal({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-
-  constructor(private authService: AuthService) {}
+  constructor(private teacherService: TeacherService, private authService: AuthService) {}
 
   ngOnInit() {
-    this.loadProfile();
-  }
-
-  loadProfile() {
-    this.isLoading.set(true);
-    
-    // Simular carga de datos
-    setTimeout(() => {
-      const user = this.authService.user();
-      
-      this.profileData.set({
-        id: user?.id || '1',
-        name: user?.name || 'Prof. María González',
-        email: user?.email || 'maria.gonzalez@colegio.edu',
-        phone: '+51 987654321',
-        department: 'Matemática',
-        specialization: 'Álgebra y Geometría',
-        bio: 'Profesora de Matemática con más de 10 años de experiencia en educación secundaria. Especializada en álgebra y geometría.',
-        photo: user?.photo || 'https://via.placeholder.com/150',
-        address: 'Av. Principal 123, Lima',
-        birthDate: '1980-05-15',
-        hireDate: '2015-03-01',
-        status: 'active'
-      });
-
-
-      this.isLoading.set(false);
-    }, 500);
-  }
-
-
-  setTab(tab: 'perfil' | 'seguridad') {
-    this.activeTab.set(tab);
-  }
-
-  startEditing() {
-    this.isEditing.set(true);
-  }
-
-  cancelEditing() {
-    this.isEditing.set(false);
-    // Recargar datos originales
-    this.loadProfile();
+    this.teacherService.getProfile().subscribe({
+      next: (data) => {
+        this.profile.set(data);
+        this.formData.set({
+          bio: data.bio ?? '',
+          specialty: data.specialty ?? '',
+          phone: data.user.phone ?? ''
+        });
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar perfil'); this.loading.set(false); }
+    });
   }
 
   saveProfile() {
-    this.isSaving.set(true);
-    
-    // Simular guardado
-    setTimeout(() => {
-      console.log('Guardando perfil:', this.profileData());
-      this.isSaving.set(false);
-      this.isEditing.set(false);
-      // Aquí se actualizaría el perfil en el backend
-    }, 1000);
-  }
-
-
-  changePassword() {
-    const passwordData = this.passwordData();
-    
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    this.isSaving.set(true);
-    
-    setTimeout(() => {
-      console.log('Cambiando contraseña...');
-      this.isSaving.set(false);
-      this.passwordData.set({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-      alert('Contraseña cambiada exitosamente');
-    }, 1000);
+    this.saving.set(true);
+    this.error.set('');
+    this.teacherService.updateProfile(this.formData()).subscribe({
+      next: (data) => {
+        this.profile.set(data);
+        this.success.set('Perfil actualizado correctamente');
+        this.saving.set(false);
+        setTimeout(() => this.success.set(''), 3000);
+      },
+      error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al guardar'); this.saving.set(false); }
+    });
   }
 
   onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.profileData.update(data => ({
-          ...data,
-          photo: e.target?.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+    const file = input.files?.[0];
+    if (!file) return;
+    this.teacherService.uploadPhoto(file).subscribe({
+      next: (data) => { this.profile.set(data); this.success.set('Foto actualizada'); }
+    });
   }
 
+  changePassword() {
+    const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm();
+    if (newPassword !== confirmPassword) { this.passwordError.set('Las contraseñas no coinciden'); return; }
+    this.passwordError.set('');
+    this.authService.changePassword(currentPassword, newPassword).subscribe({
+      next: () => { this.passwordSuccess.set('Contraseña actualizada'); this.changePasswordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' }); },
+      error: (err) => this.passwordError.set(err?.error?.error?.message ?? 'Error al cambiar contraseña')
+    });
+  }
 
-  // Métodos auxiliares para actualizar datos del perfil
-  updateName(value: string) { this.profileData.update(d => ({ ...d, name: value })); }
-  updateEmail(value: string) { this.profileData.update(d => ({ ...d, email: value })); }
-  updatePhone(value: string) { this.profileData.update(d => ({ ...d, phone: value })); }
-  updateAddress(value: string) { this.profileData.update(d => ({ ...d, address: value })); }
-  updateBirthDate(value: string) { this.profileData.update(d => ({ ...d, birthDate: value })); }
-  updateHireDate(value: string) { this.profileData.update(d => ({ ...d, hireDate: value })); }
-  updateDepartment(value: string) { this.profileData.update(d => ({ ...d, department: value })); }
-  updateSpecialization(value: string) { this.profileData.update(d => ({ ...d, specialization: value })); }
-  updateBio(value: string) { this.profileData.update(d => ({ ...d, bio: value })); }
-
-
-  updateCurrentPassword(value: string) { this.passwordData.update(p => ({ ...p, currentPassword: value })); }
-  updateNewPassword(value: string) { this.passwordData.update(p => ({ ...p, newPassword: value })); }
-  updateConfirmPassword(value: string) { this.passwordData.update(p => ({ ...p, confirmPassword: value })); }
+  getFullName(): string {
+    const p = this.profile();
+    if (!p) return '';
+    return `${p.user.firstName} ${p.user.lastName}`;
+  }
 }

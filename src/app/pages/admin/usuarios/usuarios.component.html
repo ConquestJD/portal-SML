@@ -79,33 +79,33 @@
             <td>
               <div class="user-info">
                 <div class="user-avatar">
-                  {{ user.name.charAt(0) }}
+                  {{ (user.name || user.firstName)?.charAt(0) }}
                 </div>
-                <span>{{ user.name }}</span>
+                <span>{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
               </div>
             </td>
             <td>{{ user.email }}</td>
             <td>
               <span class="badge badge-info">
-                {{ user.role === 'estudiante' ? 'Estudiante' : user.role === 'profesor' ? 'Profesor' : user.role === 'admin' ? 'Admin' : 'Administrativo' }}
+                {{ user.displayRole === 'estudiante' ? 'Estudiante' : user.displayRole === 'profesor' ? 'Profesor' : user.displayRole === 'admin' ? 'Admin' : 'Administrativo' }}
               </span>
             </td>
             <td>
-              <span class="badge" [class.badge-success]="user.status === 'activo'" [class.badge-secondary]="user.status === 'inactivo'" [class.badge-error]="user.status === 'suspendido'">
-                {{ user.status === 'activo' ? 'Activo' : user.status === 'inactivo' ? 'Inactivo' : 'Suspendido' }}
+              <span class="badge" [class.badge-success]="user.displayStatus === 'activo'" [class.badge-secondary]="user.displayStatus === 'inactivo'" [class.badge-error]="user.displayStatus === 'suspendido'">
+                {{ user.displayStatus === 'activo' ? 'Activo' : user.displayStatus === 'inactivo' ? 'Inactivo' : 'Suspendido' }}
               </span>
             </td>
             <td>{{ user.lastLogin || 'Nunca' }}</td>
             <td>
               <div class="action-buttons">
-                <a [routerLink]="['/admin/usuarios', user.id, 'editar']" class="btn btn-sm btn-primary" title="Editar">
+                <button class="btn btn-sm btn-primary" title="Editar" (click)="navigateToEdit(user)">
                   <i class="fas fa-edit"></i>
-                </a>
+                </button>
                 <button class="btn btn-sm btn-secondary" title="Resetear Contraseña">
                   <i class="fas fa-key"></i>
                 </button>
-                <button class="btn btn-sm" [class.btn-error]="user.status === 'activo'" [class.btn-success]="user.status !== 'activo'" [title]="user.status === 'activo' ? 'Desactivar' : 'Activar'">
-                  <i [class]="user.status === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
+                <button class="btn btn-sm" [class.btn-error]="user.displayStatus === 'activo'" [class.btn-success]="user.displayStatus !== 'activo'" [title]="user.displayStatus === 'activo' ? 'Desactivar' : 'Activar'" (click)="toggleStatus(user)">
+                  <i [class]="user.displayStatus === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
                 </button>
               </div>
             </td>

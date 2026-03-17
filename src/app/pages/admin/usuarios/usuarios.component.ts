@@ -1,17 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'estudiante' | 'profesor' | 'admin' | 'administrativo';
-  status: 'activo' | 'inactivo' | 'suspendido';
-  createdAt: string;
-  lastLogin?: string;
-}
+import { RouterLink, Router } from '@angular/router';
+import { AdminService, UserItem } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -20,70 +11,96 @@ interface User {
   templateUrl: './usuarios.component.html',
   styleUrl: './usuarios.component.css'
 })
-export class UsuariosComponent {
-  activeTab = signal<'estudiantes' | 'profesores' | 'administrativos'>('estudiantes');
-  searchQuery = signal('');
-  filterStatus = signal<'todos' | 'activo' | 'inactivo' | 'suspendido'>('todos');
+export class UsuariosComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  filterRole = signal('');
+  currentPage = signal(1);
+  totalPages = signal(1);
+  total = signal(0);
 
-  estudiantes = signal<User[]>([
-    { id: '1', name: 'Juan Pérez', email: 'juan@colegio.edu', role: 'estudiante', status: 'activo', createdAt: '2024-01-15', lastLogin: '2024-03-20' },
-    { id: '2', name: 'María García', email: 'maria@colegio.edu', role: 'estudiante', status: 'activo', createdAt: '2024-01-16', lastLogin: '2024-03-20' },
-    { id: '3', name: 'Carlos López', email: 'carlos@colegio.edu', role: 'estudiante', status: 'inactivo', createdAt: '2024-01-17' }
-  ]);
+  users = signal<UserItem[]>([]);
+  activeTab = signal('todos');
 
-  profesores = signal<User[]>([
-    { id: '4', name: 'Prof. Ana Martínez', email: 'ana@colegio.edu', role: 'profesor', status: 'activo', createdAt: '2024-01-10', lastLogin: '2024-03-20' },
-    { id: '5', name: 'Prof. Luis Rodríguez', email: 'luis@colegio.edu', role: 'profesor', status: 'activo', createdAt: '2024-01-11', lastLogin: '2024-03-19' }
-  ]);
+  resetPasswordResult = signal<{ userId: string; tempPassword: string } | null>(null);
 
-  administrativos = signal<User[]>([
-    { id: '6', name: 'Admin Principal', email: 'admin@colegio.edu', role: 'admin', status: 'activo', createdAt: '2024-01-01', lastLogin: '2024-03-20' },
-    { id: '7', name: 'Secretaria General', email: 'secretaria@colegio.edu', role: 'administrativo', status: 'activo', createdAt: '2024-01-05', lastLogin: '2024-03-20' }
-  ]);
+  // Plain properties for [(ngModel)] compatibility
+  private _searchQuery = signal('');
+  get searchQuery(): string { return this._searchQuery(); }
+  set searchQuery(v: string) { this._searchQuery.set(v); }
 
-  currentUsers = signal<User[]>([]);
+  private _filterStatus = signal('');
+  get filterStatus(): string { return this._filterStatus(); }
+  set filterStatus(v: string) { this._filterStatus.set(v); }
 
-  constructor() {
-    this.updateCurrentUsers();
+  filteredUsers = computed(() => {
+    const q = this._searchQuery().toLowerCase();
+    if (!q) return this.users();
+    return this.users().filter(u =>
+      (u.name ?? `${u.firstName} ${u.lastName}`).toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
+    );
+  });
+
+  estudiantes = computed(() => this.users().filter(u => u.role?.name === 'STUDENT'));
+  profesores = computed(() => this.users().filter(u => u.role?.name === 'TEACHER'));
+  administrativos = computed(() => this.users().filter(u => u.role?.name === 'ADMIN'));
+  currentUsers = computed(() => this.filteredUsers());
+
+  private readonly roleTabMap: Record<string, string> = {
+    estudiantes: 'STUDENT', profesores: 'TEACHER', administrativos: 'ADMIN'
+  };
+  private readonly statusApiMap: Record<string, string> = {
+    activo: 'ACTIVE', inactivo: 'INACTIVE', suspendido: 'SUSPENDED'
+  };
+
+  constructor(private adminService: AdminService, private router: Router) {}
+
+  navigateToEdit(user: UserItem) {
+    this.router.navigate(['/admin/usuarios', user.id, 'editar'], { state: { user } });
   }
 
-  setTab(tab: 'estudiantes' | 'profesores' | 'administrativos') {
-    this.activeTab.set(tab);
-    this.updateCurrentUsers();
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    const statusFilter = this._filterStatus();
+    this.adminService.getUsers({
+      role: this.filterRole() || undefined,
+      status: this.statusApiMap[statusFilter] || undefined,
+      page: this.currentPage(),
+      pageSize: 20
+    }).subscribe({
+      next: ({ data, meta }) => {
+        this.users.set(data);
+        this.totalPages.set(meta.totalPages);
+        this.total.set(meta.total);
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar usuarios'); this.loading.set(false); }
+    });
   }
 
-  updateCurrentUsers() {
-    const tab = this.activeTab();
-    if (tab === 'estudiantes') {
-      this.currentUsers.set(this.estudiantes());
-    } else if (tab === 'profesores') {
-      this.currentUsers.set(this.profesores());
-    } else {
-      this.currentUsers.set(this.administrativos());
-    }
-    this.applyFilters();
+  onFilterChange() { this.currentPage.set(1); this.load(); }
+
+  toggleStatus(user: UserItem) {
+    const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    this.adminService.patchUserStatus(user.id, newStatus).subscribe({
+      next: () => this.load()
+    });
   }
 
-  onSearch() {
-    this.applyFilters();
+  resetPassword(userId: string) {
+    this.adminService.resetUserPassword(userId).subscribe({
+      next: (res) => this.resetPasswordResult.set({ userId, tempPassword: res.tempPassword })
+    });
   }
 
-  applyFilters() {
-    let users = this.currentUsers();
-    const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
-
-    if (query) {
-      users = users.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
-      );
-    }
-
-    if (status !== 'todos') {
-      users = users.filter(user => user.status === status);
-    }
-
-    this.currentUsers.set(users);
+  setTab(t: string) {
+    this.activeTab.set(t);
+    this.filterRole.set(this.roleTabMap[t] ?? '');
+    this.load();
   }
+  onSearch() { this.onFilterChange(); }
+  applyFilters() { this.onFilterChange(); }
 }

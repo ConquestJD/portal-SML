@@ -1,104 +1,75 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  type: 'institucional' | 'grado' | 'seccion';
-  priority: 'urgente' | 'importante' | 'normal';
-  date: string;
-  read: boolean;
-  attachments: number;
-}
+import { RouterLink } from '@angular/router';
+import { AnnouncementService, Announcement } from '../../services/announcement.service';
 
 @Component({
   selector: 'app-comunicados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './comunicados.component.html',
   styleUrl: './comunicados.component.css'
 })
-export class ComunicadosComponent {
-  filter = signal<'todos' | 'institucionales' | 'grado' | 'seccion' | 'urgentes'>('todos');
+export class ComunicadosComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  filterType = signal('');
+  filterPriority = signal('');
+  filterRead = signal('');
   searchQuery = signal('');
+  filter = signal('all');
+  currentPage = signal(1);
+  totalPages = signal(1);
 
-  constructor(private router: Router) {}
+  announcements = signal<Announcement[]>([]);
 
-  announcements = signal<Announcement[]>([
-    {
-      id: '1',
-      title: 'Reunión de Padres - Marzo 2024',
-      content: 'Se convoca a todos los padres de familia a la reunión del mes de marzo...',
-      type: 'institucional',
-      priority: 'importante',
-      date: '2024-03-10',
-      read: false,
-      attachments: 1
-    },
-    {
-      id: '2',
-      title: 'Actividades del Grado',
-      content: 'Información sobre las actividades programadas para este mes...',
-      type: 'grado',
-      priority: 'normal',
-      date: '2024-03-08',
-      read: true,
-      attachments: 0
-    }
-  ]);
+  filteredAnnouncements = computed(() => {
+    const f = this.filter();
+    if (!f || f === 'all') return this.announcements();
+    if (f === 'unread') return this.announcements().filter(a => !a.isRead);
+    return this.announcements().filter(a => a.type === f.toUpperCase() || a.priority === f.toUpperCase());
+  });
 
-  filteredAnnouncements = signal<Announcement[]>(this.announcements());
+  urgentCount = computed(() => this.announcements().filter(a => a.priority === 'HIGH' || a.priority === 'URGENT').length);
 
-  unreadCount = computed(() => 
-    this.announcements().filter(a => !a.read).length
-  );
+  constructor(private announcementService: AnnouncementService) {}
 
-  urgentCount = computed(() => 
-    this.announcements().filter(a => a.priority === 'urgente').length
-  );
+  ngOnInit() { this.load(); }
 
-  setFilter(filter: 'todos' | 'institucionales' | 'grado' | 'seccion' | 'urgentes') {
-    this.filter.set(filter);
-    this.applyFilters();
+  load() {
+    this.loading.set(true);
+    this.announcementService.getAnnouncements({
+      type: this.filterType() || undefined,
+      priority: this.filterPriority() || undefined,
+      read: this.filterRead() !== '' ? this.filterRead() === 'true' : undefined,
+      search: this.searchQuery() || undefined,
+      page: this.currentPage(),
+      pageSize: 20
+    }).subscribe({
+      next: ({ data, meta }) => {
+        this.announcements.set(data);
+        this.totalPages.set(meta.totalPages);
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar comunicados'); this.loading.set(false); }
+    });
   }
 
-  onSearch() {
-    this.applyFilters();
+  markAsRead(id: string, event: Event) {
+    event.stopPropagation();
+    this.announcementService.markAsRead(id).subscribe({
+      next: () => this.announcements.update(list =>
+        list.map(a => a.id === id ? { ...a, isRead: true } : a)
+      )
+    });
   }
 
-  applyFilters() {
-    let result = this.announcements();
+  onFilterChange() { this.currentPage.set(1); this.load(); }
+  onSearch() { this.onFilterChange(); }
+  setFilter(f: string) { this.filter.set(f); }
+  prevPage() { if (this.currentPage() > 1) { this.currentPage.update(p => p - 1); this.load(); } }
+  nextPage() { if (this.currentPage() < this.totalPages()) { this.currentPage.update(p => p + 1); this.load(); } }
 
-    if (this.filter() !== 'todos') {
-      if (this.filter() === 'urgentes') {
-        result = result.filter(a => a.priority === 'urgente');
-      } else {
-        result = result.filter(a => a.type === this.filter());
-      }
-    }
-
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      result = result.filter(a =>
-        a.title.toLowerCase().includes(query) ||
-        a.content.toLowerCase().includes(query)
-      );
-    }
-
-    this.filteredAnnouncements.set(result);
-  }
-
-  markAsRead(id: string) {
-    this.announcements.update(announcements =>
-      announcements.map(a => a.id === id ? { ...a, read: true } : a)
-    );
-    this.applyFilters();
-  }
-
-  viewDetail(id: string) {
-    this.router.navigate(['/comunicados', id]);
-  }
+  unreadCount(): number { return this.announcements().filter(a => !a.isRead).length; }
 }

@@ -1,423 +1,84 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
-interface Submission {
-  id: string;
-  studentId: string;
-  studentName: string;
-  studentCode: string;
-  submittedAt: string;
-  status: 'pendiente' | 'entregada' | 'calificada' | 'vencida';
-  text?: string;
-  files?: AttachmentFile[];
-  grade?: number;
-  feedback?: string;
-  rubricScores?: { criterionId: string; criterionName: string; points: number; maxPoints: number }[];
-}
-
-interface AttachmentFile {
-  id: string;
-  name: string;
-  size: string;
-  type: string;
-  url: string;
-}
-
-interface TaskDetail {
-  id: string;
-  title: string;
-  description: string;
-  instructions: string;
-  courseId: string;
-  courseName: string;
-  dueDate: string;
-  points: number;
-  deliveryType: 'archivo' | 'texto' | 'ambos' | 'en-clase';
-  rubric?: RubricCriterion[];
-}
-
-interface RubricCriterion {
-  id: string;
-  name: string;
-  description: string;
-  points: number;
-}
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { TeacherService, TeacherTask, TaskSubmission } from '../../../services/teacher.service';
 
 @Component({
   selector: 'app-revisar-tarea',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './revisar-tarea.component.html',
   styleUrl: './revisar-tarea.component.css'
 })
 export class RevisarTareaComponent implements OnInit {
-  courseId = signal<string | null>(null);
-  taskId = signal<string | null>(null);
-  task = signal<TaskDetail | null>(null);
-  submissions = signal<Submission[]>([]);
-  isLoading = signal(true);
-  
-  filterStatus = signal<'todas' | 'pendiente' | 'entregada' | 'calificada' | 'vencida'>('todas');
+  courseId = signal('');
+  taskId = signal('');
+  loading = signal(true);
+  error = signal('');
+  filterStatus = signal('');
   searchQuery = signal('');
-  selectedSubmission = signal<Submission | null>(null);
-  showGradingModal = signal(false);
-  
-  // Formulario de calificación
-  gradingGrade = signal<number | null>(null);
-  gradingFeedback = signal('');
-  gradingRubricScores = signal<{ [criterionId: string]: number }>({});
+  readonly isLoading = this.loading;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
+  task = signal<TeacherTask | null>(null);
+  submissions = signal<TaskSubmission[]>([]);
+  selectedSubmission = signal<TaskSubmission | null>(null);
+
+  gradeForm = signal({ score: 0, feedback: '' });
+  saving = signal(false);
+  showGradingModal = signal(false);
+
+  constructor(private route: ActivatedRoute, private teacherService: TeacherService) {}
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
-      this.courseId.set(params['courseId']);
-      this.taskId.set(params['taskId']);
-      this.loadTask();
-    });
+    this.courseId.set(this.route.snapshot.paramMap.get('courseId') ?? '');
+    this.taskId.set(this.route.snapshot.paramMap.get('taskId') ?? '');
+    this.loadTask();
+    this.loadSubmissions();
   }
 
   loadTask() {
-    this.isLoading.set(true);
-    // Simulación de carga de datos
-    setTimeout(() => {
-      // Simular diferentes tareas según el taskId
-      let mockTask: TaskDetail;
-      
-      if (this.taskId() === '1' || this.taskId() === 'tarea-con-rubrica') {
-        // Tarea con rúbrica
-        mockTask = {
-          id: this.taskId()!,
-          title: 'Proyecto de Matemática - Álgebra',
-          description: 'Este proyecto tiene como objetivo aplicar los conceptos de álgebra aprendidos en clase.',
-          instructions: 'Resuelve los problemas planteados y presenta tu trabajo de forma clara.',
-          courseId: this.courseId()!,
-          courseName: 'Matemática - 3ro A',
-          dueDate: '2024-03-25T23:59:00',
-          points: 20,
-          deliveryType: 'ambos',
-          rubric: [
-            { id: '1', name: 'Comprensión del Problema', description: 'Demuestra comprensión clara del problema', points: 5 },
-            { id: '2', name: 'Metodología', description: 'Aplica correctamente los métodos algebraicos', points: 7 },
-            { id: '3', name: 'Cálculos', description: 'Realiza los cálculos de forma correcta', points: 5 },
-            { id: '4', name: 'Presentación', description: 'Presenta el trabajo de forma clara y organizada', points: 3 }
-          ]
-        };
-      } else {
-        // Tarea sin rúbrica
-        mockTask = {
-          id: this.taskId()!,
-          title: 'Ensayo sobre Historia del Perú',
-          description: 'Escribe un ensayo sobre un período histórico del Perú.',
-          instructions: 'El ensayo debe tener mínimo 3 páginas y máximo 5 páginas. Incluye bibliografía.',
-          courseId: this.courseId()!,
-          courseName: 'Historia - 3ro A',
-          dueDate: '2024-03-30T23:59:00',
-          points: 20,
-          deliveryType: 'archivo',
-          rubric: undefined // Sin rúbrica
-        };
-      }
-
-      // Submissions según el tipo de tarea
-      let mockSubmissions: Submission[];
-      
-      if (this.taskId() === '1' || this.taskId() === 'tarea-con-rubrica') {
-        // Submissions para tarea con rúbrica
-        mockSubmissions = [
-          {
-            id: '1',
-            studentId: '1',
-            studentName: 'Juan Pérez',
-            studentCode: '2024001',
-            submittedAt: '2024-03-20T10:30:00',
-            status: 'entregada',
-            text: 'He completado todos los problemas según las instrucciones...',
-            files: [
-              { id: '1', name: 'solucion_problemas.pdf', size: '1.5 MB', type: 'PDF', url: '#' }
-            ]
-          },
-          {
-            id: '2',
-            studentId: '2',
-            studentName: 'María García',
-            studentCode: '2024002',
-            submittedAt: '2024-03-22T14:20:00',
-            status: 'calificada',
-            text: 'Presento mi trabajo completo...',
-            files: [
-              { id: '2', name: 'trabajo_algebra.pdf', size: '2.1 MB', type: 'PDF', url: '#' }
-            ],
-            grade: 18,
-            feedback: 'Excelente trabajo. Has demostrado un buen entendimiento de los conceptos.',
-            rubricScores: [
-              { criterionId: '1', criterionName: 'Comprensión del Problema', points: 5, maxPoints: 5 },
-              { criterionId: '2', criterionName: 'Metodología', points: 6, maxPoints: 7 },
-              { criterionId: '3', criterionName: 'Cálculos', points: 5, maxPoints: 5 },
-              { criterionId: '4', criterionName: 'Presentación', points: 2, maxPoints: 3 }
-            ]
-          },
-          {
-            id: '3',
-            studentId: '3',
-            studentName: 'Carlos López',
-            studentCode: '2024003',
-            submittedAt: '',
-            status: 'pendiente',
-          },
-          {
-            id: '4',
-            studentId: '4',
-            studentName: 'Ana Martínez',
-            studentCode: '2024004',
-            submittedAt: '2024-03-26T09:15:00',
-            status: 'vencida',
-            text: 'Entrega tardía...',
-            files: [
-              { id: '3', name: 'trabajo_tarde.pdf', size: '1.8 MB', type: 'PDF', url: '#' }
-            ]
-          }
-        ];
-      } else {
-        // Submissions para tarea sin rúbrica
-        mockSubmissions = [
-          {
-            id: '5',
-            studentId: '5',
-            studentName: 'Pedro Sánchez',
-            studentCode: '2024005',
-            submittedAt: '2024-03-28T11:45:00',
-            status: 'entregada',
-            text: 'He completado el ensayo sobre la independencia del Perú...',
-            files: [
-              { id: '4', name: 'ensayo_independencia.pdf', size: '2.3 MB', type: 'PDF', url: '#' }
-            ]
-          },
-          {
-            id: '6',
-            studentId: '6',
-            studentName: 'Laura Fernández',
-            studentCode: '2024006',
-            submittedAt: '2024-03-29T09:20:00',
-            status: 'calificada',
-            text: 'Ensayo sobre el período colonial...',
-            files: [
-              { id: '5', name: 'ensayo_colonial.pdf', size: '2.8 MB', type: 'PDF', url: '#' }
-            ],
-            grade: 17,
-            feedback: 'Buen trabajo. El ensayo está bien estructurado y argumentado. Podrías profundizar más en algunos aspectos.'
-          },
-          {
-            id: '7',
-            studentId: '7',
-            studentName: 'Roberto Torres',
-            studentCode: '2024007',
-            submittedAt: '2024-03-30T15:30:00',
-            status: 'entregada',
-            text: 'Ensayo sobre la república...',
-            files: [
-              { id: '6', name: 'ensayo_republica.pdf', size: '2.1 MB', type: 'PDF', url: '#' }
-            ]
-          }
-        ];
-      }
-
-      this.task.set(mockTask);
-      this.submissions.set(mockSubmissions);
-      this.isLoading.set(false);
-    }, 500);
+    this.teacherService.getTask(this.courseId(), this.taskId()).subscribe({
+      next: (data) => this.task.set(data)
+    });
   }
 
-  filteredSubmissions = computed(() => {
-    let result = this.submissions();
-    const filter = this.filterStatus();
-    const query = this.searchQuery().toLowerCase();
+  loadSubmissions() {
+    this.loading.set(true);
+    this.teacherService.getSubmissions(this.courseId(), this.taskId(), {
+      status: this.filterStatus() || undefined,
+      search: this.searchQuery() || undefined
+    }).subscribe({
+      next: (data) => { this.submissions.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar entregas'); this.loading.set(false); }
+    });
+  }
 
-    if (filter !== 'todas') {
-      result = result.filter(sub => sub.status === filter);
-    }
-
-    if (query) {
-      result = result.filter(sub =>
-        sub.studentName.toLowerCase().includes(query) ||
-        sub.studentCode.toLowerCase().includes(query)
-      );
-    }
-
-    return result;
-  });
-
-  pendingCount = computed(() => 
-    this.submissions().filter(s => s.status === 'entregada' || s.status === 'vencida').length
-  );
-
-  gradedCount = computed(() => 
-    this.submissions().filter(s => s.status === 'calificada').length
-  );
-
-  openGradingModal(submission: Submission) {
-    this.selectedSubmission.set(submission);
-    this.gradingFeedback.set(submission.feedback || '');
-    
-    // Inicializar puntajes de rúbrica
-    const rubricScores: { [criterionId: string]: number } = {};
-    if (submission.rubricScores) {
-      submission.rubricScores.forEach(score => {
-        rubricScores[score.criterionId] = score.points;
-      });
-    }
-    this.gradingRubricScores.set(rubricScores);
-    
-    // Si hay rúbrica, calcular la calificación automáticamente
-    const rubric = this.task()?.rubric;
-    if (rubric && rubric.length > 0) {
-      const rubricTotal = this.getRubricTotal();
-      this.gradingGrade.set(rubricTotal > 0 ? rubricTotal : (submission.grade || 0));
-    } else {
-      // Si no hay rúbrica, usar la calificación existente o null
-      this.gradingGrade.set(submission.grade || null);
-    }
-    
+  openGradeModal(sub: TaskSubmission) {
+    this.selectedSubmission.set(sub);
+    this.gradeForm.set({ score: sub.score ?? 0, feedback: sub.feedback ?? '' });
     this.showGradingModal.set(true);
   }
+  closeGradeModal() { this.selectedSubmission.set(null); this.showGradingModal.set(false); }
 
-  closeGradingModal() {
-    this.showGradingModal.set(false);
-    this.selectedSubmission.set(null);
-    this.gradingGrade.set(null);
-    this.gradingFeedback.set('');
-    this.gradingRubricScores.set({});
+  saveGrade() {
+    const sub = this.selectedSubmission();
+    if (!sub) return;
+    this.saving.set(true);
+    const { score, feedback } = this.gradeForm();
+    this.teacherService.gradeSubmission(this.courseId(), this.taskId(), sub.id, score, feedback).subscribe({
+      next: (updated) => {
+        this.submissions.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.selectedSubmission.set(null);
+        this.saving.set(false);
+      },
+      error: () => this.saving.set(false)
+    });
   }
 
-  updateRubricScore(criterionId: string, points: number) {
-    const maxPoints = this.task()?.rubric?.find(r => r.id === criterionId)?.points || 0;
-    const validPoints = Math.max(0, Math.min(points, maxPoints));
-    this.gradingRubricScores.update(scores => ({
-      ...scores,
-      [criterionId]: validPoints
-    }));
-    
-    // Si hay rúbrica, actualizar automáticamente la calificación final con la suma de la rúbrica
-    const rubric = this.task()?.rubric;
-    if (rubric && rubric.length > 0) {
-      const newTotal = this.getRubricTotal();
-      this.gradingGrade.set(newTotal);
-    }
+  getStudentName(sub: TaskSubmission): string {
+    return `${sub.student.user.firstName} ${sub.student.user.lastName}`;
   }
 
-  getRubricTotal(): number {
-    return Object.values(this.gradingRubricScores()).reduce((sum, points) => sum + points, 0);
-  }
-
-  getMaxGrade(): number {
-    // Si hay rúbrica, el máximo es el total de la rúbrica
-    const rubric = this.task()?.rubric;
-    if (rubric && rubric.length > 0) {
-      return this.task()!.points; // El total de puntos de la tarea (que debería ser igual a la suma de la rúbrica)
-    }
-    // Si no hay rúbrica, el máximo es 20
-    return 20;
-  }
-
-  updateGrade(value: number) {
-    let maxGrade = this.getMaxGrade();
-    
-    // Si hay rúbrica, el máximo no puede exceder el total de la rúbrica
-    const rubric = this.task()?.rubric;
-    if (rubric && rubric.length > 0) {
-      const rubricTotal = this.getRubricTotal();
-      maxGrade = Math.min(maxGrade, rubricTotal);
-    }
-    
-    const validGrade = Math.max(0, Math.min(value, maxGrade));
-    this.gradingGrade.set(validGrade);
-  }
-
-  canSaveGrading(): boolean {
-    const grade = this.gradingGrade();
-    if (grade === null || grade < 0) {
-      return false;
-    }
-    
-    const maxGrade = this.getMaxGrade();
-    if (grade > maxGrade) {
-      return false;
-    }
-
-    // Si hay rúbrica, verificar que la calificación no exceda el total de la rúbrica
-    const rubric = this.task()?.rubric;
-    if (rubric && rubric.length > 0) {
-      const rubricTotal = this.getRubricTotal();
-      if (grade > rubricTotal) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  saveGrading() {
-    if (!this.canSaveGrading()) {
-      return;
-    }
-    const submission = this.selectedSubmission();
-    if (!submission) return;
-
-    const rubricScores = this.task()?.rubric?.map(criterion => ({
-      criterionId: criterion.id,
-      criterionName: criterion.name,
-      points: this.gradingRubricScores()[criterion.id] || 0,
-      maxPoints: criterion.points
-    })) || [];
-
-    // Actualizar la entrega
-    this.submissions.update(subs =>
-      subs.map(sub =>
-        sub.id === submission.id
-          ? {
-              ...sub,
-              status: 'calificada',
-              grade: this.gradingGrade() || 0,
-              feedback: this.gradingFeedback(),
-              rubricScores: rubricScores
-            }
-          : sub
-      )
-    );
-
-    this.closeGradingModal();
-  }
-
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'calificada': return 'badge-success';
-      case 'entregada': return 'badge-info';
-      case 'vencida': return 'badge-warning';
-      case 'pendiente': return 'badge-secondary';
-      default: return 'badge-secondary';
-    }
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'calificada': return 'Calificada';
-      case 'entregada': return 'Entregada';
-      case 'vencida': return 'Vencida';
-      case 'pendiente': return 'Pendiente';
-      default: return status;
-    }
-  }
-
-  formatFileSize(size: string): string {
-    return size;
-  }
-
-  goBack() {
-    this.router.navigate(['/profesor/cursos', this.courseId()]);
-  }
+  updateGradeForm(field: string, value: unknown) { this.gradeForm.update(d => ({ ...d, [field]: value })); }
 }

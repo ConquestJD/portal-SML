@@ -1,144 +1,56 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
-
-interface Child {
-  id: string;
-  name: string;
-  grade: string;
-  section: string;
-  photo?: string;
-}
-
-interface AttendanceSummary {
-  present: number;
-  absent: number;
-  late: number;
-  percentage: number;
-  childId: string;
-}
-
-interface AttendanceRecord {
-  date: string;
-  status: 'presente' | 'ausente' | 'tardanza';
-  time: string;
-  observation: string;
-  childId: string;
-}
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { ParentService, Child } from '../../../services/parent.service';
 
 @Component({
   selector: 'app-asistencia-padre',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './asistencia-padre.component.html',
   styleUrl: './asistencia-padre.component.css'
 })
 export class AsistenciaPadreComponent implements OnInit {
-  selectedChildId = signal('1');
-  isLoading = signal(true);
-  
-  children = signal<Child[]>([
-    { 
-      id: '1', 
-      name: 'María Rodríguez', 
-      grade: '3ro', 
-      section: 'A',
-    },
-    { 
-      id: '2', 
-      name: 'Pedro Rodríguez', 
-      grade: '1ro', 
-      section: 'B',
-    }
-  ]);
-
-  allSummaries = signal<AttendanceSummary[]>([]);
-  allRecords = signal<AttendanceRecord[]>([]);
-
-  constructor(private route: ActivatedRoute) {}
-
-  ngOnInit() {
-    // Leer query params si existe childId
-    this.route.queryParams.subscribe(params => {
-      if (params['childId']) {
-        this.selectedChildId.set(params['childId']);
-      }
-    });
-
-    this.loadAttendance();
-  }
-
-  loadAttendance() {
-    this.isLoading.set(true);
-    
-    // Simular carga de asistencia
-    setTimeout(() => {
-      // Resumen y registros para María (3ro A)
-      const mariaSummary: AttendanceSummary = {
-        present: 45,
-        absent: 3,
-        late: 2,
-        percentage: 90,
-        childId: '1'
-      };
-
-      const mariaRecords: AttendanceRecord[] = [
-        { date: '2024-03-10', status: 'presente', time: '08:15', observation: '', childId: '1' },
-        { date: '2024-03-09', status: 'ausente', time: '-', observation: 'Falta justificada', childId: '1' },
-        { date: '2024-03-08', status: 'tardanza', time: '08:45', observation: 'Llegó tarde', childId: '1' },
-        { date: '2024-03-07', status: 'presente', time: '08:10', observation: '', childId: '1' },
-        { date: '2024-03-06', status: 'presente', time: '08:05', observation: '', childId: '1' },
-        { date: '2024-03-05', status: 'ausente', time: '-', observation: 'Falta por enfermedad', childId: '1' }
-      ];
-
-      // Resumen y registros para Pedro (1ro B)
-      const pedroSummary: AttendanceSummary = {
-        present: 48,
-        absent: 1,
-        late: 1,
-        percentage: 96,
-        childId: '2'
-      };
-
-      const pedroRecords: AttendanceRecord[] = [
-        { date: '2024-03-10', status: 'presente', time: '08:00', observation: '', childId: '2' },
-        { date: '2024-03-09', status: 'presente', time: '08:05', observation: '', childId: '2' },
-        { date: '2024-03-08', status: 'tardanza', time: '08:35', observation: 'Llegó tarde', childId: '2' },
-        { date: '2024-03-07', status: 'presente', time: '08:02', observation: '', childId: '2' },
-        { date: '2024-03-06', status: 'ausente', time: '-', observation: 'Falta justificada', childId: '2' }
-      ];
-
-      this.allSummaries.set([mariaSummary, pedroSummary]);
-      this.allRecords.set([...mariaRecords, ...pedroRecords]);
-      this.isLoading.set(false);
-    }, 500);
-  }
-
-  selectChild(childId: string) {
-    this.selectedChildId.set(childId);
-  }
-
-  selectedChild = computed(() => {
-    return this.children().find(c => c.id === this.selectedChildId());
-  });
+  loading = signal(true);
+  error = signal('');
+  selectedChildId = signal('');
+  children = signal<Child[]>([]);
+  attendanceData = signal<any>(null);
+  readonly isLoading = this.loading;
+  readonly selectedChild = this.selectedChildId;
 
   attendanceSummary = computed(() => {
-    const summary = this.allSummaries().find(s => s.childId === this.selectedChildId());
-    return summary || { present: 0, absent: 0, late: 0, percentage: 0, childId: this.selectedChildId() };
+    const d = this.attendanceData();
+    if (!d) return { present: 0, absent: 0, late: 0, total: 0, percentage: 0 };
+    const records: any[] = Array.isArray(d) ? d : (d.records ?? []);
+    const present = records.filter((r: any) => r.status === 'PRESENT').length;
+    const absent = records.filter((r: any) => r.status === 'ABSENT').length;
+    const late = records.filter((r: any) => r.status === 'LATE').length;
+    const total = records.length;
+    return { present, absent, late, total, percentage: total > 0 ? Math.round(present / total * 100) : 0 };
   });
 
-  attendanceRecords = computed(() => {
-    return this.allRecords()
-      .filter(r => r.childId === this.selectedChildId())
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  });
+  constructor(private parentService: ParentService) {}
 
-  requestJustification() {
-    const child = this.selectedChild();
-    console.log('Solicitar justificación para:', child?.name);
+  ngOnInit() {
+    this.parentService.getChildren().subscribe({
+      next: (data) => {
+        this.children.set(data);
+        if (data.length) { this.selectedChildId.set(data[0].id); this.loadAttendance(data[0].id); }
+        this.loading.set(false);
+      }
+    });
   }
 
-  getInitial(name: string): string {
-    return name.charAt(0).toUpperCase();
+  selectChild(id: string) { this.selectedChildId.set(id); this.loadAttendance(id); }
+
+  loadAttendance(childId: string) {
+    this.parentService.getChildAttendance(childId).subscribe({
+      next: (data) => this.attendanceData.set(data)
+    });
   }
+
+  getChildName(c: Child): string { return `${c.user.firstName} ${c.user.lastName}`; }
+  getData(): any { return this.attendanceData(); }
 }

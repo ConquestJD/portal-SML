@@ -1,28 +1,50 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { StudentService, StudentAttendance } from '../../services/student.service';
 
 @Component({
   selector: 'app-asistencia',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './asistencia.component.html',
   styleUrl: './asistencia.component.css'
 })
-export class AsistenciaComponent {
-  selectedMonth = signal('2024-03');
-  selectedCourse = signal('todos');
+export class AsistenciaComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  selectedMonth = signal('');
+  selectedCourse = signal('');
 
-  summary = signal({
-    attendancePercentage: 95,
-    daysAttended: 19,
-    absences: 1,
-    tardies: 0
-  });
+  attendanceRecords = signal<StudentAttendance[]>([]);
+  summary = signal<Record<string, number>>({});
 
-  attendanceRecords = signal([
-    { date: '2024-03-15', course: 'Matemática', status: 'presente', timeIn: '08:00', timeOut: '09:30' },
-    { date: '2024-03-16', course: 'Lengua', status: 'falta', timeIn: '-', timeOut: '-' },
-    { date: '2024-03-17', course: 'Ciencias', status: 'tardanza', timeIn: '08:15', timeOut: '10:00' }
-  ]);
+  constructor(private studentService: StudentService) {}
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.studentService.getAttendance({
+      month: this.selectedMonth() || undefined,
+      courseId: this.selectedCourse() || undefined
+    }).subscribe({
+      next: ({ records, summary }) => {
+        this.attendanceRecords.set(records);
+        this.summary.set(summary);
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar asistencia'); this.loading.set(false); }
+    });
+  }
+
+  getAttendancePercentage(): number {
+    const s = this.summary();
+    const total = (s['PRESENT'] ?? 0) + (s['ABSENT'] ?? 0) + (s['LATE'] ?? 0) + (s['JUSTIFIED'] ?? 0);
+    if (!total) return 0;
+    return Math.round(((s['PRESENT'] ?? 0) / total) * 100);
+  }
+
+  onFilterChange() { this.load(); }
 }

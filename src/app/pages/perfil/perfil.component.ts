@@ -1,43 +1,63 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { StudentService, StudentProfile } from '../../services/student.service';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css'
 })
-export class PerfilComponent {
-  activeTab = signal<'personal' | 'academico' | 'foto'>('personal');
+export class PerfilComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  profile = signal<StudentProfile | null>(null);
+  uploadSuccess = signal('');
+  activeTab = signal('info');
+  setTab(t: string) { this.activeTab.set(t); }
 
-  studentData = signal({
-    photo: 'https://via.placeholder.com/150',
-    fullName: 'Juan Pérez García',
-    code: 'EST-2024-001',
-    grade: '3ro',
-    section: 'A',
-    dni: '12345678',
-    birthDate: '15/05/2008',
-    age: 16,
-    address: 'Av. Principal 123',
-    phone: '+51 987654321',
-    email: 'juan.perez@colegio.edu',
-    tutor: 'María Pérez',
-    emergencyPhone: '+51 987654322'
+  studentData = computed(() => {
+    const p = this.profile();
+    const defaults: any = { photo: '', fullName: '', code: '', grade: '', section: '', user: { firstName: '', lastName: '', email: '', avatarUrl: '' }, studentCode: '', id: '', enrollments: [] as any[] };
+    if (!p) return defaults;
+    return {
+      ...p,
+      photo: p.user.avatarUrl ?? '',
+      fullName: `${p.user.firstName} ${p.user.lastName}`,
+      code: p.studentCode,
+      grade: (p.enrollments as any[])?.[0]?.section?.grade ?? '',
+      section: (p.enrollments as any[])?.[0]?.section?.name ?? ''
+    };
   });
 
-  academicData = signal({
-    academicYear: '2024',
-    grade: '3ro',
-    section: 'A',
-    shift: 'Mañana',
-    admissionDate: '01/03/2020',
-    historicalAverage: 16.2,
-    status: 'Regular'
-  });
+  constructor(private studentService: StudentService) {}
 
-  setTab(tab: 'personal' | 'academico' | 'foto') {
-    this.activeTab.set(tab);
+  ngOnInit() {
+    this.studentService.getProfile().subscribe({
+      next: (data) => { this.profile.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar perfil'); this.loading.set(false); }
+    });
+  }
+
+  onPhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.studentService.uploadPhoto(file).subscribe({
+      next: (data) => { this.profile.set(data); this.uploadSuccess.set('Foto actualizada'); }
+    });
+  }
+
+  getFullName(): string {
+    const p = this.profile();
+    if (!p) return '';
+    return `${p.user.firstName} ${p.user.lastName}`;
+  }
+
+  getCurrentEnrollment(): any {
+    return this.profile()?.enrollments?.[0];
   }
 }

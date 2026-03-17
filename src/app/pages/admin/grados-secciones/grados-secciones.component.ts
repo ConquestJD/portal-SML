@@ -1,9 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-// Component for grades and sections management
+import { AdminService, SectionItem, AcademicYearItem, CreateSectionDto } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-grados-secciones',
@@ -12,17 +11,61 @@ import { RouterLink } from '@angular/router';
   templateUrl: './grados-secciones.component.html',
   styleUrl: './grados-secciones.component.css'
 })
-export class GradosSeccionesComponent {
-  levels = signal([
-    { id: '1', name: 'Secundaria', grades: ['1ro', '2do', '3ro', '4to', '5to'] }
-  ]);
+export class GradosSeccionesComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  showForm = signal(false);
+  editId = signal('');
+  academicYears = signal<AcademicYearItem[]>([]);
+  sections = signal<SectionItem[]>([]);
 
-  sections = signal([
-    { id: '1', grade: '3ro', section: 'A', capacity: 30, enrolled: 28 },
-    { id: '2', grade: '3ro', section: 'B', capacity: 30, enrolled: 25 }
-  ]);
+  formData = signal<CreateSectionDto>({
+    name: '', grade: '', level: '', academicYearId: '', capacity: 30
+  });
 
-  createSection() {
-    console.log('Crear nueva sección');
+  levels = ['Inicial', 'Primaria', 'Secundaria'];
+  grades: Record<string, string[]> = {
+    Inicial: ['3 años', '4 años', '5 años'],
+    Primaria: ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'],
+    Secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria']
+  };
+
+  constructor(private adminService: AdminService) {}
+
+  ngOnInit() {
+    this.adminService.getAcademicYears().subscribe({ next: (data) => this.academicYears.set(data) });
+    this.load();
   }
+
+  load() {
+    this.loading.set(true);
+    this.adminService.getSections().subscribe({
+      next: ({ data }) => { this.sections.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar secciones'); this.loading.set(false); }
+    });
+  }
+
+  save() {
+    const obs = this.editId()
+      ? this.adminService.updateSection(this.editId(), this.formData())
+      : this.adminService.createSection(this.formData());
+    obs.subscribe({ next: () => { this.showForm.set(false); this.editId.set(''); this.load(); } });
+  }
+
+  editSection(s: SectionItem) {
+    this.editId.set(s.id);
+    this.formData.set({
+      name: s.name, grade: s.grade, level: s.level,
+      academicYearId: s.academicYear.id, capacity: s.capacity
+    });
+    this.showForm.set(true);
+  }
+
+  cancelForm() { this.showForm.set(false); this.editId.set(''); }
+
+  update(field: string, value: unknown) { this.formData.update(d => ({ ...d, [field]: value })); }
+
+  getGradesForLevel(): string[] { return this.grades[this.formData().level] ?? []; }
+
+  createSection() { this.showForm.set(true); this.editId.set(''); this.formData.set({ name: '', grade: '', level: '', academicYearId: '', capacity: 30 }); }
 }

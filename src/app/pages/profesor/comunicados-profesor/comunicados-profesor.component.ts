@@ -1,35 +1,48 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AnnouncementService, Announcement } from '../../../services/announcement.service';
 
 @Component({
   selector: 'app-comunicados-profesor',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './comunicados-profesor.component.html',
   styleUrl: './comunicados-profesor.component.css'
 })
-export class ComunicadosProfesorComponent {
-  filter = signal<'todos' | 'publicados' | 'borradores'>('todos');
+export class ComunicadosProfesorComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  searchQuery = signal('');
+  filterType = signal('');
+  filter = signal('all');
+  announcements = signal<Announcement[]>([]);
 
-  comunicados = signal([
-    {
-      id: '1',
-      title: 'Recordatorio: Examen Parcial',
-      course: 'Matemática - 3ro A',
-      courseId: '1',
-      date: '2024-03-18',
-      status: 'publicado',
-      urgent: true
-    },
-    {
-      id: '2',
-      title: 'Material de Estudio Disponible',
-      course: 'Matemática - 3ro B',
-      courseId: '2',
-      date: '2024-03-17',
-      status: 'publicado',
-      urgent: false
-    }
-  ]);
+  get comunicados() { return this.announcements; }
+
+  constructor(private announcementService: AnnouncementService) {}
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.announcementService.getAnnouncements({
+      search: this.searchQuery() || undefined,
+      type: this.filterType() || undefined,
+      page: 1,
+      pageSize: 20
+    }).subscribe({
+      next: ({ data }) => { this.announcements.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar comunicados'); this.loading.set(false); }
+    });
+  }
+
+  markAsRead(id: string) {
+    this.announcementService.markAsRead(id).subscribe({
+      next: () => this.announcements.update(list =>
+        list.map(a => a.id === id ? { ...a, isRead: true } : a)
+      )
+    });
+  }
 }

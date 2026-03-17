@@ -1,18 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-interface Student {
-  id: string;
-  name: string;
-  code: string;
-  email: string;
-  grade: string;
-  section: string;
-  status: 'activo' | 'retirado' | 'suspendido';
-  enrollmentDate: string;
-}
+import { AdminService, StudentItem } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-estudiantes',
@@ -21,64 +11,86 @@ interface Student {
   templateUrl: './estudiantes.component.html',
   styleUrl: './estudiantes.component.css'
 })
-export class EstudiantesComponent {
-  selectedGrade = signal<string>('');
-  searchQuery = signal('');
-  filterSection = signal('todos');
-  filterStatus = signal<'todos' | 'activo' | 'retirado' | 'suspendido'>('todos');
+export class EstudiantesComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  selectedGrade = signal('');
+  currentPage = signal(1);
+  totalPages = signal(1);
+  total = signal(0);
 
-  students = signal<Student[]>([
-    { id: '1', name: 'Juan Pérez', code: '2024001', email: 'juan@colegio.edu', grade: '3ro', section: 'A', status: 'activo', enrollmentDate: '2024-01-15' },
-    { id: '2', name: 'María García', code: '2024002', email: 'maria@colegio.edu', grade: '2do', section: 'B', status: 'activo', enrollmentDate: '2024-01-16' },
-    { id: '3', name: 'Carlos López', code: '2024003', email: 'carlos@colegio.edu', grade: '5to', section: 'C', status: 'activo', enrollmentDate: '2024-01-17' },
-    { id: '4', name: 'Ana Martínez', code: '2024004', email: 'ana@colegio.edu', grade: '4to', section: 'A', status: 'retirado', enrollmentDate: '2024-01-18' },
-    { id: '5', name: 'Pedro Ramírez', code: '2024005', email: 'pedro@colegio.edu', grade: '1ro', section: 'A', status: 'activo', enrollmentDate: '2024-02-01' },
-    { id: '6', name: 'Sofía Torres', code: '2024006', email: 'sofia@colegio.edu', grade: '6to', section: 'B', status: 'activo', enrollmentDate: '2024-02-05' },
-    { id: '7', name: 'Luis Fernández', code: '2024007', email: '', grade: '', section: '', status: 'activo', enrollmentDate: '2024-03-10' }
-  ]);
+  students = signal<StudentItem[]>([]);
 
+  // Getter/setter pairs so [(ngModel)] works with signals
+  private _searchQuery = signal('');
+  get searchQuery(): string { return this._searchQuery(); }
+  set searchQuery(v: string) { this._searchQuery.set(v); }
+
+  private _filterSection = signal('todos');
+  get filterSection(): string { return this._filterSection(); }
+  set filterSection(v: string) { this._filterSection.set(v); }
+
+  private _filterStatus = signal('');
+  get filterStatus(): string { return this._filterStatus(); }
+  set filterStatus(v: string) { this._filterStatus.set(v); }
+
+  // Grade cards: unique grades from enrollment data
   availableGrades = computed(() => {
-    const grades = new Set(this.students().map(s => s.grade).filter(g => g));
+    const grades = new Set(
+      this.students()
+        .map(s => s.grade ?? '')
+        .filter(g => !!g)
+    );
     return Array.from(grades).sort();
   });
 
   filteredStudents = computed(() => {
-    if (!this.selectedGrade()) {
-      return [];
-    }
+    let result = this.students().filter(s => !!s.grade); // only enrolled students
+    const grade = this.selectedGrade();
+    const section = this._filterSection();
+    const status = this._filterStatus();
+    const q = this._searchQuery().toLowerCase();
 
-    let result = this.students().filter(s => s.grade === this.selectedGrade());
-    const query = this.searchQuery().toLowerCase();
-    const section = this.filterSection();
-    const status = this.filterStatus();
-
-    if (query) {
+    if (grade) result = result.filter(s => s.grade === grade);
+    if (section !== 'todos') result = result.filter(s => s.section === section);
+    if (status && status !== 'todos') result = result.filter(s => s.status === status);
+    if (q) {
       result = result.filter(s =>
-        s.name.toLowerCase().includes(query) ||
-        s.code.toLowerCase().includes(query) ||
-        s.email.toLowerCase().includes(query)
+        (s.name ?? '').toLowerCase().includes(q) ||
+        (s.code ?? '').toLowerCase().includes(q) ||
+        (s.email ?? '').toLowerCase().includes(q)
       );
     }
-
-    if (section !== 'todos') {
-      result = result.filter(s => s.section === section);
-    }
-
-    if (status !== 'todos') {
-      result = result.filter(s => s.status === status);
-    }
-
     return result;
   });
 
-  selectGrade(grade: string) {
-    this.selectedGrade.set(grade);
+  constructor(private adminService: AdminService) {}
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    this.adminService.getStudents({
+      page: this.currentPage(),
+      pageSize: 200
+    }).subscribe({
+      next: ({ data, meta }) => {
+        this.students.set(data);
+        this.totalPages.set(meta.totalPages);
+        this.total.set(meta.total);
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar estudiantes'); this.loading.set(false); }
+    });
   }
 
+  selectGrade(grade: string) { this.selectedGrade.set(grade); }
+
   getStudentsCountByGrade(grade: string): number {
-    return this.students().filter(s => s.grade === grade && s.status === 'activo').length;
+    return this.students().filter(s => s.grade === grade).length;
   }
+
   importStudents() {
-    console.log('Importar estudiantes desde Excel/CSV');
+    alert('Importación masiva no disponible en esta versión');
   }
 }

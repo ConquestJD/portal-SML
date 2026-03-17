@@ -1,7 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { AdminService, UserItem } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-crear-usuario',
@@ -10,229 +11,203 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
   templateUrl: './crear-usuario.component.html',
   styleUrl: './crear-usuario.component.css'
 })
-export class CrearUsuarioComponent {
+export class CrearUsuarioComponent implements OnInit {
   isEditMode = signal(false);
   userId = signal('');
   isStudentMode = signal(false);
   isProfessorMode = signal(false);
   isParentMode = signal(false);
+  isLoading = signal(false);
+  error = signal('');
+  success = signal('');
+
+  readonly GRADES: Record<string, string[]> = {
+    inicial:    ['3 años', '4 años', '5 años'],
+    primaria:   ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'],
+    secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria']
+  };
+
+  pageTitle    = computed(() => this.isEditMode() ? 'Editar Usuario' : 'Crear Usuario');
+  pageSubtitle = computed(() => this.isEditMode() ? 'Modifica los datos' : 'Completa los datos del nuevo usuario');
+  requiresCredentials = computed(() => !this.isEditMode());
 
   formData = signal({
-    name: '',
-    email: '',
-    username: '',
-    password: '',
-    role: 'estudiante' as 'estudiante' | 'profesor' | 'admin' | 'administrativo' | 'padre',
-    status: 'activo' as 'activo' | 'inactivo' | 'suspendido',
-    level: '' as '' | 'secundaria' | 'primaria' | 'inicial',
-    grade: '',
-    dni: '',
-    phone: '',
-    emergencyPhone: '',
-    address: '',
-    // Campos específicos para profesores
-    department: '',
-    specialization: '',
-    degree: '',
-    university: ''
+    firstName: '', lastName: '', name: '',
+    email: '', password: '', phone: '', username: '',
+    role: 'STUDENT' as string, status: 'ACTIVE',
+    // Student fields
+    studentCode: '', birthDate: '', gender: '',
+    address: '', bloodType: '', medicalNotes: '',
+    level: '', grade: '',
+    dni: '', emergencyPhone: '',
+    // Teacher fields
+    teacherCode: '', specialty: '', specialization: '',
+    department: '', degree: '', university: '', bio: '',
+    // Parent fields
+    relationship: '', occupation: ''
   });
 
-  constructor(private route: ActivatedRoute) {
-    // Detectar si viene desde estudiantes, profesores o padres
+  availableGrades = computed(() => this.GRADES[this.formData().level] ?? []);
+
+  onLevelChange(level: string) { this.formData.update(d => ({ ...d, level, grade: '' })); }
+  onGradeChange(grade: string) { this.formData.update(d => ({ ...d, grade })); }
+
+  resetPassword() { alert('Función de reset de contraseña'); }
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private adminService: AdminService
+  ) {}
+
+  ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      if (params['tipo'] === 'estudiante' || this.route.snapshot.url.some(segment => segment.path === 'estudiantes')) {
-        this.isStudentMode.set(true);
-        this.formData.update(d => ({ ...d, role: 'estudiante', department: '', specialization: '', degree: '', university: '' }));
-      } else if (params['tipo'] === 'profesor' || this.route.snapshot.url.some(segment => segment.path === 'profesores')) {
-        this.isProfessorMode.set(true);
-        this.formData.update(d => ({ ...d, role: 'profesor', department: '', specialization: '', degree: '', university: '' }));
-      } else if (params['tipo'] === 'padre' || this.route.snapshot.url.some(segment => segment.path === 'padres')) {
-        this.isParentMode.set(true);
-        this.formData.update(d => ({ ...d, role: 'padre', department: '', specialization: '', degree: '', university: '' }));
-      }
+      const tipo = params['tipo'];
+      if (tipo === 'estudiante')   { this.isStudentMode.set(true);   this.formData.update(d => ({ ...d, role: 'STUDENT' })); }
+      else if (tipo === 'profesor') { this.isProfessorMode.set(true); this.formData.update(d => ({ ...d, role: 'TEACHER' })); }
+      else if (tipo === 'padre')    { this.isParentMode.set(true);    this.formData.update(d => ({ ...d, role: 'PARENT' })); }
     });
 
-    // Cargar datos si está en modo edición
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode.set(true);
         this.userId.set(params['id']);
-        this.loadStudentData(params['id']);
+        this.loadUserData(params['id']);
       }
     });
   }
 
-  loadStudentData(studentId: string) {
-    // Simular carga de datos del estudiante
-    // En producción, esto haría una llamada al API
-    setTimeout(() => {
-      // Datos mock de estudiantes - en producción vendría del API
-      const studentsData: Record<string, any> = {
-        '1': {
-          name: 'Juan Pérez',
-          email: 'juan@colegio.edu',
-          username: 'S123456',
-          password: '', // No se carga la contraseña por seguridad
-          role: 'estudiante',
-          status: 'activo',
-          level: 'secundaria',
-          grade: '3ro',
-          dni: '12345678',
-          phone: '+51 987654321',
-          emergencyPhone: '+51 987654322',
-          address: 'Av. Principal 123'
-        },
-        '2': {
-          name: 'María García',
-          email: 'maria@colegio.edu',
-          username: 'S234567',
-          password: '',
-          role: 'estudiante',
-          status: 'activo',
-          level: 'secundaria',
-          grade: '3ro',
-          dni: '23456789',
-          phone: '+51 987654323',
-          emergencyPhone: '+51 987654324',
-          address: 'Jr. Los Olivos 456'
-        },
-        '3': {
-          name: 'Carlos López',
-          email: 'carlos@colegio.edu',
-          username: 'P345678',
-          password: '',
-          role: 'estudiante',
-          status: 'activo',
-          level: 'primaria',
-          grade: '4to',
-          dni: '34567890',
-          phone: '+51 987654325',
-          emergencyPhone: '+51 987654326',
-          address: 'Calle Real 789'
-        },
-        '4': {
-          name: 'Ana Martínez',
-          email: 'ana@colegio.edu',
-          username: 'S456789',
-          password: '',
-          role: 'estudiante',
-          status: 'retirado',
-          level: 'secundaria',
-          grade: '4to',
-          dni: '45678901',
-          phone: '+51 987654327',
-          emergencyPhone: '+51 987654328',
-          address: 'Av. Libertad 321'
-        }
-      };
-
-      const studentData = studentsData[studentId];
-      if (studentData) {
-        // Si es estudiante, activar modo estudiante
+  loadUserData(id: string) {
+    const stateUser: UserItem | undefined = history.state?.user;
+    if (stateUser && stateUser.id === id) {
+      this.populateFormFromUser(stateUser);
+      const roleName = stateUser.role?.name;
+      if (roleName === 'STUDENT') {
         this.isStudentMode.set(true);
-        
-        // Cargar datos en el formulario
-        this.formData.set({
-          name: studentData.name || '',
-          email: studentData.email || '',
-          username: studentData.username || '',
-          password: '', // No se carga la contraseña
-          role: studentData.role || 'estudiante',
-          status: studentData.status || 'activo',
-          level: studentData.level || '',
-          grade: studentData.grade || '',
-          dni: studentData.dni || '',
-          phone: studentData.phone || '',
-          emergencyPhone: studentData.emergencyPhone || '',
-          address: studentData.address || '',
-          department: '',
-          specialization: '',
-          degree: '',
-          university: ''
+        this.adminService.getStudentById(id).subscribe({
+          next: (student) => {
+            this.formData.update(d => ({
+              ...d,
+              studentCode:  student.studentCode ?? student.code ?? '',
+              birthDate:    student.birthDate ?? '',
+              gender:       student.gender ?? '',
+              address:      student.address ?? '',
+              bloodType:    student.bloodType ?? '',
+              medicalNotes: student.medicalNotes ?? '',
+              grade:        student.grade ?? '',
+              level:        student.level ?? '',
+            }));
+          }
         });
+      } else if (roleName === 'TEACHER') {
+        this.isProfessorMode.set(true);
+      } else if (roleName === 'PARENT') {
+        this.isParentMode.set(true);
       }
-    }, 300);
+      return;
+    }
+    this.isLoading.set(false);
   }
 
-  generateUsername(): string {
-    const level = this.formData().level;
-    let prefix = 'U'; // Por defecto
-    
-    // Asignar prefijo según el nivel
-    if (level === 'secundaria') {
-      prefix = 'S';
-    } else if (level === 'primaria') {
-      prefix = 'P';
-    }
-    
-    // Generar username con patrón [Prefijo] + 6 dígitos aleatorios
-    const randomNum = Math.floor(100000 + Math.random() * 900000);
-    const username = `${prefix}${randomNum}`;
-    this.formData.update(d => ({ ...d, username }));
-    return username;
+  private populateFormFromUser(user: UserItem) {
+    this.formData.update(d => ({
+      ...d,
+      firstName: user.firstName ?? '',
+      lastName:  user.lastName ?? '',
+      name:      user.name ?? `${user.firstName} ${user.lastName}`,
+      email:     user.email ?? '',
+      phone:     user.phone ?? '',
+      status:    user.status ?? 'ACTIVE',
+    }));
   }
-
-  onLevelChange() {
-    const level = this.formData().level;
-    if (level === 'inicial') {
-      // Limpiar username y password para inicial
-      this.formData.update(d => ({ ...d, username: '', password: '', grade: '' }));
-    } else if (level && !this.isEditMode() && this.isStudentMode()) {
-      // Generar nuevo username si cambia el nivel y no es inicial
-      this.generateUsername();
-    }
-  }
-
-  onGradeChange() {
-    // Si cambia el grado, regenerar username si no es inicial
-    if (this.formData().level !== 'inicial' && !this.isEditMode()) {
-      this.generateUsername();
-    }
-  }
-
-  availableGrades = computed(() => {
-    const level = this.formData().level;
-    if (level === 'secundaria') {
-      return ['1ro', '2do', '3ro', '4to', '5to'];
-    } else if (level === 'primaria') {
-      return ['1ro', '2do', '3ro', '4to', '5to', '6to'];
-    } else if (level === 'inicial') {
-      return ['3 años', '4 años', '5 años'];
-    }
-    return [];
-  });
-
-  pageTitle = computed(() => {
-    if (this.isStudentMode()) {
-      return this.isEditMode() ? 'Editar Estudiante' : 'Nuevo Estudiante';
-    } else if (this.isProfessorMode()) {
-      return this.isEditMode() ? 'Editar Profesor' : 'Nuevo Profesor';
-    } else if (this.isParentMode()) {
-      return this.isEditMode() ? 'Editar Padre de Familia' : 'Nuevo Padre de Familia';
-    }
-    return this.isEditMode() ? 'Editar Usuario' : 'Nuevo Usuario';
-  });
-
-  pageSubtitle = computed(() => {
-    if (this.isStudentMode()) {
-      return this.isEditMode() ? 'Modifica la información del estudiante' : 'Registra un nuevo estudiante en el sistema';
-    } else if (this.isProfessorMode()) {
-      return this.isEditMode() ? 'Modifica la información del profesor' : 'Registra un nuevo profesor en el sistema';
-    } else if (this.isParentMode()) {
-      return this.isEditMode() ? 'Modifica la información del padre de familia' : 'Registra un nuevo padre de familia en el sistema';
-    }
-    return this.isEditMode() ? 'Modifica la información del usuario' : 'Registra un nuevo usuario en el sistema';
-  });
-
-  requiresCredentials = computed(() => {
-    return this.formData().level !== 'inicial';
-  });
 
   onSubmit() {
-    console.log('Guardar usuario', this.formData());
+    this.isLoading.set(true);
+    this.error.set('');
+    const d = this.formData();
+
+    if (this.isEditMode()) {
+      const dto: any = { firstName: d.firstName, lastName: d.lastName, phone: d.phone || undefined };
+      if (d.password) dto.password = d.password;
+      if (this.isStudentMode()) {
+        dto.grade = d.grade || undefined;
+        dto.level = d.level || undefined;
+      }
+      this.adminService.updateUser(this.userId(), dto).subscribe({
+        next: () => {
+          this.success.set('Usuario actualizado correctamente');
+          this.isLoading.set(false);
+          this.router.navigate(['/admin/usuarios']);
+        },
+        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al actualizar usuario'); this.isLoading.set(false); }
+      });
+      return;
+    }
+
+    if (this.isStudentMode()) {
+      const dto = {
+        email: d.email, password: d.password,
+        firstName: d.firstName, lastName: d.lastName,
+        phone: d.phone || undefined,
+        studentCode: d.studentCode || undefined,
+        birthDate:   d.birthDate   || undefined,
+        gender:      d.gender      || undefined,
+        address:     d.address     || undefined,
+        bloodType:   d.bloodType   || undefined,
+        medicalNotes: d.medicalNotes || undefined,
+        grade: d.grade || undefined,
+        level: d.level || undefined,
+      };
+      this.adminService.createStudent(dto).subscribe({
+        next: () => {
+          this.success.set('Estudiante creado correctamente');
+          this.isLoading.set(false);
+          this.router.navigate(['/admin/estudiantes']);
+        },
+        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear estudiante'); this.isLoading.set(false); }
+      });
+
+    } else if (this.isProfessorMode()) {
+      const dto = {
+        email: d.email, password: d.password,
+        firstName: d.firstName, lastName: d.lastName,
+        phone: d.phone || undefined,
+        teacherCode: d.teacherCode || undefined,
+        specialty:   d.specialty   || undefined,
+        bio:         d.bio         || undefined,
+      };
+      this.adminService.createTeacher(dto).subscribe({
+        next: () => { this.success.set('Profesor creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/profesores']); },
+        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear profesor'); this.isLoading.set(false); }
+      });
+
+    } else if (this.isParentMode()) {
+      const dto = {
+        email: d.email, password: d.password,
+        firstName: d.firstName, lastName: d.lastName,
+        phone: d.phone || undefined,
+        relationship: d.relationship || undefined,
+        occupation:   d.occupation   || undefined,
+      };
+      this.adminService.createParent(dto).subscribe({
+        next: () => { this.success.set('Apoderado creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/padres']); },
+        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear apoderado'); this.isLoading.set(false); }
+      });
+
+    } else {
+      const dto = {
+        email: d.email, password: d.password,
+        firstName: d.firstName, lastName: d.lastName,
+        phone: d.phone || undefined, role: d.role,
+      };
+      this.adminService.createUser(dto).subscribe({
+        next: () => { this.success.set('Usuario creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/usuarios']); },
+        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear usuario'); this.isLoading.set(false); }
+      });
+    }
   }
 
-  resetPassword() {
-    console.log('Resetear contraseña');
+  update(field: string, value: string) {
+    this.formData.update(d => ({ ...d, [field]: value }));
   }
 }

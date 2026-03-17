@@ -11,72 +11,75 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './login.component.css'
 })
 export class LoginComponent implements OnInit {
-  username = signal('');
-  password = signal('');
-  rememberMe = signal(false);
+  // Private backing signals — ngModel uses getter/setter pairs to update them correctly
+  private readonly _email = signal('');
+  private readonly _password = signal('' );
+  private readonly _rememberMe = signal(false);
+
+  // Getter/setter pairs so [(ngModel)] reads the value and calls .set() on write
+  get email(): string { return this._email(); }
+  set email(v: string) { this._email.set(v); }
+
+  get password(): string { return this._password(); }
+  set password(v: string) { this._password.set(v); }
+
+  get rememberMe(): boolean { return this._rememberMe(); }
+  set rememberMe(v: boolean) { this._rememberMe.set(v); }
+
+  // username is just an alias for email (template uses name="username")
+  get username(): string { return this._email(); }
+  set username(v: string) { this._email.set(v); }
+
   showPassword = signal(false);
   isLoading = signal(false);
   error = signal('');
 
-  // Field-level validation
-  usernameTouched = signal(false);
+  emailTouched = signal(false);
   passwordTouched = signal(false);
-
-  // Animation
   isVisible = signal(false);
 
   currentYear = new Date().getFullYear();
 
-  usernameError = computed(() => {
-    if (!this.usernameTouched()) return '';
-    if (!this.username().trim()) return 'El usuario o email es obligatorio';
-    if (this.username().includes('@') && !this.isValidEmail(this.username())) {
-      return 'Ingresa un email válido';
-    }
+  emailError = computed(() => {
+    if (!this.emailTouched()) return '';
+    if (!this._email().trim()) return 'El email es obligatorio';
+    if (!this.isValidEmail(this._email())) return 'Ingresa un email válido';
     return '';
   });
 
   passwordError = computed(() => {
     if (!this.passwordTouched()) return '';
-    if (!this.password()) return 'La contraseña es obligatoria';
-    if (this.password().length < 4) return 'Mínimo 4 caracteres';
+    if (!this._password()) return 'La contraseña es obligatoria';
+    if (this._password().length < 4) return 'Mínimo 4 caracteres';
     return '';
   });
 
-  isFormValid = computed(() => {
-    return this.username().trim().length > 0
-      && this.password().length >= 4
-      && !this.usernameError()
-      && !this.passwordError();
-  });
+  isFormValid = computed(() =>
+    this._email().trim().length > 0 &&
+    this._password().length >= 4 &&
+    !this.emailError() &&
+    !this.passwordError()
+  );
+
+  usernameError = this.emailError;
 
   constructor(private authService: AuthService) {}
 
   ngOnInit() {
-    // Trigger entrance animation
-    requestAnimationFrame(() => {
-      this.isVisible.set(true);
-    });
+    requestAnimationFrame(() => this.isVisible.set(true));
   }
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  togglePasswordVisibility() {
-    this.showPassword.update(v => !v);
-  }
-
-  onUsernameBlur() {
-    this.usernameTouched.set(true);
-  }
-
-  onPasswordBlur() {
-    this.passwordTouched.set(true);
-  }
+  togglePasswordVisibility() { this.showPassword.update(v => !v); }
+  onEmailBlur() { this.emailTouched.set(true); }
+  onPasswordBlur() { this.passwordTouched.set(true); }
+  onUsernameBlur() { this.onEmailBlur(); }
 
   onSubmit() {
-    this.usernameTouched.set(true);
+    this.emailTouched.set(true);
     this.passwordTouched.set(true);
 
     if (!this.isFormValid()) {
@@ -87,22 +90,25 @@ export class LoginComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
 
-    setTimeout(() => {
-      const result = this.authService.login(
-        this.username(),
-        this.password(),
-        this.rememberMe()
-      );
-
-      this.isLoading.set(false);
-
-      if (!result.success) {
-        this.error.set(result.message || 'Credenciales incorrectas. Intenta de nuevo.');
+    this.authService.login(this._email(), this._password(), this._rememberMe()).subscribe({
+      next: () => { this.isLoading.set(false); },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err?.error?.error?.message || 'Credenciales incorrectas. Intenta de nuevo.';
+        this.error.set(msg);
       }
-    }, 800);
+    });
   }
 
   forgotPassword() {
-    console.log('Forgot password clicked');
+    if (!this._email().trim()) {
+      this.error.set('Ingresa tu email para recuperar la contraseña');
+      this.emailTouched.set(true);
+      return;
+    }
+    this.authService.forgotPassword(this._email()).subscribe({
+      next: () => this.error.set(''),
+      error: () => {}
+    });
   }
 }

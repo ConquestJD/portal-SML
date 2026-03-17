@@ -1,19 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-interface Task {
-  id: string;
-  title: string;
-  course: string;
-  courseId: string;
-  dueDate: string;
-  submitted: number;
-  pending: number;
-  total: number;
-  status: 'borrador' | 'publicada' | 'cerrada';
-}
+import { TeacherService, TeacherCourse, TeacherTask } from '../../../services/teacher.service';
 
 @Component({
   selector: 'app-tareas-profesor',
@@ -22,76 +11,68 @@ interface Task {
   templateUrl: './tareas-profesor.component.html',
   styleUrl: './tareas-profesor.component.css'
 })
-export class TareasProfesorComponent {
-  filter = signal<'todas' | 'borrador' | 'publicada' | 'cerrada'>('todas');
+export class TareasProfesorComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  selectedCourse = signal('');
+  filterStatus = signal('');
   searchQuery = signal('');
-
-  tasks = signal<Task[]>([
-    {
-      id: '1',
-      title: 'Álgebra Lineal',
-      course: 'Matemática - 3ro A',
-      courseId: '1',
-      dueDate: '2024-03-25',
-      submitted: 25,
-      pending: 5,
-      total: 30,
-      status: 'publicada'
-    },
-    {
-      id: '2',
-      title: 'Geometría',
-      course: 'Matemática - 3ro B',
-      courseId: '2',
-      dueDate: '2024-03-28',
-      submitted: 20,
-      pending: 10,
-      total: 30,
-      status: 'publicada'
-    },
-    {
-      id: '3',
-      title: 'Cálculo Diferencial',
-      course: 'Matemática - 4to A',
-      courseId: '3',
-      dueDate: '2024-04-01',
-      submitted: 0,
-      pending: 32,
-      total: 32,
-      status: 'borrador'
-    }
-  ]);
+  filter = signal('all');
+  courses = signal<TeacherCourse[]>([]);
+  tasks = signal<TeacherTask[]>([]);
+  loadingTasks = signal(false);
 
   filteredTasks = computed(() => {
-    let result = this.tasks();
-    const filter = this.filter();
-    const query = this.searchQuery().toLowerCase();
-
-    if (filter !== 'todas') {
-      result = result.filter(task => task.status === filter);
-    }
-
-    if (query) {
-      result = result.filter(task =>
-        task.title.toLowerCase().includes(query) ||
-        task.course.toLowerCase().includes(query)
-      );
-    }
-
-    return result;
+    const f = this.filter();
+    if (!f || f === 'all') return this.tasks();
+    return this.tasks().filter(t => t.status === f.toUpperCase());
   });
 
-  pendingCount = computed(() => 
-    this.tasks().reduce((sum, task) => sum + task.pending, 0)
-  );
-
   totalTasks = computed(() => this.tasks().length);
+  pendingCount = computed(() => this.tasks().filter(t => t.status === 'DRAFT' || t.status === 'PENDING').length);
 
-  applyFilters() {
-    // Los filtros se aplican automáticamente mediante computed
+  constructor(private teacherService: TeacherService) {}
+
+  ngOnInit() {
+    this.teacherService.getCourses().subscribe({
+      next: (data) => {
+        this.courses.set(data);
+        this.loading.set(false);
+        if (data.length) {
+          this.selectedCourse.set(data[0].id);
+          this.loadTasks(data[0].id);
+        }
+      },
+      error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
+    });
   }
 
-  onSearch() {
-    // La búsqueda se aplica automáticamente mediante computed
+  onCourseChange(courseId: string) {
+    this.selectedCourse.set(courseId);
+    this.loadTasks(courseId);
   }
+
+  loadTasks(courseId: string) {
+    this.loadingTasks.set(true);
+    this.teacherService.getTasks(courseId, {
+      status: this.filterStatus() || undefined,
+      search: this.searchQuery() || undefined
+    }).subscribe({
+      next: (data) => { this.tasks.set(data); this.loadingTasks.set(false); },
+      error: () => this.loadingTasks.set(false)
+    });
+  }
+
+  deleteTask(taskId: string) {
+    if (!confirm('¿Eliminar tarea?')) return;
+    this.teacherService.deleteTask(this.selectedCourse(), taskId).subscribe({
+      next: () => this.loadTasks(this.selectedCourse())
+    });
+  }
+
+  getSelectedCourseName(): string {
+    return this.courses().find(c => c.id === this.selectedCourse())?.course.name ?? '';
+  }
+
+  onSearch() { if (this.selectedCourse()) this.loadTasks(this.selectedCourse()); }
 }

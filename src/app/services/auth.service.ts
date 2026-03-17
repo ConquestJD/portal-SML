@@ -1,164 +1,133 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Observable, tap, catchError, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export type UserRole = 'estudiante' | 'profesor' | 'admin' | 'padre';
 
-export interface User {
+export interface ApiUser {
   id: string;
-  username: string;
-  password: string;
-  name: string;
   email: string;
-  role: UserRole;
-  photo?: string;
+  firstName: string;
+  lastName: string;
+  role: { name: string; permissions?: { permission: { action: string } }[] };
+  status: string;
+  avatarUrl?: string | null;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  photo?: string | null;
+}
+
+interface LoginResponse {
+  success: boolean;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    user: ApiUser;
+  };
+}
+
+interface MeResponse {
+  success: boolean;
+  data: ApiUser;
+}
+
+function mapRole(apiRole: string): UserRole {
+  switch (apiRole.toUpperCase()) {
+    case 'STUDENT': return 'estudiante';
+    case 'TEACHER': return 'profesor';
+    case 'ADMIN':   return 'admin';
+    case 'PARENT':  return 'padre';
+    default:        return 'estudiante';
+  }
+}
+
+function mapApiUser(apiUser: ApiUser): User {
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    firstName: apiUser.firstName,
+    lastName: apiUser.lastName,
+    name: `${apiUser.firstName} ${apiUser.lastName}`,
+    role: mapRole(apiUser.role.name),
+    photo: apiUser.avatarUrl
+  };
+}
+
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  // Usuarios de ejemplo
-  private users: User[] = [
-    {
-      id: '1',
-      username: 'alumno',
-      password: 'alumno123',
-      name: 'Juan Pérez',
-      email: 'alumno@colegio.edu',
-      role: 'estudiante',
-    },
-    {
-      id: '2',
-      username: 'profesor',
-      password: 'profesor123',
-      name: 'Prof. María González',
-      email: 'profesor@colegio.edu',
-      role: 'profesor',
-    },
-    {
-      id: '3',
-      username: 'admin',
-      password: 'admin123',
-      name: 'Administrador',
-      email: 'admin@colegio.edu',
-      role: 'admin',
-    },
-    {
-      id: '4',
-      username: 'padre',
-      password: 'padre123',
-      name: 'Carlos Rodríguez',
-      email: 'padre@colegio.edu',
-      role: 'padre',
-    }
-  ];
+  private readonly baseUrl = environment.apiUrl;
 
   private currentUser = signal<User | null>(null);
   private isAuthenticated = signal(false);
 
-  // Computed signals
   user = computed(() => this.currentUser());
   authenticated = computed(() => this.isAuthenticated());
-  userRole = computed(() => this.currentUser()?.role || null);
+  userRole = computed(() => this.currentUser()?.role ?? null);
 
-  constructor(private router: Router) {
-    // Verificar si hay sesión guardada solo en el cliente
+  constructor(private http: HttpClient, private router: Router) {
     if (typeof window !== 'undefined') {
-      this.checkStoredSession();
+      this.restoreSession();
     }
   }
 
-  login(username: string, password: string, rememberMe: boolean = false): { success: boolean; message?: string } {
-    const user = this.users.find(
-      u => u.username === username && u.password === password
+  login(email: string, password: string, rememberMe = false): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
+      tap(res => {
+        const { accessToken, refreshToken, user } = res.data;
+        this.saveTokens(accessToken, refreshToken, rememberMe);
+        const mapped = mapApiUser(user);
+        this.currentUser.set(mapped);
+        this.isAuthenticated.set(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(mapped));
+        }
+        this.redirectByRole(mapped.role);
+      })
     );
-
-    if (!user) {
-      return {
-        success: false,
-        message: 'Usuario o contraseña incorrectos'
-      };
-    }
-
-    // Establecer usuario actual
-    this.currentUser.set(user);
-    this.isAuthenticated.set(true);
-
-    // Guardar sesión si se seleccionó "Recordarme" (solo en el cliente)
-    if (typeof window !== 'undefined') {
-      if (rememberMe) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-      } else {
-        sessionStorage.setItem('currentUser', JSON.stringify(user));
-      }
-    }
-
-    // Redirigir según el rol
-    this.redirectByRole(user.role);
-
-    return { success: true };
   }
 
   logout(): void {
-    this.currentUser.set(null);
-    this.isAuthenticated.set(false);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('currentUser');
-      sessionStorage.removeItem('currentUser');
+    const token = this.getAccessToken();
+    if (token) {
+      this.http.post(`${this.baseUrl}/auth/logout`, {}).subscribe({ error: () => {} });
     }
+    this.clearSession();
     this.router.navigate(['/login']);
   }
 
-  private redirectByRole(role: UserRole): void {
-    switch (role) {
-      case 'estudiante':
-        this.router.navigate(['/dashboard']);
-        break;
-      case 'profesor':
-        this.router.navigate(['/profesor/dashboard']);
-        break;
-      case 'admin':
-        this.router.navigate(['/admin/dashboard']);
-        break;
-      case 'padre':
-        this.router.navigate(['/padre/dashboard']);
-        break;
-      default:
-        this.router.navigate(['/login']);
-    }
-  }
-
-  private checkStoredSession(): void {
-    // Solo verificar en el cliente (no en SSR)
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    // Verificar localStorage primero (recordarme)
-    let storedUser = localStorage.getItem('currentUser');
-    
-    // Si no hay en localStorage, verificar sessionStorage
-    if (!storedUser) {
-      storedUser = sessionStorage.getItem('currentUser');
-    }
-
-    if (storedUser) {
-      try {
-        const user: User = JSON.parse(storedUser);
-        this.currentUser.set(user);
+  getMe(): Observable<MeResponse> {
+    return this.http.get<MeResponse>(`${this.baseUrl}/auth/me`).pipe(
+      tap(res => {
+        const mapped = mapApiUser(res.data);
+        this.currentUser.set(mapped);
         this.isAuthenticated.set(true);
-      } catch (error) {
-        console.error('Error al cargar sesión:', error);
-        this.clearStoredSession();
-      }
-    }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(mapped));
+        }
+      })
+    );
   }
 
-  private clearStoredSession(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('currentUser');
-      sessionStorage.removeItem('currentUser');
-    }
+  changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/auth/change-password`, { currentPassword, newPassword });
+  }
+
+  forgotPassword(email: string): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/auth/forgot-password`, { email });
+  }
+
+  getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
   }
 
   hasRole(role: UserRole): boolean {
@@ -167,5 +136,51 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return this.isAuthenticated();
+  }
+
+  private saveTokens(accessToken: string, refreshToken: string, rememberMe: boolean): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('rememberMe', String(rememberMe));
+    if (rememberMe) {
+      localStorage.setItem('accessToken', accessToken);
+    } else {
+      sessionStorage.setItem('accessToken', accessToken);
+    }
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+
+  private clearSession(): void {
+    this.currentUser.set(null);
+    this.isAuthenticated.set(false);
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('rememberMe');
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('accessToken');
+  }
+
+  private restoreSession(): void {
+    const stored = localStorage.getItem('currentUser');
+    const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
+    if (stored && token) {
+      try {
+        const user: User = JSON.parse(stored);
+        this.currentUser.set(user);
+        this.isAuthenticated.set(true);
+      } catch {
+        this.clearSession();
+      }
+    }
+  }
+
+  private redirectByRole(role: UserRole): void {
+    const map: Record<UserRole, string> = {
+      estudiante: '/dashboard',
+      profesor: '/profesor/dashboard',
+      admin: '/admin/dashboard',
+      padre: '/padre/dashboard'
+    };
+    this.router.navigate([map[role] ?? '/login']);
   }
 }

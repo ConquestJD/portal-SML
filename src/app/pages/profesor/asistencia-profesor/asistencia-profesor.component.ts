@@ -1,23 +1,56 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TeacherService, TeacherCourse } from '../../../services/teacher.service';
 
 @Component({
   selector: 'app-asistencia-profesor',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './asistencia-profesor.component.html',
   styleUrl: './asistencia-profesor.component.css'
 })
-export class AsistenciaProfesorComponent {
+export class AsistenciaProfesorComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
   selectedCourse = signal('');
-  selectedDate = signal(new Date().toISOString().split('T')[0]);
+  courses = signal<TeacherCourse[]>([]);
+  history = signal<unknown[]>([]);
+  loadingHistory = signal(false);
 
-  courses = signal([
-    { id: '1', name: 'Matemática - 3ro A', code: 'MAT-2024', pending: 3 },
-    { id: '2', name: 'Matemática - 3ro B', code: 'MAT-2024', pending: 2 },
-    { id: '3', name: 'Matemática - 4to A', code: 'MAT-2024', pending: 3 }
-  ]);
+  constructor(private teacherService: TeacherService) {}
 
-  totalPending = signal(8);
+  ngOnInit() {
+    this.teacherService.getCourses().subscribe({
+      next: (data) => {
+        this.courses.set(data);
+        this.loading.set(false);
+        if (data.length) {
+          this.selectedCourse.set(data[0].id);
+          this.loadHistory(data[0].id);
+        }
+      },
+      error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
+    });
+  }
+
+  onCourseChange(courseId: string) {
+    this.selectedCourse.set(courseId);
+    this.loadHistory(courseId);
+  }
+
+  loadHistory(courseId: string) {
+    this.loadingHistory.set(true);
+    this.teacherService.getAttendanceHistory(courseId).subscribe({
+      next: (data) => { this.history.set(data); this.loadingHistory.set(false); },
+      error: () => this.loadingHistory.set(false)
+    });
+  }
+
+  getSelectedCourseName(): string {
+    return this.courses().find(c => c.id === this.selectedCourse())?.course.name ?? '';
+  }
+
+  totalPending = computed(() => (this.history() as any[]).filter((r: any) => r.status === 'ABSENT').length);
 }

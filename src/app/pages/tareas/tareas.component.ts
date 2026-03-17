@@ -1,105 +1,53 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
-interface Task {
-  id: string;
-  name: string;
-  course: string;
-  courseCode: string;
-  dueDate: string;
-  status: 'pendiente' | 'entregada' | 'vencida' | 'en-revision';
-  points: number;
-  grade?: number;
-}
+import { RouterLink } from '@angular/router';
+import { StudentService, StudentTask } from '../../services/student.service';
 
 @Component({
   selector: 'app-tareas',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './tareas.component.html',
   styleUrl: './tareas.component.css'
 })
-export class TareasComponent {
-  filter = signal<'todas' | 'pendientes' | 'entregadas' | 'vencidas'>('todas');
+export class TareasComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  filterStatus = signal('');
   searchQuery = signal('');
+  filter = signal('all');
+  tasks = signal<StudentTask[]>([]);
 
-  tasks = signal<Task[]>([
-    {
-      id: '1',
-      name: 'Proyecto de Matemática - Álgebra',
-      course: 'Matemática',
-      courseCode: 'MAT-2024',
-      dueDate: '2024-03-25',
-      status: 'pendiente',
-      points: 50
-    },
-    {
-      id: '2',
-      name: 'Ensayo sobre Literatura',
-      course: 'Lengua y Literatura',
-      courseCode: 'LEN-2024',
-      dueDate: '2024-03-20',
-      status: 'vencida',
-      points: 30
-    },
-    {
-      id: '3',
-      name: 'Laboratorio de Ciencias',
-      course: 'Ciencias',
-      courseCode: 'CIE-2024',
-      dueDate: '2024-03-15',
-      status: 'entregada',
-      points: 40,
-      grade: 18
-    }
-  ]);
+  filteredTasks = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    const f = this.filter();
+    let list = this.tasks();
+    if (f && f !== 'all') list = list.filter(t => t.status === f.toUpperCase());
+    if (!q) return list;
+    return list.filter(t => t.title.toLowerCase().includes(q));
+  });
 
-  filteredTasks = signal<Task[]>(this.tasks());
+  pendingCount = computed(() => this.tasks().filter(t => t.status === 'PENDING').length);
+  overdueCount = computed(() => this.tasks().filter(t => t.status === 'OVERDUE').length);
+  completedCount = computed(() => this.tasks().filter(t => t.status === 'SUBMITTED' || t.status === 'GRADED').length);
 
-  pendingCount = computed(() => 
-    this.tasks().filter(t => t.status === 'pendiente').length
-  );
+  constructor(private studentService: StudentService) {}
 
-  overdueCount = computed(() => 
-    this.tasks().filter(t => t.status === 'vencida').length
-  );
+  ngOnInit() { this.load(); }
 
-  completedCount = computed(() => 
-    this.tasks().filter(t => t.status === 'entregada').length
-  );
-
-  setFilter(filter: 'todas' | 'pendientes' | 'entregadas' | 'vencidas') {
-    this.filter.set(filter);
-    this.applyFilters();
+  load() {
+    this.loading.set(true);
+    this.studentService.getTasks({
+      status: this.filterStatus() || undefined,
+      search: this.searchQuery() || undefined
+    }).subscribe({
+      next: (data) => { this.tasks.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar tareas'); this.loading.set(false); }
+    });
   }
 
-  onSearch() {
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    let result = this.tasks();
-
-    if (this.filter() !== 'todas') {
-      const statusMap: Record<'pendientes' | 'entregadas' | 'vencidas', 'pendiente' | 'entregada' | 'vencida'> = {
-        'pendientes': 'pendiente',
-        'entregadas': 'entregada',
-        'vencidas': 'vencida'
-      };
-      const status = statusMap[this.filter() as 'pendientes' | 'entregadas' | 'vencidas'];
-      result = result.filter(task => task.status === status);
-    }
-
-    const query = this.searchQuery().toLowerCase();
-    if (query) {
-      result = result.filter(task =>
-        task.name.toLowerCase().includes(query) ||
-        task.course.toLowerCase().includes(query)
-      );
-    }
-
-    this.filteredTasks.set(result);
-  }
+  onFilterChange() { this.load(); }
+  onSearch() { this.load(); }
+  setFilter(f: string) { this.filter.set(f); }
 }

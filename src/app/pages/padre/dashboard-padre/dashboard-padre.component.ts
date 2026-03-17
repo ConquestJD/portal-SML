@@ -1,24 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-
-interface Child {
-  id: string;
-  name: string;
-  grade: string;
-  section: string;
-  photo?: string;
-}
-
-interface Alert {
-  id: string;
-  type: 'tarea' | 'falta' | 'nota' | 'pago';
-  title: string;
-  message: string;
-  date: string;
-  childId: string;
-  urgent: boolean;
-}
+import { DashboardService, ParentDashboard } from '../../../services/dashboard.service';
+import { ParentService, Child } from '../../../services/parent.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard-padre',
@@ -27,40 +12,65 @@ interface Alert {
   templateUrl: './dashboard-padre.component.html',
   styleUrl: './dashboard-padre.component.css'
 })
-export class DashboardPadreComponent {
-  selectedChild = signal<string>('1');
-  
-  children = signal<Child[]>([
-    { id: '1', name: 'María Rodríguez', grade: '3ro', section: 'A' },
-    { id: '2', name: 'Pedro Rodríguez', grade: '1ro', section: 'B' }
-  ]);
+export class DashboardPadreComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  selectedChildId = signal('');
 
-  alerts = signal<Alert[]>([
-    { id: '1', type: 'tarea', title: 'Tarea vencida', message: 'Matemática - Tarea pendiente desde hace 2 días', date: '2024-03-08', childId: '1', urgent: true },
-    { id: '2', type: 'falta', title: 'Falta registrada', message: 'María tuvo una falta el día de hoy', date: '2024-03-10', childId: '1', urgent: false },
-    { id: '3', type: 'nota', title: 'Nota baja', message: 'Pedro obtuvo una nota baja en Lengua', date: '2024-03-09', childId: '2', urgent: false }
-  ]);
+  children = signal<Child[]>([]);
+  dashboardData = signal<ParentDashboard | null>(null);
 
-  // KPIs del hijo seleccionado
-  todayAttendance = signal({ present: true, time: '08:15' });
-  weekAttendance = signal({ present: 4, total: 5, percentage: 80 });
-  pendingTasks = signal(3);
-  upcomingEvaluations = signal(2);
-  recentComunicados = signal(3);
+  pendingTasks = signal(0);
+  recentComunicados = signal(0);
+  todayAttendance = signal<{ present: boolean; time?: string; status?: string }>({ present: true });
+  upcomingEvaluations = signal<any[]>([]);
+  urgentAlerts = signal<any[]>([]);
+  weekAttendance = signal<{ present: number; total: number; percentage: number }>({ present: 0, total: 0, percentage: 0 });
 
-  selectedChildData = computed(() => {
-    return this.children().find(c => c.id === this.selectedChild());
-  });
+  selectedChildData = computed(() =>
+    this.children().find(c => c.id === this.selectedChildId())
+  );
 
-  filteredAlerts = computed(() => {
-    return this.alerts().filter(a => a.childId === this.selectedChild());
-  });
+  constructor(
+    private dashboardService: DashboardService,
+    private parentService: ParentService,
+    private authService: AuthService
+  ) {}
 
-  urgentAlerts = computed(() => {
-    return this.filteredAlerts().filter(a => a.urgent);
-  });
+  ngOnInit() {
+    this.parentService.getChildren().subscribe({
+      next: (children) => {
+        this.children.set(children);
+        if (children.length) {
+          this.selectedChildId.set(children[0].id);
+          this.loadDashboard(children[0].id);
+        }
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar hijos'); this.loading.set(false); }
+    });
+  }
 
   selectChild(childId: string) {
-    this.selectedChild.set(childId);
+    this.selectedChildId.set(childId);
+    this.loadDashboard(childId);
+  }
+
+  loadDashboard(childId: string) {
+    this.dashboardService.getParentDashboard(childId).subscribe({
+      next: (data) => {
+        this.dashboardData.set(data);
+        this.pendingTasks.set(data.summary.pendingTasks);
+        this.recentComunicados.set(data.summary.recentComunicados);
+      }
+    });
+  }
+
+  getChildName(child: Child): string {
+    return `${child.user.firstName} ${child.user.lastName}`;
+  }
+
+  getChildGrade(child: Child): string {
+    return child.enrollments?.[0]?.section?.grade ?? '';
   }
 }

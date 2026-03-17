@@ -1,26 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-interface Child {
-  id: string;
-  name: string;
-  grade: string;
-}
-
-interface Parent {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  dni: string;
-  address: string;
-  status: 'activo' | 'inactivo';
-  children: number;
-  relationship: string[];
-  childrenList: Child[];
-}
+import { AdminService, ParentItem } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-padres-admin',
@@ -29,147 +11,82 @@ interface Parent {
   templateUrl: './padres-admin.component.html',
   styleUrl: './padres-admin.component.css'
 })
-export class PadresAdminComponent {
-  selectedGrade = signal<string>('');
-  searchQuery = signal('');
-  filterStatus = signal<'todos' | 'activo' | 'inactivo'>('todos');
+export class PadresAdminComponent implements OnInit {
+  loading = signal(true);
+  error = signal('');
+  currentPage = signal(1);
+  totalPages = signal(1);
+  total = signal(0);
+  selectedGrade = signal('');
 
-  padres = signal<Parent[]>([
-    {
-      id: '1',
-      name: 'María González',
-      email: 'maria.gonzalez@email.com',
-      phone: '+51 987654321',
-      dni: '12345678',
-      address: 'Av. Principal 123, Lima',
-      status: 'activo',
-      children: 2,
-      relationship: ['Madre', 'Madre'],
-      childrenList: [
-        { id: '1', name: 'Juan González', grade: '3ro' },
-        { id: '2', name: 'Ana González', grade: '5to' }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Carlos Rodríguez',
-      email: 'carlos.rodriguez@email.com',
-      phone: '+51 987654322',
-      dni: '23456789',
-      address: 'Jr. Los Olivos 456, San Isidro',
-      status: 'activo',
-      children: 1,
-      relationship: ['Padre'],
-      childrenList: [
-        { id: '3', name: 'Pedro Rodríguez', grade: '3ro' }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Ana Martínez',
-      email: 'ana.martinez@email.com',
-      phone: '+51 987654323',
-      dni: '34567890',
-      address: 'Av. Libertad 789, Miraflores',
-      status: 'activo',
-      children: 3,
-      relationship: ['Madre', 'Madre', 'Madre'],
-      childrenList: [
-        { id: '4', name: 'Luis Martínez', grade: '4to' },
-        { id: '5', name: 'Carmen Martínez', grade: '2do' },
-        { id: '6', name: 'Sofía Martínez', grade: '1ro' }
-      ]
-    },
-    {
-      id: '4',
-      name: 'Luis Fernández',
-      email: 'luis.fernandez@email.com',
-      phone: '+51 987654324',
-      dni: '45678901',
-      address: 'Calle Real 321, Surco',
-      status: 'activo',
-      children: 1,
-      relationship: ['Padre'],
-      childrenList: [
-        { id: '7', name: 'Diego Fernández', grade: '4to' }
-      ]
-    },
-    {
-      id: '5',
-      name: 'Patricia López',
-      email: 'patricia.lopez@email.com',
-      phone: '+51 987654325',
-      dni: '56789012',
-      address: 'Av. Brasil 654, La Molina',
-      status: 'inactivo',
-      children: 2,
-      relationship: ['Madre', 'Madre'],
-      childrenList: [
-        { id: '8', name: 'María López', grade: '2do' },
-        { id: '9', name: 'José López', grade: '5to' }
-      ]
-    }
+  padres = signal<ParentItem[]>([]);
+
+  // Getter/setter pairs so [(ngModel)] works with signals
+  private _searchQuery = signal('');
+  get searchQuery(): string { return this._searchQuery(); }
+  set searchQuery(v: string) { this._searchQuery.set(v); }
+
+  private _filterStatus = signal('');
+  get filterStatus(): string { return this._filterStatus(); }
+  set filterStatus(v: string) { this._filterStatus.set(v); }
+
+  // Static school grade list (used to group parents by child's grade)
+  availableGrades = signal([
+    '1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+    '1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria'
   ]);
 
-  availableGrades = computed(() => {
-    const grades = new Set<string>();
-    this.padres().forEach(padre => {
-      padre.childrenList.forEach(child => {
-        grades.add(child.grade);
-      });
-    });
-    return Array.from(grades).sort();
-  });
-
   filteredPadres = computed(() => {
-    if (!this.selectedGrade()) {
-      return [];
-    }
-    
-    let result = this.padres().filter(p => {
-      // Filtrar padres que tienen al menos un hijo en el grado seleccionado
-      return p.childrenList.some(child => child.grade === this.selectedGrade());
-    });
-
-    // Aplicar filtros de búsqueda y estado
-    const query = this.searchQuery().toLowerCase();
-    const status = this.filterStatus();
-
-    if (query) {
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        p.email.toLowerCase().includes(query) ||
-        p.dni.includes(query) ||
-        p.phone.includes(query)
+    let list = this.padres();
+    const q = this._searchQuery().toLowerCase();
+    if (q) {
+      list = list.filter(p =>
+        (p.name ?? `${p.user.firstName} ${p.user.lastName}`).toLowerCase().includes(q) ||
+        (p.email ?? p.user.email).toLowerCase().includes(q) ||
+        (p.phone ?? p.user.phone ?? '').toLowerCase().includes(q)
       );
     }
-    if (status !== 'todos') {
-      result = result.filter(p => p.status === status);
-    }
-
-    return result;
+    return list;
   });
 
-  selectGrade(grade: string) {
-    this.selectedGrade.set(grade);
+  constructor(private adminService: AdminService) {}
+
+  ngOnInit() { this.load(); }
+
+  load() {
+    this.loading.set(true);
+    const statusMap: Record<string, string> = { activo: 'ACTIVE', inactivo: 'INACTIVE' };
+    this.adminService.getParents({
+      status: statusMap[this._filterStatus()] || undefined,
+      page: this.currentPage(),
+      pageSize: 100
+    }).subscribe({
+      next: ({ data, meta }) => {
+        this.padres.set(data);
+        this.totalPages.set(meta.totalPages);
+        this.total.set(meta.total);
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('Error al cargar padres'); this.loading.set(false); }
+    });
   }
 
+  selectGrade(grade: string) { this.selectedGrade.set(grade); }
+
   getParentsCountByGrade(grade: string): number {
-    return this.padres().filter(p => 
-      p.status === 'activo' && 
-      p.childrenList.some(child => child.grade === grade)
+    return this.padres().filter(p =>
+      (p.childrenList ?? []).some((c: any) => c.grade === grade)
     ).length;
   }
 
-  getRelationshipLabel(relationships: string[]): string {
-    if (relationships.length === 0) return 'Sin relación';
-    if (relationships.length === 1) return relationships[0];
-    const unique = [...new Set(relationships)];
-    if (unique.length === 1) return unique[0];
-    return `${unique.join(' / ')}`;
+  getChildrenInGrade(padre: ParentItem, grade: string): { id: string; name: string; grade: string }[] {
+    return (padre.childrenList ?? []).filter((c: any) => c.grade === grade);
   }
 
-  getChildrenInGrade(parent: Parent, grade: string): Child[] {
-    return parent.childrenList.filter(child => child.grade === grade);
+  getRelationshipLabel(rel: string | undefined): string {
+    const map: Record<string, string> = { Padre: 'Padre', Madre: 'Madre', Tutor: 'Tutor', Abuelo: 'Abuelo', Abuela: 'Abuela', Tío: 'Tío', Tía: 'Tía' };
+    return rel ? (map[rel] ?? rel) : '-';
   }
+
+  getFullName(p: ParentItem): string { return p.name ?? `${p.user.firstName} ${p.user.lastName}`; }
 }

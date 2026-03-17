@@ -1,76 +1,117 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { MensajeriaCursoComponent } from '../../mensajeria-curso/mensajeria-curso.component';
+import { TeacherService, TeacherCourse, TeacherTask, GradeEntry, Material } from '../../../services/teacher.service';
+
+type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'mensajes' | 'comunicados' | 'foros';
 
 @Component({
   selector: 'app-curso-detalle-profesor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MensajeriaCursoComponent],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './curso-detalle-profesor.component.html',
   styleUrl: './curso-detalle-profesor.component.css'
 })
-export class CursoDetalleProfesorComponent {
+export class CursoDetalleProfesorComponent implements OnInit {
   courseId = signal('');
-  activeTab = signal<'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados' | 'mensajes'>('estudiantes');
+  activeTab = signal<TabType>('estudiantes');
   searchQuery = signal('');
+  loading = signal(true);
+  error = signal('');
 
-  course = signal({
-    id: '1',
-    code: 'MAT-2024',
-    name: 'Matemática',
-    grade: '3ro',
-    section: 'A',
-    students: 30,
-    schedule: 'Lunes y Miércoles 8:00 - 10:00'
+  course = signal<TeacherCourse | null>(null);
+  students = signal<unknown[]>([]);
+  tasks = signal<TeacherTask[]>([]);
+  grades = signal<GradeEntry[]>([]);
+  attendance = signal<unknown[]>([]);
+  materials = signal<Material[]>([]);
+
+  filteredStudents = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    const list = this.students() as any[];
+    if (!q) return list;
+    return list.filter((s: any) =>
+      `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.toLowerCase().includes(q) ||
+      (s.studentCode ?? '').toLowerCase().includes(q)
+    );
   });
 
-  students = signal([
-    { id: '1', name: 'Juan Pérez', code: '2024001', average: 16.5, status: 'active', email: 'juan@colegio.edu', tutor: 'María Pérez' },
-    { id: '2', name: 'María García', code: '2024002', average: 18.0, status: 'active', email: 'maria@colegio.edu', tutor: 'Carlos García' },
-    { id: '3', name: 'Carlos López', code: '2024003', average: 15.2, status: 'active', email: 'carlos@colegio.edu', tutor: 'Ana López' }
-  ]);
+  constructor(private route: ActivatedRoute, private teacherService: TeacherService) {}
 
-  filteredStudents = signal(this.students());
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.courseId.set(id);
+    this.loadCourse();
+    this.loadStudents();
+  }
 
-  tasks = signal([
-    { id: '1', title: 'Álgebra Lineal', dueDate: '2024-03-25', submitted: 25, pending: 5, status: 'active' },
-    { id: '2', title: 'Geometría', dueDate: '2024-03-28', submitted: 20, pending: 10, status: 'active' }
-  ]);
-
-  constructor(private route: ActivatedRoute) {
-    this.route.params.subscribe(params => {
-      this.courseId.set(params['id']);
-    });
-    
-    // Leer query params para activar tab específico
-    this.route.queryParams.subscribe(params => {
-      if (params['tab']) {
-        const tab = params['tab'] as 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados' | 'mensajes';
-        if (['estudiantes', 'tareas', 'notas', 'asistencia', 'material', 'comunicados', 'mensajes'].includes(tab)) {
-          this.activeTab.set(tab);
-        }
-      }
+  loadCourse() {
+    this.teacherService.getCourse(this.courseId()).subscribe({
+      next: (data) => { this.course.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Error al cargar el curso'); this.loading.set(false); }
     });
   }
 
-  setTab(tab: 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados' | 'mensajes') {
+  loadStudents() {
+    this.teacherService.getStudentsInCourse(this.courseId()).subscribe({
+      next: (data) => this.students.set(data)
+    });
+  }
+
+  selectTab(tab: TabType) {
     this.activeTab.set(tab);
+    switch (tab) {
+      case 'tareas': this.loadTasks(); break;
+      case 'notas': this.loadGrades(); break;
+      case 'asistencia': this.loadAttendance(); break;
+      case 'material': this.loadMaterials(); break;
+    }
   }
 
-  onSearchStudents() {
-    const query = this.searchQuery().toLowerCase();
-    if (!query) {
-      this.filteredStudents.set(this.students());
-      return;
-    }
-    this.filteredStudents.set(
-      this.students().filter(student =>
-        student.name.toLowerCase().includes(query) ||
-        student.code.toLowerCase().includes(query) ||
-        student.email.toLowerCase().includes(query)
-      )
-    );
+  loadTasks() {
+    this.teacherService.getTasks(this.courseId()).subscribe({
+      next: (data) => this.tasks.set(data)
+    });
   }
+
+  loadGrades() {
+    this.teacherService.getGrades(this.courseId()).subscribe({
+      next: (data) => this.grades.set(data)
+    });
+  }
+
+  loadAttendance() {
+    this.teacherService.getAttendanceHistory(this.courseId()).subscribe({
+      next: (data) => this.attendance.set(data)
+    });
+  }
+
+  loadMaterials() {
+    this.teacherService.getMaterials(this.courseId()).subscribe({
+      next: (data) => this.materials.set(data)
+    });
+  }
+
+  deleteTask(taskId: string) {
+    if (!confirm('¿Eliminar tarea?')) return;
+    this.teacherService.deleteTask(this.courseId(), taskId).subscribe({
+      next: () => this.loadTasks()
+    });
+  }
+
+  deleteMaterial(materialId: string) {
+    if (!confirm('¿Eliminar material?')) return;
+    this.teacherService.deleteMaterial(this.courseId(), materialId).subscribe({
+      next: () => this.loadMaterials()
+    });
+  }
+
+  getCourseName(): string { return this.course()?.course.name ?? ''; }
+  getGradeSection(): string {
+    const c = this.course();
+    return c ? `${c.section.grade} - Sección ${c.section.name}` : '';
+  }
+
+  setTab(tab: TabType) { this.selectTab(tab); }
 }
