@@ -150,13 +150,14 @@ export class CrearUsuarioComponent implements OnInit {
         firstName: d.firstName, lastName: d.lastName,
         phone: d.phone || undefined,
         studentCode: d.studentCode || undefined,
-        birthDate:   d.birthDate   || undefined,
-        gender:      d.gender      || undefined,
-        address:     d.address     || undefined,
-        bloodType:   d.bloodType   || undefined,
-        medicalNotes: d.medicalNotes || undefined,
+        birthDate:    d.birthDate    || undefined,
+        gender:       d.gender       || undefined,
+        address:      d.address      || undefined,
+        bloodType:    d.bloodType    || undefined,
+        medicalNotes: d.medicalNotes  || undefined,
+        dni:          d.dni          || undefined,
         grade: d.grade || undefined,
-        level: d.level || undefined,
+        level: d.level ? (d.level.charAt(0).toUpperCase() + d.level.slice(1)) : undefined,
       };
       this.adminService.createStudent(dto).subscribe({
         next: () => {

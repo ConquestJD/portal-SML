@@ -44,7 +44,7 @@ export interface StudentItem {
 export interface CreateStudentDto {
   email: string; password: string; firstName: string; lastName: string;
   phone?: string; studentCode?: string; birthDate?: string; gender?: string;
-  address?: string; bloodType?: string; medicalNotes?: string;
+  address?: string; bloodType?: string; medicalNotes?: string; dni?: string;
   grade?: string; level?: string;
 }
 
