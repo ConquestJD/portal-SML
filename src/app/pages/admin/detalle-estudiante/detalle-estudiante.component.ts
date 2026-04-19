@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AdminService, StudentItem } from '../../../services/admin.service';
+import { AdminService, StudentPaymentItem, RegisterStudentPaymentDto } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-detalle-estudiante',
@@ -23,6 +23,21 @@ export class DetalleEstudianteComponent implements OnInit {
   attendance = signal<unknown[]>([]);
   parents = signal<unknown[]>([]);
   documents = signal<unknown[]>([]);
+  studentPayments = signal<StudentPaymentItem[]>([]);
+  paymentsLoading = signal(false);
+  paymentError = signal('');
+  paymentSuccess = signal('');
+  paymentForm = signal({
+    concept: '',
+    amount: '',
+    dueDate: '',
+    paidAt: '',
+    paymentMethod: '',
+    reference: '',
+    notes: '',
+    status: 'PAID',
+    category: 'matricula'
+  });
 
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
@@ -47,6 +62,7 @@ export class DetalleEstudianteComponent implements OnInit {
       case 'asistencia': this.loadAttendance(); break;
       case 'padres': this.loadParents(); break;
       case 'documentos': this.loadDocuments(); break;
+      case 'matricula': this.loadStudentPayments(); break;
     }
   }
 
@@ -77,6 +93,22 @@ export class DetalleEstudianteComponent implements OnInit {
   loadDocuments() {
     this.adminService.getStudentDocuments(this.studentId).subscribe({
       next: (data) => this.documents.set(data)
+    });
+  }
+
+  loadStudentPayments() {
+    this.paymentError.set('');
+    this.paymentsLoading.set(true);
+    this.adminService.getStudentPayments(this.studentId).subscribe({
+      next: (data) => {
+        this.studentPayments.set(data);
+        this.paymentsLoading.set(false);
+      },
+      error: () => {
+        this.paymentError.set('No se pudieron cargar los pagos del estudiante');
+        this.studentPayments.set([]);
+        this.paymentsLoading.set(false);
+      }
     });
   }
 
@@ -137,6 +169,114 @@ export class DetalleEstudianteComponent implements OnInit {
     if (size < 1024) return `${size} B`;
     if (size < 1048576) return `${(size / 1024).toFixed(1)} KB`;
     return `${(size / 1048576).toFixed(1)} MB`;
+  }
+
+  updatePaymentField(field: string, value: string) {
+    this.paymentForm.update(d => ({ ...d, [field]: value }));
+  }
+
+  registerPayment() {
+    this.paymentError.set('');
+    this.paymentSuccess.set('');
+    const f = this.paymentForm();
+    const amount = Number(f.amount);
+    if (!f.concept.trim()) {
+      this.paymentError.set('El concepto del pago es obligatorio');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.paymentError.set('El monto debe ser mayor a 0');
+      return;
+    }
+
+    const dto: RegisterStudentPaymentDto = {
+      concept: f.concept.trim(),
+      amount,
+      dueDate: f.dueDate || undefined,
+      paidAt: f.paidAt || undefined,
+      paymentMethod: f.paymentMethod || undefined,
+      reference: f.reference || undefined,
+      notes: f.notes || undefined,
+      status: f.status || undefined,
+      category: f.category || undefined
+    };
+
+    this.paymentsLoading.set(true);
+    this.adminService.registerStudentPayment(this.studentId, dto).subscribe({
+      next: () => {
+        this.paymentSuccess.set('Pago registrado correctamente');
+        this.paymentForm.set({
+          concept: '',
+          amount: '',
+          dueDate: '',
+          paidAt: '',
+          paymentMethod: '',
+          reference: '',
+          notes: '',
+          status: 'PAID',
+          category: 'matricula'
+        });
+        this.loadStudentPayments();
+      },
+      error: (err) => {
+        if (err?.status === 404) {
+          this.paymentError.set('El backend aún no tiene habilitado el registro directo de pagos para estudiantes.');
+        } else {
+          this.paymentError.set(err?.error?.error?.message ?? 'No se pudo registrar el pago');
+        }
+        this.paymentsLoading.set(false);
+      }
+    });
+  }
+
+  get totalPaidAmount(): number {
+    return this.studentPayments()
+      .filter(p => p.status === 'PAID')
+      .reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  }
+
+  get totalPendingAmount(): number {
+    return this.studentPayments()
+      .filter(p => p.status === 'PENDING' || p.status === 'OVERDUE')
+      .reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  }
+
+  get paidCount(): number {
+    return this.studentPayments().filter(p => p.status === 'PAID').length;
+  }
+
+  get pendingCount(): number {
+    return this.studentPayments().filter(p => p.status === 'PENDING' || p.status === 'OVERDUE').length;
+  }
+
+  getEnrollmentStatusLabel(status: string | undefined): string {
+    const map: Record<string, string> = {
+      ACTIVE: 'Matriculado',
+      WITHDRAWN: 'Retirado',
+      TRANSFERRED: 'Trasladado',
+      COMPLETED: 'Completado'
+    };
+    return map[status ?? ''] ?? (status || 'Sin matrícula');
+  }
+
+  getPaymentStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      PAID: 'badge-success',
+      PENDING: 'badge-warning',
+      OVERDUE: 'badge-error',
+      CANCELLED: 'badge-secondary'
+    };
+    return map[status] ?? 'badge-secondary';
+  }
+
+  getPaymentStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      PAID: 'Pagado',
+      PENDING: 'Pendiente',
+      OVERDUE: 'Vencido',
+      CANCELLED: 'Cancelado'
+    };
+    return map[status] ?? status;
   }
 
   // Modal de subir documento

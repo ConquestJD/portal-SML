@@ -35,6 +35,9 @@
     <button class="tab-btn" [class.active]="activeTab() === 'padres'" (click)="setTab('padres')">
       <i class="fas fa-users"></i> Padres de Familia
     </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'matricula'" (click)="setTab('matricula')">
+      <i class="fas fa-file-invoice-dollar"></i> Matrícula y Pagos
+    </button>
     <button class="tab-btn" [class.active]="activeTab() === 'documentos'" (click)="setTab('documentos')">
       <i class="fas fa-file"></i> Documentos
     </button>
@@ -302,6 +305,137 @@
               <p>No hay padres de familia vinculados</p>
               <p class="empty-hint">Haz clic en "Asignar Padre de Familia" para vincular uno</p>
             </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'matricula') {
+      <div class="content-section">
+        <div class="enrollment-summary">
+          <div class="summary-card">
+            <h4>Estado de Matrícula</h4>
+            <p class="summary-primary">{{ getEnrollmentStatusLabel(getCurrentEnrollment()?.status) }}</p>
+            <p class="summary-secondary">Año: {{ getCurrentEnrollment()?.academicYear?.name || 'No asignado' }}</p>
+            <p class="summary-secondary">Sección: {{ getCurrentEnrollment()?.section?.grade || '—' }} {{ getCurrentEnrollment()?.section?.name || '' }}</p>
+          </div>
+          <div class="summary-card">
+            <h4>Total Pagado</h4>
+            <p class="summary-primary">S/ {{ totalPaidAmount | number:'1.2-2' }}</p>
+            <p class="summary-secondary">{{ paidCount }} pago(s)</p>
+          </div>
+          <div class="summary-card">
+            <h4>Total Pendiente</h4>
+            <p class="summary-primary">S/ {{ totalPendingAmount | number:'1.2-2' }}</p>
+            <p class="summary-secondary">{{ pendingCount }} pago(s)</p>
+          </div>
+        </div>
+
+        <div class="payment-register-card">
+          <h3>Registrar Pago</h3>
+          @if (paymentSuccess()) {
+            <div class="alert alert-success">{{ paymentSuccess() }}</div>
+          }
+          @if (paymentError()) {
+            <div class="alert alert-error">{{ paymentError() }}</div>
+          }
+          <div class="payment-form-grid">
+            <div class="form-group">
+              <label class="form-label">Concepto *</label>
+              <input class="form-input" type="text" [ngModel]="paymentForm().concept" (ngModelChange)="updatePaymentField('concept', $event)" name="paymentConcept">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monto (S/) *</label>
+              <input class="form-input" type="number" min="0" step="0.01" [ngModel]="paymentForm().amount" (ngModelChange)="updatePaymentField('amount', $event)" name="paymentAmount">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select class="form-input" [ngModel]="paymentForm().status" (ngModelChange)="updatePaymentField('status', $event)" name="paymentStatus">
+                <option value="PAID">Pagado</option>
+                <option value="PENDING">Pendiente</option>
+                <option value="OVERDUE">Vencido</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoría</label>
+              <select class="form-input" [ngModel]="paymentForm().category" (ngModelChange)="updatePaymentField('category', $event)" name="paymentCategory">
+                <option value="matricula">Matrícula</option>
+                <option value="pension">Pensión</option>
+                <option value="materiales">Materiales</option>
+                <option value="actividades">Actividades</option>
+                <option value="otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de Vencimiento</label>
+              <input class="form-input" type="date" [ngModel]="paymentForm().dueDate" (ngModelChange)="updatePaymentField('dueDate', $event)" name="paymentDueDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de Pago</label>
+              <input class="form-input" type="date" [ngModel]="paymentForm().paidAt" (ngModelChange)="updatePaymentField('paidAt', $event)" name="paymentPaidAt">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Método de Pago</label>
+              <input class="form-input" type="text" [ngModel]="paymentForm().paymentMethod" (ngModelChange)="updatePaymentField('paymentMethod', $event)" name="paymentMethod" placeholder="Transferencia, Yape, Efectivo...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Referencia</label>
+              <input class="form-input" type="text" [ngModel]="paymentForm().reference" (ngModelChange)="updatePaymentField('reference', $event)" name="paymentReference" placeholder="N° operación, recibo, voucher...">
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label">Observaciones</label>
+              <textarea class="form-input" rows="2" [ngModel]="paymentForm().notes" (ngModelChange)="updatePaymentField('notes', $event)" name="paymentNotes"></textarea>
+            </div>
+          </div>
+          <div class="payment-actions">
+            <button class="btn btn-primary" (click)="registerPayment()" [disabled]="paymentsLoading()">
+              <i class="fas fa-save"></i> Registrar Pago
+            </button>
+          </div>
+        </div>
+
+        <div class="payment-history-card">
+          <h3>Historial de Pagos</h3>
+          @if (paymentsLoading()) {
+            <div class="empty-state">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Cargando pagos...</p>
+            </div>
+          } @else if (studentPayments().length === 0) {
+            <div class="empty-state">
+              <i class="fas fa-receipt"></i>
+              <p>No hay pagos registrados para este estudiante</p>
+            </div>
+          } @else {
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Vence</th>
+                  <th>Pagado</th>
+                  <th>Método</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of studentPayments(); track payment.id) {
+                  <tr>
+                    <td>{{ payment.concept }}</td>
+                    <td><strong>S/ {{ payment.amount | number:'1.2-2' }}</strong></td>
+                    <td>
+                      <span class="badge" [ngClass]="getPaymentStatusClass(payment.status)">
+                        {{ getPaymentStatusLabel(payment.status) }}
+                      </span>
+                    </td>
+                    <td>{{ payment.dueDate ? (payment.dueDate | date:'shortDate') : '—' }}</td>
+                    <td>{{ payment.paidAt ? (payment.paidAt | date:'shortDate') : '—' }}</td>
+                    <td>{{ payment.paymentMethod || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
         </div>
       </div>
