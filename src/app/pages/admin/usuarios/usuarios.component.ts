@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { AdminService, UserItem } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ...ADMIN_SHARED],
   templateUrl: './usuarios.component.html',
   styleUrl: './usuarios.component.css'
 })
@@ -44,11 +45,12 @@ export class UsuariosComponent implements OnInit {
 
   estudiantes = computed(() => this.users().filter(u => u.role?.name === 'STUDENT'));
   profesores = computed(() => this.users().filter(u => u.role?.name === 'TEACHER'));
+  padres = computed(() => this.users().filter(u => u.role?.name === 'PARENT'));
   administrativos = computed(() => this.users().filter(u => u.role?.name === 'ADMIN'));
   currentUsers = computed(() => this.filteredUsers());
 
   private readonly roleTabMap: Record<string, string> = {
-    estudiantes: 'STUDENT', profesores: 'TEACHER', administrativos: 'ADMIN'
+    estudiantes: 'STUDENT', profesores: 'TEACHER', padres: 'PARENT', administrativos: 'ADMIN'
   };
   private readonly statusApiMap: Record<string, string> = {
     activo: 'ACTIVE', inactivo: 'INACTIVE', suspendido: 'SUSPENDED'

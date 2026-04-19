@@ -12,32 +12,17 @@
   </div>
 
   <!-- Tabs -->
-  <div class="tabs">
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'estudiantes'"
-      (click)="setTab('estudiantes')"
-    >
-      <i class="fas fa-user-graduate"></i> Estudiantes
-      <span class="badge">{{ estudiantes().length }}</span>
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'profesores'"
-      (click)="setTab('profesores')"
-    >
-      <i class="fas fa-chalkboard-teacher"></i> Profesores
-      <span class="badge">{{ profesores().length }}</span>
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'administrativos'"
-      (click)="setTab('administrativos')"
-    >
-      <i class="fas fa-user-shield"></i> Administrativos
-      <span class="badge">{{ administrativos().length }}</span>
-    </button>
-  </div>
+  <admin-tabs
+    [tabs]="[
+      { id: 'todos',           label: 'Todos',           icon: 'fa-users',             badge: users().length },
+      { id: 'estudiantes',     label: 'Estudiantes',     icon: 'fa-user-graduate',     badge: estudiantes().length },
+      { id: 'profesores',      label: 'Profesores',      icon: 'fa-chalkboard-teacher', badge: profesores().length },
+      { id: 'padres',          label: 'Padres',          icon: 'fa-users',             badge: padres().length },
+      { id: 'administrativos', label: 'Administrativos', icon: 'fa-user-shield',       badge: administrativos().length }
+    ]"
+    [activeTab]="activeTab()"
+    (activeTabChange)="setTab($event)">
+  </admin-tabs>
 
   <!-- Filtros y Búsqueda -->
   <div class="filters-section">
@@ -86,14 +71,10 @@
             </td>
             <td>{{ user.email }}</td>
             <td>
-              <span class="badge badge-info">
-                {{ user.displayRole === 'estudiante' ? 'Estudiante' : user.displayRole === 'profesor' ? 'Profesor' : user.displayRole === 'admin' ? 'Admin' : 'Administrativo' }}
-              </span>
+              <span class="badge badge-info">{{ user.role?.name | roleLabel }}</span>
             </td>
             <td>
-              <span class="badge" [class.badge-success]="user.displayStatus === 'activo'" [class.badge-secondary]="user.displayStatus === 'inactivo'" [class.badge-error]="user.displayStatus === 'suspendido'">
-                {{ user.displayStatus === 'activo' ? 'Activo' : user.displayStatus === 'inactivo' ? 'Inactivo' : 'Suspendido' }}
-              </span>
+              <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
             </td>
             <td>{{ user.lastLogin || 'Nunca' }}</td>
             <td>
@@ -101,7 +82,7 @@
                 <button class="btn btn-sm btn-primary" title="Editar" (click)="navigateToEdit(user)">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-secondary" title="Resetear Contraseña">
+                <button class="btn btn-sm btn-secondary" title="Resetear Contraseña" (click)="resetPassword(user.id)">
                   <i class="fas fa-key"></i>
                 </button>
                 <button class="btn btn-sm" [class.btn-error]="user.displayStatus === 'activo'" [class.btn-success]="user.displayStatus !== 'activo'" [title]="user.displayStatus === 'activo' ? 'Desactivar' : 'Activar'" (click)="toggleStatus(user)">
@@ -115,11 +96,9 @@
     </table>
 
     @if (currentUsers().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-users empty-icon"></i>
-        <h2>No se encontraron usuarios</h2>
-        <p>Intenta ajustar los filtros de búsqueda.</p>
-      </div>
+      <admin-empty-state icon="fa-users" title="No se encontraron usuarios"
+        message="Intenta ajustar los filtros de búsqueda.">
+      </admin-empty-state>
     }
   </div>
 </div>
