@@ -3,11 +3,13 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, TeacherItem } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
+import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
 @Component({
   selector: 'app-detalle-profesor',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, FormsModule],
+  imports: [CommonModule, RouterLink, DatePipe, FormsModule, ...ADMIN_SHARED],
   templateUrl: './detalle-profesor.component.html',
   styleUrl: './detalle-profesor.component.css'
 })
@@ -17,9 +19,26 @@ export class DetalleProfesorComponent implements OnInit {
   activeTab = signal('perfil');
   teacherId = '';
 
+  readonly tabs: AdminTab[] = [
+    { id: 'perfil',    label: 'Perfil',              icon: 'fa-user' },
+    { id: 'cursos',    label: 'Cursos activos',      icon: 'fa-book' },
+    { id: 'historial', label: 'Historial de cursos', icon: 'fa-history' },
+  ];
+
   teacher = signal<TeacherItem | null>(null);
   activeCourses = signal<unknown[]>([]);
   courseHistory = signal<unknown[]>([]);
+
+  resetPassword() {
+    if (!this.teacherId) return;
+    this.adminService.resetUserPassword(this.teacherId).subscribe({
+      next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
+      error: () => alert('No se pudo resetear la contraseña'),
+    });
+  }
+
+  readonly finishedCourses = computed(() => this.courseHistory() as any[]);
+  removeCourse(courseId: string) { this.unassignCourse(courseId); }
 
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
@@ -72,6 +91,46 @@ export class DetalleProfesorComponent implements OnInit {
     user: { id: '', email: '', firstName: '', lastName: '', status: '' }
   } as any);
   showAssignCourseModal = signal(false);
-  openAssignCourseModal() { this.showAssignCourseModal.set(true); }
-  closeAssignCourseModal() { this.showAssignCourseModal.set(false); }
+  availableCoursesForAssignment = signal<any[]>([]);
+
+  private _selectedCourseId = signal('');
+  get selectedCourseId(): string { return this._selectedCourseId(); }
+  set selectedCourseId(v: string) { this._selectedCourseId.set(v); }
+
+  readonly selectedCourse = computed(() =>
+    this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
+  );
+
+  getLevelLabel(level: string | undefined): string {
+    const m: Record<string, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+    return m[(level ?? '').toLowerCase()] ?? (level ?? '');
+  }
+
+  openAssignCourseModal() {
+    this.showAssignCourseModal.set(true);
+    this.adminService.getCourses({ pageSize: 200 }).subscribe({
+      next: ({ data }) => this.availableCoursesForAssignment.set(data as any[]),
+    });
+  }
+  closeAssignCourseModal() {
+    this.showAssignCourseModal.set(false);
+    this._selectedCourseId.set('');
+  }
+
+  assignCourse() {
+    const course = this.selectedCourse();
+    if (!course) return;
+    const payload = {
+      courseId: course.id,
+      sectionId: course.sectionId ?? '',
+      academicYearId: course.academicYearId ?? '',
+    };
+    this.adminService.assignCourseToTeacher(this.teacherId, payload).subscribe({
+      next: () => {
+        this.closeAssignCourseModal();
+        this.loadActiveCourses();
+      },
+      error: () => alert('No se pudo asignar el curso. Faltan sección o año académico.'),
+    });
+  }
 }

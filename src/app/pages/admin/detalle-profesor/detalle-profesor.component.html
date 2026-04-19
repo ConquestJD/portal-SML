@@ -4,30 +4,22 @@
   } @else if (error()) {
     <div class="error-state"><i class="fas fa-exclamation-circle"></i> {{ error() }}</div>
   } @else {
-  <div class="breadcrumb">
-    <a routerLink="/admin/profesores" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a Profesores
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ profesor().name }}</span>
-  </div>
+  <admin-breadcrumb [items]="[
+    { label: 'Profesores', link: '/admin/profesores' },
+    { label: profesor()?.name ?? 'Profesor' }
+  ]"></admin-breadcrumb>
 
-  <div class="page-header">
-    <h1 class="page-title">{{ profesor().name }}</h1>
-    <p class="page-subtitle">{{ profesor().department }}</p>
-  </div>
+  <admin-person-header
+    [name]="profesor().name"
+    [subtitle]="profesor().department || profesor().specialty || 'Docente'"
+    [status]="profesor().status"
+    [actions]="[
+      { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/profesores', teacherId, 'editar'] },
+      { label: 'Resetear contraseña', icon: 'fa-key', variant: 'secondary', onClick: resetPassword.bind(this) }
+    ]">
+  </admin-person-header>
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
-      <i class="fas fa-user"></i> Perfil
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'cursos'" (click)="setTab('cursos')">
-      <i class="fas fa-book"></i> Cursos Activos
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'historial'" (click)="setTab('historial')">
-      <i class="fas fa-history"></i> Historial de Cursos
-    </button>
-  </div>
+  <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
 
   <div class="tab-content">
     @if (activeTab() === 'perfil') {
@@ -81,7 +73,7 @@
             <div class="info-item">
               <span class="label">Estado:</span>
               <span class="value">
-                <span class="badge badge-success">{{ profesor().status === 'activo' ? 'Activo' : 'Inactivo' }}</span>
+                <admin-status-badge [value]="profesor().status"></admin-status-badge>
               </span>
             </div>
           </div>
@@ -106,17 +98,15 @@
         </div>
         <div class="courses-list">
           @if (activeCourses().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-book"></i>
-              <p>No hay cursos activos asignados</p>
-              <p class="empty-hint">Haz clic en "Asignar Curso" para agregar uno</p>
-            </div>
+            <admin-empty-state icon="fa-book" title="No hay cursos activos asignados"
+              message="Haz clic en &quot;Asignar Curso&quot; para agregar uno">
+            </admin-empty-state>
           } @else {
             @for (course of activeCourses(); track course.id) {
               <div class="course-card">
                 <div class="course-header">
                   <div class="course-info">
-                    <h4>{{ course.name }}</h4>
+                    <h4><a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a></h4>
                     <div class="course-meta">
                       <span class="course-code">{{ course.code }}</span>
                       <span class="course-level">{{ getLevelLabel(course.level) }}</span>
@@ -171,10 +161,7 @@
         <h3>Historial de Cursos</h3>
         <div class="courses-list">
           @if (finishedCourses().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-history"></i>
-              <p>No hay cursos finalizados</p>
-            </div>
+            <admin-empty-state icon="fa-history" message="No hay cursos finalizados"></admin-empty-state>
           } @else {
             @for (course of finishedCourses(); track course.id) {
               <div class="course-card finished">
