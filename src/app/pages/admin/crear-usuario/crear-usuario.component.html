@@ -157,7 +157,11 @@
           </div>
           <div class="form-group">
             <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
-            <input type="password" class="form-input" [ngModel]="formData().password" (ngModelChange)="update('password', $event)" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()">
+            <input type="password" class="form-input" [ngModel]="formData().password" (ngModelChange)="update('password', $event)" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()" [attr.minlength]="MIN_PASSWORD_LENGTH">
+            <span class="field-hint">
+              <i class="fas fa-info-circle"></i>
+              Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres
+            </span>
           </div>
           @if (!isStudentMode() && !isProfessorMode() && !isParentMode()) {
             <div class="form-group">

@@ -12,6 +12,7 @@ import { AdminService, UserItem } from '../../../services/admin.service';
   styleUrl: './crear-usuario.component.css'
 })
 export class CrearUsuarioComponent implements OnInit {
+  readonly MIN_PASSWORD_LENGTH = 8;
   isEditMode = signal(false);
   userId = signal('');
   isStudentMode = signal(false);
@@ -125,6 +126,14 @@ export class CrearUsuarioComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
     const d = this.formData();
+
+    // En creación la contraseña es obligatoria; en edición es opcional, pero si se envía debe cumplir mínimo.
+    const mustValidatePassword = !this.isEditMode() || !!d.password;
+    if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {
+      this.error.set(`La contraseña debe tener al menos ${this.MIN_PASSWORD_LENGTH} caracteres`);
+      this.isLoading.set(false);
+      return;
+    }
 
     if (this.isEditMode()) {
       const dto: any = { firstName: d.firstName, lastName: d.lastName, phone: d.phone || undefined };
