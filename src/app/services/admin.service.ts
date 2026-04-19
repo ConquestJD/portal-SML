@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface PageMeta {
@@ -75,13 +75,23 @@ export interface CreateParentDto {
 }
 
 // ─── COURSES ─────────────────────────────────────────────────────────────────
+export interface ScheduleSlot {
+  day: string;        // 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes' | 'Sábado'
+  startTime: string;  // 'HH:mm'
+  endTime: string;    // 'HH:mm'
+}
+
 export interface CourseItem {
   id: string; name: string; code: string; description?: string;
   grade?: string; level?: string; hours?: number; status: string;
   classroom?: string; students?: number;
+  schedule?: ScheduleSlot[];
+  color?: string;
 }
 export interface CreateCourseDto {
   name: string; code: string; description?: string; grade?: string; level?: string; hours?: number;
+  schedule?: ScheduleSlot[];
+  color?: string;
 }
 
 // ─── SECTIONS ────────────────────────────────────────────────────────────────
@@ -113,6 +123,33 @@ export interface EnrollmentItem {
 }
 export interface CreateEnrollmentDto {
   studentId: string; sectionId: string; academicYearId: string;
+}
+
+// ─── STUDENT PAYMENTS ────────────────────────────────────────────────────────
+export interface StudentPaymentItem {
+  id: string;
+  concept: string;
+  amount: number;
+  status: string;
+  dueDate?: string;
+  paidAt?: string;
+  paymentMethod?: string;
+  reference?: string;
+  notes?: string;
+  category?: string;
+  createdAt?: string;
+}
+
+export interface RegisterStudentPaymentDto {
+  concept: string;
+  amount: number;
+  dueDate?: string;
+  paidAt?: string;
+  status?: string;
+  paymentMethod?: string;
+  reference?: string;
+  notes?: string;
+  category?: string;
 }
 
 // ─── TEACHER ASSIGNMENTS ────────────────────────────────────────────────────
@@ -265,6 +302,43 @@ export class AdminService {
     return this.http.delete<void>(`${this.url}/students/${studentId}/parents/${parentId}`);
   }
   getStudentDocuments(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/students/${id}/documents`); }
+  getStudentPayments(id: string, f: { status?: string } = {}): Observable<StudentPaymentItem[]> {
+    return this.get<unknown[]>(`/students/${id}/parents`).pipe(
+      switchMap((parents) => {
+        const parentIds = parents
+          .map((p: any) => p?.parentId ?? p?.id)
+          .filter((pid: string | undefined): pid is string => !!pid);
+
+        if (!parentIds.length) return of([]);
+
+        return forkJoin(
+          parentIds.map(parentId =>
+            this.get<StudentPaymentItem[]>(`/parents/${parentId}/payments`, buildParams(f)).pipe(
+              catchError(() => of([]))
+            )
+          )
+        ).pipe(
+          map((paymentsByParent) => paymentsByParent.flat()),
+          map((payments) => {
+            const filtered = payments.filter((payment: any) => {
+              const paymentStudentId = payment?.studentId ?? payment?.childId ?? payment?.student?.id ?? payment?.child?.id;
+              return paymentStudentId ? paymentStudentId === id : true;
+            });
+
+            const uniq = new Map<string, StudentPaymentItem>();
+            for (const payment of filtered) {
+              const paymentId = payment?.id ? String(payment.id) : `${payment?.concept ?? 'pago'}-${payment?.dueDate ?? ''}-${payment?.amount ?? ''}`;
+              if (!uniq.has(paymentId)) uniq.set(paymentId, payment as StudentPaymentItem);
+            }
+            return Array.from(uniq.values());
+          })
+        );
+      })
+    );
+  }
+  registerStudentPayment(id: string, dto: RegisterStudentPaymentDto): Observable<StudentPaymentItem> {
+    return this.http.post<{ success: boolean; data: StudentPaymentItem }>(`${this.url}/students/${id}/payments`, dto).pipe(map(r => r.data));
+  }
   uploadStudentDocuments(id: string, files: File[]): Observable<unknown> {
     const fd = new FormData();
     files.forEach(f => fd.append('files', f));
@@ -320,18 +394,63 @@ export class AdminService {
   getParentPayments(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/parents/${id}/payments`); }
 
   // ─── COURSES ──────────────────────────────────────────────────────────────
-  getCourses(f: { grade?: string; level?: string; status?: string; search?: string; page?: number; pageSize?: number } = {}) {
-    return this.getList<CourseItem>('/courses', buildParams(f));
+  // TODO(backend): cuando el backend persista `schedule` y `color`, se puede eliminar el fallback en localStorage.
+  private courseExtrasKey(id: string): string { return `course-extras:${id}`; }
+  private readCourseExtras(id: string): { schedule?: ScheduleSlot[]; color?: string } {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem(this.courseExtrasKey(id));
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
   }
-  getCourse(id: string): Observable<CourseItem> { return this.get<CourseItem>(`/courses/${id}`); }
+  private writeCourseExtras(id: string, extras: { schedule?: ScheduleSlot[]; color?: string }): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const current = this.readCourseExtras(id);
+      const next = {
+        schedule: extras.schedule !== undefined ? extras.schedule : current.schedule,
+        color: extras.color !== undefined ? extras.color : current.color,
+      };
+      localStorage.setItem(this.courseExtrasKey(id), JSON.stringify(next));
+    } catch {}
+  }
+  private mergeCourseExtras(course: CourseItem): CourseItem {
+    const extras = this.readCourseExtras(course.id);
+    return {
+      ...course,
+      schedule: course.schedule ?? extras.schedule,
+      color: course.color ?? extras.color,
+    };
+  }
+
+  getCourses(f: { grade?: string; level?: string; status?: string; search?: string; page?: number; pageSize?: number } = {}) {
+    return this.getList<CourseItem>('/courses', buildParams(f)).pipe(
+      map(r => ({ ...r, data: r.data.map(c => this.mergeCourseExtras(c)) }))
+    );
+  }
+  getCourse(id: string): Observable<CourseItem> {
+    return this.get<CourseItem>(`/courses/${id}`).pipe(map(c => this.mergeCourseExtras(c)));
+  }
   createCourse(dto: CreateCourseDto): Observable<CourseItem> {
-    return this.http.post<{ success: boolean; data: CourseItem }>(`${this.url}/courses`, dto).pipe(map(r => r.data));
+    const { schedule, color, ...backendDto } = dto;
+    return this.http.post<{ success: boolean; data: CourseItem }>(`${this.url}/courses`, { ...backendDto, schedule, color }).pipe(
+      map(r => r.data),
+      tap(course => this.writeCourseExtras(course.id, { schedule, color })),
+      map(course => this.mergeCourseExtras(course))
+    );
   }
   updateCourse(id: string, dto: Partial<CreateCourseDto>): Observable<CourseItem> {
-    return this.http.put<{ success: boolean; data: CourseItem }>(`${this.url}/courses/${id}`, dto).pipe(map(r => r.data));
+    const { schedule, color, ...backendDto } = dto;
+    return this.http.put<{ success: boolean; data: CourseItem }>(`${this.url}/courses/${id}`, { ...backendDto, schedule, color }).pipe(
+      map(r => r.data),
+      tap(() => this.writeCourseExtras(id, { schedule, color })),
+      map(course => this.mergeCourseExtras(course))
+    );
   }
   deleteCourse(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/courses/${id}`);
+    return this.http.delete<void>(`${this.url}/courses/${id}`).pipe(
+      tap(() => { if (typeof window !== 'undefined') localStorage.removeItem(this.courseExtrasKey(id)); })
+    );
   }
 
   // ─── SECTIONS ─────────────────────────────────────────────────────────────
