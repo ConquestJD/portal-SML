@@ -3,11 +3,13 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, StudentPaymentItem, RegisterStudentPaymentDto } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
+import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
 @Component({
   selector: 'app-detalle-estudiante',
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterLink, FormsModule],
+  imports: [CommonModule, DatePipe, RouterLink, FormsModule, ...ADMIN_SHARED],
   templateUrl: './detalle-estudiante.component.html',
   styleUrl: './detalle-estudiante.component.css'
 })
@@ -16,6 +18,16 @@ export class DetalleEstudianteComponent implements OnInit {
   error = signal('');
   activeTab = signal('perfil');
   studentId = '';
+
+  readonly tabs: AdminTab[] = [
+    { id: 'perfil',     label: 'Perfil',             icon: 'fa-user' },
+    { id: 'academico',  label: 'Académico',          icon: 'fa-graduation-cap' },
+    { id: 'notas',      label: 'Notas',              icon: 'fa-chart-line' },
+    { id: 'asistencia', label: 'Asistencia',         icon: 'fa-calendar-check' },
+    { id: 'padres',     label: 'Padres de familia',  icon: 'fa-users' },
+    { id: 'matricula',  label: 'Matrícula y pagos',  icon: 'fa-file-invoice-dollar' },
+    { id: 'documentos', label: 'Documentos',         icon: 'fa-file' },
+  ];
 
   student = signal<any>(null);
   academicHistory = signal<unknown[]>([]);
@@ -120,10 +132,21 @@ export class DetalleEstudianteComponent implements OnInit {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    if (!files.length) return;
-    this.adminService.uploadStudentDocuments(this.studentId, files).subscribe({
-      next: () => this.loadDocuments()
+    this.selectedFile.set(input.files?.[0] ?? null);
+  }
+
+  uploadDocument() {
+    const file = this.selectedFile();
+    if (!file) return;
+    this.isUploading.set(true);
+    this.adminService.uploadStudentDocuments(this.studentId, [file]).subscribe({
+      next: () => {
+        this.isUploading.set(false);
+        this.closeUploadModal();
+        this.selectedFile.set(null);
+        this.loadDocuments();
+      },
+      error: () => this.isUploading.set(false),
     });
   }
 
@@ -133,7 +156,8 @@ export class DetalleEstudianteComponent implements OnInit {
     });
   }
 
-  downloadDocument(docId: string) {
+  downloadDocument(doc: { id: string } | string) {
+    const docId = typeof doc === 'string' ? doc : doc.id;
     window.open(this.adminService.getDocumentDownloadUrl(this.studentId, docId));
   }
 
@@ -287,11 +311,7 @@ export class DetalleEstudianteComponent implements OnInit {
   isUploading = signal(false);
 
   openUploadModal() { this.showUploadModal.set(true); }
-  closeUploadModal() { this.showUploadModal.set(false); }
-  onFileChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.selectedFile.set(input.files?.[0] ?? null);
-  }
+  closeUploadModal() { this.showUploadModal.set(false); this.selectedFile.set(null); }
 
   // Modal de asignar padre
   showAssignParentModal = signal(false);

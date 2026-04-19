@@ -351,6 +351,19 @@
   transform: translateY(-2px);
 }
 
+.parent-header.parent-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  margin: calc(var(--spacing-sm) * -1);
+  margin-bottom: var(--spacing-md);
+}
+.parent-header.parent-link:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
 .parent-header {
   display: flex;
   align-items: center;

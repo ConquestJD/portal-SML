@@ -1,47 +1,21 @@
 <div class="detalle-estudiante-container">
-  <div class="breadcrumb">
-    <a routerLink="/admin/estudiantes" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a Estudiantes
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ student().name }}</span>
-  </div>
+  <admin-breadcrumb [items]="[
+    { label: 'Estudiantes', link: '/admin/estudiantes' },
+    { label: student()?.name ?? 'Estudiante' }
+  ]"></admin-breadcrumb>
 
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">{{ student().name }}</h1>
-      <p class="page-subtitle">Código: {{ student().code }} | {{ student().grade }} {{ student().section }}</p>
-    </div>
-    <div class="header-actions">
-      <a [routerLink]="['/admin/usuarios', student().id, 'editar']" [queryParams]="{ tipo: 'estudiante' }" class="btn btn-primary">
-        <i class="fas fa-edit"></i> Editar
-      </a>
-    </div>
-  </div>
+  @if (student()) {
+    <admin-person-header
+      [name]="student()?.name || ''"
+      [subtitle]="'Código: ' + (student().code ?? student().studentCode ?? '—') + ' · ' + (student().grade ?? '') + ' ' + (student().section ?? '')"
+      [status]="student().status"
+      [actions]="[
+        { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/estudiantes', student().id, 'editar'] }
+      ]">
+    </admin-person-header>
+  }
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
-      <i class="fas fa-user"></i> Perfil
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'academico'" (click)="setTab('academico')">
-      <i class="fas fa-graduation-cap"></i> Académico
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">
-      <i class="fas fa-chart-line"></i> Notas
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
-      <i class="fas fa-calendar-check"></i> Asistencia
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'padres'" (click)="setTab('padres')">
-      <i class="fas fa-users"></i> Padres de Familia
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'matricula'" (click)="setTab('matricula')">
-      <i class="fas fa-file-invoice-dollar"></i> Matrícula y Pagos
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'documentos'" (click)="setTab('documentos')">
-      <i class="fas fa-file"></i> Documentos
-    </button>
-  </div>
+  <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
 
   <div class="tab-content">
     @if (activeTab() === 'perfil') {
@@ -86,7 +60,7 @@
             <div class="info-item">
               <span class="label">Estado:</span>
               <span class="value">
-                <span class="badge badge-success">{{ student().status === 'activo' ? 'Activo' : student().status }}</span>
+                <admin-status-badge [value]="student().status"></admin-status-badge>
               </span>
             </div>
             <div class="info-item">
@@ -257,7 +231,7 @@
         <div class="parents-container">
           @for (parent of parents(); track parent.id) {
             <div class="parent-card">
-              <div class="parent-header">
+              <a [routerLink]="['/admin/padres', parent.id]" class="parent-header parent-link">
                 <div class="parent-avatar">
                   <i class="fas fa-user"></i>
                 </div>
@@ -265,15 +239,13 @@
                   <h3>{{ parent.name }}</h3>
                   <span class="parent-relationship">
                     <i class="fas fa-tag"></i>
-                    {{ getRelationshipLabel(parent.relationship) }}
+                    {{ parent.relationship | relationshipLabel }}
                   </span>
                 </div>
                 <div class="parent-status">
-                  <span class="badge" [class.badge-success]="parent.isActive" [class.badge-secondary]="!parent.isActive">
-                    {{ parent.isActive ? 'Activo' : 'Inactivo' }}
-                  </span>
+                  <admin-status-badge [value]="parent.isActive ? 'ACTIVE' : 'INACTIVE'"></admin-status-badge>
                 </div>
-              </div>
+              </a>
               <div class="parent-details">
                 <div class="detail-row">
                   <i class="fas fa-envelope"></i>
@@ -293,6 +265,9 @@
                 </div>
               </div>
               <div class="parent-actions">
+                <a [routerLink]="['/admin/padres', parent.id]" class="btn-icon" title="Ver Detalle">
+                  <i class="fas fa-eye"></i>
+                </a>
                 <button class="btn-icon btn-danger" (click)="removeParent(parent.id)" title="Desasignar">
                   <i class="fas fa-user-minus"></i>
                 </button>
@@ -300,11 +275,9 @@
             </div>
           }
           @if (parents().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-users"></i>
-              <p>No hay padres de familia vinculados</p>
-              <p class="empty-hint">Haz clic en "Asignar Padre de Familia" para vincular uno</p>
-            </div>
+            <admin-empty-state icon="fa-users" title="No hay padres de familia vinculados"
+              message="Haz clic en &quot;Asignar Padre de Familia&quot; para vincular uno">
+            </admin-empty-state>
           }
         </div>
       </div>
@@ -398,15 +371,9 @@
         <div class="payment-history-card">
           <h3>Historial de Pagos</h3>
           @if (paymentsLoading()) {
-            <div class="empty-state">
-              <i class="fas fa-spinner fa-spin"></i>
-              <p>Cargando pagos...</p>
-            </div>
+            <admin-empty-state icon="fa-spinner fa-spin" message="Cargando pagos..."></admin-empty-state>
           } @else if (studentPayments().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-receipt"></i>
-              <p>No hay pagos registrados para este estudiante</p>
-            </div>
+            <admin-empty-state icon="fa-receipt" message="No hay pagos registrados para este estudiante"></admin-empty-state>
           } @else {
             <table class="data-table">
               <thead>
@@ -425,9 +392,7 @@
                     <td>{{ payment.concept }}</td>
                     <td><strong>S/ {{ payment.amount | number:'1.2-2' }}</strong></td>
                     <td>
-                      <span class="badge" [ngClass]="getPaymentStatusClass(payment.status)">
-                        {{ getPaymentStatusLabel(payment.status) }}
-                      </span>
+                      <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
                     </td>
                     <td>{{ payment.dueDate ? (payment.dueDate | date:'shortDate') : '—' }}</td>
                     <td>{{ payment.paidAt ? (payment.paidAt | date:'shortDate') : '—' }}</td>
@@ -452,11 +417,9 @@
 
         <div class="documents-list">
           @if (documents().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-folder-open"></i>
-              <p>No hay documentos registrados</p>
-              <p class="empty-hint">Haz clic en "Subir Documento" para agregar uno</p>
-            </div>
+            <admin-empty-state icon="fa-folder-open" title="No hay documentos registrados"
+              message="Haz clic en &quot;Subir Documento&quot; para agregar uno">
+            </admin-empty-state>
           } @else {
             @for (doc of documents(); track doc.id) {
               <div class="document-card">
