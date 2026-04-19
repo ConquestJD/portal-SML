@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService, ParentItem } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
 
 @Component({
   selector: 'app-padres-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ...ADMIN_SHARED],
   templateUrl: './padres-admin.component.html',
   styleUrl: './padres-admin.component.css'
 })
@@ -89,4 +90,13 @@ export class PadresAdminComponent implements OnInit {
   }
 
   getFullName(p: ParentItem): string { return p.name ?? `${p.user.firstName} ${p.user.lastName}`; }
+
+  toggleStatus(p: ParentItem) {
+    const current = (p as any).status ?? p.user?.status;
+    const isActive = current === 'ACTIVE' || current === 'activo';
+    const next = isActive ? 'INACTIVE' : 'ACTIVE';
+    this.adminService.patchUserStatus(p.user?.id ?? p.id, next).subscribe({
+      next: () => this.load(),
+    });
+  }
 }

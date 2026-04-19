@@ -5,7 +5,7 @@
       <p class="page-subtitle">Administra el registro de padres de familia</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/admin/usuarios/crear" [queryParams]="{ tipo: 'padre' }" class="btn btn-primary">
+      <a routerLink="/admin/padres/nuevo" class="btn btn-primary">
         <i class="fas fa-plus"></i> Nuevo Padre de Familia
       </a>
     </div>
@@ -66,9 +66,8 @@
         <tbody>
           @if (filteredPadres().length === 0) {
             <tr>
-              <td colspan="8" class="empty-state">
-                <i class="fas fa-users"></i>
-                <p>No se encontraron padres de familia para este grado</p>
+              <td colspan="8">
+                <admin-empty-state icon="fa-users" message="No se encontraron padres de familia para este grado"></admin-empty-state>
               </td>
             </tr>
           } @else {
@@ -90,16 +89,22 @@
                     }
                   </div>
                 </td>
-                <td>{{ getRelationshipLabel(padre.relationship) }}</td>
+                <td>{{ padre.relationship | relationshipLabel }}</td>
                 <td>
-                  <span class="badge" [class.badge-success]="padre.status === 'activo'" [class.badge-secondary]="padre.status === 'inactivo'">
-                    {{ padre.status === 'activo' ? 'Activo' : 'Inactivo' }}
-                  </span>
+                  <admin-status-badge [value]="padre.status ?? padre.user?.status"></admin-status-badge>
                 </td>
                 <td>
-                  <a [routerLink]="['/admin/padres', padre.id]" class="btn btn-sm btn-primary">
-                    <i class="fas fa-eye"></i> Ver
-                  </a>
+                  <div class="action-buttons">
+                    <a [routerLink]="['/admin/padres', padre.id]" class="btn btn-sm btn-primary" title="Ver Detalle">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a [routerLink]="['/admin/padres', padre.id, 'editar']" class="btn btn-sm btn-secondary" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <button class="btn btn-sm btn-icon" (click)="toggleStatus(padre)" title="Activar/Desactivar">
+                      <i class="fas fa-power-off"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
