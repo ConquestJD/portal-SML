@@ -1,28 +1,28 @@
 <div class="detalle-padre-container">
-  <div class="breadcrumb">
-    <a routerLink="/admin/padres" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a Padres de Familia
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ padre().name }}</span>
-  </div>
+  <admin-breadcrumb [items]="[
+    { label: 'Padres de familia', link: '/admin/padres' },
+    { label: padre()?.name ?? 'Apoderado' }
+  ]"></admin-breadcrumb>
 
-  <div class="page-header">
-    <h1 class="page-title">{{ padre().name }}</h1>
-    <p class="page-subtitle">Padre de Familia</p>
-  </div>
+  <admin-person-header
+    [name]="padre()?.name ?? ''"
+    [subtitle]="(padre()?.relationship | relationshipLabel) + ' · ' + (padre()?.email ?? '')"
+    [status]="padre()?.status ?? (padre()?.user?.status ?? '')"
+    [actions]="[
+      { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/padres', parentId, 'editar'] },
+      { label: 'Resetear contraseña', icon: 'fa-key', variant: 'secondary', onClick: resetPassword.bind(this) }
+    ]">
+  </admin-person-header>
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'perfil'" (click)="setTab('perfil')">
-      <i class="fas fa-user"></i> Perfil
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'hijos'" (click)="setTab('hijos')">
-      <i class="fas fa-child"></i> Hijos ({{ children().length }})
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'pagos'" (click)="setTab('pagos')">
-      <i class="fas fa-dollar-sign"></i> Pagos
-    </button>
-  </div>
+  <admin-tabs
+    [tabs]="[
+      { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
+      { id: 'hijos',  label: 'Hijos',  icon: 'fa-child', badge: children().length },
+      { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' }
+    ]"
+    [activeTab]="activeTab()"
+    (activeTabChange)="setTab($event)">
+  </admin-tabs>
 
   <div class="tab-content">
     @if (activeTab() === 'perfil') {
@@ -64,7 +64,7 @@
             <div class="info-item">
               <span class="label">Estado:</span>
               <span class="value">
-                <span class="badge badge-success">{{ padre().status === 'activo' ? 'Activo' : 'Inactivo' }}</span>
+                <admin-status-badge [value]="padre()?.status ?? padre()?.user?.status"></admin-status-badge>
               </span>
             </div>
             <div class="info-item">
@@ -86,26 +86,21 @@
         </div>
         <div class="children-list">
           @if (children().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-child"></i>
-              <p>No hay hijos vinculados a este padre de familia</p>
-            </div>
+            <admin-empty-state icon="fa-child" message="No hay hijos vinculados a este padre de familia"></admin-empty-state>
           } @else {
             @for (child of children(); track child.id) {
               <div class="child-card">
                 <div class="child-header">
                   <div class="child-info">
-                    <h4>{{ child.name }}</h4>
+                    <h4><a [routerLink]="['/admin/estudiantes', child.id]" class="child-link">{{ child.name }}</a></h4>
                     <div class="child-meta">
                       <span class="child-grade">{{ child.grade }}</span>
-                      <span class="child-level">{{ getLevelLabel(child.level) }}</span>
-                      <span class="child-relationship">{{ child.relationship }}</span>
+                      <span class="child-level">{{ child.level | levelLabel }}</span>
+                      <span class="child-relationship">{{ child.relationship | relationshipLabel }}</span>
                     </div>
                   </div>
                   <div class="child-status">
-                    <span class="badge" [class.badge-success]="child.status === 'activo'" [class.badge-secondary]="child.status === 'inactivo'">
-                      {{ child.status === 'activo' ? 'Activo' : 'Inactivo' }}
-                    </span>
+                    <admin-status-badge [value]="child.status"></admin-status-badge>
                   </div>
                 </div>
                 <div class="child-details">
@@ -162,10 +157,7 @@
 
         <div class="payments-list">
           @if (pendingPayments().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-check-circle"></i>
-              <p>No hay pagos pendientes</p>
-            </div>
+            <admin-empty-state icon="fa-check-circle" message="No hay pagos pendientes"></admin-empty-state>
           } @else {
             @for (payment of pendingPayments(); track payment.id) {
               <div class="payment-item">
@@ -180,9 +172,7 @@
                   </div>
                 </div>
                 <div class="payment-status">
-                  <span class="badge" [ngClass]="getPaymentStatusClass(payment.status)">
-                    {{ getPaymentStatusLabel(payment.status) }}
-                  </span>
+                  <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
                 </div>
               </div>
             }

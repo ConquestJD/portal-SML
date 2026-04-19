@@ -200,6 +200,12 @@
   color: var(--text-primary);
 }
 
+.child-link {
+  color: var(--primary, #003366);
+  text-decoration: none;
+}
+.child-link:hover { text-decoration: underline; }
+
 .child-meta {
   display: flex;
   flex-wrap: wrap;

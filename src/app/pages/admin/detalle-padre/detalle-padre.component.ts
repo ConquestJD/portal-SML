@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, ParentItem } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
+import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
 @Component({
   selector: 'app-detalle-padre',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ...ADMIN_SHARED],
   templateUrl: './detalle-padre.component.html',
   styleUrl: './detalle-padre.component.css'
 })
@@ -16,6 +18,20 @@ export class DetallePadreComponent implements OnInit {
   error = signal('');
   activeTab = signal('perfil');
   parentId = '';
+
+  readonly tabs: AdminTab[] = [
+    { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
+    { id: 'hijos',  label: 'Hijos',  icon: 'fa-child' },
+    { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' },
+  ];
+
+  resetPassword() {
+    if (!this.parentId) return;
+    this.adminService.resetUserPassword(this.parentId).subscribe({
+      next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
+      error: () => alert('No se pudo resetear la contraseña'),
+    });
+  }
 
   parent = signal<any>(null);
   children = signal<unknown[]>([]);
@@ -61,16 +77,12 @@ export class DetallePadreComponent implements OnInit {
     return p.name ?? `${p.user.firstName} ${p.user.lastName}`;
   }
   get padre() { return this.parent; }
-  getLevelLabel(level: string): string { return level ?? ''; }
-  get totalPaid(): number { return (this.payments() as any[]).filter((p: any) => p.status === 'PAID').reduce((a: number, p: any) => a + (p.amount ?? 0), 0); }
-  get totalPending(): number { return (this.payments() as any[]).filter((p: any) => p.status !== 'PAID').reduce((a: number, p: any) => a + (p.amount ?? 0), 0); }
-  get pendingPayments(): any[] { return (this.payments() as any[]).filter((p: any) => p.status !== 'PAID'); }
-  getPaymentStatusClass(status: string): string {
-    const m: Record<string, string> = { PAID: 'badge-success', PENDING: 'badge-warning', OVERDUE: 'badge-danger', CANCELLED: 'badge-secondary' };
-    return m[status] ?? 'badge-secondary';
+  getLevelLabel(level: string): string {
+    const m: Record<string, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+    return m[(level ?? '').toLowerCase()] ?? (level ?? '');
   }
-  getPaymentStatusLabel(status: string): string {
-    const m: Record<string, string> = { PAID: 'Pagado', PENDING: 'Pendiente', OVERDUE: 'Vencido', CANCELLED: 'Cancelado' };
-    return m[status] ?? status;
-  }
+  totalPaid = () => (this.payments() as any[]).filter(p => p.status === 'PAID').reduce((a, p) => a + (p.amount ?? 0), 0);
+  totalPending = () => (this.payments() as any[]).filter(p => p.status !== 'PAID').reduce((a, p) => a + (p.amount ?? 0), 0);
+  paidPayments = () => (this.payments() as any[]).filter(p => p.status === 'PAID');
+  pendingPayments = () => (this.payments() as any[]).filter(p => p.status !== 'PAID');
 }
