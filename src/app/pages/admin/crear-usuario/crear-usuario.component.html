@@ -1,11 +1,5 @@
 <div class="crear-usuario-container">
-  <div class="breadcrumb">
-    <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : isParentMode() ? '/admin/padres' : '/admin/usuarios'" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a {{ isStudentMode() ? 'Estudiantes' : isProfessorMode() ? 'Profesores' : isParentMode() ? 'Padres de Familia' : 'Usuarios' }}
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ pageTitle() }}</span>
-  </div>
+  <admin-breadcrumb [items]="breadcrumbItems()"></admin-breadcrumb>
 
   <div class="page-header">
     <div class="header-content">
@@ -19,24 +13,51 @@
     }
   </div>
 
-  <form (ngSubmit)="onSubmit()" class="user-form">
-    @if (isStudentMode() || formData().role === 'estudiante') {
+  @if (error()) {
+    <div class="alert alert-error">
+      <i class="fas fa-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+  @if (success()) {
+    <div class="alert alert-success">
+      <i class="fas fa-check-circle"></i> {{ success() }}
+    </div>
+  }
+
+  <form (ngSubmit)="onSubmit()" class="user-form" #userForm="ngForm">
+
+    <!-- Sección específica del rol (arriba para guiar al usuario) -->
+    @if (hasField('level') || hasField('grade') || hasField('department')) {
       <div class="form-section">
-        <h2 class="section-title">Información Académica</h2>
+        <h2 class="section-title">
+          @if (roleKind() === 'student') { Información Académica }
+          @else if (roleKind() === 'teacher') { Información Profesional }
+          @else { Información del Rol }
+        </h2>
         <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Nivel *</label>
-            <select class="form-input" [ngModel]="formData().level" (ngModelChange)="onLevelChange($event)" name="level" required>
-              <option value="">Seleccionar nivel</option>
-              <option value="secundaria">Secundaria</option>
-              <option value="primaria">Primaria</option>
-              <option value="inicial">Inicial</option>
-            </select>
-          </div>
-          @if (formData().level) {
+
+          @if (hasField('level')) {
+            <div class="form-group">
+              <label class="form-label">Nivel *</label>
+              <select class="form-input"
+                      [ngModel]="formData().level"
+                      (ngModelChange)="onLevelChange($event)"
+                      name="level" required>
+                <option value="">Seleccionar nivel</option>
+                <option value="inicial">Inicial</option>
+                <option value="primaria">Primaria</option>
+                <option value="secundaria">Secundaria</option>
+              </select>
+            </div>
+          }
+
+          @if (hasField('grade') && formData().level) {
             <div class="form-group">
               <label class="form-label">Grado *</label>
-              <select class="form-input" [ngModel]="formData().grade" (ngModelChange)="onGradeChange($event)" name="grade" required>
+              <select class="form-input"
+                      [ngModel]="formData().grade"
+                      (ngModelChange)="update('grade', $event)"
+                      name="grade" required>
                 <option value="">Seleccionar grado</option>
                 @for (grade of availableGrades(); track grade) {
                   <option [value]="grade">{{ grade }}</option>
@@ -44,138 +65,252 @@
               </select>
             </div>
           }
+
+          @if (hasField('studentCode')) {
+            <div class="form-group">
+              <label class="form-label">Código de estudiante</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().studentCode"
+                     (ngModelChange)="update('studentCode', $event)"
+                     name="studentCode" placeholder="Generado si se deja vacío">
+            </div>
+          }
+
+          @if (hasField('department')) {
+            <div class="form-group">
+              <label class="form-label">Departamento *</label>
+              <select class="form-input"
+                      [ngModel]="formData().department"
+                      (ngModelChange)="update('department', $event)"
+                      name="department" required>
+                <option value="">Seleccionar departamento</option>
+                @for (dep of DEPARTMENTS; track dep) {
+                  <option [value]="dep">{{ dep }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (hasField('specialization')) {
+            <div class="form-group">
+              <label class="form-label">Especialización</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().specialization"
+                     (ngModelChange)="update('specialization', $event)"
+                     name="specialization" placeholder="Ej: Álgebra y Geometría">
+            </div>
+          }
+
+          @if (hasField('degree')) {
+            <div class="form-group">
+              <label class="form-label">Título Profesional *</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().degree"
+                     (ngModelChange)="update('degree', $event)"
+                     name="degree" required placeholder="Ej: Licenciado en Matemáticas">
+            </div>
+          }
+
+          @if (hasField('university')) {
+            <div class="form-group">
+              <label class="form-label">Universidad</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().university"
+                     (ngModelChange)="update('university', $event)"
+                     name="university" placeholder="Ej: UNMSM">
+            </div>
+          }
+
+          @if (hasField('teacherCode')) {
+            <div class="form-group">
+              <label class="form-label">Código de docente</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().teacherCode"
+                     (ngModelChange)="update('teacherCode', $event)"
+                     name="teacherCode">
+            </div>
+          }
+
+          @if (hasField('relationship')) {
+            <div class="form-group">
+              <label class="form-label">Relación con el estudiante *</label>
+              <select class="form-input"
+                      [ngModel]="formData().relationship"
+                      (ngModelChange)="update('relationship', $event)"
+                      name="relationship" required>
+                <option value="">Seleccionar</option>
+                @for (rel of RELATIONSHIPS; track rel) {
+                  <option [value]="rel">{{ rel }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          @if (hasField('occupation')) {
+            <div class="form-group">
+              <label class="form-label">Ocupación</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().occupation"
+                     (ngModelChange)="update('occupation', $event)"
+                     name="occupation" placeholder="Ej: Ingeniero">
+            </div>
+          }
+
+          @if (hasField('birthDate')) {
+            <div class="form-group">
+              <label class="form-label">Fecha de nacimiento</label>
+              <input type="date" class="form-input"
+                     [ngModel]="formData().birthDate"
+                     (ngModelChange)="update('birthDate', $event)"
+                     name="birthDate">
+            </div>
+          }
+
+          @if (hasField('gender')) {
+            <div class="form-group">
+              <label class="form-label">Género</label>
+              <select class="form-input"
+                      [ngModel]="formData().gender"
+                      (ngModelChange)="update('gender', $event)"
+                      name="gender">
+                <option value="">Seleccionar</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+          }
+
+          @if (hasField('bloodType')) {
+            <div class="form-group">
+              <label class="form-label">Tipo de sangre</label>
+              <input type="text" class="form-input"
+                     [ngModel]="formData().bloodType"
+                     (ngModelChange)="update('bloodType', $event)"
+                     name="bloodType" placeholder="O+, A-, etc.">
+            </div>
+          }
+
+          @if (hasField('medicalNotes')) {
+            <div class="form-group full-width">
+              <label class="form-label">Notas médicas</label>
+              <textarea class="form-input" rows="2"
+                        [ngModel]="formData().medicalNotes"
+                        (ngModelChange)="update('medicalNotes', $event)"
+                        name="medicalNotes" placeholder="Alergias, condiciones, medicación..."></textarea>
+            </div>
+          }
         </div>
-        @if (formData().level === 'inicial') {
+
+        @if (showInitialNote()) {
           <div class="info-box">
             <i class="fas fa-info-circle"></i>
             <div class="info-content">
-              <p><strong>Nota:</strong> Para estudiantes de inicial no se requiere crear usuario y contraseña en este momento.</p>
-              <p>La cuenta de acceso será creada posteriormente junto con la cuenta del padre de familia.</p>
+              <p><strong>Nota:</strong> Para estudiantes de inicial no se requiere crear usuario y contraseña ahora.</p>
+              <p>Las credenciales se generarán junto con la cuenta del padre de familia.</p>
             </div>
           </div>
         }
       </div>
     }
 
+    <!-- Sección común: datos personales -->
     <div class="form-section">
       <h2 class="section-title">Información Personal</h2>
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">Nombre *</label>
-          <input type="text" class="form-input" [ngModel]="formData().firstName" (ngModelChange)="update('firstName', $event)" name="firstName" placeholder="Ej: Ana" required>
+          <input type="text" class="form-input"
+                 [ngModel]="formData().firstName"
+                 (ngModelChange)="update('firstName', $event)"
+                 name="firstName" required placeholder="Ej: Ana">
         </div>
         <div class="form-group">
           <label class="form-label">Apellido *</label>
-          <input type="text" class="form-input" [ngModel]="formData().lastName" (ngModelChange)="update('lastName', $event)" name="lastName" placeholder="Ej: García" required>
+          <input type="text" class="form-input"
+                 [ngModel]="formData().lastName"
+                 (ngModelChange)="update('lastName', $event)"
+                 name="lastName" required placeholder="Ej: García">
         </div>
         <div class="form-group">
           <label class="form-label">Email *</label>
-          <input type="email" class="form-input" [ngModel]="formData().email" (ngModelChange)="update('email', $event)" name="email" required>
-          @if (isStudentMode() || formData().role === 'estudiante') {
+          <input type="email" class="form-input"
+                 [ngModel]="formData().email"
+                 (ngModelChange)="update('email', $event)"
+                 name="email" required>
+          @if (roleKind() === 'student') {
             <span class="field-hint">
               <i class="fas fa-info-circle"></i>
-              Si el estudiante no tiene correo, usar el correo del padre de familia
+              Si el estudiante no tiene correo, usa el del padre de familia
             </span>
           }
         </div>
-        <div class="form-group">
-          <label class="form-label">DNI</label>
-          <input type="text" class="form-input" [ngModel]="formData().dni" (ngModelChange)="update('dni', $event)" name="dni">
-        </div>
+        @if (hasField('dni')) {
+          <div class="form-group">
+            <label class="form-label">DNI</label>
+            <input type="text" class="form-input"
+                   [ngModel]="formData().dni"
+                   (ngModelChange)="update('dni', $event)"
+                   name="dni">
+          </div>
+        }
         <div class="form-group">
           <label class="form-label">Teléfono</label>
-          <input type="tel" class="form-input" [ngModel]="formData().phone" (ngModelChange)="update('phone', $event)" name="phone">
+          <input type="tel" class="form-input"
+                 [ngModel]="formData().phone"
+                 (ngModelChange)="update('phone', $event)"
+                 name="phone">
         </div>
-        @if (isStudentMode() || formData().role === 'estudiante') {
+        @if (hasField('emergencyPhone')) {
           <div class="form-group">
-            <label class="form-label">Número de Emergencia *</label>
-            <input type="tel" class="form-input" [ngModel]="formData().emergencyPhone" (ngModelChange)="update('emergencyPhone', $event)" name="emergencyPhone" required>
+            <label class="form-label">Teléfono de emergencia *</label>
+            <input type="tel" class="form-input"
+                   [ngModel]="formData().emergencyPhone"
+                   (ngModelChange)="update('emergencyPhone', $event)"
+                   name="emergencyPhone" required>
             <span class="field-hint">
               <i class="fas fa-phone-alt"></i>
-              Número de contacto en caso de emergencia
+              Contacto ante emergencias
             </span>
           </div>
         }
-        <div class="form-group full-width">
-          <label class="form-label">Dirección</label>
-          <input type="text" class="form-input" [ngModel]="formData().address" (ngModelChange)="update('address', $event)" name="address">
-        </div>
+        @if (hasField('address')) {
+          <div class="form-group full-width">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-input"
+                   [ngModel]="formData().address"
+                   (ngModelChange)="update('address', $event)"
+                   name="address">
+          </div>
+        }
       </div>
     </div>
 
-    @if (isProfessorMode() || formData().role === 'profesor') {
-      <div class="form-section">
-        <h2 class="section-title">Información Profesional</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Departamento *</label>
-            <select class="form-input" [ngModel]="formData().department" (ngModelChange)="update('department', $event)" name="department" required>
-              <option value="">Seleccionar departamento</option>
-              <option value="Matemática">Matemática</option>
-              <option value="Lengua y Literatura">Lengua y Literatura</option>
-              <option value="Ciencias">Ciencias</option>
-              <option value="Historia">Historia</option>
-              <option value="Inglés">Inglés</option>
-              <option value="Educación Física">Educación Física</option>
-              <option value="Arte">Arte</option>
-              <option value="Música">Música</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Especialización</label>
-            <input type="text" class="form-input" [ngModel]="formData().specialization" (ngModelChange)="update('specialization', $event)" name="specialization" placeholder="Ej: Álgebra y Geometría">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Título Profesional *</label>
-            <input type="text" class="form-input" [ngModel]="formData().degree" (ngModelChange)="update('degree', $event)" name="degree" required placeholder="Ej: Licenciado en Matemáticas">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Universidad</label>
-            <input type="text" class="form-input" [ngModel]="formData().university" (ngModelChange)="update('university', $event)" name="university" placeholder="Ej: Universidad Nacional Mayor de San Marcos">
-          </div>
-        </div>
-      </div>
-    }
-
-    @if (!isStudentMode() || requiresCredentials()) {
+    <!-- Sección de credenciales (condicional) -->
+    @if (credentialsRequired() || isEditMode()) {
       <div class="form-section">
         <h2 class="section-title">Credenciales de Acceso</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Usuario *</label>
-            @if (isStudentMode() && !isEditMode()) {
-              <div class="input-with-info">
-                <input type="text" class="form-input" [ngModel]="formData().username" (ngModelChange)="update('username', $event)" name="username" [readonly]="true" required>
-                <span class="input-hint">
-                  <i class="fas fa-info-circle"></i>
-                  Generado automáticamente
-                </span>
-              </div>
-            } @else {
-              <input type="text" class="form-input" [ngModel]="formData().username" (ngModelChange)="update('username', $event)" name="username" required>
-            }
-          </div>
-          <div class="form-group">
-            <label class="form-label">{{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}</label>
-            <input type="password" class="form-input" [ngModel]="formData().password" (ngModelChange)="update('password', $event)" [name]="isEditMode() ? 'newPassword' : 'password'" [required]="!isEditMode()" [attr.minlength]="MIN_PASSWORD_LENGTH">
+            <label class="form-label">
+              {{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}
+            </label>
+            <input type="password" class="form-input"
+                   [ngModel]="formData().password"
+                   (ngModelChange)="update('password', $event)"
+                   [name]="isEditMode() ? 'newPassword' : 'password'"
+                   [required]="!isEditMode()"
+                   [attr.minlength]="MIN_PASSWORD_LENGTH">
             <span class="field-hint">
               <i class="fas fa-info-circle"></i>
               Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres
             </span>
           </div>
-          @if (!isStudentMode() && !isProfessorMode() && !isParentMode()) {
-            <div class="form-group">
-              <label class="form-label">Rol *</label>
-              <select class="form-input" [ngModel]="formData().role" (ngModelChange)="update('role', $event)" name="role" required>
-                <option value="STUDENT">Estudiante</option>
-                <option value="TEACHER">Profesor</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
-            </div>
-          }
           <div class="form-group">
-            <label class="form-label">Estado *</label>
-            <select class="form-input" [ngModel]="formData().status" (ngModelChange)="update('status', $event)" name="status" required>
+            <label class="form-label">Estado</label>
+            <select class="form-input"
+                    [ngModel]="formData().status"
+                    (ngModelChange)="update('status', $event)"
+                    name="status" required>
               <option value="ACTIVE">Activo</option>
               <option value="INACTIVE">Inactivo</option>
               <option value="SUSPENDED">Suspendido</option>
@@ -186,9 +321,12 @@
     }
 
     <div class="form-actions">
-      <a [routerLink]="isStudentMode() ? '/admin/estudiantes' : isProfessorMode() ? '/admin/profesores' : isParentMode() ? '/admin/padres' : '/admin/usuarios'" class="btn btn-secondary">Cancelar</a>
-      <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> {{ isEditMode() ? 'Guardar Cambios' : (isStudentMode() ? 'Crear Estudiante' : isProfessorMode() ? 'Crear Profesor' : isParentMode() ? 'Crear Padre de Familia' : 'Crear Usuario') }}
+      <a [routerLink]="strategy().listPath" class="btn btn-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
+        <i class="fas fa-save"></i>
+        @if (isLoading()) { Guardando... }
+        @else if (isEditMode()) { Guardar Cambios }
+        @else { Crear {{ strategy().singular }} }
       </button>
     </div>
   </form>

@@ -3,70 +3,87 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { AdminService, UserItem } from '../../../services/admin.service';
+import {
+  USER_FORM_STRATEGIES, UserFormStrategy, UserFormData, emptyFormData, FieldKey,
+} from './user-form.strategies';
+import { RoleKind, apiRoleToKind } from '../_shared/models/role.model';
+import { AdminBreadcrumbComponent } from '../_shared/components/breadcrumb/admin-breadcrumb.component';
 
 @Component({
   selector: 'app-crear-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AdminBreadcrumbComponent],
   templateUrl: './crear-usuario.component.html',
-  styleUrl: './crear-usuario.component.css'
+  styleUrl: './crear-usuario.component.css',
 })
 export class CrearUsuarioComponent implements OnInit {
   readonly MIN_PASSWORD_LENGTH = 8;
-  isEditMode = signal(false);
-  userId = signal('');
-  isStudentMode = signal(false);
-  isProfessorMode = signal(false);
-  isParentMode = signal(false);
-  isLoading = signal(false);
-  error = signal('');
-  success = signal('');
 
   readonly GRADES: Record<string, string[]> = {
     inicial:    ['3 años', '4 años', '5 años'],
     primaria:   ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'],
-    secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria']
+    secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria'],
   };
 
-  pageTitle    = computed(() => this.isEditMode() ? 'Editar Usuario' : 'Crear Usuario');
-  pageSubtitle = computed(() => this.isEditMode() ? 'Modifica los datos' : 'Completa los datos del nuevo usuario');
-  requiresCredentials = computed(() => !this.isEditMode());
+  readonly DEPARTMENTS = [
+    'Matemática', 'Lengua y Literatura', 'Ciencias', 'Historia', 'Inglés',
+    'Educación Física', 'Arte', 'Música',
+  ];
 
-  formData = signal({
-    firstName: '', lastName: '', name: '',
-    email: '', password: '', phone: '', username: '',
-    role: 'STUDENT' as string, status: 'ACTIVE',
-    // Student fields
-    studentCode: '', birthDate: '', gender: '',
-    address: '', bloodType: '', medicalNotes: '',
-    level: '', grade: '',
-    dni: '', emergencyPhone: '',
-    // Teacher fields
-    teacherCode: '', specialty: '', specialization: '',
-    department: '', degree: '', university: '', bio: '',
-    // Parent fields
-    relationship: '', occupation: ''
-  });
+  readonly RELATIONSHIPS = ['Padre', 'Madre', 'Tutor', 'Abuelo', 'Abuela', 'Tío', 'Tía', 'Apoderado'];
+
+  isEditMode = signal(false);
+  userId = signal('');
+  isLoading = signal(false);
+  error = signal('');
+  success = signal('');
+
+  /** Rol actual (resuelto desde la ruta o desde el `tipo` query param legacy). */
+  roleKind = signal<RoleKind>('admin');
+  strategy = computed<UserFormStrategy>(() => USER_FORM_STRATEGIES[this.roleKind()]);
+
+  formData = signal<UserFormData>(emptyFormData());
 
   availableGrades = computed(() => this.GRADES[this.formData().level] ?? []);
 
-  onLevelChange(level: string) { this.formData.update(d => ({ ...d, level, grade: '' })); }
-  onGradeChange(grade: string) { this.formData.update(d => ({ ...d, grade })); }
+  pageTitle = computed(() =>
+    this.isEditMode() ? `Editar ${this.strategy().singular}` : `Nuevo ${this.strategy().singular}`
+  );
+  pageSubtitle = computed(() =>
+    this.isEditMode() ? 'Modifica los datos del usuario' : this.strategy().subtitle
+  );
 
-  resetPassword() { alert('Función de reset de contraseña'); }
+  breadcrumbItems = computed(() => [
+    { label: this.strategy().listLabel, link: this.strategy().listPath },
+    { label: this.pageTitle() },
+  ]);
+
+  credentialsRequired = computed(() =>
+    this.strategy().requiresCredentials(this.formData(), this.isEditMode())
+  );
+
+  /** En "inicial" no se piden credenciales porque se crean más adelante. */
+  showInitialNote = computed(() =>
+    this.roleKind() === 'student' && this.formData().level === 'inicial' && !this.isEditMode()
+  );
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private adminService: AdminService
+    private adminService: AdminService,
   ) {}
 
   ngOnInit() {
+    this.route.data.subscribe(data => {
+      const fromData = data['roleKind'] as RoleKind | undefined;
+      if (fromData) this.roleKind.set(fromData);
+    });
+
     this.route.queryParams.subscribe(params => {
       const tipo = params['tipo'];
-      if (tipo === 'estudiante')   { this.isStudentMode.set(true);   this.formData.update(d => ({ ...d, role: 'STUDENT' })); }
-      else if (tipo === 'profesor') { this.isProfessorMode.set(true); this.formData.update(d => ({ ...d, role: 'TEACHER' })); }
-      else if (tipo === 'padre')    { this.isParentMode.set(true);    this.formData.update(d => ({ ...d, role: 'PARENT' })); }
+      if (tipo === 'estudiante') this.roleKind.set('student');
+      else if (tipo === 'profesor') this.roleKind.set('teacher');
+      else if (tipo === 'padre') this.roleKind.set('parent');
     });
 
     this.route.params.subscribe(params => {
@@ -78,13 +95,14 @@ export class CrearUsuarioComponent implements OnInit {
     });
   }
 
-  loadUserData(id: string) {
+  private loadUserData(id: string) {
     const stateUser: UserItem | undefined = history.state?.user;
     if (stateUser && stateUser.id === id) {
       this.populateFormFromUser(stateUser);
-      const roleName = stateUser.role?.name;
-      if (roleName === 'STUDENT') {
-        this.isStudentMode.set(true);
+      const kind = apiRoleToKind(stateUser.role?.name);
+      if (kind) this.roleKind.set(kind);
+
+      if (kind === 'student') {
         this.adminService.getStudentById(id).subscribe({
           next: (student) => {
             this.formData.update(d => ({
@@ -96,18 +114,12 @@ export class CrearUsuarioComponent implements OnInit {
               bloodType:    student.bloodType ?? '',
               medicalNotes: student.medicalNotes ?? '',
               grade:        student.grade ?? '',
-              level:        student.level ?? '',
+              level:        (student.level ?? '').toLowerCase(),
             }));
-          }
+          },
         });
-      } else if (roleName === 'TEACHER') {
-        this.isProfessorMode.set(true);
-      } else if (roleName === 'PARENT') {
-        this.isParentMode.set(true);
       }
-      return;
     }
-    this.isLoading.set(false);
   }
 
   private populateFormFromUser(user: UserItem) {
@@ -115,20 +127,43 @@ export class CrearUsuarioComponent implements OnInit {
       ...d,
       firstName: user.firstName ?? '',
       lastName:  user.lastName ?? '',
-      name:      user.name ?? `${user.firstName} ${user.lastName}`,
       email:     user.email ?? '',
       phone:     user.phone ?? '',
-      status:    user.status ?? 'ACTIVE',
+      status:    (user.status as UserFormData['status']) ?? 'ACTIVE',
     }));
+  }
+
+  hasField(key: FieldKey): boolean {
+    return this.strategy().roleFields.includes(key);
+  }
+
+  update<K extends keyof UserFormData>(field: K, value: UserFormData[K]) {
+    this.formData.update(d => ({ ...d, [field]: value }));
+  }
+
+  updateRaw(field: string, value: unknown) {
+    this.formData.update(d => ({ ...d, [field]: value as never }));
+  }
+
+  onLevelChange(level: string) {
+    this.formData.update(d => ({ ...d, level, grade: '' }));
+  }
+
+  resetPassword() {
+    if (!this.userId()) return;
+    this.adminService.resetUserPassword(this.userId()).subscribe({
+      next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
+      error: () => alert('No se pudo resetear la contraseña'),
+    });
   }
 
   onSubmit() {
     this.isLoading.set(true);
     this.error.set('');
+    this.success.set('');
     const d = this.formData();
 
-    // En creación la contraseña es obligatoria; en edición es opcional, pero si se envía debe cumplir mínimo.
-    const mustValidatePassword = !this.isEditMode() || !!d.password;
+    const mustValidatePassword = this.credentialsRequired() && (!this.isEditMode() || !!d.password);
     if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {
       this.error.set(`La contraseña debe tener al menos ${this.MIN_PASSWORD_LENGTH} caracteres`);
       this.isLoading.set(false);
@@ -136,88 +171,57 @@ export class CrearUsuarioComponent implements OnInit {
     }
 
     if (this.isEditMode()) {
-      const dto: any = { firstName: d.firstName, lastName: d.lastName, phone: d.phone || undefined };
-      if (d.password) dto.password = d.password;
-      if (this.isStudentMode()) {
-        dto.grade = d.grade || undefined;
-        dto.level = d.level || undefined;
-      }
-      this.adminService.updateUser(this.userId(), dto).subscribe({
-        next: () => {
-          this.success.set('Usuario actualizado correctamente');
-          this.isLoading.set(false);
-          this.router.navigate(['/admin/usuarios']);
-        },
-        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al actualizar usuario'); this.isLoading.set(false); }
-      });
+      this.doUpdate(d);
       return;
     }
-
-    if (this.isStudentMode()) {
-      const dto = {
-        email: d.email, password: d.password,
-        firstName: d.firstName, lastName: d.lastName,
-        phone: d.phone || undefined,
-        studentCode: d.studentCode || undefined,
-        birthDate:    d.birthDate    || undefined,
-        gender:       d.gender       || undefined,
-        address:      d.address      || undefined,
-        bloodType:    d.bloodType    || undefined,
-        medicalNotes: d.medicalNotes  || undefined,
-        dni:          d.dni          || undefined,
-        grade: d.grade || undefined,
-        level: d.level ? (d.level.charAt(0).toUpperCase() + d.level.slice(1)) : undefined,
-      };
-      this.adminService.createStudent(dto).subscribe({
-        next: () => {
-          this.success.set('Estudiante creado correctamente');
-          this.isLoading.set(false);
-          this.router.navigate(['/admin/estudiantes']);
-        },
-        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear estudiante'); this.isLoading.set(false); }
-      });
-
-    } else if (this.isProfessorMode()) {
-      const dto = {
-        email: d.email, password: d.password,
-        firstName: d.firstName, lastName: d.lastName,
-        phone: d.phone || undefined,
-        teacherCode: d.teacherCode || undefined,
-        specialty:   d.specialty   || undefined,
-        bio:         d.bio         || undefined,
-      };
-      this.adminService.createTeacher(dto).subscribe({
-        next: () => { this.success.set('Profesor creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/profesores']); },
-        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear profesor'); this.isLoading.set(false); }
-      });
-
-    } else if (this.isParentMode()) {
-      const dto = {
-        email: d.email, password: d.password,
-        firstName: d.firstName, lastName: d.lastName,
-        phone: d.phone || undefined,
-        relationship: d.relationship || undefined,
-        occupation:   d.occupation   || undefined,
-      };
-      this.adminService.createParent(dto).subscribe({
-        next: () => { this.success.set('Apoderado creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/padres']); },
-        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear apoderado'); this.isLoading.set(false); }
-      });
-
-    } else {
-      const dto = {
-        email: d.email, password: d.password,
-        firstName: d.firstName, lastName: d.lastName,
-        phone: d.phone || undefined, role: d.role,
-      };
-      this.adminService.createUser(dto).subscribe({
-        next: () => { this.success.set('Usuario creado correctamente'); this.isLoading.set(false); this.router.navigate(['/admin/usuarios']); },
-        error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al crear usuario'); this.isLoading.set(false); }
-      });
-    }
+    this.doCreate(d);
   }
 
-  update(field: string, value: string) {
-    this.formData.update(d => ({ ...d, [field]: value }));
+  private doCreate(d: UserFormData) {
+    const strategy = this.strategy();
+    const dto = strategy.buildCreateDto(d);
+    strategy.create(this.adminService, dto).subscribe({
+      next: () => {
+        this.success.set(strategy.successMessage);
+        this.isLoading.set(false);
+        this.router.navigate([strategy.listPath]);
+      },
+      error: (err) => {
+        this.error.set(this.parseError(err) ?? `Error al crear ${strategy.singular.toLowerCase()}`);
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private doUpdate(d: UserFormData) {
+    const dto: Record<string, unknown> = {
+      firstName: d.firstName,
+      lastName:  d.lastName,
+      phone:     d.phone || undefined,
+    };
+    if (d.password) dto['password'] = d.password;
+    if (this.roleKind() === 'student') {
+      dto['grade'] = d.grade || undefined;
+      dto['level'] = d.level || undefined;
+    }
+
+    this.adminService.updateUser(this.userId(), dto as never).subscribe({
+      next: () => {
+        this.success.set('Usuario actualizado correctamente');
+        this.isLoading.set(false);
+        this.router.navigate([this.strategy().listPath]);
+      },
+      error: (err) => {
+        this.error.set(this.parseError(err) ?? 'Error al actualizar usuario');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private parseError(err: unknown): string | null {
+    const anyErr = err as { error?: { error?: { message?: string | string[] } } };
+    const msg = anyErr?.error?.error?.message;
+    if (Array.isArray(msg)) return msg.join(', ');
+    return msg ?? null;
   }
 }
