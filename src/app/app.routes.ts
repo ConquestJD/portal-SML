@@ -138,7 +138,8 @@ export const routes: Routes = [
       },
       {
         path: 'admin/usuarios/crear',
-        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent)
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'admin' }
       },
       {
         path: 'admin/usuarios/:id/editar',
@@ -149,24 +150,54 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/estudiantes/estudiantes.component').then(m => m.EstudiantesComponent)
       },
       {
+        path: 'admin/estudiantes/nuevo',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'student' }
+      },
+      {
         path: 'admin/estudiantes/:id',
         loadComponent: () => import('./pages/admin/detalle-estudiante/detalle-estudiante.component').then(m => m.DetalleEstudianteComponent)
+      },
+      {
+        path: 'admin/estudiantes/:id/editar',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'student' }
       },
       {
         path: 'admin/profesores',
         loadComponent: () => import('./pages/admin/profesores/profesores.component').then(m => m.ProfesoresComponent)
       },
       {
+        path: 'admin/profesores/nuevo',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'teacher' }
+      },
+      {
         path: 'admin/profesores/:id',
         loadComponent: () => import('./pages/admin/detalle-profesor/detalle-profesor.component').then(m => m.DetalleProfesorComponent)
+      },
+      {
+        path: 'admin/profesores/:id/editar',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'teacher' }
       },
       {
         path: 'admin/padres',
         loadComponent: () => import('./pages/admin/padres-admin/padres-admin.component').then(m => m.PadresAdminComponent)
       },
       {
+        path: 'admin/padres/nuevo',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'parent' }
+      },
+      {
         path: 'admin/padres/:id',
         loadComponent: () => import('./pages/admin/detalle-padre/detalle-padre.component').then(m => m.DetallePadreComponent)
+      },
+      {
+        path: 'admin/padres/:id/editar',
+        loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
+        data: { roleKind: 'parent' }
       },
       {
         path: 'admin/cursos',
