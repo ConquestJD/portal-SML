@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminService, StudentItem } from '../../../services/admin.service';
+import { ADMIN_SHARED } from '../_shared';
 
 @Component({
   selector: 'app-estudiantes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ...ADMIN_SHARED],
   templateUrl: './estudiantes.component.html',
   styleUrl: './estudiantes.component.css'
 })
