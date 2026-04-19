@@ -11,23 +11,39 @@
     </div>
   </div>
 
+  @if (error()) {
+    <div class="alert alert-error">
+      <i class="fas fa-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+
   @if (!selectedGrade()) {
     <div class="grades-section">
       <h2 class="section-title">Selecciona un Grado</h2>
-      <div class="grades-grid">
-        @for (grade of availableGrades(); track grade) {
-          <button class="grade-card" (click)="selectGrade(grade)">
-            <div class="grade-icon">
-              <i class="fas fa-graduation-cap"></i>
-            </div>
-            <div class="grade-info">
-              <h3>{{ grade }}</h3>
-              <p>{{ getCoursesCountByGrade(grade) }} cursos activos</p>
-            </div>
-            <i class="fas fa-chevron-right grade-arrow"></i>
-          </button>
-        }
-      </div>
+      @if (availableGrades().length === 0) {
+        <div class="empty-state">
+          <i class="fas fa-book-open"></i>
+          <p>No hay cursos registrados aún</p>
+          <a routerLink="/admin/cursos/crear" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear primer curso
+          </a>
+        </div>
+      } @else {
+        <div class="grades-grid">
+          @for (grade of availableGrades(); track grade) {
+            <button class="grade-card" (click)="selectGrade(grade)">
+              <div class="grade-icon">
+                <i class="fas fa-graduation-cap"></i>
+              </div>
+              <div class="grade-info">
+                <h3>{{ grade }}</h3>
+                <p>{{ getCoursesCountByGrade(grade) }} curso(s)</p>
+              </div>
+              <i class="fas fa-chevron-right grade-arrow"></i>
+            </button>
+          }
+        </div>
+      }
     </div>
   } @else {
     <div class="selected-grade-header">
@@ -40,33 +56,42 @@
     <div class="courses-calendar-section">
       <div class="courses-list-section">
         <h3 class="subsection-title">Cursos del Grado</h3>
+
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text"
+                 placeholder="Buscar curso..."
+                 [value]="searchQuery()"
+                 (input)="searchQuery.set($any($event.target).value)">
+        </div>
+
         <div class="courses-list">
-          @if (filteredCourses().length === 0) {
-            <div class="empty-state">
+          @if (coursesOfSelectedGrade().length === 0) {
+            <div class="empty-state small">
               <i class="fas fa-book"></i>
-              <p>No hay cursos activos para este grado</p>
+              <p>No hay cursos para este grado</p>
             </div>
           } @else {
-            @for (course of filteredCourses(); track course.id) {
-              <div class="course-card">
+            @for (course of coursesOfSelectedGrade(); track course.id) {
+              <div class="course-card" [style.borderLeftColor]="course.color || '#3b82f6'">
                 <div class="course-header">
-                  <h4>{{ course.name }}</h4>
+                  <div class="course-title">
+                    <span class="course-color-dot" [style.background]="course.color || '#3b82f6'"></span>
+                    <h4>{{ course.name }}</h4>
+                  </div>
                   <span class="course-code">{{ course.code }}</span>
                 </div>
-                <div class="course-details">
-                  <div class="detail-item">
-                    <i class="fas fa-door-open"></i>
-                    <span>{{ course.classroom || 'Sin aula asignada' }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <i class="fas fa-users"></i>
-                    <span>{{ course.students }} estudiantes</span>
-                  </div>
+                <div class="course-schedule-summary">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ readableSchedule(course) }}</span>
                 </div>
                 <div class="course-actions">
-                  <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-primary">
+                  <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-secondary">
                     <i class="fas fa-edit"></i> Editar
                   </a>
+                  <button class="btn btn-sm btn-danger-outline" (click)="deleteCourse(course.id)">
+                    <i class="fas fa-trash"></i> Eliminar
+                  </button>
                 </div>
               </div>
             }
@@ -76,33 +101,36 @@
 
       <div class="calendar-section">
         <h3 class="subsection-title">Calendario Semanal</h3>
+
         <div class="weekly-calendar">
           <div class="calendar-header">
-            <div class="time-column"></div>
+            <div class="time-col-header">Hora</div>
             @for (day of weekDays; track day) {
-              <div class="day-header">{{ day }}</div>
+              <div class="day-col-header">{{ day }}</div>
             }
           </div>
+
           <div class="calendar-body">
-            @for (time of timeSlots; track time) {
-              <div class="time-row">
-                <div class="time-slot">{{ formatTime(time) }}</div>
-                @for (day of weekDays; track day) {
-                  <div class="calendar-cell">
-                    @let course = getCourseForTimeSlot(day, time);
-                    @if (course && isCourseStart(day, time, course)) {
-                      @let span = getCourseSpan(day, course);
-                      @let schedule = getScheduleForDay(course, day);
-                      <div class="course-block" [style.height.px]="span * 60">
-                        <div class="course-block-content">
-                          <strong>{{ course.name }}</strong>
-                          @if (schedule) {
-                            <span class="course-time">{{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}</span>
-                          }
-                          <span class="course-classroom">{{ course.classroom }}</span>
-                        </div>
-                      </div>
-                    }
+            <div class="time-col">
+              @for (slot of hourSlots(); track slot) {
+                <div class="hour-mark">{{ slot }}</div>
+              }
+            </div>
+
+            @for (day of weekDays; track day) {
+              <div class="day-col">
+                @for (slot of hourSlots(); track slot) {
+                  <div class="hour-cell"></div>
+                }
+
+                @for (item of getBlocksForDay(day); track $index) {
+                  <div class="calendar-block"
+                       [style.top.px]="getBlockTop(item.block.startTime)"
+                       [style.height.px]="getBlockHeight(item.block.startTime, item.block.endTime)"
+                       [style.background]="item.course.color || '#3b82f6'"
+                       [title]="item.course.name + ' · ' + item.block.startTime + ' - ' + item.block.endTime">
+                    <strong>{{ item.course.name }}</strong>
+                    <span>{{ item.block.startTime }} – {{ item.block.endTime }}</span>
                   </div>
                 }
               </div>

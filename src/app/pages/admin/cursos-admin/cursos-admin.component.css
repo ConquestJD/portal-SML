@@ -26,6 +26,23 @@
   margin: 0;
 }
 
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  border: 1px solid transparent;
+}
+
+.alert-error {
+  background: #fde2e2;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
 /* Grados Section */
 .grades-section {
   margin-top: var(--spacing-xl);
@@ -75,9 +92,7 @@
   font-size: var(--font-size-xl);
 }
 
-.grade-info {
-  flex: 1;
-}
+.grade-info { flex: 1; }
 
 .grade-info h3 {
   margin: 0 0 var(--spacing-xs) 0;
@@ -133,12 +148,11 @@
   margin: 0;
 }
 
-/* Courses and Calendar Section */
+/* Courses list + calendar layout */
 .courses-calendar-section {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 360px 1fr;
   gap: var(--spacing-xl);
-  margin-top: var(--spacing-xl);
 }
 
 .subsection-title {
@@ -150,6 +164,34 @@
   border-bottom: 2px solid var(--border-color);
 }
 
+.search-box {
+  position: relative;
+  margin-bottom: var(--spacing-md);
+}
+
+.search-box i {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+}
+
+.search-box input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
 .courses-list {
   display: flex;
   flex-direction: column;
@@ -159,6 +201,7 @@
 .course-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary);
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
   transition: all 0.2s;
@@ -172,13 +215,27 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
 }
 
-.course-header h4 {
+.course-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.course-title h4 {
   margin: 0;
   font-size: var(--font-size-base);
   color: var(--text-primary);
+}
+
+.course-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .course-code {
@@ -187,30 +244,24 @@
   background: var(--bg-secondary);
   padding: 2px var(--spacing-xs);
   border-radius: var(--border-radius);
+  font-family: monospace;
 }
 
-.course-details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
-}
-
-.detail-item {
+.course-schedule-summary {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.4;
 }
 
-.detail-item i {
-  color: var(--primary);
-  width: 16px;
-}
+.course-schedule-summary i { color: var(--primary); }
 
 .course-actions {
-  margin-top: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-xs);
   padding-top: var(--spacing-sm);
   border-top: 1px solid var(--border-color);
 }
@@ -224,104 +275,108 @@
 }
 
 .weekly-calendar {
-  overflow-x: auto;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
 }
 
 .calendar-header {
   display: grid;
-  grid-template-columns: 80px repeat(5, 1fr);
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
+  grid-template-columns: 70px repeat(6, minmax(0, 1fr));
+  background: var(--primary);
+  color: white;
 }
 
-.time-column {
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.day-header {
+.time-col-header,
+.day-col-header {
   padding: var(--spacing-sm);
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius);
   text-align: center;
   font-weight: 600;
-  color: var(--text-primary);
   font-size: var(--font-size-sm);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+.day-col-header:last-child { border-right: none; }
 
 .calendar-body {
+  display: grid;
+  grid-template-columns: 70px repeat(6, minmax(0, 1fr));
+  position: relative;
+}
+
+.time-col {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
 }
 
-.time-row {
-  display: grid;
-  grid-template-columns: 80px repeat(5, 1fr);
-  gap: var(--spacing-xs);
-  min-height: 60px;
-}
-
-.time-slot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hour-mark {
+  height: 60px;
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  padding: var(--spacing-xs);
+  text-align: center;
+  padding-top: 4px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.calendar-cell {
+.day-col {
   position: relative;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  background: var(--bg-secondary);
-  min-height: 60px;
-  padding: var(--spacing-xs);
+  border-right: 1px solid var(--border-color);
+  min-height: 720px;
 }
 
-.course-block {
+.day-col:last-child { border-right: none; }
+
+.hour-cell {
+  height: 60px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.calendar-block {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: white;
+  left: 4px;
+  right: 4px;
   border-radius: var(--border-radius);
-  padding: var(--spacing-xs);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-  z-index: 1;
-}
-
-.course-block-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.course-block-content strong {
+  color: white;
+  padding: 6px 8px;
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
-.course-time {
-  font-size: 10px;
+.calendar-block:hover { transform: translateY(-1px); }
+
+.calendar-block strong {
+  display: block;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-block span {
+  display: block;
   opacity: 0.9;
-}
-
-.course-classroom {
   font-size: 10px;
-  opacity: 0.8;
+  margin-top: 2px;
 }
 
+/* Empty state */
 .empty-state {
   text-align: center;
   padding: var(--spacing-2xl);
   color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.empty-state.small {
+  padding: var(--spacing-xl);
 }
 
 .empty-state i {
@@ -331,10 +386,13 @@
 }
 
 .empty-state p {
-  margin: 0;
+  margin: 0 0 var(--spacing-md) 0;
   font-size: var(--font-size-base);
 }
 
+.empty-state .btn { margin-top: var(--spacing-sm); }
+
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -354,8 +412,29 @@
   color: white;
 }
 
-.btn-primary:hover {
-  background: var(--primary-dark);
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-primary);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--error, #d33);
+  border: 1px solid var(--error, #d33);
+}
+
+.btn-danger-outline:hover {
+  background: var(--error, #d33);
+  color: white;
 }
 
 .btn-sm {
@@ -376,11 +455,9 @@
   }
 
   .calendar-header,
-  .time-row {
-    grid-template-columns: 60px repeat(5, 1fr);
+  .calendar-body {
+    grid-template-columns: 50px repeat(6, minmax(80px, 1fr));
   }
 
-  .time-column {
-    font-size: 10px;
-  }
+  .weekly-calendar { overflow-x: auto; }
 }

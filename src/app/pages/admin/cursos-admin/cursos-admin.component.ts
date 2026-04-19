@@ -2,7 +2,9 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService, CourseItem } from '../../../services/admin.service';
+import { AdminService, CourseItem, ScheduleSlot } from '../../../services/admin.service';
+
+type CourseBlock = { course: CourseItem; block: ScheduleSlot };
 
 @Component({
   selector: 'app-cursos-admin',
@@ -15,30 +17,34 @@ export class CursosAdminComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   searchQuery = signal('');
-  filterGrade = signal('');
-  filterLevel = signal('');
-  filterStatus = signal('');
-  currentPage = signal(1);
-  totalPages = signal(1);
-  total = signal(0);
 
   courses = signal<CourseItem[]>([]);
   selectedGrade = signal('');
-  weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-  timeSlots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
+
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly calendarStartHour = 7;
+  readonly calendarEndHour = 18;
+
+  readonly hourSlots = computed(() => {
+    const slots: string[] = [];
+    for (let h = this.calendarStartHour; h <= this.calendarEndHour; h++) {
+      slots.push(`${String(h).padStart(2, '0')}:00`);
+    }
+    return slots;
+  });
 
   availableGrades = computed(() => {
-    const grades = new Set(this.courses().map(c => c.grade).filter(Boolean));
+    const grades = new Set(this.courses().map(c => c.grade).filter(Boolean) as string[]);
     return Array.from(grades).sort();
   });
 
-  filteredCourses = computed(() => {
+  coursesOfSelectedGrade = computed(() => {
+    const grade = this.selectedGrade();
+    if (!grade) return [];
     const q = this.searchQuery().toLowerCase();
-    if (!q) return this.courses();
-    return this.courses().filter(c =>
-      c.name.toLowerCase().includes(q) ||
-      c.code.toLowerCase().includes(q)
-    );
+    return this.courses()
+      .filter(c => c.grade === grade)
+      .filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
   });
 
   constructor(private adminService: AdminService) {}
@@ -47,17 +53,9 @@ export class CursosAdminComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.adminService.getCourses({
-      grade: this.filterGrade() || undefined,
-      level: this.filterLevel() || undefined,
-      status: this.filterStatus() || undefined,
-      page: this.currentPage(),
-      pageSize: 20
-    }).subscribe({
-      next: ({ data, meta }) => {
+    this.adminService.getCourses({ pageSize: 100 }).subscribe({
+      next: ({ data }) => {
         this.courses.set(data);
-        this.totalPages.set(meta.totalPages);
-        this.total.set(meta.total);
         this.loading.set(false);
       },
       error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
@@ -65,16 +63,48 @@ export class CursosAdminComponent implements OnInit {
   }
 
   selectGrade(grade: string) { this.selectedGrade.set(grade); }
-  getCoursesCountByGrade(grade: string): number { return this.courses().filter(c => c.grade === grade).length; }
-  formatTime(time: string): string { return time; }
-  getCourseForTimeSlot(_day: string, _time: string): CourseItem | null { return null; }
-  isCourseStart(_day: string, _time: string): boolean { return false; }
-  getCourseSpan(_course: CourseItem): number { return 1; }
+
+  getCoursesCountByGrade(grade: string): number {
+    return this.courses().filter(c => c.grade === grade).length;
+  }
 
   deleteCourse(id: string) {
     if (!confirm('¿Estás seguro de eliminar este curso?')) return;
     this.adminService.deleteCourse(id).subscribe({
       next: () => this.load()
     });
+  }
+
+  // ─── CALENDAR POSITIONING ────────────────────────────────────────────────
+  private timeToMinutes(time: string): number {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + (m || 0);
+  }
+
+  private calendarStartMinutes(): number { return this.calendarStartHour * 60; }
+
+  getBlockTop(startTime: string): number {
+    return Math.max(0, this.timeToMinutes(startTime) - this.calendarStartMinutes());
+  }
+
+  getBlockHeight(startTime: string, endTime: string): number {
+    return Math.max(20, this.timeToMinutes(endTime) - this.timeToMinutes(startTime));
+  }
+
+  getBlocksForDay(day: string): CourseBlock[] {
+    const result: CourseBlock[] = [];
+    for (const course of this.coursesOfSelectedGrade()) {
+      for (const block of course.schedule ?? []) {
+        if (block.day === day) result.push({ course, block });
+      }
+    }
+    return result.sort((a, b) => a.block.startTime.localeCompare(b.block.startTime));
+  }
+
+  readableSchedule(course: CourseItem): string {
+    if (!course.schedule?.length) return 'Sin horario';
+    return course.schedule
+      .map(s => `${s.day.substring(0, 3)} ${s.startTime}-${s.endTime}`)
+      .join(' · ');
   }
 }
