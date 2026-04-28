@@ -2,7 +2,7 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">Gestión de Profesores</h1>
-      <p class="page-subtitle">Administra el registro de profesores</p>
+      <p class="page-subtitle">Listado completo — administra el registro de profesores</p>
     </div>
     <div class="header-actions">
       <a routerLink="/admin/profesores/nuevo" class="btn btn-primary">
@@ -11,43 +11,20 @@
     </div>
   </div>
 
-  @if (!selectedGrade()) {
-    <div class="grades-section">
-      <h2 class="section-title">Selecciona un Departamento</h2>
-      @if (availableGrades().length === 0) {
-        <admin-empty-state icon="fa-chalkboard-teacher" message="No hay profesores registrados"></admin-empty-state>
-      } @else {
-        <div class="grades-grid">
-          @for (grade of availableGrades(); track grade) {
-            <button class="grade-card" (click)="selectGrade(grade)">
-              <div class="grade-icon">
-                <i class="fas fa-chalkboard-teacher"></i>
-              </div>
-              <div class="grade-info">
-                <h3>{{ grade }}</h3>
-                <p>{{ getProfessorsCountByGrade(grade) }} profesor(es)</p>
-              </div>
-              <i class="fas fa-chevron-right grade-arrow"></i>
-            </button>
-          }
-        </div>
-      }
-    </div>
-  } @else {
-    <div class="selected-grade-header">
-      <button class="btn-back" (click)="selectedGrade.set('')">
-        <i class="fas fa-arrow-left"></i> Volver
-      </button>
-      <h2 class="selected-grade-title">Profesores - {{ selectedGrade() }}</h2>
-    </div>
+  @if (error()) {
+    <div class="alert-inline">{{ error() }}</div>
+  }
 
+  @if (loading()) {
+    <div class="loading-state">Cargando profesores…</div>
+  } @else {
     <div class="filters-section">
       <div class="search-wrapper">
         <i class="fas fa-search"></i>
-        <input type="text" class="form-input search-input" placeholder="Buscar..." [(ngModel)]="searchQuery" name="searchQuery" />
+        <input type="text" class="form-input search-input" placeholder="Buscar por nombre o correo…" [(ngModel)]="searchQuery" name="searchQuery" />
       </div>
-      <select [(ngModel)]="filterStatus" class="form-input" name="filterStatus" (change)="load()">
-        <option value="">Todos</option>
+      <select [(ngModel)]="filterStatus" class="form-input filter-select" name="filterStatus" (change)="load()">
+        <option value="">Todos los estados</option>
         <option value="activo">Activo</option>
         <option value="inactivo">Inactivo</option>
       </select>
@@ -59,7 +36,6 @@
           <tr>
             <th>Nombre</th>
             <th>Email</th>
-            <th>Departamento</th>
             <th>Cursos</th>
             <th>Estudiantes</th>
             <th>Estado</th>
@@ -69,8 +45,8 @@
         <tbody>
           @if (filteredProfesores().length === 0) {
             <tr>
-              <td colspan="7">
-                <admin-empty-state icon="fa-chalkboard-teacher" message="No se encontraron profesores"></admin-empty-state>
+              <td colspan="6">
+                <admin-empty-state icon="fa-chalkboard-teacher" message="No hay profesores para mostrar"></admin-empty-state>
               </td>
             </tr>
           } @else {
@@ -78,7 +54,6 @@
               <tr>
                 <td>{{ getFullName(profesor) }}</td>
                 <td>{{ profesor.email ?? profesor.user?.email }}</td>
-                <td>{{ profesor.department ?? profesor.specialty ?? '—' }}</td>
                 <td>{{ profesor.courses ?? 0 }}</td>
                 <td>{{ profesor.students ?? 0 }}</td>
                 <td>
