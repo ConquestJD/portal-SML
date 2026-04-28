@@ -85,12 +85,12 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
       ]
     },
     {
-      label: 'Gestión de Usuarios',
+      label: 'Personas',
       items: [
-        { label: 'Usuarios', icon: 'fas fa-users', path: '/admin/usuarios', exact: false },
         { label: 'Estudiantes', icon: 'fas fa-user-graduate', path: '/admin/estudiantes', exact: false },
         { label: 'Profesores', icon: 'fas fa-chalkboard-teacher', path: '/admin/profesores', exact: false },
-        { label: 'Padres', icon: 'fas fa-user-friends', path: '/admin/padres', exact: false }
+        { label: 'Padres', icon: 'fas fa-user-friends', path: '/admin/padres', exact: false },
+        { label: 'Administradores', icon: 'fas fa-user-shield', path: '/admin/administradores', exact: false }
       ]
     },
     {
