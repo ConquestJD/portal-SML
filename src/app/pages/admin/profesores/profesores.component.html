@@ -18,17 +18,45 @@
   @if (loading()) {
     <div class="loading-state">Cargando profesores…</div>
   } @else {
-    <div class="filters-section">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" class="form-input search-input" placeholder="Buscar por nombre o correo…" [(ngModel)]="searchQuery" name="searchQuery" />
+    <div class="admin-toolbar">
+      <div class="admin-toolbar__search">
+        <i class="fas fa-search admin-toolbar__search-icon"></i>
+        <input
+          type="text"
+          class="admin-toolbar__input"
+          placeholder="Buscar por nombre o correo..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery" />
+        @if (searchQuery) {
+          <button type="button" class="admin-toolbar__clear" (click)="clearSearch()" title="Limpiar búsqueda">
+            <i class="fas fa-times"></i>
+          </button>
+        }
       </div>
-      <select [(ngModel)]="filterStatus" class="form-input filter-select" name="filterStatus" (change)="load()">
-        <option value="">Todos los estados</option>
-        <option value="activo">Activo</option>
-        <option value="inactivo">Inactivo</option>
-      </select>
+      <div class="admin-toolbar__filters">
+        <div class="admin-toolbar__select-wrapper">
+          <select class="admin-toolbar__select" [(ngModel)]="filterStatus" name="filterStatus" (change)="load()">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+          </select>
+        </div>
+        @if (hasActiveFilters()) {
+          <button type="button" class="admin-toolbar__reset" (click)="resetFilters()" title="Quitar filtros">
+            <i class="fas fa-rotate-left"></i> Limpiar
+          </button>
+        }
+      </div>
     </div>
+
+    @if (hasActiveFilters()) {
+      <div class="admin-results-bar">
+        <span>
+          Mostrando <span class="admin-results-bar__count">{{ filteredProfesores().length }}</span>
+          de <span class="admin-results-bar__count">{{ profesores().length }}</span> profesores
+        </span>
+      </div>
+    }
 
     <div class="table-container">
       <table class="data-table">

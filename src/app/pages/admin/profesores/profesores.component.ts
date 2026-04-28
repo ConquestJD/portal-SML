@@ -38,6 +38,18 @@ export class ProfesoresComponent implements OnInit {
     return list;
   });
 
+  hasActiveFilters = computed(() => !!this._searchQuery() || !!this._filterStatus());
+
+  clearSearch() { this._searchQuery.set(''); }
+
+  resetFilters() {
+    this._searchQuery.set('');
+    if (this._filterStatus()) {
+      this._filterStatus.set('');
+      this.load();
+    }
+  }
+
   constructor(private adminService: AdminService) {}
 
   ngOnInit() { this.load(); }

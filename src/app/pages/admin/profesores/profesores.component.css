@@ -42,36 +42,6 @@
   color: var(--text-secondary);
 }
 
-.filters-section {
-  display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  flex-wrap: wrap;
-}
-
-.search-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
-}
-
-.search-wrapper i {
-  position: absolute;
-  left: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-}
-
-.search-input {
-  padding-left: 2.5rem;
-  width: 100%;
-}
-
-.filter-select {
-  min-width: 170px;
-}
-
 .table-container {
   background: var(--bg-primary);
   border-radius: var(--border-radius-lg);
