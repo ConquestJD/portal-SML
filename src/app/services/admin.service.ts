@@ -60,15 +60,11 @@ export interface TeacherItem {
   name?: string; email?: string; phone?: string; status?: string;
   department?: string; courses?: number; students?: number; grades?: string[];
 }
+/** Cuerpo esperado por `POST /teachers` (validación forbidNonWhitelisted en backend). */
 export interface CreateTeacherDto {
   username: string;
   email?: string; password: string; firstName: string; lastName: string;
   phone?: string;
-  dni?: string;
-  department?: string;
-  degree?: string;
-  university?: string;
-  address?: string;
   teacherCode?: string; specialty?: string; bio?: string;
 }
 

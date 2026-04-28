@@ -120,6 +120,7 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
   /** Solo DNI y dirección opcional; departamento/código/etc. no se piden en el alta. */
   roleFields: ['dni', 'address'],
   requiresCredentials: () => true,
+  /** El API de `POST /teachers` solo acepta el DTO base de usuario (sin `dni` ni `address` en body). El DNI solo se usa en el cliente para el `username`. */
   buildCreateDto: (d) => ({
     username: usernameFromDni(d.dni) || d.username,
     email: d.email || undefined,
@@ -127,8 +128,6 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
-    dni: d.dni || undefined,
-    address: d.address || undefined,
   }),
   create: (svc, dto) => svc.createTeacher(dto as never),
   successMessage: 'Profesor creado correctamente',
