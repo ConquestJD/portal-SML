@@ -2,7 +2,8 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService, CourseItem, ScheduleSlot } from '../../../services/admin.service';
+import { forkJoin } from 'rxjs';
+import { AdminService, CourseItem, ScheduleSlot, AssignmentItem } from '../../../services/admin.service';
 
 type CourseBlock = { course: CourseItem; block: ScheduleSlot };
 
@@ -19,6 +20,8 @@ export class CursosAdminComponent implements OnInit {
   searchQuery = signal('');
 
   courses = signal<CourseItem[]>([]);
+  /** courseId → nombre del profesor asignado activo */
+  teacherByCourseId = signal<Record<string, string>>({});
   selectedGrade = signal('');
 
   readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -42,9 +45,15 @@ export class CursosAdminComponent implements OnInit {
     const grade = this.selectedGrade();
     if (!grade) return [];
     const q = this.searchQuery().toLowerCase();
+    const map = this.teacherByCourseId();
     return this.courses()
       .filter(c => c.grade === grade)
-      .filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+      .filter(c =>
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        (map[c.id] ?? '').toLowerCase().includes(q)
+      );
   });
 
   constructor(private adminService: AdminService) {}
@@ -53,12 +62,28 @@ export class CursosAdminComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.adminService.getCourses({ pageSize: 100 }).subscribe({
-      next: ({ data }) => {
-        this.courses.set(data);
+    forkJoin({
+      coursesResp: this.adminService.getCourses({ pageSize: 300 }),
+      assignsResp: this.adminService.getTeacherAssignments({ pageSize: 500 }),
+    }).subscribe({
+      next: ({ coursesResp, assignsResp }) => {
+        this.courses.set(coursesResp.data);
+        const m: Record<string, string> = {};
+        for (const a of assignsResp.data as AssignmentItem[]) {
+          if (a.isActive === false || !a.course?.id) continue;
+          const fn = a.teacher?.user?.firstName ?? '';
+          const ln = a.teacher?.user?.lastName ?? '';
+          const label = `${fn} ${ln}`.trim();
+          if (!label) continue;
+          m[a.course.id] = label;
+        }
+        this.teacherByCourseId.set(m);
         this.loading.set(false);
       },
-      error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
+      error: () => {
+        this.error.set('Error al cargar cursos');
+        this.loading.set(false);
+      },
     });
   }
 
@@ -68,6 +93,10 @@ export class CursosAdminComponent implements OnInit {
     return this.courses().filter(c => c.grade === grade).length;
   }
 
+  teacherName(courseId: string): string {
+    return this.teacherByCourseId()[courseId] ?? '';
+  }
+
   deleteCourse(id: string) {
     if (!confirm('¿Estás seguro de eliminar este curso?')) return;
     this.adminService.deleteCourse(id).subscribe({
@@ -75,7 +104,6 @@ export class CursosAdminComponent implements OnInit {
     });
   }
 
-  // ─── CALENDAR POSITIONING ────────────────────────────────────────────────
   private timeToMinutes(time: string): number {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + (m || 0);

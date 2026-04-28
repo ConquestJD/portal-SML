@@ -60,7 +60,7 @@
         <div class="search-box">
           <i class="fas fa-search"></i>
           <input type="text"
-                 placeholder="Buscar curso..."
+                 placeholder="Buscar por nombre, código o profesor..."
                  [value]="searchQuery()"
                  (input)="searchQuery.set($any($event.target).value)">
         </div>
@@ -84,6 +84,14 @@
                 <div class="course-schedule-summary">
                   <i class="fas fa-clock"></i>
                   <span>{{ readableSchedule(course) }}</span>
+                </div>
+                <div class="course-teacher-row">
+                  <i class="fas fa-chalkboard-teacher"></i>
+                  @if (teacherName(course.id)) {
+                    <span>{{ teacherName(course.id) }}</span>
+                  } @else {
+                    <span class="course-teacher-muted">Sin profesor asignado</span>
+                  }
                 </div>
                 <div class="course-actions">
                   <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="btn btn-sm btn-secondary">

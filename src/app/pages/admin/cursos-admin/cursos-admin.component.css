@@ -247,6 +247,24 @@
   font-family: monospace;
 }
 
+.course-teacher-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.course-teacher-row i {
+  color: var(--primary);
+}
+
+.course-teacher-muted {
+  opacity: 0.75;
+  font-style: italic;
+}
+
 .course-schedule-summary {
   display: flex;
   align-items: center;
