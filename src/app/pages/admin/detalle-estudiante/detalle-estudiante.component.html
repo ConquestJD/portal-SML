@@ -25,37 +25,65 @@
             <h3>Información Personal</h3>
             <div class="info-item">
               <span class="label">DNI:</span>
-              <span class="value">{{ student().dni }}</span>
+              <span class="value">{{ student().dni || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Email:</span>
-              <span class="value">{{ student().email }}</span>
+              <span class="value">{{ student().email || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Teléfono:</span>
-              <span class="value">{{ student().phone }}</span>
+              <span class="value">{{ student().phone || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Dirección:</span>
-              <span class="value">{{ student().address }}</span>
+              <span class="value">{{ student().address || '—' }}</span>
             </div>
+            @if (student().emergencyPhone) {
+              <div class="info-item">
+                <span class="label">Teléfono Emergencia:</span>
+                <span class="value">{{ student().emergencyPhone }}</span>
+              </div>
+            }
           </div>
+
           <div class="info-card">
             <h3>Información de Contacto</h3>
-            <div class="info-item">
-              <span class="label">Tutor:</span>
-              <span class="value">{{ student().tutor }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Teléfono Emergencia:</span>
-              <span class="value">{{ student().emergencyPhone }}</span>
-            </div>
+            @if (parents().length === 0) {
+              <p class="muted-note">Sin padres o apoderados vinculados todavía. Vincula uno desde la pestaña <strong>Padres de familia</strong>.</p>
+            } @else {
+              <div class="contact-parents">
+                @for (p of parents(); track p.id) {
+                  <div class="contact-parent">
+                    <div class="contact-parent__head">
+                      <a [routerLink]="['/admin/padres', p.id]" class="contact-parent__name">{{ p.name }}</a>
+                      @if (p.isPrimary) {
+                        <span class="badge badge-info">Principal</span>
+                      }
+                    </div>
+                    <div class="contact-parent__rel">{{ p.relationship | relationshipLabel }}</div>
+                    <div class="contact-parent__meta">
+                      @if (p.phone) {
+                        <span><i class="fas fa-phone"></i> {{ p.phone }}</span>
+                      }
+                      @if (p.email) {
+                        <span><i class="fas fa-envelope"></i> {{ p.email }}</span>
+                      }
+                      @if (p.dni) {
+                        <span><i class="fas fa-id-card"></i> {{ p.dni }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
+
           <div class="info-card">
             <h3>Credenciales de Acceso</h3>
             <div class="info-item">
               <span class="label">Usuario:</span>
-              <span class="value">{{ student().username }}</span>
+              <span class="value">{{ student().username || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Estado:</span>
@@ -64,8 +92,8 @@
               </span>
             </div>
             <div class="info-item">
-              <span class="label">Fecha de Matrícula:</span>
-              <span class="value">{{ student().enrollmentDate | date:'longDate' }}</span>
+              <span class="label">Fecha de Registro:</span>
+              <span class="value">{{ student().createdAt ? (student().createdAt | date:'longDate') : '—' }}</span>
             </div>
           </div>
         </div>
@@ -255,14 +283,18 @@
                   <i class="fas fa-phone"></i>
                   <span>{{ parent.phone }}</span>
                 </div>
-                <div class="detail-row">
-                  <i class="fas fa-id-card"></i>
-                  <span>DNI: {{ parent.dni }}</span>
-                </div>
-                <div class="detail-row">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span>{{ parent.address }}</span>
-                </div>
+                @if (parent.dni) {
+                  <div class="detail-row">
+                    <i class="fas fa-id-card"></i>
+                    <span>DNI: {{ parent.dni }}</span>
+                  </div>
+                }
+                @if (parent.address) {
+                  <div class="detail-row">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ parent.address }}</span>
+                  </div>
+                }
               </div>
               <div class="parent-actions">
                 <a [routerLink]="['/admin/padres', parent.id]" class="btn-icon" title="Ver Detalle">
@@ -564,17 +596,19 @@
                     <strong>Relación:</strong> {{ getRelationshipLabel(selectedParent()!.relationship) }}
                   </div>
                   <div class="preview-item">
-                    <strong>Email:</strong> {{ selectedParent()!.email }}
+                    <strong>Email:</strong> {{ selectedParent()!.email || '—' }}
                   </div>
                   <div class="preview-item">
-                    <strong>Teléfono:</strong> {{ selectedParent()!.phone }}
+                    <strong>Teléfono:</strong> {{ selectedParent()!.phone || '—' }}
                   </div>
                   <div class="preview-item">
-                    <strong>DNI:</strong> {{ selectedParent()!.dni }}
+                    <strong>DNI:</strong> {{ selectedParent()!.dni || '—' }}
                   </div>
-                  <div class="preview-item">
-                    <strong>Dirección:</strong> {{ selectedParent()!.address }}
-                  </div>
+                  @if (selectedParent()!.address) {
+                    <div class="preview-item">
+                      <strong>Dirección:</strong> {{ selectedParent()!.address }}
+                    </div>
+                  }
                 </div>
               </div>
             }

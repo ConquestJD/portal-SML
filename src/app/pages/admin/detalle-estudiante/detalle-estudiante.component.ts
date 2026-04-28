@@ -56,6 +56,7 @@ export class DetalleEstudianteComponent implements OnInit {
   ngOnInit() {
     this.studentId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadStudent();
+    this.loadParents();
   }
 
   loadStudent() {
@@ -98,7 +99,30 @@ export class DetalleEstudianteComponent implements OnInit {
 
   loadParents() {
     this.adminService.getStudentParents(this.studentId).subscribe({
-      next: (data) => this.parents.set(data)
+      next: (data) => this.parents.set(this.normalizeParents(data as any[]))
+    });
+  }
+
+  /** Acepta tanto Parent planos como relaciones { parent: {...}, isPrimary, relationship }. */
+  private normalizeParents(raw: any[]): any[] {
+    return (raw ?? []).map(r => {
+      const p = r?.parent ?? r;
+      const u = p?.user ?? r?.user ?? {};
+      const fallbackName = `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() || '(sin nombre)';
+      const rawStatus = p?.status ?? u?.status ?? '';
+      return {
+        id: p?.id ?? r?.parentId ?? r?.id ?? '',
+        name: p?.name ?? r?.name ?? fallbackName,
+        email: p?.email ?? u?.email ?? '',
+        phone: p?.phone ?? u?.phone ?? '',
+        dni: p?.dni ?? u?.dni ?? '',
+        address: p?.address ?? u?.address ?? '',
+        relationship: r?.relationship ?? p?.relationship ?? 'Apoderado',
+        occupation: p?.occupation ?? '',
+        isPrimary: !!(r?.isPrimary ?? p?.isPrimary),
+        isActive: r?.isActive ?? p?.isActive ?? rawStatus === 'ACTIVE',
+        status: rawStatus,
+      };
     });
   }
 
@@ -315,19 +339,40 @@ export class DetalleEstudianteComponent implements OnInit {
 
   // Modal de asignar padre
   showAssignParentModal = signal(false);
-  selectedParentId = signal('');
-  selectedParent = signal<unknown>(null);
-  availableParentsForAssignment = signal<unknown[]>([]);
+  private _selectedParentId = signal('');
+  get selectedParentId(): string { return this._selectedParentId(); }
+  set selectedParentId(v: string) { this._selectedParentId.set(v); }
+
+  private allAvailableParents = signal<any[]>([]);
+
+  /** Padres disponibles excluyendo a los ya vinculados al estudiante. */
+  availableParentsForAssignment = computed(() => {
+    const linkedIds = new Set((this.parents() as any[]).map(p => p.id));
+    return this.allAvailableParents().filter(p => !linkedIds.has(p.id));
+  });
+
+  /** Padre actualmente seleccionado en el modal. */
+  selectedParent = computed(() =>
+    this.availableParentsForAssignment().find(p => p.id === this._selectedParentId()) ?? null
+  );
 
   openAssignParentModal() {
     this.showAssignParentModal.set(true);
-    this.adminService.getParents({ pageSize: 100 }).subscribe({ next: ({ data }) => this.availableParentsForAssignment.set(data) });
+    this._selectedParentId.set('');
+    this.adminService.getParents({ pageSize: 100 }).subscribe({
+      next: ({ data }) => this.allAvailableParents.set(data as any[]),
+    });
   }
-  closeAssignParentModal() { this.showAssignParentModal.set(false); }
+  closeAssignParentModal() {
+    this.showAssignParentModal.set(false);
+    this._selectedParentId.set('');
+  }
   assignParent() {
-    const parentId = this.selectedParentId();
+    const parentId = this._selectedParentId();
     if (!parentId) return;
-    this.adminService.linkParent(this.studentId, parentId).subscribe({ next: () => { this.closeAssignParentModal(); this.loadParents(); } });
+    this.adminService.linkParent(this.studentId, parentId).subscribe({
+      next: () => { this.closeAssignParentModal(); this.loadParents(); }
+    });
   }
   removeParent(parentId: string) { this.unlinkParent(parentId); }
 }
