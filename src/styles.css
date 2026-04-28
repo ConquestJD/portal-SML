@@ -289,6 +289,220 @@ body {
   box-shadow: 0 0 0 3px rgb(0 51 102 / 0.1);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Admin search & filters toolbar
+   Compartida por las listas de estudiantes / profesores / padres / administradores.
+   ───────────────────────────────────────────────────────────────────────── */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  padding: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-toolbar__search {
+  position: relative;
+  flex: 1 1 320px;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-toolbar__search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--gray-400);
+  pointer-events: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.admin-toolbar__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 40px 0 42px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  background: var(--gray-50);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-toolbar__input::placeholder {
+  color: var(--gray-400);
+}
+
+.admin-toolbar__input:hover {
+  border-color: var(--gray-300);
+}
+
+.admin-toolbar__input:focus {
+  background: var(--bg-primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(0 51 102 / 0.12);
+}
+
+.admin-toolbar__search:focus-within .admin-toolbar__search-icon {
+  color: var(--primary);
+}
+
+.admin-toolbar__clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--gray-400);
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-toolbar__clear:hover {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+
+.admin-toolbar__filters {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-toolbar__select-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.admin-toolbar__select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--gray-500);
+  border-bottom: 2px solid var(--gray-500);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+  transition: border-color 0.2s ease;
+}
+
+.admin-toolbar__select-wrapper:focus-within::after {
+  border-color: var(--primary);
+}
+
+.admin-toolbar__select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 44px;
+  padding: 0 38px 0 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  background: var(--gray-50);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  min-width: 170px;
+}
+
+.admin-toolbar__select:hover {
+  border-color: var(--gray-300);
+}
+
+.admin-toolbar__select:focus {
+  background: var(--bg-primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(0 51 102 / 0.12);
+}
+
+.admin-toolbar__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 44px;
+  background: transparent;
+  border: 1px dashed var(--gray-300);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-toolbar__reset:hover {
+  color: var(--secondary);
+  border-color: var(--secondary);
+  background: rgb(196 30 58 / 0.04);
+}
+
+.admin-toolbar__divider {
+  width: 1px;
+  height: 28px;
+  background: var(--gray-200);
+}
+
+/* Línea informativa con conteo bajo el toolbar */
+.admin-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin: calc(var(--spacing-lg) * -1 + 4px) 0 var(--spacing-md);
+  padding: 0 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.admin-results-bar__count {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (max-width: 720px) {
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-toolbar__filters {
+    width: 100%;
+  }
+  .admin-toolbar__select-wrapper,
+  .admin-toolbar__select {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+  }
+  .admin-toolbar__reset {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Grid */
 .grid {
   display: grid;

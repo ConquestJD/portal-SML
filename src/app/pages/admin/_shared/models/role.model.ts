@@ -48,7 +48,7 @@ export function roleListPath(kind: RoleKind): string {
     case 'student': return '/admin/estudiantes';
     case 'teacher': return '/admin/profesores';
     case 'parent':  return '/admin/padres';
-    case 'admin':   return '/admin/usuarios';
+    case 'admin':   return '/admin/administradores';
   }
 }
 
@@ -58,7 +58,7 @@ export function roleListLabel(kind: RoleKind): string {
     case 'student': return 'Estudiantes';
     case 'teacher': return 'Profesores';
     case 'parent':  return 'Padres de familia';
-    case 'admin':   return 'Usuarios';
+    case 'admin':   return 'Administradores';
   }
 }
 

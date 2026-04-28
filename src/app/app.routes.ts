@@ -133,18 +133,22 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent)
       },
       {
-        path: 'admin/usuarios',
+        path: 'admin/administradores',
         loadComponent: () => import('./pages/admin/usuarios/usuarios.component').then(m => m.UsuariosComponent)
       },
       {
-        path: 'admin/usuarios/crear',
+        path: 'admin/administradores/crear',
         loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent),
         data: { roleKind: 'admin' }
       },
       {
-        path: 'admin/usuarios/:id/editar',
+        path: 'admin/administradores/:id/editar',
         loadComponent: () => import('./pages/admin/crear-usuario/crear-usuario.component').then(m => m.CrearUsuarioComponent)
       },
+      // Compatibilidad: rutas antiguas redirigen a la nueva sección de administradores.
+      { path: 'admin/usuarios', redirectTo: 'admin/administradores', pathMatch: 'full' },
+      { path: 'admin/usuarios/crear', redirectTo: 'admin/administradores/crear', pathMatch: 'full' },
+      { path: 'admin/usuarios/:id/editar', redirectTo: 'admin/administradores/:id/editar' },
       {
         path: 'admin/estudiantes',
         loadComponent: () => import('./pages/admin/estudiantes/estudiantes.component').then(m => m.EstudiantesComponent)
