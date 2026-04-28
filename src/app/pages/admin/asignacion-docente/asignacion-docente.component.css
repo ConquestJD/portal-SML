@@ -1,3 +1,102 @@
+.assign-panel {
+  margin-bottom: var(--spacing-xl);
+}
+
+.card-panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow);
+}
+
+.assign-panel-title {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-lg);
+  color: var(--primary);
+}
+
+.assign-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-lg);
+  align-items: flex-end;
+}
+
+.assign-form-grid .form-group-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.form-input {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.assign-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.assign-error-msg {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background: #fde2e2;
+  color: #721c24;
+  border-radius: var(--border-radius);
+  border: 1px solid #f5c6cb;
+}
+
+.loading-msg {
+  padding: var(--spacing-md);
+}
+
+.btn-sm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.btn-danger-outline {
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  background: transparent;
+}
+
+.btn-secondary {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .asignacion-docente-container {
   max-width: 1400px;
   margin: 0 auto;

@@ -2,16 +2,80 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">Asignación Docente</h1>
-      <p class="page-subtitle">Gestiona la carga académica de los profesores</p>
+      <p class="page-subtitle">Gestiona la carga académica de los profesores por curso y sección</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-primary" (click)="assignTeacher()">
+      <button type="button" class="btn btn-primary" (click)="assignTeacher()">
         <i class="fas fa-plus"></i> Nueva Asignación
       </button>
     </div>
   </div>
 
+  @if (showForm()) {
+    <div class="assign-panel card-panel">
+      <h2 class="assign-panel-title">Nueva asignación</h2>
+      <form class="assign-form-grid" (ngSubmit)="save()">
+        <admin-teacher-search-combobox
+          [teachers]="teachers()"
+          [selectedId]="formData().teacherId"
+          (selectedIdChange)="update('teacherId', $event)"
+          fieldLabel="Profesor"
+        />
+
+        <div class="form-group-panel">
+          <label class="form-label">Curso</label>
+          <select class="form-input" required
+                  [ngModel]="formData().courseId" (ngModelChange)="update('courseId', $event)"
+                  name="courseId">
+            <option value="">Seleccionar curso</option>
+            @for (c of courses(); track c.id) {
+              <option [value]="c.id">{{ c.name }} · {{ c.code }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group-panel">
+          <label class="form-label">Sección</label>
+          <select class="form-input" required
+                  [ngModel]="formData().sectionId" (ngModelChange)="update('sectionId', $event)"
+                  name="sectionId">
+            <option value="">Seleccionar sección</option>
+            @for (s of sections(); track s.id) {
+              <option [value]="s.id">{{ s.name }} — {{ s.grade }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group-panel">
+          <label class="form-label">Año académico</label>
+          <select class="form-input" required
+                  [ngModel]="formData().academicYearId" (ngModelChange)="update('academicYearId', $event)"
+                  name="yearId">
+            @for (y of academicYears(); track y.id) {
+              <option [value]="y.id">{{ y.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="assign-form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="btn btn-primary"
+                  [disabled]="!formData().teacherId || !formData().courseId || !formData().sectionId || !formData().academicYearId">
+            <i class="fas fa-save"></i> Guardar asignación
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="assign-error-msg">{{ error() }}</div>
+  }
+
   <div class="table-container">
+    @if (loading()) {
+      <div class="loading-msg">Cargando…</div>
+    }
     <table class="data-table">
       <thead>
         <tr>
@@ -26,14 +90,19 @@
       <tbody>
         @for (assignment of assignments(); track assignment.id) {
           <tr>
-            <td>{{ assignment.teacher }}</td>
-            <td>{{ assignment.course }}</td>
-            <td>{{ assignment.grade }}</td>
-            <td>{{ assignment.section }}</td>
-            <td>{{ assignment.students }}</td>
+            <td>{{ teacherDisplay(assignment) }}</td>
+            <td>{{ assignment.course?.name }}</td>
+            <td>{{ gradeDisplay(assignment) }}</td>
+            <td>{{ sectionDisplay(assignment) }}</td>
+            <td>{{ assignment.students ?? '—' }}</td>
             <td>
-              <button class="btn btn-sm btn-primary">
-                <i class="fas fa-edit"></i> Editar
+              <button type="button" class="btn btn-sm btn-secondary"
+                      (click)="deactivate(assignment.id)"
+                      title="Desactivar">
+                <i class="fas fa-pause"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-danger-outline" (click)="delete(assignment.id)">
+                <i class="fas fa-trash"></i>
               </button>
             </td>
           </tr>
