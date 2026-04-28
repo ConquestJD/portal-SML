@@ -5,6 +5,10 @@ import { RouterLink, Router } from '@angular/router';
 import { AdminService, UserItem } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 
+/**
+ * Vista de "Administradores": gestiona únicamente usuarios con rol ADMIN.
+ * (El listado completo de cada rol vive en sus propias páginas: estudiantes, profesores, padres.)
+ */
 @Component({
   selector: 'app-usuarios',
   standalone: true,
@@ -15,17 +19,11 @@ import { ADMIN_SHARED } from '../_shared';
 export class UsuariosComponent implements OnInit {
   loading = signal(true);
   error = signal('');
-  filterRole = signal('');
-  currentPage = signal(1);
-  totalPages = signal(1);
   total = signal(0);
 
   users = signal<UserItem[]>([]);
-  activeTab = signal('todos');
-
   resetPasswordResult = signal<{ userId: string; tempPassword: string } | null>(null);
 
-  // Plain properties for [(ngModel)] compatibility
   private _searchQuery = signal('');
   get searchQuery(): string { return this._searchQuery(); }
   set searchQuery(v: string) { this._searchQuery.set(v); }
@@ -35,55 +33,61 @@ export class UsuariosComponent implements OnInit {
   set filterStatus(v: string) { this._filterStatus.set(v); }
 
   filteredUsers = computed(() => {
-    const q = this._searchQuery().toLowerCase();
-    if (!q) return this.users();
-    return this.users().filter(u =>
-      (u.name ?? `${u.firstName} ${u.lastName}`).toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
-    );
+    const q = this._searchQuery().toLowerCase().trim();
+    const list = this.users();
+    if (!q) return list;
+    return list.filter(u => {
+      const name = (u.name ?? `${u.firstName} ${u.lastName}`).toLowerCase();
+      const email = (u.email ?? '').toLowerCase();
+      const username = (u.username ?? '').toLowerCase();
+      return name.includes(q) || email.includes(q) || username.includes(q);
+    });
   });
 
-  estudiantes = computed(() => this.users().filter(u => u.role?.name === 'STUDENT'));
-  profesores = computed(() => this.users().filter(u => u.role?.name === 'TEACHER'));
-  padres = computed(() => this.users().filter(u => u.role?.name === 'PARENT'));
-  administrativos = computed(() => this.users().filter(u => u.role?.name === 'ADMIN'));
-  currentUsers = computed(() => this.filteredUsers());
+  totalActive = computed(() =>
+    this.users().filter(u => u.status === 'ACTIVE' || u.displayStatus === 'activo').length
+  );
 
-  private readonly roleTabMap: Record<string, string> = {
-    estudiantes: 'STUDENT', profesores: 'TEACHER', padres: 'PARENT', administrativos: 'ADMIN'
-  };
+  hasActiveFilters = computed(() => !!this._searchQuery() || !!this._filterStatus());
+
+  resetFilters() {
+    this._searchQuery.set('');
+    if (this._filterStatus()) {
+      this._filterStatus.set('');
+      this.load();
+    }
+  }
+
   private readonly statusApiMap: Record<string, string> = {
     activo: 'ACTIVE', inactivo: 'INACTIVE', suspendido: 'SUSPENDED'
   };
 
   constructor(private adminService: AdminService, private router: Router) {}
 
-  navigateToEdit(user: UserItem) {
-    this.router.navigate(['/admin/usuarios', user.id, 'editar'], { state: { user } });
-  }
-
   ngOnInit() { this.load(); }
 
   load() {
     this.loading.set(true);
-    const statusFilter = this._filterStatus();
     this.adminService.getUsers({
-      role: this.filterRole() || undefined,
-      status: this.statusApiMap[statusFilter] || undefined,
-      page: this.currentPage(),
-      pageSize: 20
+      role: 'ADMIN',
+      status: this.statusApiMap[this._filterStatus()] || undefined,
+      page: 1,
+      pageSize: 100,
     }).subscribe({
       next: ({ data, meta }) => {
         this.users.set(data);
-        this.totalPages.set(meta.totalPages);
         this.total.set(meta.total);
         this.loading.set(false);
       },
-      error: () => { this.error.set('Error al cargar usuarios'); this.loading.set(false); }
+      error: () => { this.error.set('Error al cargar administradores'); this.loading.set(false); }
     });
   }
 
-  onFilterChange() { this.currentPage.set(1); this.load(); }
+  onFilterChange() { this.load(); }
+
+  navigateToEdit(user: UserItem) {
+    this.router.navigate(['/admin/administradores', user.id, 'editar'], { state: { user } });
+  }
 
   toggleStatus(user: UserItem) {
     const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -98,11 +102,15 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  setTab(t: string) {
-    this.activeTab.set(t);
-    this.filterRole.set(this.roleTabMap[t] ?? '');
-    this.load();
+  dismissResetResult() { this.resetPasswordResult.set(null); }
+
+  clearSearch() { this._searchQuery.set(''); }
+
+  getInitials(u: UserItem): string {
+    const name = (u.name ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`).trim();
+    if (!name) return '?';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
-  onSearch() { this.onFilterChange(); }
-  applyFilters() { this.onFilterChange(); }
 }

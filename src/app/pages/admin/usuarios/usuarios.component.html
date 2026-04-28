@@ -1,104 +1,156 @@
 <div class="usuarios-container">
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">Gestión de Usuarios</h1>
-      <p class="page-subtitle">Administra todos los usuarios del sistema</p>
+      <h1 class="page-title">Administradores</h1>
+      <p class="page-subtitle">Gestiona las cuentas con permisos administrativos del sistema</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/admin/usuarios/crear" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nuevo Usuario
+      <a routerLink="/admin/administradores/crear" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nuevo Administrador
       </a>
     </div>
   </div>
 
-  <!-- Tabs -->
-  <admin-tabs
-    [tabs]="[
-      { id: 'todos',           label: 'Todos',           icon: 'fa-users',             badge: users().length },
-      { id: 'estudiantes',     label: 'Estudiantes',     icon: 'fa-user-graduate',     badge: estudiantes().length },
-      { id: 'profesores',      label: 'Profesores',      icon: 'fa-chalkboard-teacher', badge: profesores().length },
-      { id: 'padres',          label: 'Padres',          icon: 'fa-users',             badge: padres().length },
-      { id: 'administrativos', label: 'Administrativos', icon: 'fa-user-shield',       badge: administrativos().length }
-    ]"
-    [activeTab]="activeTab()"
-    (activeTabChange)="setTab($event)">
-  </admin-tabs>
-
-  <!-- Filtros y Búsqueda -->
-  <div class="filters-section">
-    <div class="search-wrapper">
-      <i class="fas fa-search"></i>
-      <input
-        type="text"
-        class="form-input search-input"
-        placeholder="Buscar por nombre o email..."
-        [(ngModel)]="searchQuery"
-        (input)="onSearch()"
-        name="searchQuery"
-      />
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-icon"><i class="fas fa-user-shield"></i></span>
+      <div class="stat-text">
+        <span class="stat-value">{{ total() }}</span>
+        <span class="stat-label">Administradores registrados</span>
+      </div>
     </div>
-    <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-input" name="filterStatus">
-      <option value="todos">Todos los estados</option>
-      <option value="activo">Activo</option>
-      <option value="inactivo">Inactivo</option>
-      <option value="suspendido">Suspendido</option>
-    </select>
+    <div class="stat-card">
+      <span class="stat-icon stat-icon--success"><i class="fas fa-user-check"></i></span>
+      <div class="stat-text">
+        <span class="stat-value">{{ totalActive() }}</span>
+        <span class="stat-label">Activos</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Tabla de Usuarios -->
-  <div class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Rol</th>
-          <th>Estado</th>
-          <th>Último Acceso</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (user of currentUsers(); track user.id) {
-          <tr>
-            <td>
-              <div class="user-info">
-                <div class="user-avatar">
-                  {{ (user.name || user.firstName)?.charAt(0) }}
-                </div>
-                <span>{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
-              </div>
-            </td>
-            <td>{{ user.email }}</td>
-            <td>
-              <span class="badge badge-info">{{ user.role?.name | roleLabel }}</span>
-            </td>
-            <td>
-              <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
-            </td>
-            <td>{{ user.lastLogin || 'Nunca' }}</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn btn-sm btn-primary" title="Editar" (click)="navigateToEdit(user)">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-secondary" title="Resetear Contraseña" (click)="resetPassword(user.id)">
-                  <i class="fas fa-key"></i>
-                </button>
-                <button class="btn btn-sm" [class.btn-error]="user.displayStatus === 'activo'" [class.btn-success]="user.displayStatus !== 'activo'" [title]="user.displayStatus === 'activo' ? 'Desactivar' : 'Activar'" (click)="toggleStatus(user)">
-                  <i [class]="user.displayStatus === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  @if (resetPasswordResult(); as r) {
+    <div class="alert alert-info">
+      <div>
+        <i class="fas fa-key"></i>
+        Se generó una contraseña temporal: <strong>{{ r.tempPassword }}</strong>
+      </div>
+      <button type="button" class="alert-dismiss" (click)="dismissResetResult()" aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  }
 
-    @if (currentUsers().length === 0) {
-      <admin-empty-state icon="fa-users" title="No se encontraron usuarios"
-        message="Intenta ajustar los filtros de búsqueda.">
-      </admin-empty-state>
+  <div class="admin-toolbar">
+    <div class="admin-toolbar__search">
+      <i class="fas fa-search admin-toolbar__search-icon"></i>
+      <input
+        type="text"
+        class="admin-toolbar__input"
+        placeholder="Buscar por nombre, usuario o email..."
+        [(ngModel)]="searchQuery"
+        name="searchQuery" />
+      @if (searchQuery) {
+        <button type="button" class="admin-toolbar__clear" (click)="clearSearch()" title="Limpiar búsqueda">
+          <i class="fas fa-times"></i>
+        </button>
+      }
+    </div>
+    <div class="admin-toolbar__filters">
+      <div class="admin-toolbar__select-wrapper">
+        <select class="admin-toolbar__select" [(ngModel)]="filterStatus" (change)="onFilterChange()" name="filterStatus">
+          <option value="">Todos los estados</option>
+          <option value="activo">Activos</option>
+          <option value="inactivo">Inactivos</option>
+          <option value="suspendido">Suspendidos</option>
+        </select>
+      </div>
+      @if (hasActiveFilters()) {
+        <button type="button" class="admin-toolbar__reset" (click)="resetFilters()" title="Quitar filtros">
+          <i class="fas fa-rotate-left"></i> Limpiar
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (hasActiveFilters()) {
+    <div class="admin-results-bar">
+      <span>
+        Mostrando <span class="admin-results-bar__count">{{ filteredUsers().length }}</span>
+        de <span class="admin-results-bar__count">{{ total() }}</span> administradores
+      </span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-error">
+      <i class="fas fa-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+
+  <div class="table-container">
+    @if (loading()) {
+      <div class="table-loading">
+        <i class="fas fa-spinner fa-spin"></i> Cargando administradores...
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Administrador</th>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Estado</th>
+            <th>Último acceso</th>
+            <th class="actions-col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <span class="user-avatar">{{ getInitials(user) }}</span>
+                  <span class="user-name">{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
+                </div>
+              </td>
+              <td>{{ user.username || '—' }}</td>
+              <td>{{ user.email || '—' }}</td>
+              <td>
+                <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
+              </td>
+              <td>{{ user.lastLogin || 'Nunca' }}</td>
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <button type="button" class="btn btn-sm btn-primary" title="Editar" (click)="navigateToEdit(user)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-secondary" title="Resetear contraseña" (click)="resetPassword(user.id)">
+                    <i class="fas fa-key"></i>
+                  </button>
+                  <button type="button"
+                          class="btn btn-sm"
+                          [class.btn-error]="user.displayStatus === 'activo'"
+                          [class.btn-success]="user.displayStatus !== 'activo'"
+                          [title]="user.displayStatus === 'activo' ? 'Desactivar' : 'Activar'"
+                          (click)="toggleStatus(user)">
+                    <i [class]="user.displayStatus === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <admin-empty-state
+                  icon="fa-user-shield"
+                  title="No hay administradores"
+                  message="Crea el primer administrador con el botón superior.">
+                </admin-empty-state>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     }
   </div>
 </div>
