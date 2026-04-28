@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { AdminService, UserItem } from '../../../services/admin.service';
 import {
-  USER_FORM_STRATEGIES, UserFormStrategy, UserFormData, emptyFormData, FieldKey,
+  USER_FORM_STRATEGIES, UserFormStrategy, UserFormData, emptyFormData, FieldKey, usernameFromDni,
 } from './user-form.strategies';
 import { RoleKind, apiRoleToKind } from '../_shared/models/role.model';
 import { AdminBreadcrumbComponent } from '../_shared/components/breadcrumb/admin-breadcrumb.component';
@@ -18,6 +18,8 @@ import { AdminBreadcrumbComponent } from '../_shared/components/breadcrumb/admin
 })
 export class CrearUsuarioComponent implements OnInit {
   readonly MIN_PASSWORD_LENGTH = 8;
+  /** DNI peruano; el nombre de usuario de acceso son solo estos dígitos. */
+  readonly MIN_DNI_DIGITS = 8;
 
   readonly GRADES: Record<string, string[]> = {
     inicial:    ['3 años', '4 años', '5 años'],
@@ -41,6 +43,9 @@ export class CrearUsuarioComponent implements OnInit {
   /** Rol actual (resuelto desde la ruta o desde el `tipo` query param legacy). */
   roleKind = signal<RoleKind>('admin');
   strategy = computed<UserFormStrategy>(() => USER_FORM_STRATEGIES[this.roleKind()]);
+
+  /** Clase CSS para tema visual por tipo de usuario (estudiante, docente, apoderado, admin). */
+  containerRoleClass = computed(() => `crear-usuario-container--${this.roleKind()}`);
 
   formData = signal<UserFormData>(emptyFormData());
 
@@ -115,6 +120,7 @@ export class CrearUsuarioComponent implements OnInit {
               medicalNotes: student.medicalNotes ?? '',
               grade:        student.grade ?? '',
               level:        (student.level ?? '').toLowerCase(),
+              dni:          student.dni ?? d.dni ?? '',
             }));
           },
         });
@@ -127,9 +133,11 @@ export class CrearUsuarioComponent implements OnInit {
       ...d,
       firstName: user.firstName ?? '',
       lastName:  user.lastName ?? '',
+      username:  user.username ?? '',
       email:     user.email ?? '',
       phone:     user.phone ?? '',
       status:    (user.status as UserFormData['status']) ?? 'ACTIVE',
+      dni:       user.dni ?? usernameFromDni(user.username ?? ''),
     }));
   }
 
@@ -149,6 +157,25 @@ export class CrearUsuarioComponent implements OnInit {
     this.formData.update(d => ({ ...d, level, grade: '' }));
   }
 
+  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta. */
+  onDniInput(value: string) {
+    this.formData.update(d => ({ ...d, dni: value }));
+    if (!this.isEditMode()) {
+      const u = usernameFromDni(value);
+      this.formData.update(d => ({ ...d, username: u }));
+    }
+  }
+
+  dniError(): string {
+    if (this.isEditMode() || !this.hasField('dni')) return '';
+    const digits = usernameFromDni(this.formData().dni);
+    if (!digits) return 'El DNI es obligatorio';
+    if (digits.length < this.MIN_DNI_DIGITS) {
+      return `El DNI debe tener al menos ${this.MIN_DNI_DIGITS} dígitos`;
+    }
+    return '';
+  }
+
   resetPassword() {
     if (!this.userId()) return;
     this.adminService.resetUserPassword(this.userId()).subscribe({
@@ -162,6 +189,16 @@ export class CrearUsuarioComponent implements OnInit {
     this.error.set('');
     this.success.set('');
     const d = this.formData();
+
+    // DNI obligatorio en creación y base del usuario de acceso
+    if (!this.isEditMode()) {
+      const dErr = this.dniError();
+      if (dErr) {
+        this.error.set(dErr);
+        this.isLoading.set(false);
+        return;
+      }
+    }
 
     const mustValidatePassword = this.credentialsRequired() && (!this.isEditMode() || !!d.password);
     if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {

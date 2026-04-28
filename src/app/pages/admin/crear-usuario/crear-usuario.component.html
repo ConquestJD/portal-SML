@@ -1,4 +1,4 @@
-<div class="crear-usuario-container">
+<div class="crear-usuario-container" [ngClass]="containerRoleClass()">
   <admin-breadcrumb [items]="breadcrumbItems()"></admin-breadcrumb>
 
   <div class="page-header">
@@ -26,7 +26,42 @@
 
   <form (ngSubmit)="onSubmit()" class="user-form" #userForm="ngForm">
 
-    <!-- Sección específica del rol (arriba para guiar al usuario) -->
+    <!-- 1. DNI primero: será el usuario de acceso y base para datos automáticos vía API -->
+    @if (hasField('dni')) {
+      <div class="form-section form-section--identification">
+        <h2 class="section-title">Identificación</h2>
+        <p class="section-lead">
+          Ingresa primero el <strong>DNI</strong>. Será el <strong>nombre de usuario</strong> para iniciar sesión (solo números, sin espacios).
+        </p>
+        <div class="form-grid form-grid--identification">
+          <div class="form-group" [class.form-group--error]="dniError()">
+            <label class="form-label" for="dni">DNI *</label>
+            <input
+              type="text"
+              id="dni"
+              name="dni"
+              class="form-input"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="16"
+              [ngModel]="formData().dni"
+              (ngModelChange)="onDniInput($event)"
+              [disabled]="isEditMode()"
+              placeholder="Ej: 45678901"
+            />
+            <span class="field-hint">
+              <i class="fas fa-id-card"></i>
+              Mínimo {{ MIN_DNI_DIGITS }} dígitos. Puedes pegar el DNI con o sin guiones.
+            </span>
+            @if (dniError()) {
+              <span class="field-error">{{ dniError() }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Sección específica del rol -->
     @if (hasField('level') || hasField('grade') || hasField('department')) {
       <div class="form-section">
         <h2 class="section-title">
@@ -232,27 +267,17 @@
                  name="lastName" required placeholder="Ej: García">
         </div>
         <div class="form-group">
-          <label class="form-label">Email *</label>
+          <label class="form-label">Email <span class="field-optional">(opcional)</span></label>
           <input type="email" class="form-input"
                  [ngModel]="formData().email"
                  (ngModelChange)="update('email', $event)"
-                 name="email" required>
-          @if (roleKind() === 'student') {
-            <span class="field-hint">
-              <i class="fas fa-info-circle"></i>
-              Si el estudiante no tiene correo, usa el del padre de familia
-            </span>
-          }
+                 name="email"
+                 placeholder="correo@ejemplo.com">
+          <span class="field-hint">
+            <i class="fas fa-info-circle"></i>
+            Solo para notificaciones. El inicio de sesión se hace con el usuario.
+          </span>
         </div>
-        @if (hasField('dni')) {
-          <div class="form-group">
-            <label class="form-label">DNI</label>
-            <input type="text" class="form-input"
-                   [ngModel]="formData().dni"
-                   (ngModelChange)="update('dni', $event)"
-                   name="dni">
-          </div>
-        }
         <div class="form-group">
           <label class="form-label">Teléfono</label>
           <input type="tel" class="form-input"
@@ -289,7 +314,37 @@
     @if (credentialsRequired() || isEditMode()) {
       <div class="form-section">
         <h2 class="section-title">Credenciales de Acceso</h2>
+        <p class="section-hint">
+          <i class="fas fa-info-circle"></i>
+          El <strong>usuario de acceso</strong> es el mismo <strong>número de DNI</strong> (sin letras ni guiones).
+          El correo, si lo indicas, es solo para notificaciones.
+        </p>
         <div class="form-grid">
+          @if (!isEditMode()) {
+            <div class="form-group">
+              <label class="form-label">Usuario (DNI)</label>
+              <input
+                type="text"
+                class="form-input form-input--readonly-simulated"
+                readonly
+                tabindex="-1"
+                [value]="formData().username || '—'"
+                aria-readonly="true">
+              <span class="field-hint">
+                <i class="fas fa-link"></i>
+                Se toma automáticamente del DNI que ingresaste arriba.
+              </span>
+            </div>
+          } @else {
+            <div class="form-group">
+              <label class="form-label">Nombre de usuario</label>
+              <input type="text" class="form-input" [value]="formData().username" disabled>
+              <span class="field-hint">
+                <i class="fas fa-lock"></i>
+                El nombre de usuario no se puede modificar después de crear la cuenta.
+              </span>
+            </div>
+          }
           <div class="form-group">
             <label class="form-label">
               {{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}
@@ -299,7 +354,8 @@
                    (ngModelChange)="update('password', $event)"
                    [name]="isEditMode() ? 'newPassword' : 'password'"
                    [required]="!isEditMode()"
-                   [attr.minlength]="MIN_PASSWORD_LENGTH">
+                   [attr.minlength]="MIN_PASSWORD_LENGTH"
+                   autocomplete="new-password">
             <span class="field-hint">
               <i class="fas fa-info-circle"></i>
               Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres
