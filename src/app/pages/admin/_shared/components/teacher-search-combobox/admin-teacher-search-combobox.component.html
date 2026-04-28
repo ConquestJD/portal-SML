@@ -1,0 +1,62 @@
+<div class="teacher-combo" [class.disabled]="disabled()" [class.is-open]="dropdownOpen() && !disabled()">
+  @if (!withoutLabel()) {
+    <label class="teacher-combo__label">{{ fieldLabel() }}</label>
+  }
+
+  <div class="teacher-combo__wrap" [class.has-value]="!!selectedId()">
+    <span class="teacher-combo__leading">
+      <i class="fas fa-user"></i>
+    </span>
+
+    <input
+      type="text"
+      class="form-input teacher-combo__field"
+      [value]="searchText()"
+      (input)="onInput($event)"
+      (focus)="onFocusInput()"
+      (blur)="scheduleClose()"
+      [disabled]="disabled()"
+      [attr.placeholder]="placeholder()"
+      autocomplete="off"
+      spellcheck="false"
+    />
+
+    @if (selectedId() && !disabled()) {
+      <button type="button"
+              class="teacher-combo__clear"
+              (mousedown)="clearSelection($event)"
+              title="Quitar profesor"
+              aria-label="Quitar profesor">
+        <i class="fas fa-times"></i>
+      </button>
+    } @else if (!disabled()) {
+      <span class="teacher-combo__chevron" aria-hidden="true">
+        <i class="fas fa-chevron-down"></i>
+      </span>
+    }
+  </div>
+
+  @if (dropdownOpen() && !disabled()) {
+    <ul class="teacher-combo__list" role="listbox" (mouseenter)="cancelClose()">
+      @if (filteredTeachers().length === 0) {
+        <li class="teacher-combo__empty">
+          <i class="fas fa-search"></i>
+          Sin resultados para “{{ searchText() }}”
+        </li>
+      } @else {
+        @for (t of filteredTeachers(); track trackById($index, t)) {
+          <li role="option"
+              class="teacher-combo__item"
+              [class.is-selected]="t.id === selectedId()"
+              (mousedown)="pick(t, $event)">
+            <span class="teacher-combo__avatar">{{ initialsOf(t) }}</span>
+            <span class="teacher-combo__item-text">{{ labelOf(t) }}</span>
+            @if (t.id === selectedId()) {
+              <i class="fas fa-check teacher-combo__item-check"></i>
+            }
+          </li>
+        }
+      }
+    </ul>
+  }
+</div>
