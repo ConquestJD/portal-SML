@@ -63,13 +63,38 @@ export class DetalleProfesorComponent implements OnInit {
 
   loadActiveCourses() {
     this.adminService.getTeacherActiveCourses(this.teacherId).subscribe({
-      next: (data) => this.activeCourses.set(data)
+      next: (data) => this.activeCourses.set(this.normalizeCourses(data as any[]))
     });
   }
 
   loadCourseHistory() {
     this.adminService.getTeacherCourseHistory(this.teacherId).subscribe({
-      next: (data) => this.courseHistory.set(data)
+      next: (data) => this.courseHistory.set(this.normalizeCourses(data as any[]))
+    });
+  }
+
+  /** Acepta tanto cursos planos como objetos `TeacherAssignment` con `course` anidado. */
+  private normalizeCourses(raw: any[]): any[] {
+    return (raw ?? []).map(c => {
+      const course = c?.course ?? c;
+      const schedule = (course?.schedule ?? c?.schedule ?? []) as any[];
+      return {
+        id: course?.id ?? c?.courseId ?? c?.id ?? '',
+        name: course?.name ?? '(sin nombre)',
+        code: course?.code ?? '',
+        level: course?.level ?? '',
+        grade: course?.grade ?? c?.section?.grade ?? '',
+        section: c?.section?.name ?? '',
+        academicYear: c?.academicYear?.name ?? course?.academicYear ?? '',
+        students: c?.students ?? course?.students ?? 0,
+        classroom: course?.classroom ?? c?.classroom ?? '',
+        startDate: c?.startDate ?? course?.startDate ?? null,
+        endDate: c?.endDate ?? course?.endDate ?? null,
+        schedule: schedule.map(s => ({
+          day: s?.day ?? '',
+          time: s?.time ?? (s?.startTime && s?.endTime ? `${s.startTime} – ${s.endTime}` : ''),
+        })),
+      };
     });
   }
 
@@ -108,7 +133,7 @@ export class DetalleProfesorComponent implements OnInit {
 
   openAssignCourseModal() {
     this.showAssignCourseModal.set(true);
-    this.adminService.getCourses({ pageSize: 200 }).subscribe({
+    this.adminService.getCourses({ pageSize: 100 }).subscribe({
       next: ({ data }) => this.availableCoursesForAssignment.set(data as any[]),
     });
   }

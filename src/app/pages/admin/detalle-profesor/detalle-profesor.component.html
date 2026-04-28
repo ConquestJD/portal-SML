@@ -29,59 +29,42 @@
             <h3>Información Personal</h3>
             <div class="info-item">
               <span class="label">Nombre Completo:</span>
-              <span class="value">{{ profesor().name }}</span>
+              <span class="value">{{ profesor().name || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">DNI:</span>
-              <span class="value">{{ profesor().dni }}</span>
+              <span class="value">{{ profesor().dni || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Email:</span>
-              <span class="value">{{ profesor().email }}</span>
+              <span class="value">{{ profesor().email || '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Teléfono:</span>
-              <span class="value">{{ profesor().phone }}</span>
+              <span class="value">{{ profesor().phone || '—' }}</span>
             </div>
-            <div class="info-item">
-              <span class="label">Dirección:</span>
-              <span class="value">{{ profesor().address }}</span>
-            </div>
+            @if (profesor().address) {
+              <div class="info-item">
+                <span class="label">Dirección:</span>
+                <span class="value">{{ profesor().address }}</span>
+              </div>
+            }
           </div>
           <div class="info-card">
-            <h3>Información Profesional</h3>
+            <h3>Credenciales de Acceso</h3>
             <div class="info-item">
-              <span class="label">Departamento:</span>
-              <span class="value">{{ profesor().department }}</span>
+              <span class="label">Usuario:</span>
+              <span class="value">{{ profesor().username || '—' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">Especialización:</span>
-              <span class="value">{{ profesor().specialization }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Título Profesional:</span>
-              <span class="value">{{ profesor().degree }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Universidad:</span>
-              <span class="value">{{ profesor().university }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Fecha de Contratación:</span>
-              <span class="value">{{ profesor().hireDate | date:'longDate' }}</span>
+              <span class="label">Fecha de Registro:</span>
+              <span class="value">{{ profesor().createdAt ? (profesor().createdAt | date:'longDate') : '—' }}</span>
             </div>
             <div class="info-item">
               <span class="label">Estado:</span>
               <span class="value">
                 <admin-status-badge [value]="profesor().status"></admin-status-badge>
               </span>
-            </div>
-          </div>
-          <div class="info-card">
-            <h3>Credenciales de Acceso</h3>
-            <div class="info-item">
-              <span class="label">Usuario:</span>
-              <span class="value">{{ profesor().username }}</span>
             </div>
           </div>
         </div>
@@ -108,42 +91,40 @@
                   <div class="course-info">
                     <h4><a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a></h4>
                     <div class="course-meta">
-                      <span class="course-code">{{ course.code }}</span>
-                      <span class="course-level">{{ getLevelLabel(course.level) }}</span>
-                      <span class="course-grade">{{ course.grade }} - Sección {{ course.section }}</span>
+                      @if (course.code) { <span class="course-code">{{ course.code }}</span> }
+                      @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
+                      @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
                     </div>
                   </div>
                   <div class="course-stats">
-                    <div class="stat-item">
-                      <i class="fas fa-users"></i>
-                      <span>{{ course.students }} estudiantes</span>
-                    </div>
-                    <div class="stat-item">
-                      <i class="fas fa-calendar"></i>
-                      <span>{{ course.academicYear }}</span>
-                    </div>
+                    @if (course.students) {
+                      <div class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <span>{{ course.students }} estudiantes</span>
+                      </div>
+                    }
+                    @if (course.academicYear) {
+                      <div class="stat-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ course.academicYear }}</span>
+                      </div>
+                    }
                   </div>
                 </div>
-                <div class="course-details">
-                  <div class="detail-section">
-                    <h5><i class="fas fa-clock"></i> Horario</h5>
-                    <div class="schedule-list">
-                      @for (schedule of course.schedule; track schedule.day) {
-                        <div class="schedule-item">
-                          <strong>{{ schedule.day }}:</strong> {{ schedule.time }}
-                        </div>
-                      }
+                @if (course.schedule?.length) {
+                  <div class="course-details">
+                    <div class="detail-section">
+                      <h5><i class="fas fa-clock"></i> Horario</h5>
+                      <div class="schedule-list">
+                        @for (schedule of course.schedule; track schedule.day) {
+                          <div class="schedule-item">
+                            <strong>{{ schedule.day }}:</strong> {{ schedule.time }}
+                          </div>
+                        }
+                      </div>
                     </div>
                   </div>
-                  <div class="detail-section">
-                    <h5><i class="fas fa-door-open"></i> Aula</h5>
-                    <p>{{ course.classroom }}</p>
-                  </div>
-                  <div class="detail-section">
-                    <h5><i class="fas fa-calendar-alt"></i> Fecha de Inicio</h5>
-                    <p>{{ course.startDate | date:'longDate' }}</p>
-                  </div>
-                </div>
+                }
                 <div class="course-actions">
                   <button class="btn-icon btn-danger" (click)="removeCourse(course.id)" title="Desasignar Curso">
                     <i class="fas fa-times"></i>
@@ -169,31 +150,19 @@
                   <div class="course-info">
                     <h4>{{ course.name }}</h4>
                     <div class="course-meta">
-                      <span class="course-code">{{ course.code }}</span>
-                      <span class="course-level">{{ getLevelLabel(course.level) }}</span>
-                      <span class="course-grade">{{ course.grade }} - Sección {{ course.section }}</span>
+                      @if (course.code) { <span class="course-code">{{ course.code }}</span> }
+                      @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
+                      @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
                     </div>
                   </div>
                   <div class="course-stats">
-                    <div class="stat-item">
-                      <i class="fas fa-users"></i>
-                      <span>{{ course.students }} estudiantes</span>
-                    </div>
-                    <div class="stat-item">
-                      <i class="fas fa-calendar"></i>
-                      <span>{{ course.academicYear }}</span>
-                    </div>
+                    @if (course.academicYear) {
+                      <div class="stat-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ course.academicYear }}</span>
+                      </div>
+                    }
                     <span class="badge badge-secondary">Finalizado</span>
-                  </div>
-                </div>
-                <div class="course-details">
-                  <div class="detail-section">
-                    <h5><i class="fas fa-calendar-check"></i> Período</h5>
-                    <p>{{ course.startDate | date:'shortDate' }} - {{ course.endDate | date:'shortDate' }}</p>
-                  </div>
-                  <div class="detail-section">
-                    <h5><i class="fas fa-door-open"></i> Aula</h5>
-                    <p>{{ course.classroom }}</p>
                   </div>
                 </div>
               </div>
