@@ -18,7 +18,8 @@ function buildParams(filters: Record<string, string | number | boolean | undefin
 
 // ─── USERS ───────────────────────────────────────────────────────────────────
 export interface UserItem {
-  id: string; email: string; firstName: string; lastName: string;
+  id: string; username?: string; email: string; firstName: string; lastName: string;
+  dni?: string;
   name?: string;
   role: { name: string };
   displayRole?: string;
@@ -27,8 +28,10 @@ export interface UserItem {
   phone?: string; createdAt?: string; lastLogin?: string;
 }
 export interface CreateUserDto {
-  email: string; password: string; firstName: string; lastName: string;
+  username: string;
+  email?: string; password: string; firstName: string; lastName: string;
   phone?: string; role: string;
+  dni?: string;
 }
 
 // ─── STUDENTS ────────────────────────────────────────────────────────────────
@@ -42,7 +45,8 @@ export interface StudentItem {
   dni?: string; emergencyPhone?: string; username?: string; tutor?: string;
 }
 export interface CreateStudentDto {
-  email: string; password: string; firstName: string; lastName: string;
+  username: string;
+  email?: string; password: string; firstName: string; lastName: string;
   phone?: string; studentCode?: string; birthDate?: string; gender?: string;
   address?: string; bloodType?: string; medicalNotes?: string; dni?: string;
   grade?: string; level?: string;
@@ -57,8 +61,15 @@ export interface TeacherItem {
   department?: string; courses?: number; students?: number; grades?: string[];
 }
 export interface CreateTeacherDto {
-  email: string; password: string; firstName: string; lastName: string;
-  phone?: string; teacherCode?: string; specialty?: string; bio?: string;
+  username: string;
+  email?: string; password: string; firstName: string; lastName: string;
+  phone?: string;
+  dni?: string;
+  department?: string;
+  degree?: string;
+  university?: string;
+  address?: string;
+  teacherCode?: string; specialty?: string; bio?: string;
 }
 
 // ─── PARENTS ─────────────────────────────────────────────────────────────────
@@ -70,8 +81,12 @@ export interface ParentItem {
   children?: number; childrenList?: { id: string; name: string; grade: string }[];
 }
 export interface CreateParentDto {
-  email: string; password: string; firstName: string; lastName: string;
-  phone?: string; relationship?: string; occupation?: string;
+  username: string;
+  email?: string; password: string; firstName: string; lastName: string;
+  phone?: string;
+  dni?: string;
+  address?: string;
+  relationship?: string; occupation?: string;
 }
 
 // ─── COURSES ─────────────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ export type UserRole = 'estudiante' | 'profesor' | 'admin' | 'padre';
 
 export interface ApiUser {
   id: string;
+  username?: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -18,6 +19,7 @@ export interface ApiUser {
 
 export interface User {
   id: string;
+  username: string;
   email: string;
   name: string;
   firstName: string;
@@ -53,6 +55,7 @@ function mapRole(apiRole: string): UserRole {
 function mapApiUser(apiUser: ApiUser): User {
   return {
     id: apiUser.id,
+    username: apiUser.username ?? apiUser.email,
     email: apiUser.email,
     firstName: apiUser.firstName,
     lastName: apiUser.lastName,
@@ -79,8 +82,15 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string, rememberMe = false): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
+  login(identifier: string, password: string, rememberMe = false): Observable<LoginResponse> {
+    // Contrato API (FRONTEND.md): { email, password } o usuario sin @ con { username, password }.
+    // No mezclar ambos campos: algunos backends validan email XOR username y rechazan login.
+    const id = identifier.trim();
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
+    const body = looksLikeEmail
+      ? ({ email: id, password } as Record<string, string>)
+      : ({ username: id, password } as Record<string, string>);
+    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, body).pipe(
       tap(res => {
         const { accessToken, refreshToken, user } = res.data;
         this.saveTokens(accessToken, refreshToken, rememberMe);
@@ -121,8 +131,13 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}/auth/change-password`, { currentPassword, newPassword });
   }
 
-  forgotPassword(email: string): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/auth/forgot-password`, { email });
+  forgotPassword(identifier: string): Observable<unknown> {
+    const id = identifier.trim();
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
+    const body = looksLikeEmail
+      ? { email: id }
+      : ({ username: id } as Record<string, string>);
+    return this.http.post(`${this.baseUrl}/auth/forgot-password`, body);
   }
 
   getAccessToken(): string | null {

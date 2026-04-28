@@ -3,7 +3,7 @@ import { AdminService } from '../../../services/admin.service';
 import { RoleKind, roleListPath, roleListLabel, roleSingularLabel } from '../_shared/models/role.model';
 
 export type FieldKey =
-  | 'firstName' | 'lastName' | 'email' | 'password' | 'phone' | 'dni' | 'address' | 'status'
+  | 'firstName' | 'lastName' | 'username' | 'email' | 'password' | 'phone' | 'dni' | 'address' | 'status'
   // student
   | 'level' | 'grade' | 'studentCode' | 'birthDate' | 'gender' | 'bloodType' | 'medicalNotes' | 'emergencyPhone'
   // teacher
@@ -18,6 +18,7 @@ export type FieldKey =
 export interface UserFormData {
   firstName: string;
   lastName: string;
+  username: string;
   email: string;
   password: string;
   phone: string;
@@ -48,11 +49,18 @@ export interface UserFormData {
 
 export function emptyFormData(): UserFormData {
   return {
-    firstName: '', lastName: '', email: '', password: '', phone: '', dni: '', address: '', status: 'ACTIVE',
+    firstName: '', lastName: '', username: '', email: '', password: '', phone: '', dni: '', address: '', status: 'ACTIVE',
     level: '', grade: '', studentCode: '', birthDate: '', gender: '', bloodType: '', medicalNotes: '', emergencyPhone: '',
     department: '', specialization: '', degree: '', university: '', teacherCode: '', specialty: '', bio: '',
     relationship: '', occupation: '',
   };
+}
+
+/**
+ * Normaliza el DNI a solo dígitos para usarlo como nombre de usuario de acceso.
+ */
+export function usernameFromDni(dni: string): string {
+  return (dni || '').replace(/\D/g, '');
 }
 
 export interface UserFormStrategy {
@@ -64,8 +72,6 @@ export interface UserFormStrategy {
   subtitle: string;
   /** Campos específicos del rol que se muestran en la sección "Información del rol" */
   roleFields: FieldKey[];
-  /** Campo del formulario que se debe rellenar como "username" automático cuando aplique */
-  autoUsername?: boolean;
   /** Devuelve true si el rol requiere credenciales en creación (en inicial para estudiantes no se requiere) */
   requiresCredentials: (data: UserFormData, isEditMode: boolean) => boolean;
   /** Construye el DTO para creación */
@@ -85,7 +91,8 @@ export const STUDENT_STRATEGY: UserFormStrategy = {
   roleFields: ['level', 'grade', 'studentCode', 'birthDate', 'gender', 'bloodType', 'medicalNotes', 'dni', 'emergencyPhone', 'address'],
   requiresCredentials: (d, isEditMode) => isEditMode ? !!d.password : d.level !== 'inicial',
   buildCreateDto: (d) => ({
-    email: d.email,
+    username: usernameFromDni(d.dni) || d.username,
+    email: d.email || undefined,
     password: d.password,
     firstName: d.firstName,
     lastName: d.lastName,
@@ -113,14 +120,20 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
   roleFields: ['department', 'specialization', 'degree', 'university', 'teacherCode', 'dni', 'address'],
   requiresCredentials: () => true,
   buildCreateDto: (d) => ({
-    email: d.email,
+    username: usernameFromDni(d.dni) || d.username,
+    email: d.email || undefined,
     password: d.password,
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
+    dni: d.dni || undefined,
     teacherCode: d.teacherCode || undefined,
     specialty: d.specialization || d.specialty || undefined,
     bio: d.bio || undefined,
+    department: d.department || undefined,
+    degree: d.degree || undefined,
+    university: d.university || undefined,
+    address: d.address || undefined,
   }),
   create: (svc, dto) => svc.createTeacher(dto as never),
   successMessage: 'Profesor creado correctamente',
@@ -135,13 +148,16 @@ export const PARENT_STRATEGY: UserFormStrategy = {
   roleFields: ['relationship', 'occupation', 'dni', 'address'],
   requiresCredentials: () => true,
   buildCreateDto: (d) => ({
-    email: d.email,
+    username: usernameFromDni(d.dni) || d.username,
+    email: d.email || undefined,
     password: d.password,
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
+    dni: d.dni || undefined,
     relationship: d.relationship || undefined,
     occupation: d.occupation || undefined,
+    address: d.address || undefined,
   }),
   create: (svc, dto) => svc.createParent(dto as never),
   successMessage: 'Apoderado creado correctamente',
@@ -156,12 +172,14 @@ export const ADMIN_STRATEGY: UserFormStrategy = {
   roleFields: ['dni', 'address'],
   requiresCredentials: () => true,
   buildCreateDto: (d) => ({
-    email: d.email,
+    username: usernameFromDni(d.dni) || d.username,
+    email: d.email || undefined,
     password: d.password,
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
     role: 'ADMIN',
+    dni: d.dni || undefined,
   }),
   create: (svc, dto) => svc.createUser(dto as never),
   successMessage: 'Usuario creado correctamente',
