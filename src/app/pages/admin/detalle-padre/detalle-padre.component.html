@@ -46,10 +46,12 @@
               <span class="label">Teléfono:</span>
               <span class="value">{{ padre().phone }}</span>
             </div>
-            <div class="info-item">
-              <span class="label">Dirección:</span>
-              <span class="value">{{ padre().address }}</span>
-            </div>
+            @if (padre().address) {
+              <div class="info-item">
+                <span class="label">Dirección:</span>
+                <span class="value">{{ padre().address }}</span>
+              </div>
+            }
           </div>
           <div class="info-card">
             <h3>Información de Cuenta</h3>
@@ -59,7 +61,7 @@
             </div>
             <div class="info-item">
               <span class="label">Fecha de Registro:</span>
-              <span class="value">{{ padre().registrationDate | date:'longDate' }}</span>
+              <span class="value">{{ (padre().createdAt ? (padre().createdAt | date:'longDate') : '—') }}</span>
             </div>
             <div class="info-item">
               <span class="label">Estado:</span>
@@ -81,9 +83,107 @@
     @if (activeTab() === 'hijos') {
       <div class="content-section">
         <div class="children-header">
-          <h3>Hijos Vinculados</h3>
-          <span class="children-count">{{ children().length }} hijo(s)</span>
+          <div class="children-header__title">
+            <h3>Hijos Vinculados</h3>
+            <span class="children-count">{{ children().length }} hijo(s)</span>
+          </div>
+          @if (!showLinkPanel()) {
+            <button type="button" class="btn btn-primary" (click)="openLinkPanel()">
+              <i class="fas fa-link"></i> Vincular hijos
+            </button>
+          }
         </div>
+
+        @if (showLinkPanel()) {
+          <div class="link-panel">
+            <div class="link-panel__header">
+              <h4><i class="fas fa-user-plus"></i> Vincular estudiantes a este apoderado</h4>
+              <button type="button" class="link-panel__close" (click)="closeLinkPanel()" title="Cerrar" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            @if (linkError()) {
+              <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> {{ linkError() }}
+              </div>
+            }
+
+            <div class="link-panel__search">
+              <i class="fas fa-search"></i>
+              <input type="text" class="form-input"
+                     placeholder="Buscar por nombre, DNI, código o grado..."
+                     [ngModel]="linkSearch()"
+                     (ngModelChange)="setLinkSearch($event)"
+                     name="linkSearch"
+                     autocomplete="off" />
+            </div>
+
+            <div class="link-panel__list">
+              @if (loadingStudents()) {
+                <div class="link-panel__empty">
+                  <i class="fas fa-spinner fa-spin"></i> Cargando estudiantes...
+                </div>
+              } @else {
+                @for (student of availableStudents(); track student.id) {
+                  <label class="link-row" [class.is-selected]="isStudentSelected(student.id)">
+                    <input type="checkbox"
+                           [checked]="isStudentSelected(student.id)"
+                           (change)="toggleStudent(student.id)" />
+                    <span class="link-row__avatar">{{ getStudentInitials(student) }}</span>
+                    <div class="link-row__info">
+                      <span class="link-row__name">{{ getStudentDisplayName(student) }}</span>
+                      <small class="link-row__meta">
+                        @if (student.grade) {
+                          <span><i class="fas fa-graduation-cap"></i> {{ student.grade }}</span>
+                        }
+                        @if (student.dni) {
+                          <span>DNI {{ student.dni }}</span>
+                        }
+                        @if (student.studentCode || student.code) {
+                          <span class="muted">Código {{ student.studentCode || student.code }}</span>
+                        }
+                      </small>
+                    </div>
+                  </label>
+                } @empty {
+                  <div class="link-panel__empty">
+                    @if (linkSearch()) {
+                      <i class="fas fa-search"></i> Sin resultados para "{{ linkSearch() }}"
+                    } @else {
+                      <i class="fas fa-info-circle"></i> No hay estudiantes disponibles para vincular
+                    }
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="link-panel__footer">
+              <label class="link-primary-toggle">
+                <input type="checkbox"
+                       [checked]="linkAsPrimary()"
+                       (change)="setLinkAsPrimary(!linkAsPrimary())" />
+                <span>Marcar como apoderado principal</span>
+              </label>
+              <div class="link-panel__actions">
+                <button type="button" class="btn btn-secondary" (click)="closeLinkPanel()" [disabled]="linkLoading()">
+                  Cancelar
+                </button>
+                <button type="button" class="btn btn-primary"
+                        (click)="linkSelected()"
+                        [disabled]="!selectedCount() || linkLoading()">
+                  @if (linkLoading()) {
+                    <i class="fas fa-spinner fa-spin"></i> Vinculando...
+                  } @else {
+                    <i class="fas fa-link"></i>
+                    Vincular {{ selectedCount() }} estudiante{{ selectedCount() === 1 ? '' : 's' }}
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
         <div class="children-list">
           @if (children().length === 0) {
             <admin-empty-state icon="fa-child" message="No hay hijos vinculados a este padre de familia"></admin-empty-state>
@@ -113,6 +213,9 @@
                   <a [routerLink]="['/admin/estudiantes', child.id]" class="btn btn-sm btn-primary">
                     <i class="fas fa-eye"></i> Ver Detalles
                   </a>
+                  <button type="button" class="btn btn-sm btn-danger-outline" (click)="unlinkChild(child)">
+                    <i class="fas fa-unlink"></i> Desvincular
+                  </button>
                 </div>
               </div>
             }
