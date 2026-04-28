@@ -379,7 +379,11 @@ export class AdminService {
   }
   getTeacherActiveCourses(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/teachers/${id}/courses/active`); }
   getTeacherCourseHistory(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/teachers/${id}/courses/history`); }
-  assignCourseToTeacher(teacherId: string, dto: { courseId: string; sectionId: string; academicYearId: string }): Observable<unknown> {
+  /** `sectionId` opcional si el colegio ya no usa secciones; el backend valida según contrato vigente. */
+  assignCourseToTeacher(
+    teacherId: string,
+    dto: { courseId: string; academicYearId: string; sectionId?: string },
+  ): Observable<unknown> {
     return this.http.post(`${this.url}/teachers/${teacherId}/courses`, dto);
   }
   unassignCourseFromTeacher(teacherId: string, courseId: string): Observable<void> {

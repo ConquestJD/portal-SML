@@ -13,6 +13,7 @@ import { AdminPersonHeaderComponent } from './components/person-header/admin-per
 import { AdminInfoCardComponent, AdminInfoItemComponent } from './components/info-card/admin-info-card.component';
 import { AdminTabsComponent } from './components/tabs/admin-tabs.component';
 import { AdminGradeSelectorComponent } from './components/grade-selector/admin-grade-selector.component';
+import { AdminTeacherSearchComboboxComponent } from './components/teacher-search-combobox/admin-teacher-search-combobox.component';
 import {
   StatusLabelPipe, StatusBadgePipe, RoleLabelPipe, RelationshipLabelPipe, LevelLabelPipe,
 } from './pipes/admin-pipes';
@@ -26,6 +27,7 @@ export * from './components/person-header/admin-person-header.component';
 export * from './components/info-card/admin-info-card.component';
 export * from './components/tabs/admin-tabs.component';
 export * from './components/grade-selector/admin-grade-selector.component';
+export * from './components/teacher-search-combobox/admin-teacher-search-combobox.component';
 
 export const ADMIN_SHARED = [
   AdminStatusBadgeComponent,
@@ -36,6 +38,7 @@ export const ADMIN_SHARED = [
   AdminInfoItemComponent,
   AdminTabsComponent,
   AdminGradeSelectorComponent,
+  AdminTeacherSearchComboboxComponent,
   StatusLabelPipe,
   StatusBadgePipe,
   RoleLabelPipe,
