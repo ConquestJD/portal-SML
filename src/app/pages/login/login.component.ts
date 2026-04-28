@@ -11,14 +11,12 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './login.component.css'
 })
 export class LoginComponent implements OnInit {
-  // Private backing signals — ngModel uses getter/setter pairs to update them correctly
-  private readonly _email = signal('');
-  private readonly _password = signal('' );
+  private readonly _username = signal('');
+  private readonly _password = signal('');
   private readonly _rememberMe = signal(false);
 
-  // Getter/setter pairs so [(ngModel)] reads the value and calls .set() on write
-  get email(): string { return this._email(); }
-  set email(v: string) { this._email.set(v); }
+  get username(): string { return this._username(); }
+  set username(v: string) { this._username.set(v); }
 
   get password(): string { return this._password(); }
   set password(v: string) { this._password.set(v); }
@@ -26,24 +24,22 @@ export class LoginComponent implements OnInit {
   get rememberMe(): boolean { return this._rememberMe(); }
   set rememberMe(v: boolean) { this._rememberMe.set(v); }
 
-  // username is just an alias for email (template uses name="username")
-  get username(): string { return this._email(); }
-  set username(v: string) { this._email.set(v); }
-
   showPassword = signal(false);
   isLoading = signal(false);
   error = signal('');
+  info = signal('');
 
-  emailTouched = signal(false);
+  usernameTouched = signal(false);
   passwordTouched = signal(false);
   isVisible = signal(false);
 
   currentYear = new Date().getFullYear();
 
-  emailError = computed(() => {
-    if (!this.emailTouched()) return '';
-    if (!this._email().trim()) return 'El email es obligatorio';
-    if (!this.isValidEmail(this._email())) return 'Ingresa un email válido';
+  usernameError = computed(() => {
+    if (!this.usernameTouched()) return '';
+    const v = this._username().trim();
+    if (!v) return 'El usuario es obligatorio';
+    if (v.length < 3) return 'Mínimo 3 caracteres';
     return '';
   });
 
@@ -55,13 +51,11 @@ export class LoginComponent implements OnInit {
   });
 
   isFormValid = computed(() =>
-    this._email().trim().length > 0 &&
+    this._username().trim().length >= 3 &&
     this._password().length >= 4 &&
-    !this.emailError() &&
+    !this.usernameError() &&
     !this.passwordError()
   );
-
-  usernameError = this.emailError;
 
   constructor(private authService: AuthService) {}
 
@@ -69,17 +63,12 @@ export class LoginComponent implements OnInit {
     requestAnimationFrame(() => this.isVisible.set(true));
   }
 
-  private isValidEmail(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
   togglePasswordVisibility() { this.showPassword.update(v => !v); }
-  onEmailBlur() { this.emailTouched.set(true); }
+  onUsernameBlur() { this.usernameTouched.set(true); }
   onPasswordBlur() { this.passwordTouched.set(true); }
-  onUsernameBlur() { this.onEmailBlur(); }
 
   onSubmit() {
-    this.emailTouched.set(true);
+    this.usernameTouched.set(true);
     this.passwordTouched.set(true);
 
     if (!this.isFormValid()) {
@@ -89,26 +78,21 @@ export class LoginComponent implements OnInit {
 
     this.isLoading.set(true);
     this.error.set('');
+    this.info.set('');
 
-    this.authService.login(this._email(), this._password(), this._rememberMe()).subscribe({
+    const identifier = this._username().trim();
+    this.authService.login(identifier, this._password(), this._rememberMe()).subscribe({
       next: () => { this.isLoading.set(false); },
       error: (err) => {
         this.isLoading.set(false);
         const msg = err?.error?.error?.message || 'Credenciales incorrectas. Intenta de nuevo.';
-        this.error.set(msg);
+        this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
       }
     });
   }
 
   forgotPassword() {
-    if (!this._email().trim()) {
-      this.error.set('Ingresa tu email para recuperar la contraseña');
-      this.emailTouched.set(true);
-      return;
-    }
-    this.authService.forgotPassword(this._email()).subscribe({
-      next: () => this.error.set(''),
-      error: () => {}
-    });
+    this.error.set('');
+    this.info.set('Si olvidaste tu contraseña, contacta al administrador del colegio para que la restablezca desde el panel de administración.');
   }
 }

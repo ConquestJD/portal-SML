@@ -245,8 +245,29 @@
   line-height: 1.4;
   animation: shake .35s var(--ease);
 }
+.alert--info {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--r-sm);
+  background: rgba(59, 130, 246, .08);
+  border: 1px solid rgba(59, 130, 246, .25);
+  color: #1d4ed8;
+  font-size: .875rem;
+  line-height: 1.4;
+}
 .alert__icon {
   flex-shrink: 0;
+}
+.login-card__help {
+  font-size: .825rem;
+  color: var(--t-secondary);
+  line-height: 1.45;
+}
+.login-card__help strong {
+  color: var(--t-primary);
 }
 
 @keyframes shake {
