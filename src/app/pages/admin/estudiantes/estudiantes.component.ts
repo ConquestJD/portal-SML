@@ -15,55 +15,59 @@ import { ADMIN_SHARED } from '../_shared';
 export class EstudiantesComponent implements OnInit {
   loading = signal(true);
   error = signal('');
-  selectedGrade = signal('');
-  currentPage = signal(1);
-  totalPages = signal(1);
   total = signal(0);
 
   students = signal<StudentItem[]>([]);
 
-  // Getter/setter pairs so [(ngModel)] works with signals
   private _searchQuery = signal('');
   get searchQuery(): string { return this._searchQuery(); }
   set searchQuery(v: string) { this._searchQuery.set(v); }
 
-  private _filterSection = signal('todos');
-  get filterSection(): string { return this._filterSection(); }
-  set filterSection(v: string) { this._filterSection.set(v); }
+  private _filterGrade = signal('');
+  get filterGrade(): string { return this._filterGrade(); }
+  set filterGrade(v: string) { this._filterGrade.set(v); }
+
+  private _filterLevel = signal('');
+  get filterLevel(): string { return this._filterLevel(); }
+  set filterLevel(v: string) { this._filterLevel.set(v); }
 
   private _filterStatus = signal('');
   get filterStatus(): string { return this._filterStatus(); }
   set filterStatus(v: string) { this._filterStatus.set(v); }
 
-  // Grade cards: unique grades from enrollment data
-  availableGrades = computed(() => {
-    const grades = new Set(
-      this.students()
-        .map(s => s.grade ?? '')
-        .filter(g => !!g)
-    );
-    return Array.from(grades).sort();
-  });
+  /** Lista única de grados a partir de los estudiantes cargados. */
+  availableGrades = computed(() =>
+    Array.from(new Set(this.students().map(s => s.grade ?? '').filter(Boolean))).sort()
+  );
+
+  availableLevels = computed(() =>
+    Array.from(new Set(this.students().map(s => (s.level ?? '').toLowerCase()).filter(Boolean))).sort()
+  );
 
   filteredStudents = computed(() => {
-    let result = this.students().filter(s => !!s.grade); // only enrolled students
-    const grade = this.selectedGrade();
-    const section = this._filterSection();
+    const grade = this._filterGrade();
+    const level = this._filterLevel();
     const status = this._filterStatus();
-    const q = this._searchQuery().toLowerCase();
+    const q = this._searchQuery().trim().toLowerCase();
 
-    if (grade) result = result.filter(s => s.grade === grade);
-    if (section !== 'todos') result = result.filter(s => s.section === section);
-    if (status && status !== 'todos') result = result.filter(s => s.status === status);
-    if (q) {
-      result = result.filter(s =>
-        (s.name ?? '').toLowerCase().includes(q) ||
-        (s.code ?? '').toLowerCase().includes(q) ||
-        (s.email ?? '').toLowerCase().includes(q)
-      );
-    }
-    return result;
+    return this.students().filter(s => {
+      if (grade && s.grade !== grade) return false;
+      if (level && (s.level ?? '').toLowerCase() !== level) return false;
+      if (status && s.status !== status) return false;
+      if (q) {
+        const text = `${s.name ?? ''} ${s.code ?? ''} ${s.email ?? ''} ${s.dni ?? ''} ${s.phone ?? ''}`.toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+      return true;
+    });
   });
+
+  totalActive = computed(() => this.students().filter(s => s.status === 'activo').length);
+  totalEnrolled = computed(() => this.students().filter(s => !!s.grade).length);
+
+  hasActiveFilters = computed(() =>
+    !!this._searchQuery() || !!this._filterGrade() || !!this._filterLevel() || !!this._filterStatus()
+  );
 
   constructor(private adminService: AdminService) {}
 
@@ -71,13 +75,9 @@ export class EstudiantesComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.adminService.getStudents({
-      page: this.currentPage(),
-      pageSize: 200
-    }).subscribe({
+    this.adminService.getStudents({ page: 1, pageSize: 100 }).subscribe({
       next: ({ data, meta }) => {
         this.students.set(data);
-        this.totalPages.set(meta.totalPages);
         this.total.set(meta.total);
         this.loading.set(false);
       },
@@ -85,10 +85,21 @@ export class EstudiantesComponent implements OnInit {
     });
   }
 
-  selectGrade(grade: string) { this.selectedGrade.set(grade); }
+  clearSearch() { this._searchQuery.set(''); }
 
-  getStudentsCountByGrade(grade: string): number {
-    return this.students().filter(s => s.grade === grade).length;
+  resetFilters() {
+    this._searchQuery.set('');
+    this._filterGrade.set('');
+    this._filterLevel.set('');
+    this._filterStatus.set('');
+  }
+
+  getInitials(s: StudentItem): string {
+    const name = (s.name ?? '').trim();
+    if (!name) return '?';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   }
 
   importStudents() {
