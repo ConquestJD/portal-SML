@@ -2,12 +2,21 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { AdminService, AcademicYearItem, ScheduleSlot } from '../../../services/admin.service';
+import { forkJoin, of } from 'rxjs';
+import { switchMap, catchError, map } from 'rxjs/operators';
+import {
+  AdminService,
+  AcademicYearItem,
+  AssignmentItem,
+  ScheduleSlot,
+  TeacherItem,
+} from '../../../services/admin.service';
+import { AdminTeacherSearchComboboxComponent } from '../_shared/components/teacher-search-combobox/admin-teacher-search-combobox.component';
 
 @Component({
   selector: 'app-crear-curso',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AdminTeacherSearchComboboxComponent],
   templateUrl: './crear-curso.component.html',
   styleUrl: './crear-curso.component.css'
 })
@@ -18,6 +27,11 @@ export class CrearCursoComponent implements OnInit {
   error = signal('');
   success = signal('');
   scheduleError = signal('');
+  assignWarning = signal('');
+
+  teachers = signal<TeacherItem[]>([]);
+  /** Profesor que tenía asignación activa al abrir la edición (DELETE antes de reasignar). */
+  initialAssignmentTeacherId = signal('');
 
   pageTitle = computed(() => this.isEditMode() ? 'Editar Curso' : 'Crear Curso');
   pageSubtitle = computed(() => this.isEditMode() ? 'Modifica los datos del curso' : 'Completa los datos del nuevo curso');
@@ -31,7 +45,6 @@ export class CrearCursoComponent implements OnInit {
     '#f97316', '#6366f1', '#14b8a6', '#a855f7'
   ];
 
-  // Calendario: horas mostradas (07:00 a 18:00)
   readonly calendarStartHour = 7;
   readonly calendarEndHour = 18;
   readonly hourSlots = computed(() => {
@@ -42,7 +55,6 @@ export class CrearCursoComponent implements OnInit {
     return slots;
   });
 
-  // Formulario para un bloque de horario: un día + rango horario
   scheduleDraft = signal<{ day: string; startTime: string; endTime: string }>({
     day: '',
     startTime: '',
@@ -56,7 +68,8 @@ export class CrearCursoComponent implements OnInit {
     grade: '',
     academicYearId: '',
     color: this.colorPalette[0],
-    schedule: [] as ScheduleSlot[]
+    schedule: [] as ScheduleSlot[],
+    teacherId: '',
   });
 
   availableGrades = computed(() => {
@@ -76,6 +89,11 @@ export class CrearCursoComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.adminService.getTeachers({ pageSize: 500 }).subscribe({
+      next: ({ data }) => this.teachers.set(data),
+      error: () => this.teachers.set([])
+    });
+
     this.adminService.getAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
@@ -95,19 +113,46 @@ export class CrearCursoComponent implements OnInit {
     });
   }
 
+  private mapLevelToApi(levelKey: string): string {
+    const m: Record<string, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+    return m[levelKey] ?? levelKey;
+  }
+
   loadCourse(id: string) {
-    this.adminService.getCourse(id).subscribe({
-      next: (data) => {
-        this.formData.update(d => ({
-          ...d,
-          name: data.name,
-          code: data.code,
-          level: data.level ?? '',
-          grade: data.grade ?? '',
-          schedule: data.schedule ?? [],
-          color: data.color ?? this.colorPalette[0]
+    forkJoin({
+      course: this.adminService.getCourse(id),
+      assignments: this.adminService.getTeacherAssignments({ page: 1, pageSize: 500 }),
+    }).subscribe({
+      next: ({ course, assignments }) => {
+        const a = assignments.data.find((x: AssignmentItem) =>
+          x.course?.id === id && x.isActive !== false
+        );
+
+        const rawLevel = (course.level ?? '').toLowerCase();
+        const lvl = rawLevel.includes('secund')
+          ? 'secundaria'
+          : rawLevel.includes('prim')
+            ? 'primaria'
+            : rawLevel.includes('inic')
+              ? 'inicial'
+              : '';
+
+        this.formData.update(fd => ({
+          ...fd,
+          name: course.name,
+          code: course.code,
+          level: lvl || fd.level,
+          grade: course.grade ?? '',
+          schedule: course.schedule ?? [],
+          color: course.color ?? this.colorPalette[0],
+          academicYearId: a?.academicYear?.id ?? fd.academicYearId,
+          teacherId: a?.teacher?.id ?? '',
         }));
-      }
+
+        if (a?.teacher?.id) this.initialAssignmentTeacherId.set(a.teacher.id);
+        else this.initialAssignmentTeacherId.set('');
+      },
+      error: () => this.error.set('No se pudo cargar el curso')
     });
   }
 
@@ -126,7 +171,6 @@ export class CrearCursoComponent implements OnInit {
     this.formData.update(f => ({ ...f, color }));
   }
 
-  // ─── SCHEDULE ─────────────────────────────────────────────────────────────
   updateScheduleDraft(field: 'day' | 'startTime' | 'endTime', value: string) {
     this.scheduleDraft.update(d => ({ ...d, [field]: value }));
   }
@@ -148,7 +192,6 @@ export class CrearCursoComponent implements OnInit {
       return;
     }
 
-    // Detectar traslape en el mismo día
     const overlaps = this.formData().schedule.some(s =>
       s.day === d.day && !(d.endTime <= s.startTime || d.startTime >= s.endTime)
     );
@@ -159,8 +202,6 @@ export class CrearCursoComponent implements OnInit {
 
     const newBlock: ScheduleSlot = { day: d.day, startTime: d.startTime, endTime: d.endTime };
     this.formData.update(f => ({ ...f, schedule: [...f.schedule, newBlock] }));
-
-    // Reset completo del draft para permitir agregar otro bloque sin bloqueo
     this.scheduleDraft.set({ day: '', startTime: '', endTime: '' });
   }
 
@@ -175,14 +216,12 @@ export class CrearCursoComponent implements OnInit {
     this.formData.update(f => ({ ...f, schedule: [] }));
   }
 
-  // ─── CALENDAR POSITIONING ────────────────────────────────────────────────
   private timeToMinutes(time: string): number {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + (m || 0);
   }
 
   private calendarStartMinutes(): number { return this.calendarStartHour * 60; }
-  private calendarEndMinutes(): number { return this.calendarEndHour * 60; }
 
   getBlockTop(startTime: string): number {
     return Math.max(0, this.timeToMinutes(startTime) - this.calendarStartMinutes());
@@ -198,11 +237,11 @@ export class CrearCursoComponent implements OnInit {
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   }
 
-  // ─── SUBMIT ───────────────────────────────────────────────────────────────
   onSubmit() {
     this.isLoading.set(true);
     this.error.set('');
     this.success.set('');
+    this.assignWarning.set('');
     const d = this.formData();
 
     if (!d.name || !d.code || !d.level || !d.grade) {
@@ -211,33 +250,81 @@ export class CrearCursoComponent implements OnInit {
       return;
     }
 
+    if (!d.teacherId) {
+      this.error.set('Selecciona el profesor del curso.');
+      this.isLoading.set(false);
+      return;
+    }
+
+    if (!d.academicYearId) {
+      this.error.set('Selecciona el año académico para registrar la asignación del profesor.');
+      this.isLoading.set(false);
+      return;
+    }
+
     const dto = {
       name: d.name,
       code: d.code,
       grade: d.grade,
-      level: d.level,
+      level: this.mapLevelToApi(d.level),
       schedule: d.schedule,
       color: d.color
     };
 
-    const obs = this.isEditMode()
+    const base$ = this.isEditMode()
       ? this.adminService.updateCourse(this.courseId(), dto)
       : this.adminService.createCourse(dto);
 
-    obs.subscribe({
-      next: () => {
-        this.success.set(this.isEditMode() ? 'Curso actualizado' : 'Curso creado');
+    base$.pipe(
+      switchMap(course => this.syncTeacherAssignment(course.id).pipe(map(() => course))),
+      catchError(err => {
+        const msg = err?.error?.error?.message ?? 'Error al guardar el curso';
+        this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
         this.isLoading.set(false);
+        throw err;
+      })
+    ).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        const fd = this.formData();
+        this.initialAssignmentTeacherId.set(fd.teacherId || '');
+        if (this.assignWarning()) {
+          alert(this.assignWarning());
+        }
         this.router.navigate(['/admin/cursos']);
       },
-      error: (err) => {
-        this.error.set(err?.error?.error?.message ?? 'Error al guardar el curso');
-        this.isLoading.set(false);
-      }
+      error: () => {},
     });
   }
 
+  private syncTeacherAssignment(courseId: string) {
+    const d = this.formData();
+    const prevTeacher = this.initialAssignmentTeacherId();
+    const assign = !!(d.teacherId && d.academicYearId);
+
+    const unassignPrev$ = prevTeacher
+      ? this.adminService.unassignCourseFromTeacher(prevTeacher, courseId).pipe(catchError(() => of(null)))
+      : of(null);
+
+    return unassignPrev$.pipe(
+      switchMap(() => {
+        if (!assign || !d.teacherId) return of(undefined);
+        return this.adminService.assignCourseToTeacher(d.teacherId, {
+          courseId,
+          academicYearId: d.academicYearId,
+        }).pipe(
+          catchError(() => {
+            this.assignWarning.set(
+              'Aviso: la asignación del profesor no se pudo registrar. Complétala desde Asignación docente.'
+            );
+            return of(undefined);
+          })
+        );
+      })
+    );
+  }
+
   update(field: string, value: unknown) {
-    this.formData.update(d => ({ ...d, [field]: value }));
+    this.formData.update(fd => ({ ...fd, [field]: value } as typeof fd));
   }
 }
