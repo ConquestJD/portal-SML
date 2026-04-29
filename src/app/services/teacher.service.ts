@@ -94,6 +94,10 @@ export interface TeacherTask {
   id: string; title: string; description?: string;
   dueDate?: string; maxScore: number; status: string;
   submissionsCount?: number; gradedCount?: number;
+  /** Entregas recibidas (alias que algunos endpoints pueden enviar). */
+  submitted?: number;
+  /** Pendientes de entregar o de calificar según contexto de API. */
+  pending?: number;
   attachments?: { id: string; name: string; url?: string }[];
 }
 
