@@ -1,22 +1,22 @@
 <div class="tareas-container">
-  <div class="page-header">
+  <header class="page-header page-header--compact">
     <div class="header-content">
-      <h1 class="page-title">Mis Tareas</h1>
-      <p class="page-subtitle">Gestiona y completa todas tus tareas académicas</p>
+      <h1 class="page-title">Mis tareas</h1>
+      <p class="page-subtitle">Busca, filtra y abre cada tarea desde tarjetas compactas.</p>
     </div>
     <div class="header-actions">
       <div class="search-wrapper">
-        <i class="fas fa-search"></i>
+        <i class="fas fa-search" aria-hidden="true"></i>
         <input
-          type="text"
+          type="search"
           class="form-input search-input"
-          placeholder="Buscar por título, curso o instrucciones..."
+          placeholder="Título, curso…"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
       </div>
     </div>
-  </div>
+  </header>
 
   @if (loading()) {
     <p class="loading-hint">Cargando tareas…</p>
@@ -58,139 +58,95 @@
       </button>
     </div>
 
-    <div class="summary-panel">
-      <div class="summary-item">
-        <div class="summary-icon-wrapper pending">
-          <i class="fas fa-tasks"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Pendientes</span>
-          <span class="summary-value">{{ pendingCount() }}</span>
-          <span class="summary-hint">Sin entregar, aún en plazo</span>
-        </div>
+    <div class="summary-strip" role="status">
+      <div class="summary-strip__item">
+        <span class="summary-strip__value summary-strip__value--pending">{{ pendingCount() }}</span>
+        <span class="summary-strip__label">Pendientes</span>
       </div>
-      <div class="summary-item">
-        <div class="summary-icon-wrapper error">
-          <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Vencidas</span>
-          <span class="summary-value error">{{ overdueCount() }}</span>
-          <span class="summary-hint">Sin entregar, fecha pasada</span>
-        </div>
+      <div class="summary-strip__divider" aria-hidden="true"></div>
+      <div class="summary-strip__item">
+        <span class="summary-strip__value summary-strip__value--due">{{ overdueCount() }}</span>
+        <span class="summary-strip__label">Vencidas</span>
       </div>
-      <div class="summary-item">
-        <div class="summary-icon-wrapper success">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Entregadas</span>
-          <span class="summary-value success">{{ completedCount() }}</span>
-          <span class="summary-hint">Incluye en revisión y calificadas</span>
-        </div>
+      <div class="summary-strip__divider" aria-hidden="true"></div>
+      <div class="summary-strip__item">
+        <span class="summary-strip__value summary-strip__value--ok">{{ completedCount() }}</span>
+        <span class="summary-strip__label">Entregadas</span>
       </div>
     </div>
 
     @if (filteredTasks().length === 0) {
       <div class="empty-state">
-        <i class="fas fa-tasks empty-icon"></i>
+        <i class="fas fa-tasks empty-icon" aria-hidden="true"></i>
         <h2>No hay tareas que mostrar</h2>
         <p>No hay tareas en este filtro o en la búsqueda.</p>
       </div>
     } @else {
-      <div class="tasks-list">
+      <ul class="tasks-list" role="list">
         @for (task of filteredTasks(); track task.id) {
-          <div
-            class="task-card"
-            [class.task-vencida]="taskUiStatus(task) === 'vencida'"
-            [class.task-calificada]="taskUiStatus(task) === 'calificada'"
-          >
-            <div class="task-header">
-              <div class="task-course">
-                <div class="course-badge-wrapper">
-                  <i class="fas fa-book"></i>
-                  <span class="course-badge">{{ courseName(task) }}</span>
-                </div>
-              </div>
-              <span
-                class="badge"
-                [class.badge-warning]="taskUiStatus(task) === 'pendiente'"
-                [class.badge-error]="taskUiStatus(task) === 'vencida'"
-                [class.badge-info]="taskUiStatus(task) === 'en-revision'"
-                [class.badge-success]="taskUiStatus(task) === 'calificada'"
-              >
-                {{ taskUiStatusLabel(task) }}
-              </span>
-            </div>
-
-            <h3 class="task-name">{{ task.title }}</h3>
-
-            @if (task.description?.trim()) {
-              <p class="task-desc">{{ task.description }}</p>
-            }
-
-            <div class="task-details">
-              <div class="detail-item">
-                <div class="detail-icon-wrapper">
-                  <i class="fas fa-calendar-alt"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Fecha límite</span>
+          <li class="tasks-list__item">
+            <article
+              class="task-card"
+              [class.task-card--vencida]="taskUiStatus(task) === 'vencida'"
+              [class.task-card--calificada]="taskUiStatus(task) === 'calificada'"
+            >
+              <div class="task-card__main">
+                <div class="task-card__topline">
+                  <span class="course-pill">
+                    <i class="fas fa-book" aria-hidden="true"></i>
+                    {{ courseName(task) }}
+                  </span>
                   <span
-                    class="detail-value"
-                    [class.overdue]="taskUiStatus(task) === 'vencida'"
+                    class="task-status-badge"
+                    [class.task-status-badge--pendiente]="taskUiStatus(task) === 'pendiente'"
+                    [class.task-status-badge--vencida]="taskUiStatus(task) === 'vencida'"
+                    [class.task-status-badge--revision]="taskUiStatus(task) === 'en-revision'"
+                    [class.task-status-badge--calificada]="taskUiStatus(task) === 'calificada'"
                   >
-                    {{ formatDue(task.dueDate) }}
+                    {{ taskUiStatusLabel(task) }}
                   </span>
                 </div>
-              </div>
-              <div class="detail-item">
-                <div class="detail-icon-wrapper">
-                  <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Puntuación máx.</span>
-                  <span class="detail-value">{{ task.maxScore ?? '—' }}</span>
-                </div>
-              </div>
-              @if (task.submission?.submittedAt) {
-                <div class="detail-item">
-                  <div class="detail-icon-wrapper">
-                    <i class="fas fa-paper-plane"></i>
-                  </div>
-                  <div class="detail-content">
-                    <span class="detail-label">Entregada</span>
-                    <span class="detail-value">{{ formatDue(task.submission!.submittedAt) }}</span>
-                  </div>
-                </div>
-              }
-              @if (task.submission?.score != null && task.submission.score !== undefined) {
-                <div class="detail-item">
-                  <div class="detail-icon-wrapper success">
-                    <i class="fas fa-star"></i>
-                  </div>
-                  <div class="detail-content">
-                    <span class="detail-label">Calificación</span>
-                    <span class="detail-value grade"
-                      >{{ task.submission!.score }} / {{ task.maxScore ?? '—' }}</span
-                    >
-                  </div>
-                </div>
-              }
-            </div>
-
-            <div class="task-actions">
-              <a [routerLink]="['/tareas', task.id]" class="btn btn-primary">
-                @if (taskUiStatus(task) === 'pendiente' || taskUiStatus(task) === 'vencida') {
-                  <i class="fas fa-arrow-right"></i> Ver / entregar
-                } @else {
-                  <i class="fas fa-arrow-right"></i> Ver detalle
+                <h3 class="task-card__title">{{ task.title }}</h3>
+                @if (task.description?.trim()) {
+                  <p class="task-card__desc">{{ task.description }}</p>
                 }
-              </a>
-            </div>
-          </div>
+                <div class="task-card__meta">
+                  <span class="task-meta-chip" [class.task-meta-chip--alert]="taskUiStatus(task) === 'vencida'">
+                    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                    {{ formatDue(task.dueDate) }}
+                  </span>
+                  <span class="task-meta-chip">
+                    <i class="fas fa-star" aria-hidden="true"></i>
+                    {{ task.maxScore ?? '—' }} pts
+                  </span>
+                  @if (task.submission?.submittedAt) {
+                    <span class="task-meta-chip">
+                      <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                      Entregada {{ formatDue(task.submission!.submittedAt) }}
+                    </span>
+                  }
+                  @if (task.submission?.score != null && task.submission!.score !== undefined) {
+                    <span class="task-meta-chip task-meta-chip--grade">
+                      <i class="fas fa-award" aria-hidden="true"></i>
+                      Nota {{ task.submission!.score }}/{{ task.maxScore ?? '—' }}
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="task-card__action">
+                <a [routerLink]="['/tareas', task.id]" class="btn-task-open">
+                  @if (taskUiStatus(task) === 'pendiente' || taskUiStatus(task) === 'vencida') {
+                    Entregar
+                  } @else {
+                    Ver
+                  }
+                  <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </a>
+              </div>
+            </article>
+          </li>
         }
-      </div>
+      </ul>
     }
   }
 </div>
