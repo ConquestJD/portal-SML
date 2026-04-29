@@ -1,3 +1,9 @@
+.page-error {
+  padding: var(--spacing-md);
+  color: var(--error, #c62828);
+  margin-bottom: var(--spacing-md);
+}
+
 .tareas-padre-container {
   max-width: 1200px;
   margin: 0 auto;

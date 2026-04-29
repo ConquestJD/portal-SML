@@ -10,6 +10,10 @@
     <p class="page-subtitle">Seguimiento de tareas del hijo</p>
   </div>
 
+  @if (error()) {
+    <p class="page-error">{{ error() }}</p>
+  }
+
   <!-- Selector de Hijos -->
   @if (children().length > 1) {
     <div class="child-selector-section">
@@ -48,6 +52,7 @@
     </div>
   }
 
+  @if (children().length) {
   @if (selectedChild()) {
     <div class="child-header">
       <h2 class="child-header-title">
@@ -65,21 +70,21 @@
       <i class="fas fa-clock"></i>
       <div>
         <h3>Pendientes</h3>
-        <p>{{ pendingCount() }}</p>
+        <p>{{ taskSummary().pendiente }}</p>
       </div>
     </div>
     <div class="summary-card completed">
       <i class="fas fa-check-circle"></i>
       <div>
         <h3>Entregadas</h3>
-        <p>{{ completedCount() }}</p>
+        <p>{{ taskSummary().entregada }}</p>
       </div>
     </div>
     <div class="summary-card overdue">
       <i class="fas fa-exclamation-triangle"></i>
       <div>
         <h3>Vencidas</h3>
-        <p>{{ overdueCount() }}</p>
+        <p>{{ taskSummary().vencida }}</p>
       </div>
     </div>
   </div>
@@ -95,28 +100,36 @@
         (input)="searchQuery.set($any($event.target).value)">
     </div>
     <div class="filter-buttons">
-      <button 
-        class="filter-btn" 
+      <button
+        class="filter-btn"
         [class.active]="filterStatus() === 'todos'"
-        (click)="filterStatus.set('todos')">
+        type="button"
+        (click)="setFilter('todos')"
+      >
         Todas
       </button>
-      <button 
-        class="filter-btn" 
+      <button
+        class="filter-btn"
         [class.active]="filterStatus() === 'pendiente'"
-        (click)="filterStatus.set('pendiente')">
+        type="button"
+        (click)="setFilter('pendiente')"
+      >
         Pendientes
       </button>
-      <button 
-        class="filter-btn" 
+      <button
+        class="filter-btn"
         [class.active]="filterStatus() === 'entregada'"
-        (click)="filterStatus.set('entregada')">
+        type="button"
+        (click)="setFilter('entregada')"
+      >
         Entregadas
       </button>
-      <button 
-        class="filter-btn" 
+      <button
+        class="filter-btn"
         [class.active]="filterStatus() === 'vencida'"
-        (click)="filterStatus.set('vencida')">
+        type="button"
+        (click)="setFilter('vencida')"
+      >
         Vencidas
       </button>
     </div>
@@ -128,55 +141,69 @@
       <i class="fas fa-spinner fa-spin"></i>
       <p>Cargando tareas...</p>
     </div>
+  } @else if (filteredTasks().length === 0) {
+    <div class="empty-state">
+      <i class="fas fa-tasks"></i>
+      <p>No se encontraron tareas</p>
+      @if (searchQuery() || filterStatus() !== 'todos') {
+        <p class="empty-hint">Intenta con otros filtros o términos de búsqueda</p>
+      } @else {
+        <p class="empty-hint">Este hijo no tiene tareas asignadas</p>
+      }
+    </div>
   } @else {
     <div class="tasks-list">
       @for (task of filteredTasks(); track task.id) {
-      <div class="task-card" [class.overdue]="task.status === 'vencida'">
-        <div class="task-status-icon" [class.pending]="task.status === 'pendiente'"
-                                      [class.completed]="task.status === 'entregada'"
-                                      [class.overdue]="task.status === 'vencida'">
-          @if (task.status === 'entregada') {
-            <i class="fas fa-check-circle"></i>
-          } @else if (task.status === 'vencida') {
-            <i class="fas fa-exclamation-circle"></i>
-          } @else {
-            <i class="fas fa-clock"></i>
-          }
-        </div>
-        <div class="task-content">
-          <div class="task-header">
-            <h3>{{ task.title }}</h3>
-            <span class="task-badge" [class.pending]="task.status === 'pendiente'"
-                                    [class.completed]="task.status === 'entregada'"
-                                    [class.overdue]="task.status === 'vencida'">
-              {{ task.status | titlecase }}
-            </span>
-          </div>
-          <div class="task-details">
-            <p><i class="fas fa-book"></i> {{ task.course }}</p>
-            <p><i class="fas fa-calendar"></i> Fecha límite: {{ task.dueDate | date:'longDate' }}</p>
-            @if (task.submitted && task.submittedDate) {
-              <p class="submitted"><i class="fas fa-check"></i> Entregada el {{ task.submittedDate | date:'shortDate' }}</p>
-            }
-            @if (task.grade !== undefined && task.grade !== null) {
-              <p class="task-grade"><i class="fas fa-star"></i> Calificación: {{ task.grade }}/20</p>
+        <div class="task-card" [class.overdue]="task.status === 'vencida'">
+          <div
+            class="task-status-icon"
+            [class.pending]="task.status === 'pendiente'"
+            [class.completed]="task.status === 'entregada'"
+            [class.overdue]="task.status === 'vencida'"
+          >
+            @if (task.status === 'entregada') {
+              <i class="fas fa-check-circle"></i>
+            } @else if (task.status === 'vencida') {
+              <i class="fas fa-exclamation-circle"></i>
+            } @else {
+              <i class="fas fa-clock"></i>
             }
           </div>
-        </div>
+          <div class="task-content">
+            <div class="task-header">
+              <h3>{{ task.title }}</h3>
+              <span
+                class="task-badge"
+                [class.pending]="task.status === 'pendiente'"
+                [class.completed]="task.status === 'entregada'"
+                [class.overdue]="task.status === 'vencida'"
+              >
+                {{ task.status | titlecase }}
+              </span>
+            </div>
+            <div class="task-details">
+              <p><i class="fas fa-book"></i> {{ task.course }}</p>
+              @if (task.dueDate) {
+                <p><i class="fas fa-calendar"></i> Fecha límite: {{ task.dueDate | date: 'longDate' }}</p>
+              } @else {
+                <p><i class="fas fa-calendar"></i> Sin fecha límite</p>
+              }
+              @if (task.submitted && task.submittedDate) {
+                <p class="submitted"><i class="fas fa-check"></i> Entregada el {{ task.submittedDate | date: 'shortDate' }}</p>
+              }
+              @if (task.grade !== undefined && task.grade !== null) {
+                <p class="task-grade"><i class="fas fa-star"></i> Calificación: {{ task.grade }}/20</p>
+              }
+            </div>
+          </div>
         </div>
       }
     </div>
-
-    @if (filteredTasks().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-tasks"></i>
-        <p>No se encontraron tareas</p>
-        @if (searchQuery() || filterStatus() !== 'todos') {
-          <p class="empty-hint">Intenta con otros filtros o términos de búsqueda</p>
-        } @else {
-          <p class="empty-hint">Este hijo no tiene tareas asignadas</p>
-        }
-      </div>
-    }
+  }
+  } @else if (!isLoading()) {
+    <div class="empty-state">
+      <i class="fas fa-user-slash"></i>
+      <p>No hay estudiantes vinculados a tu cuenta.</p>
+    </div>
   }
 </div>
