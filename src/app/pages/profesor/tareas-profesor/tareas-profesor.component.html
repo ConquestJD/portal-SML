@@ -5,118 +5,170 @@
       <p class="page-subtitle">Gestiona todas las tareas de tus cursos</p>
     </div>
     <div class="header-actions">
+      @if (courses().length > 0) {
+        <div class="course-toolbar">
+          <label class="sr-only" for="courseSelect">Curso</label>
+          <select
+            id="courseSelect"
+            name="courseSelect"
+            class="form-input course-select"
+            [ngModel]="selectedCourse()"
+            (ngModelChange)="onCourseChange($event)"
+          >
+            @for (c of courses(); track c.id) {
+              <option [value]="c.id">{{ courseOptionLabel(c) }}</option>
+            }
+          </select>
+          <a
+            [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
+            [queryParams]="{ returnTo: 'tareas' }"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-plus"></i> Nueva tarea
+          </a>
+        </div>
+      }
       <div class="search-wrapper">
         <i class="fas fa-search"></i>
         <input
           type="text"
           class="form-input search-input"
           placeholder="Buscar tarea..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
           name="searchQuery"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="setSearch($event)"
         />
       </div>
     </div>
   </div>
 
-  <div class="filters">
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'todas'"
-      (click)="filter.set('todas')"
-    >
-      Todas
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'borrador'"
-      (click)="filter.set('borrador')"
-    >
-      Borrador
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'publicada'"
-      (click)="filter.set('publicada')"
-    >
-      Publicadas
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'cerrada'"
-      (click)="filter.set('cerrada')"
-    >
-      Cerradas
-    </button>
-  </div>
+  @if (loading()) {
+    <p class="loading-hint">Cargando cursos…</p>
+  } @else if (error()) {
+    <p class="error-hint">{{ error() }}</p>
+  } @else if (courses().length === 0) {
+    <div class="empty-state">
+      <i class="fas fa-chalkboard-teacher empty-icon"></i>
+      <h2>Sin cursos asignados</h2>
+      <p>No hay cursos para gestionar tareas.</p>
+    </div>
+  } @else {
+    <div class="filters">
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'todas'"
+        (click)="filter.set('todas')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'borrador'"
+        (click)="filter.set('borrador')"
+      >
+        Borrador
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'publicada'"
+        (click)="filter.set('publicada')"
+      >
+        Publicadas
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'cerrada'"
+        (click)="filter.set('cerrada')"
+      >
+        Cerradas
+      </button>
+    </div>
 
-  <div class="summary-panel">
-    <div class="summary-item">
-      <div class="summary-icon-wrapper">
-        <i class="fas fa-tasks"></i>
+    <div class="summary-panel">
+      <div class="summary-item">
+        <div class="summary-icon-wrapper">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="summary-content">
+          <span class="summary-label">Total tareas (este curso)</span>
+          <span class="summary-value">{{ totalTasks() }}</span>
+        </div>
       </div>
-      <div class="summary-content">
-        <span class="summary-label">Total Tareas</span>
-        <span class="summary-value">{{ totalTasks() }}</span>
+      <div class="summary-item">
+        <div class="summary-icon-wrapper warning">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="summary-content">
+          <span class="summary-label">Entregas por calificar</span>
+          <span class="summary-value warning">{{ pendingCount() }}</span>
+        </div>
       </div>
     </div>
-    <div class="summary-item">
-      <div class="summary-icon-wrapper warning">
-        <i class="fas fa-exclamation-circle"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Pendientes de Calificar</span>
-        <span class="summary-value warning">{{ pendingCount() }}</span>
-      </div>
-    </div>
-  </div>
 
-  <div class="tasks-list">
-    @for (task of filteredTasks(); track task.id) {
-      <div class="task-card">
-        <div class="task-header">
-          <div class="task-title-section">
-            <h3 class="task-title">{{ task.title }}</h3>
-            <span class="task-course">{{ task.course }}</span>
+    @if (loadingTasks()) {
+      <p class="loading-hint">Cargando tareas…</p>
+    }
+
+    <div class="tasks-list">
+      @for (task of filteredTasks(); track task.id) {
+        <div class="task-card">
+          <div class="task-header">
+            <div class="task-title-section">
+              <h3 class="task-title">{{ task.title }}</h3>
+              <span class="task-course">{{ task.courseLabel }}</span>
+            </div>
+            <span class="badge" [ngClass]="badgeClass(task)">
+              {{ statusLabel(task) }}
+            </span>
           </div>
-          <span class="badge" [class.badge-info]="task.status === 'publicada'" [class.badge-secondary]="task.status === 'borrador'" [class.badge-warning]="task.status === 'cerrada'">
-            {{ task.status === 'publicada' ? 'Publicada' : task.status === 'borrador' ? 'Borrador' : 'Cerrada' }}
-          </span>
+          <div class="task-info">
+            <div class="info-item">
+              <i class="fas fa-calendar-alt"></i>
+              <span>Fecha límite: {{ formatDueDate(task.dueDate) }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Entregadas: {{ task.submitted }} / {{ task.totalStudents || '—' }}</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-clock"></i>
+              <span class="warning">Por calificar: {{ task.pendingToGrade }}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id]" class="btn btn-primary btn-sm">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+            <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id, 'revisar']" class="btn btn-secondary btn-sm">
+              <i class="fas fa-check"></i> Revisar ({{ task.submitted }})
+            </a>
+            <a [routerLink]="['/profesor/cursos', task.assignmentId]" class="btn btn-sm btn-outline">
+              <i class="fas fa-arrow-right"></i> Ver curso
+            </a>
+          </div>
         </div>
-        <div class="task-info">
-          <div class="info-item">
-            <i class="fas fa-calendar-alt"></i>
-            <span>Fecha límite: {{ task.dueDate }}</span>
-          </div>
-          <div class="info-item">
-            <i class="fas fa-check-circle"></i>
-            <span>Entregadas: {{ task.submitted }} / {{ task.total }}</span>
-          </div>
-          <div class="info-item">
-            <i class="fas fa-clock"></i>
-            <span class="warning">Pendientes: {{ task.pending }}</span>
-          </div>
-        </div>
-        <div class="task-actions">
-          <a [routerLink]="['/profesor/cursos', task.courseId, 'tareas', task.id]" class="btn btn-primary btn-sm">
-            <i class="fas fa-edit"></i> Editar
+      }
+    </div>
+
+    @if (!loadingTasks() && filteredTasks().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-tasks empty-icon"></i>
+        <h2>No hay tareas</h2>
+        <p>No se encontraron tareas con los filtros seleccionados.</p>
+        @if (selectedCourse()) {
+          <a
+            [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
+            [queryParams]="{ returnTo: 'tareas' }"
+            class="btn btn-primary empty-cta"
+          >
+            <i class="fas fa-plus"></i> Crear primera tarea
           </a>
-          <a [routerLink]="['/profesor/cursos', task.courseId, 'tareas', task.id, 'revisar']" class="btn btn-secondary btn-sm">
-            <i class="fas fa-check"></i> Revisar ({{ task.submitted }})
-          </a>
-          <a [routerLink]="['/profesor/cursos', task.courseId]" class="btn btn-sm btn-outline">
-            <i class="fas fa-arrow-right"></i> Ver Curso
-          </a>
-        </div>
+        }
       </div>
     }
-  </div>
-
-  @if (filteredTasks().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-tasks empty-icon"></i>
-      <h2>No hay tareas</h2>
-      <p>No se encontraron tareas con los filtros seleccionados.</p>
-    </div>
   }
 </div>
