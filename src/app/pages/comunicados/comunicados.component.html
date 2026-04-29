@@ -54,6 +54,20 @@
             >
               <div class="com-card__top">
                 <div class="com-card__badges">
+                  <span
+                    class="com-read-pill"
+                    [class.com-read-pill--unread]="!a.isRead"
+                    [class.com-read-pill--read]="a.isRead"
+                    [attr.aria-label]="a.isRead ? 'Leído' : 'No leído'"
+                  >
+                    @if (a.isRead) {
+                      <i class="fas fa-check-double" aria-hidden="true"></i>
+                      Leído
+                    } @else {
+                      <i class="fas fa-envelope" aria-hidden="true"></i>
+                      No leído
+                    }
+                  </span>
                   <span class="com-badge com-badge--type">{{ typeLabel(a.type) }}</span>
                   <span
                     class="com-badge"

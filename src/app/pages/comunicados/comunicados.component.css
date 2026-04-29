@@ -158,6 +158,35 @@
 
 .com-card--unread {
   border-left: 4px solid var(--primary);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 7%, var(--bg-primary)),
+    var(--bg-primary) 40%
+  );
+}
+
+.com-read-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.com-read-pill--unread {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color));
+}
+
+.com-read-pill--read {
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
 }
 
 .com-card--urgent {
