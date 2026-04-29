@@ -46,10 +46,13 @@ export interface StudentTask {
 }
 
 export interface StudentGrade {
-  id: string; score: number; notes?: string;
+  id: string;
+  score: number;
+  notes?: string;
   course?: { name: string };
   period?: { id: string; name: string };
   createdAt?: string;
+  teacherAssignmentId?: string;
 }
 
 export interface StudentAttendance {
@@ -76,6 +79,22 @@ export class StudentService {
   private get<T>(path: string, params?: HttpParams): Observable<T> {
     return this.http.get<{ success: boolean; data: T }>(`${this.url}${path}`, { params })
       .pipe(map((r: any) => r.data));
+  }
+
+  private normalizeStudentGrade(raw: StudentGrade | Record<string, unknown>): StudentGrade {
+    const g = raw as Record<string, unknown>;
+    const ta = g['teacherAssignment'] as { id?: string; course?: { name?: string } } | undefined;
+    const courseFromTa =
+      ta?.course?.name != null ? { name: String(ta.course.name) } : undefined;
+    const existing = g['course'] as StudentGrade['course'] | undefined;
+    return {
+      ...(g as unknown as StudentGrade),
+      course: existing ?? courseFromTa,
+      teacherAssignmentId:
+        typeof g['teacherAssignmentId'] === 'string'
+          ? (g['teacherAssignmentId'] as string)
+          : ta?.id,
+    };
   }
 
   private normalizeStudentTask(raw: StudentTask | Record<string, unknown>): StudentTask {
@@ -148,7 +167,11 @@ export class StudentService {
     );
   }
   getCourseGrades(courseId: string): Observable<StudentGrade[]> {
-    return this.get<StudentGrade[]>(`/student/courses/${courseId}/grades`);
+    return this.get<StudentGrade[]>(`/student/courses/${courseId}/grades`).pipe(
+      map((list) =>
+        (Array.isArray(list) ? list : []).map((g) => this.normalizeStudentGrade(g as StudentGrade)),
+      ),
+    );
   }
   getMaterialDownloadUrl(courseId: string, unitId: string): string {
     return `${this.url}/student/courses/${courseId}/materials/${unitId}/download`;
@@ -176,7 +199,11 @@ export class StudentService {
 
   // ─── GRADES ───────────────────────────────────────────────────────────────
   getGrades(f: { period?: string; courseId?: string } = {}): Observable<StudentGrade[]> {
-    return this.get<StudentGrade[]>('/student/grades', buildParams(f));
+    return this.get<StudentGrade[]>('/student/grades', buildParams(f)).pipe(
+      map((list) =>
+        (Array.isArray(list) ? list : []).map((g) => this.normalizeStudentGrade(g as StudentGrade)),
+      ),
+    );
   }
   getGradesExportUrl(period?: string): string {
     return period
