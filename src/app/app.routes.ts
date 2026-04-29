@@ -289,6 +289,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/comunicados/comunicados.component').then(m => m.ComunicadosComponent)
       },
       {
+        path: 'padre/comunicados/:id',
+        loadComponent: () => import('./pages/comunicados/comunicado-detalle/comunicado-detalle.component').then(m => m.ComunicadoDetalleComponent)
+      },
+      {
         path: 'padre/mensajeria',
         loadComponent: () => import('./pages/padre/mensajeria-padre/mensajeria-padre.component').then(m => m.MensajeriaPadreComponent)
       },
