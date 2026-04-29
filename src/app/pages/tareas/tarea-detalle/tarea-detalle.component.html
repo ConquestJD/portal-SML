@@ -19,6 +19,10 @@
         </button>
       </div>
 
+      @if (downloadError()) {
+        <p class="alert-error download-alert" role="alert">{{ downloadError() }}</p>
+      }
+
       <div class="task-info-card">
         <div class="task-header-info">
           <div class="task-course-info">

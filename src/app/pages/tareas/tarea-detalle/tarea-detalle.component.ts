@@ -2,6 +2,7 @@ import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { StudentService, StudentTask } from '../../../services/student.service';
 
 type TaskUiStatus = 'pendiente' | 'vencida' | 'en-revision' | 'calificada';
@@ -20,6 +21,8 @@ export class TareaDetalleComponent implements OnInit {
   submitting = signal(false);
   submitSuccess = signal('');
   submitError = signal('');
+  /** Error al descargar adjuntos (requiere petición autenticada, no window.open). */
+  downloadError = signal('');
   showSubmitConfirmation = signal(false);
   readonly isLoading = this.loading;
 
@@ -266,11 +269,83 @@ export class TareaDetalleComponent implements OnInit {
   }
 
   downloadMaterial(fileId: string) {
-    window.open(this.studentService.getTaskMaterialDownloadUrl(this.taskId(), fileId));
+    this.downloadError.set('');
+    const fallback =
+      this.task()?.attachments?.find((a) => a.id === fileId)?.name ?? 'archivo';
+
+    this.studentService.downloadTaskMaterialBlob(this.taskId(), fileId).subscribe({
+      next: async (res) => {
+        const apiErr = await this.messageIfBlobIsApiError(res.blob);
+        if (apiErr) {
+          this.downloadError.set(apiErr);
+          return;
+        }
+        this.triggerBlobDownload(res.blob, res.filename ?? fallback);
+      },
+      error: (err: unknown) => {
+        void this.downloadHttpFailureMessage(err).then((m) => this.downloadError.set(m));
+      },
+    });
   }
 
   downloadSubmissionFile(fileId: string) {
-    window.open(this.studentService.getSubmissionAttachmentDownloadUrl(this.taskId(), fileId));
+    this.downloadError.set('');
+    const fallback =
+      this.task()?.submission?.attachments?.find((a) => a.id === fileId)?.name ?? 'archivo';
+
+    this.studentService.downloadSubmissionAttachmentBlob(this.taskId(), fileId).subscribe({
+      next: async (res) => {
+        const apiErr = await this.messageIfBlobIsApiError(res.blob);
+        if (apiErr) {
+          this.downloadError.set(apiErr);
+          return;
+        }
+        this.triggerBlobDownload(res.blob, res.filename ?? fallback);
+      },
+      error: (err: unknown) => {
+        void this.downloadHttpFailureMessage(err).then((m) => this.downloadError.set(m));
+      },
+    });
+  }
+
+  private triggerBlobDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.trim() || 'descarga';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** Si el servidor devolvió JSON de error en el cuerpo (p. ej. tipo application/json). */
+  private async messageIfBlobIsApiError(blob: Blob): Promise<string | null> {
+    if (blob.type && blob.type !== 'application/json' && !blob.type.includes('json')) {
+      return null;
+    }
+    if (blob.size > 8192) return null;
+    const text = await blob.text();
+    if (!text.trimStart().startsWith('{')) return null;
+    try {
+      const j = JSON.parse(text) as { error?: { message?: string } };
+      if (j?.error?.message?.trim()) return j.error.message.trim();
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  private async downloadHttpFailureMessage(err: unknown): Promise<string> {
+    const e = err as HttpErrorResponse;
+    if (e?.error instanceof Blob) {
+      try {
+        const t = await e.error.text();
+        const j = JSON.parse(t) as { error?: { message?: string } };
+        if (j?.error?.message) return j.error.message;
+      } catch {
+        /* ignore */
+      }
+    }
+    return 'No se pudo descargar el archivo. Si la sesión expiró, vuelve a iniciar sesión.';
   }
 
   submissionIsGraded(): boolean {
