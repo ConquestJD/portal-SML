@@ -36,6 +36,8 @@ export interface StudentTask {
   description?: string;
   dueDate?: string;
   maxScore: number;
+  /** Límite de envíos/actualizaciones en el portal (por defecto 1). */
+  maxSubmissions?: number;
   status: string;
   /** Normalizado: archivo | texto | ambos | clase */
   deliveryType?: string;
@@ -50,6 +52,8 @@ export interface StudentTask {
     submittedAt?: string;
     gradedAt?: string;
     content?: string | null;
+    /** Cuántas veces se ha pulsado “Entregar” con éxito para esta tarea. */
+    submitCount?: number;
     attachments?: { id: string; name: string }[];
   };
   attachments?: { id: string; name: string }[];
@@ -120,12 +124,19 @@ export class StudentService {
       }));
     };
 
+    const num = (v: unknown): number | undefined => {
+      if (v === null || v === undefined) return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+
     let submission: StudentTask['submission'] | undefined;
     if (subRaw && typeof subRaw === 'object') {
       const s = subRaw as Record<string, unknown>;
       submission = {
         ...(subRaw as StudentTask['submission']),
         content: (s['content'] as string | null | undefined) ?? undefined,
+        submitCount: num(s['submitCount']),
         attachments: mapTaskFiles(s['attachments']),
       };
     }
@@ -151,10 +162,13 @@ export class StudentService {
       ? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || undefined
       : undefined;
 
+    const maxSubmissions = num(t['maxSubmissions']) ?? 1;
+
     const unit = t['unit'] as StudentTask['unit'];
 
     return {
       ...(t as unknown as StudentTask),
+      maxSubmissions: Math.max(1, Math.min(20, maxSubmissions)),
       deliveryType,
       submission,
       course,

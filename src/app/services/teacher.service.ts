@@ -93,6 +93,8 @@ export interface TeacherCourse {
 export interface TeacherTask {
   id: string; title: string; description?: string;
   dueDate?: string; maxScore: number; status: string;
+  /** Veces que el alumno puede enviar/actualizar (portal); por defecto 1. */
+  maxSubmissions?: number;
   /** Slugs: `archivo` | `texto` | `ambos` | `clase` (API del profesor). */
   deliveryType?: string;
   submissionsCount?: number; gradedCount?: number;
@@ -348,7 +350,7 @@ export class TeacherService {
     taskId: string,
     dto: Partial<{
       title: string; description: string; dueDate: string;
-      maxScore: number; status: string; deliveryType: string;
+      maxScore: number; status: string; deliveryType: string; maxSubmissions?: number;
     }>,
   ): Observable<TeacherTask> {
     return this.http.put<{ success: boolean; data: TeacherTask }>(
