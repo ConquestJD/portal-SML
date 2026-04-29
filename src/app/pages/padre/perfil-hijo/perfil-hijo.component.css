@@ -3,6 +3,23 @@
   margin: 0 auto;
   padding: var(--spacing-lg);
 }
+.perfil-error,
+.perfil-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-secondary, #666);
+}
+
+.perfil-error {
+  color: var(--error, #c62828);
+}
+
+.contact-placeholder {
+  margin: 0;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--text-secondary, #666);
+}
+
 
 .loading-state {
   display: flex;

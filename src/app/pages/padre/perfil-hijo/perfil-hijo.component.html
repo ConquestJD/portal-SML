@@ -1,10 +1,15 @@
 <div class="perfil-hijo-container">
-  @if (isLoading()) {
+  @if (loading()) {
     <div class="loading-state">
       <i class="fas fa-spinner fa-spin"></i>
       <p>Cargando perfil...</p>
     </div>
+  } @else if (error()) {
+    <p class="perfil-error">{{ error() }}</p>
   } @else {
+    @if (children().length === 0) {
+      <p class="perfil-empty">No hay estudiantes vinculados a tu cuenta.</p>
+    } @else {
     <!-- Breadcrumb -->
     <div class="breadcrumb">
       <a routerLink="/padre/dashboard" class="breadcrumb-link">
@@ -91,7 +96,7 @@
             <i class="fas fa-chart-line"></i>
           </div>
           <div class="stat-content">
-            <span class="stat-value">{{ profile.academicSummary.overallAverage }}</span>
+            <span class="stat-value">{{ profile.academicSummary.overallAverage ?? '—' }}</span>
             <span class="stat-label">Promedio General</span>
           </div>
         </div>
@@ -196,7 +201,7 @@
                 <div class="summary-list">
                   <div class="summary-item">
                     <span class="summary-label">Promedio General</span>
-                    <span class="summary-value highlight">{{ profile.academicSummary.overallAverage }}</span>
+                    <span class="summary-value highlight">{{ profile.academicSummary.overallAverage ?? '—' }}</span>
                   </div>
                   <div class="summary-item">
                     <span class="summary-label">Total de Cursos</span>
@@ -271,10 +276,10 @@
                   <div class="metric-item">
                     <div class="metric-header">
                       <span class="metric-label">Promedio General</span>
-                      <span class="metric-value large">{{ profile.academicSummary.overallAverage }}</span>
+                      <span class="metric-value large">{{ profile.academicSummary.overallAverage ?? '—' }}</span>
                     </div>
                     <div class="metric-bar">
-                      <div class="metric-fill" [style.width.%]="(profile.academicSummary.overallAverage / 20) * 100"></div>
+                      <div class="metric-fill" [style.width.%]="averageBarWidth(profile.academicSummary.overallAverage)"></div>
                     </div>
                     <p class="metric-hint">Escala de 0 a 20</p>
                   </div>
@@ -382,14 +387,21 @@
                 <div class="contact-body">
                   <p class="contact-name">{{ profile.tutor.name }}</p>
                   <div class="contact-details">
-                    <a [href]="'mailto:' + profile.tutor.email" class="contact-link">
-                      <i class="fas fa-envelope"></i>
-                      {{ profile.tutor.email }}
-                    </a>
-                    <a [href]="'tel:' + profile.tutor.phone" class="contact-link">
-                      <i class="fas fa-phone"></i>
-                      {{ profile.tutor.phone }}
-                    </a>
+                    @if (profile.tutor.email) {
+                      <a [href]="'mailto:' + profile.tutor.email" class="contact-link">
+                        <i class="fas fa-envelope"></i>
+                        {{ profile.tutor.email }}
+                      </a>
+                    }
+                    @if (profile.tutor.phone) {
+                      <a [href]="'tel:' + profile.tutor.phone" class="contact-link">
+                        <i class="fas fa-phone"></i>
+                        {{ profile.tutor.phone }}
+                      </a>
+                    }
+                    @if (!profile.tutor.email && !profile.tutor.phone) {
+                      <p class="contact-placeholder">Los datos de contacto se facilitan en secretaría.</p>
+                    }
                   </div>
                   <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'tutor', childId: selectedChildId()}" class="contact-action-btn">
                     <i class="fas fa-comment"></i>
@@ -408,14 +420,21 @@
                 <div class="contact-body">
                   <p class="contact-name">{{ profile.coordinator.name }}</p>
                   <div class="contact-details">
-                    <a [href]="'mailto:' + profile.coordinator.email" class="contact-link">
-                      <i class="fas fa-envelope"></i>
-                      {{ profile.coordinator.email }}
-                    </a>
-                    <a [href]="'tel:' + profile.coordinator.phone" class="contact-link">
-                      <i class="fas fa-phone"></i>
-                      {{ profile.coordinator.phone }}
-                    </a>
+                    @if (profile.coordinator.email) {
+                      <a [href]="'mailto:' + profile.coordinator.email" class="contact-link">
+                        <i class="fas fa-envelope"></i>
+                        {{ profile.coordinator.email }}
+                      </a>
+                    }
+                    @if (profile.coordinator.phone) {
+                      <a [href]="'tel:' + profile.coordinator.phone" class="contact-link">
+                        <i class="fas fa-phone"></i>
+                        {{ profile.coordinator.phone }}
+                      </a>
+                    }
+                    @if (!profile.coordinator.email && !profile.coordinator.phone) {
+                      <p class="contact-placeholder">Los datos de contacto se facilitan en secretaría.</p>
+                    }
                   </div>
                   <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'coordinator', childId: selectedChildId()}" class="contact-action-btn">
                     <i class="fas fa-comment"></i>
@@ -427,6 +446,7 @@
           </div>
         }
       </div>
+    }
     }
   }
 </div>
