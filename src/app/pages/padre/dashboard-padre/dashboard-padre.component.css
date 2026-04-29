@@ -257,6 +257,10 @@
   color: var(--error);
 }
 
+.kpi-value.neutral {
+  color: #666;
+}
+
 .kpi-detail {
   font-size: 0.875rem;
   color: #999;
@@ -290,6 +294,10 @@
   margin-bottom: var(--spacing-md);
 }
 
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
 .view-all {
   color: var(--primary);
   text-decoration: none;
@@ -298,6 +306,49 @@
 
 .view-all:hover {
   text-decoration: underline;
+}
+
+.unread-badge {
+  display: inline-block;
+  margin-left: var(--spacing-xs);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--secondary, #1976d2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+a.comunicado-item {
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  border-radius: 8px;
+}
+
+a.comunicado-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.comunicado-item.unread .comunicado-content h3 {
+  font-weight: 700;
+}
+
+.empty-comunicados {
+  margin: 0;
+  padding: var(--spacing-md);
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.state-msg {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--primary);
+}
+
+.state-msg.error {
+  color: var(--error);
 }
 
 .comunicados-list {
@@ -379,6 +430,7 @@
 .section-title {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin: 0 0 var(--spacing-md) 0;
   color: var(--primary);

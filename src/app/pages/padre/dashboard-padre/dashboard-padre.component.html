@@ -1,4 +1,11 @@
 <div class="dashboard-padre-container">
+  @if (loading()) {
+    <p class="state-msg">Cargando…</p>
+  } @else if (error()) {
+    <p class="state-msg error">{{ error() }}</p>
+  } @else if (!children().length) {
+    <p class="state-msg">No hay estudiantes vinculados a tu cuenta. Contacta a administración.</p>
+  } @else {
   <!-- Selector de Hijos -->
   @if (children().length > 1) {
     <div class="child-selector-section">
@@ -8,9 +15,10 @@
       </h2>
       <div class="children-grid">
         @for (child of children(); track child.id) {
-          <button 
+          <button
+            type="button"
             class="child-card"
-            [class.active]="selectedChild() === child.id"
+            [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
             <div class="child-photo-wrapper">
@@ -26,7 +34,7 @@
               <h3 class="child-name">{{ child.name }}</h3>
               <p class="child-grade">{{ child.grade }}</p>
             </div>
-            @if (selectedChild() === child.id) {
+            @if (selectedChildId() === child.id) {
               <div class="child-check">
                 <i class="fas fa-check-circle"></i>
               </div>
@@ -48,7 +56,7 @@
     <div class="alerts-section">
       <h2 class="section-title">
         <i class="fas fa-exclamation-triangle"></i>
-        Alertas Urgentes
+        Avisos
       </h2>
       <div class="alerts-grid">
         @for (alert of urgentAlerts(); track alert.id) {
@@ -59,12 +67,16 @@
                 @case ('falta') { <i class="fas fa-calendar-times"></i> }
                 @case ('nota') { <i class="fas fa-chart-line"></i> }
                 @case ('pago') { <i class="fas fa-dollar-sign"></i> }
+                @case ('justificacion') { <i class="fas fa-file-signature"></i> }
+                @default { <i class="fas fa-info-circle"></i> }
               }
             </div>
             <div class="alert-content">
               <h3>{{ alert.title }}</h3>
               <p>{{ alert.message }}</p>
-              <span class="alert-date">{{ alert.date }}</span>
+              @if (alert.date) {
+                <span class="alert-date">{{ alert.date }}</span>
+              }
             </div>
           </div>
         }
@@ -79,11 +91,18 @@
         <i class="fas fa-calendar-check"></i>
       </div>
       <div class="kpi-content">
-        <h3>Asistencia Hoy</h3>
-        <p class="kpi-value" [class.present]="todayAttendance().present" [class.absent]="!todayAttendance().present">
-          {{ todayAttendance().present ? 'Presente' : 'Ausente' }}
+        <h3>Asistencia hoy</h3>
+        <p
+          class="kpi-value"
+          [class.present]="attendanceTodayClass() === 'present'"
+          [class.absent]="attendanceTodayClass() === 'absent'"
+          [class.neutral]="attendanceTodayClass() === 'neutral'"
+        >
+          {{ todayAttendance().label }}
         </p>
-        <span class="kpi-detail">{{ todayAttendance().time }}</span>
+        @if (todayAttendance().sessionCount > 0) {
+          <span class="kpi-detail">{{ todayAttendance().sessionCount }} registro(s)</span>
+        }
       </div>
     </div>
 
@@ -92,7 +111,7 @@
         <i class="fas fa-calendar-week"></i>
       </div>
       <div class="kpi-content">
-        <h3>Asistencia Semanal</h3>
+        <h3>Asistencia semanal</h3>
         <p class="kpi-value">{{ weekAttendance().present }}/{{ weekAttendance().total }}</p>
         <span class="kpi-detail">{{ weekAttendance().percentage }}%</span>
       </div>
@@ -103,7 +122,7 @@
         <i class="fas fa-tasks"></i>
       </div>
       <div class="kpi-content">
-        <h3>Tareas Pendientes</h3>
+        <h3>Tareas pendientes</h3>
         <p class="kpi-value">{{ pendingTasks() }}</p>
         <a routerLink="/padre/tareas" class="kpi-link">Ver tareas</a>
       </div>
@@ -111,12 +130,13 @@
 
     <div class="kpi-card">
       <div class="kpi-icon evaluations">
-        <i class="fas fa-clipboard-check"></i>
+        <i class="fas fa-clock"></i>
       </div>
       <div class="kpi-content">
-        <h3>Evaluaciones Próximas</h3>
-        <p class="kpi-value">{{ upcomingEvaluations() }}</p>
-        <a routerLink="/padre/cursos" class="kpi-link">Ver cursos</a>
+        <h3>Entregas próximas</h3>
+        <p class="kpi-value">{{ upcomingDueTasks() }}</p>
+        <span class="kpi-detail">Próx. 14 días, sin entregar</span>
+        <a routerLink="/padre/tareas" class="kpi-link">Ver tareas</a>
       </div>
     </div>
   </div>
@@ -126,25 +146,29 @@
     <div class="section-header">
       <h2 class="section-title">
         <i class="fas fa-bullhorn"></i>
-        Comunicados Recientes
+        Comunicados recientes
+        @if (unreadComunicados() > 0) {
+          <span class="unread-badge">{{ unreadComunicados() }} sin leer</span>
+        }
       </h2>
       <a routerLink="/padre/comunicados" class="view-all">Ver todos</a>
     </div>
     <div class="comunicados-list">
-      <div class="comunicado-item">
-        <i class="fas fa-file-alt"></i>
-        <div class="comunicado-content">
-          <h3>Reunión de Padres</h3>
-          <p>15 de marzo, 2024</p>
-        </div>
-      </div>
-      <div class="comunicado-item">
-        <i class="fas fa-file-alt"></i>
-        <div class="comunicado-content">
-          <h3>Cambio de Horario</h3>
-          <p>12 de marzo, 2024</p>
-        </div>
-      </div>
+      @for (c of recentComunicadosList(); track c.id) {
+        <a
+          [routerLink]="['/padre/comunicados', c.id]"
+          class="comunicado-item"
+          [class.unread]="!c.isRead"
+        >
+          <i class="fas" [class.fa-envelope-open]="c.isRead" [class.fa-envelope]="!c.isRead"></i>
+          <div class="comunicado-content">
+            <h3>{{ c.title }}</h3>
+            <p>{{ formatComunicadoDate(c.publishedAt) || 'Sin fecha' }}</p>
+          </div>
+        </a>
+      } @empty {
+        <p class="empty-comunicados">No hay comunicados para mostrar.</p>
+      }
     </div>
   </div>
 
@@ -189,4 +213,5 @@
       </a>
     </div>
   </div>
+  }
 </div>
