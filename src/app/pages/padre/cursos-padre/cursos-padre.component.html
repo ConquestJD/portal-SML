@@ -35,7 +35,7 @@
             </div>
             <div class="child-info">
               <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+              <p class="child-grade">{{ child.grade }}</p>
             </div>
             @if (selectedChildId() === child.id) {
               <div class="child-check">
@@ -54,7 +54,7 @@
         Cursos de {{ selectedChild()!.name }}
       </h2>
       <p class="child-header-subtitle">
-        {{ selectedChild()!.grade }} - Sección {{ selectedChild()!.section }}
+        {{ selectedChild()!.grade }}
       </p>
     </div>
   }

@@ -39,7 +39,7 @@
               </div>
               <div class="child-info">
                 <h3 class="child-name">{{ child.name }}</h3>
-                <p class="child-grade">{{ child.grade }} - Sección {{ child.section }}</p>
+                <p class="child-grade">{{ child.grade }}</p>
                 <p class="child-code">{{ child.code }}</p>
               </div>
               @if (selectedChildId() === child.id) {
@@ -69,7 +69,7 @@
         <div class="profile-header-content">
           <h1 class="profile-name">{{ profile.name }}</h1>
           <p class="profile-subtitle">
-            {{ profile.grade }} - Sección {{ profile.section }} | {{ profile.code }}
+            {{ profile.grade }} | {{ profile.code }}
           </p>
           <div class="profile-badges">
             <span class="status-badge" [class.active]="profile.status === 'Activo'">
