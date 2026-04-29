@@ -12,14 +12,12 @@ import {
   TeacherCourseAnnouncement,
   filterTeacherRosterByCourseGrade,
 } from '../../../services/teacher.service';
-import { MensajeriaCursoComponent } from '../../mensajeria-curso/mensajeria-curso.component';
-
-type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'mensajes' | 'comunicados' | 'foros';
+type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados' | 'foros';
 
 @Component({
   selector: 'app-curso-detalle-profesor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MensajeriaCursoComponent],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './curso-detalle-profesor.component.html',
   styleUrl: './curso-detalle-profesor.component.css'
 })
@@ -84,7 +82,6 @@ export class CursoDetalleProfesorComponent implements OnInit {
       'notas',
       'asistencia',
       'material',
-      'mensajes',
       'comunicados',
       'foros',
     ];

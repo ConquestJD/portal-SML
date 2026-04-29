@@ -40,9 +40,6 @@
     <button class="tab-btn" [class.active]="activeTab() === 'comunicados'" (click)="setTab('comunicados')">
       <i class="fas fa-bullhorn"></i> Comunicados
     </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'mensajes'" (click)="setTab('mensajes')">
-      <i class="fas fa-envelope"></i> Mensajes
-    </button>
   </div>
 
   <div class="tab-content">
@@ -196,23 +193,44 @@
           </a>
         </div>
         <div class="materials-list">
-          <div class="material-item">
-            <div class="material-icon">
-              <i class="fas fa-file-pdf"></i>
+          @if (materials().length === 0) {
+            <div class="state-card">
+              <i class="fas fa-file"></i>
+              <p>No hay materiales publicados. Usa «Subir Material» para agregar carpetas y archivos.</p>
             </div>
-            <div class="material-info">
-              <h4>Unidad 1 - Álgebra Básica</h4>
-              <p>PDF - 2.5 MB - Publicado el 15/03/2024</p>
-            </div>
-            <div class="material-actions">
-              <button class="btn btn-sm btn-secondary">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-sm btn-danger">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
+          } @else {
+            @for (m of materials(); track m.id) {
+              <div class="material-item">
+                <div class="material-icon">
+                  <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="material-info">
+                  <h4>{{ m.title }}</h4>
+                  <p>
+                    @if (m.files?.length) {
+                      {{ m.files.length }} archivo(s)
+                    } @else {
+                      Sin archivos
+                    }
+                    @if (m.createdAt) {
+                      · {{ formatAnnouncementDate(m.createdAt) }}
+                    }
+                    @if (m.unit?.title) {
+                      · {{ m.unit.title }}
+                    }
+                  </p>
+                </div>
+                <div class="material-actions">
+                  <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button type="button" class="btn btn-sm btn-danger" (click)="deleteMaterial(m.id)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          }
         </div>
       </div>
     }
@@ -288,8 +306,3 @@
       </div>
     }
 
-    @if (activeTab() === 'mensajes') {
-      <app-mensajeria-curso></app-mensajeria-curso>
-    }
-  </div>
-</div>
