@@ -31,9 +31,17 @@ export interface StudentCourse {
 }
 
 export interface StudentTask {
-  id: string; title: string; description?: string;
-  dueDate?: string; maxScore: number; status: string;
+  id: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  maxScore: number;
+  status: string;
+  /** Normalizado: archivo | texto | ambos | clase */
+  deliveryType?: string;
   course?: { name: string };
+  teacherName?: string;
+  unit?: { id?: string; title?: string; number?: number } | null;
   submission?: {
     id: string;
     status: string;
@@ -41,8 +49,10 @@ export interface StudentTask {
     feedback?: string;
     submittedAt?: string;
     gradedAt?: string;
+    content?: string | null;
+    attachments?: { id: string; name: string }[];
   };
-  attachments?: { id: string; name: string; url?: string }[];
+  attachments?: { id: string; name: string }[];
 }
 
 export interface StudentGrade {
@@ -99,17 +109,58 @@ export class StudentService {
 
   private normalizeStudentTask(raw: StudentTask | Record<string, unknown>): StudentTask {
     const t = raw as Record<string, unknown>;
-    const mySub = t['mySubmission'] as StudentTask['submission'] | undefined;
-    const sub = (t['submission'] as StudentTask['submission'] | undefined) ?? mySub;
-    const ta = t['teacherAssignment'] as { course?: { name?: string } } | undefined;
+    const mySub = t['mySubmission'] as StudentTask['submission'] | Record<string, unknown> | undefined;
+    const subRaw = (t['submission'] as typeof mySub) ?? mySub;
+
+    const mapTaskFiles = (list: unknown): { id: string; name: string }[] | undefined => {
+      if (!Array.isArray(list)) return undefined;
+      return list.map((f: Record<string, unknown>) => ({
+        id: String(f['id'] ?? ''),
+        name: String(f['filename'] ?? f['name'] ?? 'Archivo'),
+      }));
+    };
+
+    let submission: StudentTask['submission'] | undefined;
+    if (subRaw && typeof subRaw === 'object') {
+      const s = subRaw as Record<string, unknown>;
+      submission = {
+        ...(subRaw as StudentTask['submission']),
+        content: (s['content'] as string | null | undefined) ?? undefined,
+        attachments: mapTaskFiles(s['attachments']),
+      };
+    }
+
+    const rawDt = String(t['deliveryType'] ?? 'ARCHIVO').toUpperCase();
+    let deliveryType: StudentTask['deliveryType'] = 'archivo';
+    if (rawDt === 'TEXTO') deliveryType = 'texto';
+    else if (rawDt === 'AMBOS') deliveryType = 'ambos';
+    else if (rawDt === 'EN_CLASE') deliveryType = 'clase';
+
+    const ta = t['teacherAssignment'] as
+      | {
+          course?: { name?: string };
+          teacher?: { user?: { firstName?: string; lastName?: string } };
+        }
+      | undefined;
     const courseFromList = t['course'] as StudentTask['course'] | undefined;
     const course =
       courseFromList ??
       (ta?.course?.name != null ? { name: String(ta.course.name) } : undefined);
+    const u = ta?.teacher?.user;
+    const teacherName = u
+      ? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || undefined
+      : undefined;
+
+    const unit = t['unit'] as StudentTask['unit'];
+
     return {
       ...(t as unknown as StudentTask),
-      submission: sub,
+      deliveryType,
+      submission,
       course,
+      teacherName,
+      unit: unit ?? undefined,
+      attachments: mapTaskFiles(t['attachments']),
     };
   }
 
@@ -195,6 +246,9 @@ export class StudentService {
   }
   getTaskMaterialDownloadUrl(taskId: string, fileId: string): string {
     return `${this.url}/student/tasks/${taskId}/materials/${fileId}/download`;
+  }
+  getSubmissionAttachmentDownloadUrl(taskId: string, fileId: string): string {
+    return `${this.url}/student/tasks/${taskId}/submission-attachments/${fileId}/download`;
   }
 
   // ─── GRADES ───────────────────────────────────────────────────────────────
