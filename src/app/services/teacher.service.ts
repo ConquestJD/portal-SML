@@ -135,6 +135,21 @@ export interface Material {
   createdAt?: string;
 }
 
+/** Comunicado publicado por el docente para un curso (asignación). */
+export interface TeacherCourseAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  priority: string;
+  targetRoles?: string[];
+  publishedAt?: string | null;
+  createdAt?: string;
+  teacherAssignmentId?: string | null;
+  author: { firstName: string; lastName: string };
+  attachments?: { id: string; name: string; url?: string }[];
+}
+
 export interface TeacherProfile {
   id: string; teacherCode?: string; specialty?: string; bio?: string;
   user: { id: string; email: string; firstName: string; lastName: string; phone?: string; avatarUrl?: string };
@@ -412,6 +427,19 @@ export class TeacherService {
   }
   deleteMaterial(courseId: string, materialId: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/teacher/courses/${courseId}/materials/${materialId}`);
+  }
+
+  getCourseAnnouncements(courseId: string): Observable<TeacherCourseAnnouncement[]> {
+    return this.get<TeacherCourseAnnouncement[]>(`/teacher/courses/${courseId}/announcements`);
+  }
+
+  createCourseAnnouncement(courseId: string, formData: FormData): Observable<TeacherCourseAnnouncement> {
+    return this.http
+      .post<{ success: boolean; data: TeacherCourseAnnouncement }>(
+        `${this.url}/teacher/courses/${courseId}/announcements`,
+        formData,
+      )
+      .pipe(map((r: { data: TeacherCourseAnnouncement }) => r.data));
   }
 
   // ─── PROFILE ──────────────────────────────────────────────────────────────
