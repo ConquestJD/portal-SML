@@ -37,10 +37,44 @@ export interface AdminDashboard {
   recentAnnouncements?: unknown[];
 }
 
+export interface ParentDashboardChild {
+  id: string;
+  name: string;
+  studentCode: string;
+  section: string | null;
+  grade: string | null;
+  academicYear: string | null;
+}
+
+export interface ParentDashboardComunicado {
+  id: string;
+  title: string;
+  publishedAt: string | Date | null;
+  isRead: boolean;
+}
+
+export interface ParentDashboardAlert {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  date: string;
+}
+
 export interface ParentDashboard {
-  summary: { pendingTasks: number; recentComunicados: number };
-  attendance?: { today: boolean; weekPercentage: number };
-  upcomingEvaluations?: number;
+  pendingPayments: number;
+  child: ParentDashboardChild | null;
+  summary: {
+    pendingTasks: number;
+    unreadComunicados: number;
+    upcomingDueTasks: number;
+  };
+  attendance: {
+    today: { status: string | null; label: string; sessionCount: number };
+    week: { present: number; total: number; percentage: number };
+  };
+  recentComunicados: ParentDashboardComunicado[];
+  alerts: ParentDashboardAlert[];
 }
 
 @Injectable({ providedIn: 'root' })

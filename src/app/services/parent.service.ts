@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 function buildParams(f: Record<string, string | number | boolean | undefined>): HttpParams {
@@ -13,10 +13,36 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
 }
 
 export interface Child {
-  id: string; studentCode: string; code?: string;
-  name?: string; grade?: string; section?: string; photo?: string;
-  user: { firstName: string; lastName: string; avatarUrl?: string };
-  enrollments?: { section: { name: string; grade: string }; academicYear: { name: string } }[];
+  id: string;
+  studentCode: string;
+  code?: string;
+  name?: string;
+  grade?: string;
+  section?: string;
+  photo?: string;
+  status?: string;
+  user: {
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+    email?: string;
+    phone?: string;
+  };
+  enrollments?: {
+    enrolledAt?: string;
+    section: { name: string; grade: string };
+    academicYear: { name: string };
+  }[];
+}
+
+/** Fila de GET /parent/children (StudentParent + student anidado). */
+interface StudentParentListRow {
+  student: {
+    id: string;
+    studentCode: string;
+    user: { firstName: string; lastName: string; avatarUrl?: string | null };
+    enrollments?: { section: { name: string; grade: string }; academicYear: { name: string } }[];
+  };
 }
 
 export interface ParentPayment {
@@ -43,14 +69,28 @@ export class ParentService {
 
   // ─── CHILDREN ─────────────────────────────────────────────────────────────
   getChildren(): Observable<Child[]> {
-    return this.get<Child[]>('/parent/children').pipe(
-      map(list => list.map(c => this.normalizeChild(c)))
+    return this.get<StudentParentListRow[]>('/parent/children').pipe(
+      map((list) => list.map((row) => this.normalizeChild(this.studentRowToChild(row)))),
     );
   }
   getChild(childId: string): Observable<Child> {
     return this.get<Child>(`/parent/children/${childId}`).pipe(
       map(c => this.normalizeChild(c))
     );
+  }
+
+  private studentRowToChild(row: StudentParentListRow): Child {
+    const s = row.student;
+    return {
+      id: s.id,
+      studentCode: s.studentCode,
+      user: {
+        firstName: s.user.firstName,
+        lastName: s.user.lastName,
+        avatarUrl: s.user.avatarUrl ?? undefined,
+      },
+      enrollments: s.enrollments,
+    };
   }
 
   private normalizeChild(c: Child): Child {
