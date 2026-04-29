@@ -67,7 +67,6 @@ export interface ParentDashboard {
   summary: {
     pendingTasks: number;
     unreadComunicados: number;
-    upcomingDueTasks: number;
   };
   attendance: {
     today: { status: string | null; label: string; sessionCount: number };
