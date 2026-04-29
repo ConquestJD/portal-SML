@@ -56,6 +56,9 @@
   <div class="tab-content">
     @if (activeTab() === 'contenido') {
       <div class="content-section">
+        @if (materialDownloadError()) {
+          <p class="alert-error" role="alert">{{ materialDownloadError() }}</p>
+        }
         <div class="section-header">
           <h2 class="section-title">
             <i class="fas fa-book"></i> Plan de Estudios

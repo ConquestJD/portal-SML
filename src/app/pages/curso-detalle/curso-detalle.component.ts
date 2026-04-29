@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { StudentService, StudentCourse, StudentTask, StudentGrade } from '../../services/student.service';
 
 type TabType = 'contenido' | 'tareas' | 'calificaciones' | 'comunicados' | 'mensajes' | 'foros' | 'compañeros';
@@ -36,6 +37,8 @@ export class CursoDetalleComponent implements OnInit {
   units = signal<unknown[]>([]);
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
+  /** Descarga de materiales del curso requiere token (no abrir URL en nueva pestaña). */
+  materialDownloadError = signal('');
 
   courseGradeRows = computed((): CourseGradeRow[] => {
     const withTs: { row: CourseGradeRow; ts: number }[] = [];
@@ -163,11 +166,66 @@ export class CursoDetalleComponent implements OnInit {
     });
   }
 
-  downloadMaterial(material: { id?: string }) {
+  downloadMaterial(material: { id?: string; name?: string }) {
     const mid = material?.id;
-    if (mid) {
-      window.open(this.studentService.getMaterialDownloadUrl(this.courseId(), mid));
+    if (!mid) return;
+    this.materialDownloadError.set('');
+    const fallback =
+      (material.name && String(material.name).trim()) ||
+      'material';
+
+    this.studentService.downloadCourseMaterialBlob(this.courseId(), mid).subscribe({
+      next: async (res) => {
+        const errMsg = await this.messageIfBlobIsApiError(res.blob);
+        if (errMsg) {
+          this.materialDownloadError.set(errMsg);
+          return;
+        }
+        this.triggerBlobDownload(res.blob, res.filename ?? fallback);
+      },
+      error: (err: unknown) => {
+        void this.materialDownloadHttpError(err).then((m) => this.materialDownloadError.set(m));
+      },
+    });
+  }
+
+  private triggerBlobDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.trim() || 'descarga';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private async messageIfBlobIsApiError(blob: Blob): Promise<string | null> {
+    if (blob.type && blob.type !== 'application/json' && !blob.type.includes('json')) {
+      return null;
     }
+    if (blob.size > 8192) return null;
+    const text = await blob.text();
+    if (!text.trimStart().startsWith('{')) return null;
+    try {
+      const j = JSON.parse(text) as { error?: { message?: string } };
+      if (j?.error?.message?.trim()) return j.error.message.trim();
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  private async materialDownloadHttpError(err: unknown): Promise<string> {
+    const e = err as HttpErrorResponse;
+    if (e?.error instanceof Blob) {
+      try {
+        const t = await e.error.text();
+        const j = JSON.parse(t) as { error?: { message?: string } };
+        if (j?.error?.message) return j.error.message;
+      } catch {
+        /* ignore */
+      }
+    }
+    return 'No se pudo descargar el material. Si la sesión expiró, vuelve a iniciar sesión.';
   }
 
   getCourseName(): string { return this.course()?.course.name ?? ''; }

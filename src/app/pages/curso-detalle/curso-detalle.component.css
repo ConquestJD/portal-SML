@@ -867,3 +867,12 @@
     align-self: flex-end;
   }
 }
+
+.alert-error {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--border-radius);
+  color: rgb(153, 27, 27);
+  margin-bottom: var(--spacing-md);
+}
