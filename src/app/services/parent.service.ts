@@ -119,6 +119,11 @@ export class ParentService {
     return this.get<unknown[]>(`/parent/children/${childId}/courses/${courseId}/tasks`);
   }
 
+  /** Descarga de material del curso (mismo patrón que el portal estudiante). */
+  getChildCourseMaterialDownloadUrl(childId: string, courseId: string, materialId: string): string {
+    return `${this.url}/parent/children/${childId}/courses/${courseId}/materials/${materialId}/download`;
+  }
+
   // ─── TASKS ────────────────────────────────────────────────────────────────
   getChildTasks(childId: string, f: { status?: string; search?: string } = {}): Observable<unknown[]> {
     return this.get<unknown[]>(`/parent/children/${childId}/tasks`, buildParams(f));
