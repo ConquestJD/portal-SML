@@ -399,9 +399,27 @@ textarea.form-input {
   border-top: 2px solid var(--border-color);
 }
 
-.form-actions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.page-hint {
+  margin: var(--spacing-sm) 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.alert-error {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  background: rgba(185, 28, 28, 0.08);
+  color: #991b1b;
+  border: 1px solid rgba(185, 28, 28, 0.25);
+}
+
+.preview-meta {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 /* Responsive */

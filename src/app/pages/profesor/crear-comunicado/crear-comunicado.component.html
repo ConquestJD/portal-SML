@@ -1,51 +1,49 @@
 <div class="crear-comunicado-container">
-  @if (isLoading()) {
+  @if (loading()) {
     <div class="loading-state">
       <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando información del curso...</p>
+      <p>Cargando curso…</p>
     </div>
-  } @else {
-    <!-- Breadcrumb -->
+  } @else if (error() && !course()) {
+    <div class="empty-state">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn btn-outline" (click)="cancel()">Volver</button>
+    </div>
+  } @else if (course()) {
     <div class="breadcrumb">
-      <a (click)="cancel()" class="breadcrumb-link">
-        <i class="fas fa-arrow-left"></i> Volver al Curso
-      </a>
+      <button type="button" class="breadcrumb-link" (click)="cancel()">
+        <i class="fas fa-arrow-left"></i> Volver al curso
+      </button>
       <span class="breadcrumb-separator">/</span>
-      <span class="breadcrumb-current">
-        @if (isEditMode()) {
-          Editar Comunicado
-        } @else {
-          Nuevo Comunicado
-        }
-      </span>
+      <span class="breadcrumb-current">Nuevo comunicado</span>
     </div>
 
-    <!-- Header -->
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">
-          @if (isEditMode()) {
-            <i class="fas fa-edit"></i> Editar Comunicado
-          } @else {
-            <i class="fas fa-bullhorn"></i> Nuevo Comunicado
-          }
+          <i class="fas fa-bullhorn"></i> Nuevo comunicado
         </h1>
-        <p class="page-subtitle">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</p>
+        <p class="page-subtitle">{{ courseSubtitle() }}</p>
+        <p class="page-hint">
+          Se publica de inmediato. Lo verán los <strong>estudiantes</strong> de este curso y los <strong>padres</strong> vinculados a esos estudiantes en el portal.
+        </p>
       </div>
     </div>
 
-    <!-- Form -->
+    @if (error()) {
+      <div class="alert-error">{{ error() }}</div>
+    }
+
     <form (ngSubmit)="saveComunicado()" class="comunicado-form">
-      <!-- Basic Information -->
       <div class="form-section essential">
         <h2 class="section-title">
           <i class="fas fa-info-circle"></i>
-          Información Básica
+          Contenido
         </h2>
 
         <div class="form-group">
           <label for="title" class="form-label">
-            Título del Comunicado <span class="required">*</span>
+            Título <span class="required">*</span>
           </label>
           <input
             type="text"
@@ -54,14 +52,14 @@
             class="form-input"
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
-            placeholder="Ej: Recordatorio: Examen Parcial"
+            placeholder="Ej: Recordatorio de evaluación"
             required
           />
         </div>
 
         <div class="form-group">
           <label for="content" class="form-label">
-            Contenido <span class="required">*</span>
+            Mensaje <span class="required">*</span>
           </label>
           <textarea
             id="content"
@@ -70,88 +68,41 @@
             rows="8"
             [ngModel]="content()"
             (ngModelChange)="content.set($event)"
-            placeholder="Escribe el contenido del comunicado aquí..."
+            placeholder="Escribe el comunicado…"
             required
           ></textarea>
-          <p class="form-hint">
-            <i class="fas fa-info-circle"></i>
-            Puedes usar formato básico. El comunicado será visible para todos los estudiantes del curso.
-          </p>
         </div>
       </div>
 
-      <!-- Configuration -->
       <div class="form-section">
         <h2 class="section-title">
           <i class="fas fa-cog"></i>
-          Configuración
+          Prioridad
         </h2>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="priority" class="form-label">Prioridad</label>
-            <select
-              id="priority"
-              name="priority"
-              class="form-input"
-              [ngModel]="priority()"
-              (ngModelChange)="priority.set($event)"
-            >
-              <option value="normal">Normal</option>
-              <option value="importante">Importante</option>
-              <option value="urgente">Urgente</option>
-            </select>
-            <p class="form-hint">
-              <i class="fas fa-info-circle"></i>
-              Los comunicados urgentes aparecerán destacados para los estudiantes.
-            </p>
-          </div>
-
-          <div class="form-group">
-            <label for="publishDate" class="form-label">Fecha de Publicación</label>
-            <input
-              type="date"
-              id="publishDate"
-              name="publishDate"
-              class="form-input"
-              [ngModel]="publishDate()"
-              (ngModelChange)="publishDate.set($event)"
-              required
-            />
-            <p class="form-hint">
-              <i class="fas fa-info-circle"></i>
-              El comunicado será visible a partir de esta fecha.
-            </p>
-          </div>
-        </div>
-
         <div class="form-group">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              name="saveAsDraft"
-              [ngModel]="saveAsDraft()"
-              (ngModelChange)="saveAsDraft.set($event)"
-            />
-            <div class="checkbox-content">
-              <span class="checkbox-title">Guardar como borrador</span>
-              <span class="checkbox-description">El comunicado no será visible para los estudiantes hasta que lo publiques</span>
-            </div>
-          </label>
+          <select
+            id="priority"
+            name="priority"
+            class="form-input"
+            [ngModel]="priority()"
+            (ngModelChange)="priority.set($event)"
+          >
+            <option value="LOW">Normal</option>
+            <option value="MEDIUM">Importante</option>
+            <option value="HIGH">Urgente</option>
+          </select>
         </div>
       </div>
 
-      <!-- Attachments -->
       <div class="form-section">
         <h2 class="section-title">
           <i class="fas fa-paperclip"></i>
-          Archivos Adjuntos (Opcional)
+          Adjuntos (opcional)
         </h2>
-
         <div class="form-group">
           <label class="upload-label">
             <i class="fas fa-file-upload"></i>
-            Seleccionar Archivos
+            Seleccionar archivos
             <input
               type="file"
               class="file-input"
@@ -160,29 +111,19 @@
               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
             />
           </label>
-          <p class="form-hint">
-            <i class="fas fa-info-circle"></i>
-            Puedes adjuntar documentos, imágenes o archivos comprimidos. Máximo 10 MB por archivo.
-          </p>
+          <p class="form-hint">Hasta 5 archivos. Máx. 20 MB c/u.</p>
         </div>
 
-        @if (attachments().length > 0) {
+        @if (selectedFiles().length > 0) {
           <div class="attachments-list">
-            @for (attachment of attachments(); track attachment.id) {
+            @for (f of selectedFiles(); track fileKey(f)) {
               <div class="attachment-item">
-                <div class="attachment-icon">
-                  <i class="fas fa-file"></i>
-                </div>
+                <div class="attachment-icon"><i class="fas fa-file"></i></div>
                 <div class="attachment-info">
-                  <span class="attachment-name">{{ attachment.name }}</span>
-                  <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+                  <span class="attachment-name">{{ f.name }}</span>
+                  <span class="attachment-size">{{ formatFileSize(f.size) }}</span>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-danger"
-                  (click)="removeAttachment(attachment.id)"
-                  title="Eliminar archivo"
-                >
+                <button type="button" class="btn btn-sm btn-danger" (click)="removeFile(f)" title="Quitar">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -191,60 +132,29 @@
         }
       </div>
 
-      <!-- Preview -->
       @if (title() || content()) {
         <div class="form-section">
-          <h2 class="section-title">
-            <i class="fas fa-eye"></i>
-            Vista Previa
-          </h2>
+          <h2 class="section-title"><i class="fas fa-eye"></i> Vista previa</h2>
           <div class="preview-card">
             <div class="preview-header">
-              <h3 class="preview-title">{{ title() || 'Título del comunicado' }}</h3>
-              <span class="badge" [class]="getPriorityBadgeClass(priority())">
-                {{ getPriorityLabel(priority()) }}
-              </span>
+              <h3 class="preview-title">{{ title() || 'Título' }}</h3>
+              <span class="badge" [ngClass]="priorityBadgeClass()">{{ priorityLabel() }}</span>
             </div>
-            <div class="preview-meta">
-              <span class="preview-course">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</span>
-              <span class="preview-date">{{ publishDate() || 'Fecha de publicación' }}</span>
-            </div>
-            <div class="preview-content">
-              <p>{{ content() || 'Contenido del comunicado...' }}</p>
-            </div>
-            @if (attachments().length > 0) {
-              <div class="preview-attachments">
-                <h4>Archivos adjuntos:</h4>
-                <ul>
-                  @for (attachment of attachments(); track attachment.id) {
-                    <li>{{ attachment.name }} ({{ formatFileSize(attachment.size) }})</li>
-                  }
-                </ul>
-              </div>
-            }
+            <p class="preview-meta">{{ courseSubtitle() }}</p>
+            <div class="preview-content"><p>{{ content() || '…' }}</p></div>
           </div>
         </div>
       }
 
-      <!-- Form Actions -->
       <div class="form-actions">
-        <button type="button" class="btn btn-outline" (click)="cancel()">
-          <i class="fas fa-times"></i> Cancelar
+        <button type="button" class="btn btn-outline" (click)="cancel()" [disabled]="saving()">
+          Cancelar
         </button>
-        <button 
-          type="submit" 
-          class="btn btn-primary"
-          [disabled]="!canSave() || isSaving()"
-        >
-          @if (isSaving()) {
-            <i class="fas fa-spinner fa-spin"></i> Guardando...
+        <button type="submit" class="btn btn-primary" [disabled]="!canSave() || saving()">
+          @if (saving()) {
+            <i class="fas fa-spinner fa-spin"></i> Publicando…
           } @else {
-            <i class="fas fa-save"></i> 
-            @if (saveAsDraft()) {
-              Guardar como Borrador
-            } @else {
-              Publicar Comunicado
-            }
+            <i class="fas fa-paper-plane"></i> Publicar comunicado
           }
         </button>
       </div>
