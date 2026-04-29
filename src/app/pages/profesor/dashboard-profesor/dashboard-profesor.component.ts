@@ -84,15 +84,20 @@ export class DashboardProfesorComponent implements OnInit {
     return ['/profesor/cursos', c.id];
   }
 
+  /** "Grado · Nivel" del curso. El sistema usa "un grado = un curso" (sin secciones). */
   courseSubtitle(c: TeacherCourse): string {
-    const gs = (c.gradeSection ?? '').trim();
-    if (gs) return gs;
-    const parts: string[] = [];
-    if (c.section?.grade) parts.push(c.section.grade);
-    if (c.section?.name && c.section.name !== '—') parts.push(`Sección ${c.section.name}`);
-    const per = (c.period ?? '').trim();
-    if (per && per !== '—') parts.push(per);
-    return parts.filter(Boolean).join(' · ');
+    const grade = (c.course?.grade ?? '').trim();
+    const level = (c.course?.level ?? '').trim();
+    return [grade, level].filter(Boolean).join(' · ');
+  }
+
+  courseInitial(c: TeacherCourse): string {
+    const name = (c.course?.name ?? '').trim();
+    return name ? name.charAt(0).toUpperCase() : '·';
+  }
+
+  courseColor(c: TeacherCourse): string {
+    return (c.course?.color || '').trim() || '#003366';
   }
 
   getCurrentDate() {

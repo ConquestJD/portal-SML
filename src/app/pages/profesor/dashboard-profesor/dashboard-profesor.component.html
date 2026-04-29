@@ -80,10 +80,17 @@
 
   <!-- Cursos vinculados -->
   <div class="section courses-dashboard-section">
-    <h2 class="section-title">
-      <i class="fas fa-book"></i>
-      Mis cursos
-    </h2>
+    <div class="courses-dashboard-header">
+      <h2 class="section-title">
+        <i class="fas fa-book"></i>
+        Mis cursos
+      </h2>
+      @if (!coursesLoading() && teacherCourses().length > 0) {
+        <a routerLink="/profesor/cursos" class="courses-dashboard-link">
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      }
+    </div>
 
     @if (coursesLoading()) {
       <div class="courses-loading">
@@ -99,20 +106,28 @@
     } @else {
       <div class="courses-dashboard-grid">
         @for (c of teacherCourses(); track c.id) {
-          <a [routerLink]="courseLink(c)" class="course-dashboard-card">
+          <a [routerLink]="courseLink(c)"
+             class="course-dashboard-card"
+             [style.--course-accent]="courseColor(c)">
+            <div class="course-dashboard-card__accent"></div>
             <div class="course-dashboard-card__top">
-              <span class="course-dashboard-code">{{ c.course?.code || '—' }}</span>
-              @if (c.studentsCount != null || c.students != null) {
-                <span class="course-dashboard-students" title="Estudiantes">
-                  <i class="fas fa-users"></i> {{ c.studentsCount ?? c.students }}
-                </span>
+              <div class="course-dashboard-card__logo">{{ courseInitial(c) }}</div>
+              @if (c.course?.code) {
+                <span class="course-dashboard-code">{{ c.course.code }}</span>
               }
             </div>
             <h3 class="course-dashboard-name">{{ c.course?.name || 'Curso' }}</h3>
             @if (courseSubtitle(c)) {
-              <p class="course-dashboard-meta">{{ courseSubtitle(c) }}</p>
+              <p class="course-dashboard-meta">
+                <i class="fas fa-graduation-cap"></i> {{ courseSubtitle(c) }}
+              </p>
             }
-            <span class="course-dashboard-cta">Abrir curso <i class="fas fa-arrow-right"></i></span>
+            <div class="course-dashboard-card__footer">
+              <span class="course-dashboard-students" title="Estudiantes">
+                <i class="fas fa-users"></i> {{ c.studentsCount ?? c.students ?? 0 }} estudiantes
+              </span>
+              <span class="course-dashboard-cta">Abrir <i class="fas fa-arrow-right"></i></span>
+            </div>
           </a>
         }
       </div>
