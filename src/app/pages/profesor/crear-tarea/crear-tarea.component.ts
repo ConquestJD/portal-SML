@@ -76,6 +76,8 @@ export class CrearTareaComponent implements OnInit {
         this.dueDate.set(data.dueDate ? this.toDatetimeLocalValue(data.dueDate) : '');
         this.points.set(data.maxScore);
         this.status.set(data.status);
+        const dt = data.deliveryType ?? 'archivo';
+        this.deliveryType.set(['archivo', 'texto', 'ambos', 'clase'].includes(dt) ? dt : 'archivo');
       },
       error: (err) => {
         this.error.set(err?.error?.error?.message ?? 'No se pudo cargar la tarea');
@@ -137,7 +139,8 @@ export class CrearTareaComponent implements OnInit {
         description: this.instructions().trim(),
         dueDate: dueRaw ? new Date(dueRaw).toISOString() : undefined,
         maxScore: this.points(),
-        status: this.status()
+        status: this.status(),
+        deliveryType: this.deliveryType(),
       }).subscribe({
         next: () => {
           this.isSaving.set(false);
@@ -156,6 +159,7 @@ export class CrearTareaComponent implements OnInit {
       if (dueRaw) fd.append('dueDate', new Date(dueRaw).toISOString());
       fd.append('maxScore', String(this.points()));
       fd.append('status', this.status());
+      fd.append('deliveryType', this.deliveryType());
       this.selectedFiles().forEach(f => fd.append('files', f));
 
       this.teacherService.createTask(this.courseId(), fd).subscribe({

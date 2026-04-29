@@ -93,6 +93,8 @@ export interface TeacherCourse {
 export interface TeacherTask {
   id: string; title: string; description?: string;
   dueDate?: string; maxScore: number; status: string;
+  /** Slugs: `archivo` | `texto` | `ambos` | `clase` (API del profesor). */
+  deliveryType?: string;
   submissionsCount?: number; gradedCount?: number;
   /** Entregas recibidas (alias que algunos endpoints pueden enviar). */
   submitted?: number;
@@ -102,8 +104,9 @@ export interface TeacherTask {
 }
 
 export interface TaskSubmission {
-  id: string; status: string; score?: number | null; feedback?: string | null;
-  content?: string; submittedAt?: string;
+  id: string | null;
+  status: string; score?: number | null; feedback?: string | null;
+  content?: string | null; submittedAt?: string | null;
   student: { id: string; studentCode: string; user: { firstName: string; lastName: string; avatarUrl?: string } };
   attachments?: { id: string; name: string; url?: string }[];
 }
@@ -325,7 +328,14 @@ export class TeacherService {
       `${this.url}/teacher/courses/${courseId}/tasks`, formData
     ).pipe(map(r => r.data));
   }
-  updateTask(courseId: string, taskId: string, dto: Partial<{ title: string; description: string; dueDate: string; maxScore: number; status: string }>): Observable<TeacherTask> {
+  updateTask(
+    courseId: string,
+    taskId: string,
+    dto: Partial<{
+      title: string; description: string; dueDate: string;
+      maxScore: number; status: string; deliveryType: string;
+    }>,
+  ): Observable<TeacherTask> {
     return this.http.put<{ success: boolean; data: TeacherTask }>(
       `${this.url}/teacher/courses/${courseId}/tasks/${taskId}`, dto
     ).pipe(map(r => r.data));
@@ -343,6 +353,19 @@ export class TeacherService {
       `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submissionId}/grade`,
       { score, feedback }
     ).pipe(map(r => r.data));
+  }
+
+  gradeStudentForTask(
+    courseId: string,
+    taskId: string,
+    body: { studentId: string; score: number; feedback?: string },
+  ): Observable<TaskSubmission> {
+    return this.http
+      .post<{ success: boolean; data: TaskSubmission }>(
+        `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/grade-student`,
+        body,
+      )
+      .pipe(map(r => r.data));
   }
 
   // ─── ATTENDANCE ───────────────────────────────────────────────────────────
