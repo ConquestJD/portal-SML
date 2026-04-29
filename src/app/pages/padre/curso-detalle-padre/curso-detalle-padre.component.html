@@ -4,111 +4,121 @@
       <i class="fas fa-spinner fa-spin"></i>
       <p>Cargando información del curso...</p>
     </div>
-  } @else {
+  } @else if (error()) {
+    <div class="loading-state">
+      <p>{{ error() }}</p>
+      <a routerLink="/padre/cursos" class="tab-btn" style="margin-top: 1rem; display: inline-block;">Volver a cursos</a>
+    </div>
+  } @else if (courseVm(); as c) {
     <div class="breadcrumb">
       <a routerLink="/padre/dashboard">Inicio</a>
       <span>/</span>
       <a routerLink="/padre/cursos">Cursos</a>
       <span>/</span>
-      <span>{{ course().name }}</span>
+      <span>{{ c.name }}</span>
     </div>
 
-    <!-- Header del Curso -->
     <div class="course-header">
       <div class="course-header-content">
         <div class="course-title-wrapper">
           <div class="course-code-badge">
             <i class="fas fa-book"></i>
-            <span>{{ course().code }}</span>
+            <span>{{ c.code }}</span>
           </div>
-          <h1 class="course-title">{{ course().name }}</h1>
-          <p class="course-period">Año Académico {{ course().academicYear }}</p>
+          <h1 class="course-title">{{ c.name }}</h1>
+          <p class="course-period">Año académico {{ c.academicYear }}</p>
         </div>
         <div class="course-stats">
           <div class="stat-item">
             <i class="fas fa-chart-line"></i>
             <div class="stat-content">
               <span class="stat-label">Promedio</span>
-              <span class="stat-value">{{ course().average }}</span>
+              <span class="stat-value">{{ c.average }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'informacion'" 
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'informacion'"
         (click)="setTab('informacion')"
       >
         <i class="fas fa-info-circle"></i> Información
       </button>
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'materiales'" 
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'materiales'"
         (click)="setTab('materiales')"
       >
         <i class="fas fa-book"></i> Materiales
       </button>
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'tareas'" 
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'tareas'"
         (click)="setTab('tareas')"
       >
         <i class="fas fa-tasks"></i> Tareas
       </button>
     </div>
 
-    <!-- Contenido de Tabs -->
     <div class="tab-content">
-      <!-- Tab: Información -->
       @if (activeTab() === 'informacion') {
         <div class="content-section">
-          <!-- Información del Profesor -->
           <div class="info-card">
             <h2 class="card-title">
               <i class="fas fa-chalkboard-teacher"></i>
-              Información del Profesor
+              Información del profesor
             </h2>
             <div class="teacher-card">
               <div class="teacher-photo-wrapper">
-                <div class="teacher-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
+                @if (c.teacherAvatar) {
+                  <img [src]="c.teacherAvatar" [alt]="c.teacher" class="teacher-photo" />
+                } @else {
+                  <div class="teacher-photo-placeholder">
+                    <i class="fas fa-user"></i>
+                  </div>
+                }
               </div>
               <div class="teacher-details">
-                <h3 class="teacher-name">{{ course().teacher }}</h3>
+                <h3 class="teacher-name">{{ c.teacher }}</h3>
                 <div class="teacher-contact-info">
-                  <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
-                    <a [href]="'mailto:' + course().teacherEmail">{{ course().teacherEmail }}</a>
-                  </div>
-                  <div class="contact-item">
-                    <i class="fas fa-phone"></i>
-                    <a [href]="'tel:' + course().teacherPhone">{{ course().teacherPhone }}</a>
-                  </div>
+                  @if (c.teacherEmail) {
+                    <div class="contact-item">
+                      <i class="fas fa-envelope"></i>
+                      <a [href]="'mailto:' + c.teacherEmail">{{ c.teacherEmail }}</a>
+                    </div>
+                  }
+                  @if (c.teacherPhone) {
+                    <div class="contact-item">
+                      <i class="fas fa-phone"></i>
+                      <a [href]="'tel:' + c.teacherPhone">{{ c.teacherPhone }}</a>
+                    </div>
+                  }
                 </div>
                 <div class="teacher-actions">
-                  <button class="btn-send-message" (click)="sendMessageToTeacher()">
+                  <button type="button" class="btn-send-message" (click)="sendMessageToTeacher()">
                     <i class="fas fa-comment"></i>
-                    Enviar Mensaje
+                    Enviar mensaje
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Horarios y Aula -->
           <div class="info-card">
             <h2 class="card-title">
               <i class="fas fa-calendar-alt"></i>
-              Horarios y Aula
+              Horarios y aula
             </h2>
             <div class="schedule-info">
               <div class="schedule-list">
-                @for (scheduleItem of course().schedule; track scheduleItem.day) {
+                @for (scheduleItem of c.schedule; track scheduleItem.day + scheduleItem.time) {
                   <div class="schedule-item">
                     <div class="schedule-day">
                       <i class="fas fa-calendar-day"></i>
@@ -123,42 +133,40 @@
               </div>
               <div class="classroom-info">
                 <i class="fas fa-door-open"></i>
-                <span><strong>Aula:</strong> {{ course().classroom }}</span>
+                <span><strong>Aula / sección:</strong> {{ c.classroom }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Información General del Curso -->
           <div class="info-card">
             <h2 class="card-title">
               <i class="fas fa-info-circle"></i>
-              Información General
+              Información general
             </h2>
             <div class="info-grid">
               <div class="info-item">
-                <label>Código del Curso</label>
-                <p>{{ course().code }}</p>
+                <label>Código del curso</label>
+                <p>{{ c.code }}</p>
               </div>
               <div class="info-item">
-                <label>Año Académico</label>
-                <p>{{ course().academicYear }}</p>
+                <label>Año académico</label>
+                <p>{{ c.academicYear }}</p>
               </div>
               <div class="info-item">
-                <label>Promedio Actual</label>
-                <p class="highlight-value">{{ course().average }}</p>
+                <label>Promedio actual</label>
+                <p class="highlight-value">{{ c.average }}</p>
               </div>
             </div>
           </div>
         </div>
       }
 
-      <!-- Tab: Materiales -->
       @if (activeTab() === 'materiales') {
         <div class="content-section">
           <div class="section-header">
             <h2 class="section-title">
               <i class="fas fa-book"></i>
-              Materiales del Curso
+              Materiales del curso
             </h2>
             <p class="section-description">
               Materiales organizados por unidades del plan de estudios
@@ -166,48 +174,55 @@
           </div>
 
           <div class="units-list">
-            @for (unit of units(); track unit.id) {
-              <div class="unit-item" [class.expanded]="unit.isExpanded">
-                <div class="unit-header" (click)="toggleUnit(unit.id)">
-                  <div class="unit-number">{{ unit.number.toString().padStart(2, '0') }}</div>
+            @for (unit of units(); track unit['id']) {
+              <div class="unit-item" [class.expanded]="unit['isExpanded']">
+                <div class="unit-header" (click)="toggleUnit(String(unit['id']))">
+                  <div class="unit-number">{{ ($any(unit['number'])).toString().padStart(2, '0') }}</div>
                   <div class="unit-content">
-                    <h3>{{ unit.title }}</h3>
-                    <p>{{ unit.description }}</p>
+                    <h3>{{ unit['title'] }}</h3>
+                    <p>{{ unit['description'] }}</p>
                   </div>
                   <div class="unit-toggle">
-                    <i class="fas" [class.fa-chevron-down]="!unit.isExpanded" [class.fa-chevron-up]="unit.isExpanded"></i>
+                    <i
+                      class="fas"
+                      [class.fa-chevron-down]="!unit['isExpanded']"
+                      [class.fa-chevron-up]="unit['isExpanded']"
+                    ></i>
                   </div>
                 </div>
-                @if (unit.isExpanded) {
+                @if (unit['isExpanded']) {
                   <div class="unit-materials">
-                    @if (unit.materials && unit.materials.length > 0) {
+                    @if ($any(unit['materials'])?.length > 0) {
                       <div class="materials-list">
-                        @for (material of unit.materials; track material.id) {
+                        @for (material of $any(unit['materials']); track material['id']) {
                           <div class="material-item">
-                            <div class="material-icon-wrapper" 
-                              [class.pdf]="material.type === 'PDF'" 
-                              [class.video]="material.type === 'Video'"
-                              [class.documento]="material.type === 'Documento'"
-                              [class.imagen]="material.type === 'Imagen'"
-                              [class.link]="material.type === 'Link'">
-                              <i class="fas" [ngClass]="getMaterialIcon(material.type)"></i>
+                            <div
+                              class="material-icon-wrapper"
+                              [class.pdf]="material['type'] === 'PDF'"
+                              [class.video]="material['type'] === 'Video'"
+                              [class.documento]="material['type'] === 'Documento'"
+                              [class.imagen]="material['type'] === 'Imagen'"
+                              [class.link]="material['type'] === 'Link'"
+                            >
+                              <i class="fas" [ngClass]="getMaterialIcon(material['type'])"></i>
                             </div>
                             <div class="material-info">
-                              <h4>{{ material.name }}</h4>
+                              <h4>{{ material['name'] }}</h4>
                               <div class="material-meta">
-                                <span class="material-type">{{ material.type }}</span>
-                                @if (material.size) {
-                                  <span class="material-size">{{ material.size }}</span>
+                                <span class="material-type">{{ material['type'] }}</span>
+                                @if (material['size']) {
+                                  <span class="material-size">{{ material['size'] }}</span>
                                 }
-                                <span class="material-date">{{ material.date | date:'shortDate' }}</span>
+                                <span class="material-date">{{ material['date'] | date: 'shortDate' }}</span>
                               </div>
                             </div>
-                            <button 
-                              class="btn-download" 
+                            <button
+                              type="button"
+                              class="btn-download"
                               (click)="downloadMaterial(material)"
-                              [title]="material.type === 'Link' ? 'Abrir enlace' : 'Descargar'"
+                              [title]="material['type'] === 'Link' ? 'Abrir enlace' : 'Descargar'"
                             >
-                              @if (material.type === 'Link') {
+                              @if (material['type'] === 'Link') {
                                 <i class="fas fa-external-link-alt"></i>
                                 Abrir
                               } @else {
@@ -232,26 +247,27 @@
         </div>
       }
 
-      <!-- Tab: Tareas -->
       @if (activeTab() === 'tareas') {
         <div class="content-section">
           <div class="section-header">
             <h2 class="section-title">
               <i class="fas fa-tasks"></i>
-              Tareas Asignadas
+              Tareas asignadas
             </h2>
             <p class="section-description">
-              Lista de tareas asignadas para este curso
+              Lista de tareas de este curso para tu hijo
             </p>
           </div>
 
           <div class="tasks-list">
             @for (task of tasks(); track task.id) {
               <div class="task-item" [class.completed]="task.status === 'entregada'">
-                <div class="task-status" 
-                     [class.status-entregada]="task.status === 'entregada'"
-                     [class.status-pendiente]="task.status === 'pendiente'"
-                     [class.status-vencida]="task.status === 'vencida'">
+                <div
+                  class="task-status"
+                  [class.status-entregada]="task.status === 'entregada'"
+                  [class.status-pendiente]="task.status === 'pendiente'"
+                  [class.status-vencida]="task.status === 'vencida'"
+                >
                   @if (task.status === 'entregada') {
                     <i class="fas fa-check-circle"></i>
                   } @else if (task.status === 'vencida') {
@@ -265,12 +281,12 @@
                   <div class="task-meta">
                     <span class="task-due-date">
                       <i class="fas fa-calendar"></i>
-                      Fecha límite: {{ task.dueDate | date:'longDate' }}
+                      Fecha límite: {{ task.dueDate | date: 'longDate' }}
                     </span>
                     @if (task.submitted && task.submittedDate) {
                       <span class="task-submitted">
                         <i class="fas fa-check"></i>
-                        Entregada el {{ task.submittedDate | date:'shortDate' }}
+                        Entregada el {{ task.submittedDate | date: 'shortDate' }}
                       </span>
                     }
                     @if (task.grade !== undefined && task.grade !== null) {
@@ -281,10 +297,12 @@
                     }
                   </div>
                 </div>
-                <div class="task-badge" 
-                     [class.badge-pending]="task.status === 'pendiente'" 
-                     [class.badge-completed]="task.status === 'entregada'"
-                     [class.badge-overdue]="task.status === 'vencida'">
+                <div
+                  class="task-badge"
+                  [class.badge-pending]="task.status === 'pendiente'"
+                  [class.badge-completed]="task.status === 'entregada'"
+                  [class.badge-overdue]="task.status === 'vencida'"
+                >
                   {{ task.status | titlecase }}
                 </div>
               </div>

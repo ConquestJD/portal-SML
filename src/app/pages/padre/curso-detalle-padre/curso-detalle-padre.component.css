@@ -255,6 +255,14 @@
   flex-shrink: 0;
 }
 
+.teacher-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border-color);
+}
+
 .teacher-photo-placeholder {
   width: 80px;
   height: 80px;
