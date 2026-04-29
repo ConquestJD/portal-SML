@@ -88,7 +88,8 @@ export const STUDENT_STRATEGY: UserFormStrategy = {
   listLabel: roleListLabel('student'),
   singular: roleSingularLabel('student'),
   subtitle: 'Información académica y personal del estudiante',
-  roleFields: ['level', 'grade', 'studentCode', 'birthDate', 'gender', 'bloodType', 'medicalNotes', 'dni', 'emergencyPhone', 'address'],
+  /** Campos médicos y código de estudiante se omiten del alta a pedido del colegio. */
+  roleFields: ['level', 'grade', 'birthDate', 'gender', 'dni', 'emergencyPhone', 'address'],
   requiresCredentials: (d, isEditMode) => isEditMode ? !!d.password : d.level !== 'inicial',
   buildCreateDto: (d) => ({
     username: usernameFromDni(d.dni) || d.username,
@@ -97,12 +98,9 @@ export const STUDENT_STRATEGY: UserFormStrategy = {
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
-    studentCode: d.studentCode || undefined,
     birthDate: d.birthDate || undefined,
     gender: d.gender || undefined,
     address: d.address || undefined,
-    bloodType: d.bloodType || undefined,
-    medicalNotes: d.medicalNotes || undefined,
     dni: d.dni || undefined,
     grade: d.grade || undefined,
     level: d.level ? (d.level.charAt(0).toUpperCase() + d.level.slice(1)) : undefined,
@@ -117,8 +115,11 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
   listLabel: roleListLabel('teacher'),
   singular: roleSingularLabel('teacher'),
   subtitle: 'Datos personales y credenciales de acceso al portal',
-  /** Solo DNI y dirección opcional; departamento/código/etc. no se piden en el alta. */
-  roleFields: ['dni', 'address'],
+  /**
+   * Solo DNI: el backend de `/teachers` rechaza el campo `address`, así que no lo pedimos
+   * para no almacenar datos que luego no se persisten. El DNI se usa para generar el username.
+   */
+  roleFields: ['dni'],
   requiresCredentials: () => true,
   /** El API de `POST /teachers` solo acepta el DTO base de usuario (sin `dni` ni `address` en body). El DNI solo se usa en el cliente para el `username`. */
   buildCreateDto: (d) => ({
@@ -139,8 +140,13 @@ export const PARENT_STRATEGY: UserFormStrategy = {
   listLabel: roleListLabel('parent'),
   singular: roleSingularLabel('parent'),
   subtitle: 'Información personal y de contacto del apoderado',
-  roleFields: ['relationship', 'occupation', 'dni', 'address'],
+  /**
+   * `POST /parents` rechaza `address`, por eso solo pedimos relación, ocupación y DNI.
+   * El DNI se usa para generar el username del apoderado.
+   */
+  roleFields: ['relationship', 'occupation', 'dni'],
   requiresCredentials: () => true,
+  /** `POST /parents` solo acepta el DTO base de usuario + relationship/occupation. El DNI se usa solo en cliente para construir el `username`; la dirección no la persiste el backend en el alta. */
   buildCreateDto: (d) => ({
     username: usernameFromDni(d.dni) || d.username,
     email: d.email || undefined,
@@ -148,10 +154,8 @@ export const PARENT_STRATEGY: UserFormStrategy = {
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
-    dni: d.dni || undefined,
     relationship: d.relationship || undefined,
     occupation: d.occupation || undefined,
-    address: d.address || undefined,
   }),
   create: (svc, dto) => svc.createParent(dto as never),
   successMessage: 'Apoderado creado correctamente',
