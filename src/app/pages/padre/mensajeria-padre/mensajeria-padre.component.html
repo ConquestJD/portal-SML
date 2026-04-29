@@ -10,26 +10,26 @@
       <i class="fas fa-envelope"></i>
       Mensajería
     </h1>
-    <p class="page-subtitle">Comunícate con profesores, tutores y coordinadores</p>
+    <p class="page-subtitle">Comunícate con los docentes de los cursos de tu hijo</p>
   </div>
 
-  <!-- Selector de Hijos -->
   @if (children().length > 1) {
     <div class="child-selector-section">
       <h2 class="selector-title">
         <i class="fas fa-users"></i>
-        Seleccionar Hijo
+        Seleccionar hijo
       </h2>
       <div class="children-grid">
         @for (child of children(); track child.id) {
-          <button 
+          <button
+            type="button"
             class="child-card"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
             <div class="child-photo-wrapper">
               @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+                <img [src]="child.photo" [alt]="child.name ?? ''" class="child-photo" />
               } @else {
                 <div class="child-photo-placeholder">
                   <i class="fas fa-user"></i>
@@ -51,6 +51,10 @@
     </div>
   }
 
+  @if (error()) {
+    <p class="page-error">{{ error() }}</p>
+  }
+
   @if (isLoading()) {
     <div class="loading-state">
       <i class="fas fa-spinner fa-spin"></i>
@@ -58,12 +62,11 @@
     </div>
   } @else {
     <div class="chat-layout">
-      <!-- Sidebar de Conversaciones -->
       <div class="conversations-sidebar">
         <div class="sidebar-header">
           <h3>Conversaciones</h3>
-          @if (selectedChild()) {
-            <p class="child-context">{{ selectedChild()!.name }}</p>
+          @if (selectedChild(); as ch) {
+            <p class="child-context">{{ ch.name }}</p>
           }
           @if (totalUnreadCount() > 0) {
             <span class="unread-badge">{{ totalUnreadCount() }}</span>
@@ -72,15 +75,18 @@
         <div class="conversation-list">
           @if (filteredConversations().length > 0) {
             @for (conv of filteredConversations(); track conv.id) {
-              <div 
-                class="conversation-item" 
-                [class.active]="selectedConversation()?.id === conv.id"
+              <div
+                class="conversation-item"
+                [class.active]="activeDetail()?.id === conv.id"
                 [class.has-unread]="conv.unreadCount > 0"
                 (click)="selectConversation(conv)"
+                (keyup.enter)="selectConversation(conv)"
+                tabindex="0"
+                role="button"
               >
                 <div class="participant-avatar">
                   @if (conv.participantAvatar) {
-                    <img [src]="conv.participantAvatar" [alt]="conv.participantName">
+                    <img [src]="conv.participantAvatar" [alt]="conv.participantName" />
                   } @else {
                     <i class="fas fa-user"></i>
                   }
@@ -92,8 +98,10 @@
                       <span class="participant-title">{{ conv.participantTitle }}</span>
                     }
                   </div>
-                  <p class="last-message">{{ conv.lastMessage }}</p>
-                  <span class="child-badge">{{ conv.childName }}</span>
+                  <p class="last-message">{{ conv.lastMessage || 'Sin mensajes' }}</p>
+                  @if (selectedChild(); as ch2) {
+                    <span class="child-badge">{{ ch2.name }}</span>
+                  }
                 </div>
                 <div class="conversation-meta">
                   <span class="message-time">{{ formatTimestamp(conv.lastMessageTime) }}</span>
@@ -106,36 +114,40 @@
           } @else {
             <div class="empty-conversations">
               <i class="fas fa-comments"></i>
-              <p>No hay conversaciones disponibles</p>
+              <p>No hay conversaciones</p>
+              @if (selectedChild(); as ch) {
+                <p class="empty-hint">Aún no hay mensajes con docentes para {{ ch.name }}.</p>
+              }
             </div>
           }
         </div>
       </div>
 
-      <!-- Área de Mensajes -->
       <div class="chat-area">
-        @if (selectedConversation()) {
+        @if (activeDetail(); as d) {
           <div class="chat-header">
             <div class="participant-avatar">
-              @if (selectedConversation()!.participantAvatar) {
-                <img [src]="selectedConversation()!.participantAvatar" [alt]="selectedConversation()!.participantName">
+              @if (d.participantAvatar) {
+                <img [src]="d.participantAvatar" [alt]="d.participantName" />
               } @else {
                 <i class="fas fa-user"></i>
               }
             </div>
             <div class="header-info">
-              <h3>{{ selectedConversation()!.participantName }}</h3>
-              @if (selectedConversation()!.participantTitle) {
-                <p>{{ selectedConversation()!.participantTitle }}</p>
+              <h3>{{ d.participantName }}</h3>
+              @if (d.participantTitle) {
+                <p>{{ d.participantTitle }}</p>
               }
-              <span class="child-context-badge">{{ selectedConversation()!.childName }}</span>
+              @if (selectedChild(); as ch) {
+                <span class="child-context-badge">{{ ch.name }}</span>
+              }
             </div>
           </div>
 
           <div class="messages-list">
-            @for (message of selectedConversation()!.messages; track message.id) {
-              <div 
-                class="message-item" 
+            @for (message of d.messages; track message.id) {
+              <div
+                class="message-item"
                 [class.sent]="message.senderRole === 'padre'"
                 [class.received]="message.senderRole !== 'padre'"
               >
@@ -149,12 +161,18 @@
 
           <div class="message-input-area">
             <textarea
-              [(ngModel)]="newMessageText"
+              name="padreDraft"
+              [(ngModel)]="draftMessage"
               placeholder="Escribe un mensaje..."
-              rows="1"
-              (keydown.enter)="sendMessage()"
+              rows="2"
+              (keydown)="onEnterKey($event)"
             ></textarea>
-            <button class="btn btn-primary" (click)="sendMessage()" [disabled]="isSending() || newMessageText().trim() === ''">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="sendMessage()"
+              [disabled]="isSending() || draftMessage.trim() === ''"
+            >
               @if (isSending()) {
                 <i class="fas fa-spinner fa-spin"></i>
               } @else {
@@ -165,9 +183,9 @@
         } @else {
           <div class="empty-chat-state">
             <i class="fas fa-comments"></i>
-            <p>Selecciona una conversación para empezar a chatear</p>
+            <p>Selecciona una conversación para ver los mensajes</p>
             @if (filteredConversations().length === 0 && selectedChildId()) {
-              <p class="empty-hint">No hay conversaciones disponibles para {{ selectedChild()?.name }}</p>
+              <p class="empty-hint">Las conversaciones aparecen cuando un docente o tú inician un chat.</p>
             }
           </div>
         }
