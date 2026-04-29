@@ -14,7 +14,7 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
 
 export interface StudentCourse {
   id: string; // TeacherAssignment ID
-  course: { id: string; name: string; code?: string };
+  course: { id: string; name: string; code?: string; color?: string; imageUrl?: string };
   teacher: { user: { firstName: string; lastName: string; avatarUrl?: string } };
   section: { name: string; grade: string };
   academicYear: { name: string };
@@ -71,6 +71,16 @@ export class StudentService {
       .pipe(map((r: any) => r.data));
   }
 
+  private normalizeStudentTask(raw: StudentTask | Record<string, unknown>): StudentTask {
+    const t = raw as Record<string, unknown>;
+    const mySub = t['mySubmission'] as StudentTask['submission'] | undefined;
+    const sub = (t['submission'] as StudentTask['submission'] | undefined) ?? mySub;
+    return {
+      ...(t as unknown as StudentTask),
+      submission: sub,
+    };
+  }
+
   private normalizeCourse(raw: StudentCourse | Record<string, unknown>): StudentCourse {
     const c = raw as Record<string, unknown>;
     const course = (c['course'] as StudentCourse['course']) ?? { id: String(c['id'] ?? ''), name: '—' };
@@ -120,7 +130,9 @@ export class StudentService {
     return this.get<unknown[]>(`/student/courses/${courseId}/units`);
   }
   getCourseTasks(courseId: string): Observable<StudentTask[]> {
-    return this.get<StudentTask[]>(`/student/courses/${courseId}/tasks`);
+    return this.get<StudentTask[]>(`/student/courses/${courseId}/tasks`).pipe(
+      map((list) => (Array.isArray(list) ? list : []).map((t) => this.normalizeStudentTask(t as StudentTask))),
+    );
   }
   getCourseGrades(courseId: string): Observable<StudentGrade[]> {
     return this.get<StudentGrade[]>(`/student/courses/${courseId}/grades`);
@@ -131,10 +143,14 @@ export class StudentService {
 
   // ─── TASKS ────────────────────────────────────────────────────────────────
   getTasks(f: { status?: string; search?: string; courseId?: string } = {}): Observable<StudentTask[]> {
-    return this.get<StudentTask[]>('/student/tasks', buildParams(f));
+    return this.get<StudentTask[]>('/student/tasks', buildParams(f)).pipe(
+      map((list) => (Array.isArray(list) ? list : []).map((t) => this.normalizeStudentTask(t as StudentTask))),
+    );
   }
   getTask(taskId: string): Observable<StudentTask> {
-    return this.get<StudentTask>(`/student/tasks/${taskId}`);
+    return this.get<StudentTask>(`/student/tasks/${taskId}`).pipe(
+      map((t) => this.normalizeStudentTask(t as StudentTask)),
+    );
   }
   submitTask(taskId: string, formData: FormData): Observable<unknown> {
     return this.http.post<{ success: boolean; data: unknown }>(
