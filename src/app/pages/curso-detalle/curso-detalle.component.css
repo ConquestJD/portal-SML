@@ -457,6 +457,33 @@
   gap: var(--spacing-md);
 }
 
+.tasks-empty {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+}
+
+.tasks-empty i {
+  font-size: var(--font-size-3xl);
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.tasks-empty p {
+  margin: 0 0 var(--spacing-sm);
+}
+
+.tasks-empty-hint {
+  font-size: var(--font-size-sm);
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .material-item,
 .task-item {
   display: flex;
