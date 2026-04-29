@@ -71,24 +71,46 @@ export class StudentService {
       .pipe(map((r: any) => r.data));
   }
 
-  private normalizeCourse(c: StudentCourse): StudentCourse {
+  private normalizeCourse(raw: StudentCourse | Record<string, unknown>): StudentCourse {
+    const c = raw as Record<string, unknown>;
+    const course = (c['course'] as StudentCourse['course']) ?? { id: String(c['id'] ?? ''), name: '—' };
+    const teacherBlock = c['teacher'] as StudentCourse['teacher'] | undefined;
+    const teacherUser = teacherBlock?.user ?? { firstName: '', lastName: '' };
+    const section = (c['section'] as (StudentCourse['section'] & { academicYear?: { name: string } }) | undefined) ?? {
+      name: '',
+      grade: '',
+    };
+    const academicYear =
+      (c['academicYear'] as StudentCourse['academicYear'] | undefined) ??
+      (section as { academicYear?: { name: string } }).academicYear ??
+      { name: '' };
+
+    const base: StudentCourse = {
+      ...(c as unknown as StudentCourse),
+      id: String(c['id'] ?? ''),
+      course,
+      teacher: { user: teacherUser },
+      section,
+      academicYear,
+    };
+
     return {
-      ...c,
-      name: c.course.name,
-      code: c.course.code,
-      period: c.academicYear.name,
-      average: c.averageScore,
-      teacherName: `${c.teacher.user.firstName} ${c.teacher.user.lastName}`,
-      teacherPhoto: c.teacher.user.avatarUrl,
-      // Sin secciones: mostramos solo el grado del curso (o el de la sección como fallback).
-      gradeSection: c.section?.grade ?? ''
+      ...base,
+      name: course.name,
+      code: course.code,
+      period: academicYear.name,
+      average: base.averageScore,
+      teacherName: `${teacherUser.firstName ?? ''} ${teacherUser.lastName ?? ''}`.trim() || '—',
+      teacherPhoto: teacherUser.avatarUrl,
+      gradeSection: section?.grade ?? '',
     };
   }
 
   // ─── COURSES ──────────────────────────────────────────────────────────────
   getCourses(f: { search?: string; period?: string } = {}): Observable<StudentCourse[]> {
-    return this.get<StudentCourse[]>('/student/courses', buildParams(f))
-      .pipe(map(list => list.map(c => this.normalizeCourse(c))));
+    return this.get<StudentCourse[]>('/student/courses', buildParams(f)).pipe(
+      map((list) => (Array.isArray(list) ? list : []).map((c) => this.normalizeCourse(c as StudentCourse))),
+    );
   }
   getCourse(courseId: string): Observable<StudentCourse> {
     return this.get<StudentCourse>(`/student/courses/${courseId}`)

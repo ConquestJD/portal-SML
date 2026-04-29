@@ -7,10 +7,14 @@
       <div class="header-greeting">
         <h1 class="header-title">Hola, {{ studentName() }}</h1>
         <p class="header-subtitle">
-          <span class="grade-info">{{ grade() }}</span>
-          <span class="separator">•</span>
-          <span class="period-info">Período {{ currentPeriod() }}</span>
-          <span class="separator">•</span>
+          @if (grade()) {
+            <span class="grade-info"><strong>Grado:</strong> {{ grade() }}</span>
+            <span class="separator">•</span>
+          }
+          @if (currentPeriod()) {
+            <span class="period-info">Período {{ currentPeriod() }}</span>
+            <span class="separator">•</span>
+          }
           <span class="date-info">{{ getCurrentDate() }}</span>
         </p>
       </div>

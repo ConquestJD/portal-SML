@@ -5,7 +5,15 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface StudentDashboard {
-  student: { name: string; studentCode: string; section: string; grade: string; academicYear: string };
+  student: {
+    name: string;
+    studentCode: string;
+    section?: string | null;
+    grade?: string | null;
+    level?: string | null;
+    gradeLabel?: string | null;
+    academicYear?: string | null;
+  };
   summary: { pendingTasks: number; totalCourses: number; attendanceSummary: Record<string, number> };
   recentGrades: unknown[];
   recentAnnouncements: unknown[];

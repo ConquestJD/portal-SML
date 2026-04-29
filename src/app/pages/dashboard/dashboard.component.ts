@@ -118,10 +118,13 @@ export class DashboardComponent implements OnInit {
       }
 
       this.studentName.set(dashboard.student.name);
-      this.grade.set(dashboard.student.grade);
-      this.section.set(dashboard.student.section);
+      const gl = dashboard.student.gradeLabel?.trim();
+      const g = (dashboard.student.grade ?? '').trim();
+      const lv = (dashboard.student.level ?? '').trim();
+      this.grade.set((gl || [g, lv].filter(Boolean).join(' · ')).trim());
+      this.section.set(dashboard.student.section ?? '');
       this.studentCode.set(dashboard.student.studentCode);
-      this.currentPeriod.set(dashboard.student.academicYear);
+      this.currentPeriod.set(dashboard.student.academicYear ?? '');
       this.pendingTasks.set(dashboard.summary.pendingTasks);
       this.totalCourses.set(dashboard.summary.totalCourses);
       const att = dashboard.summary.attendanceSummary;
