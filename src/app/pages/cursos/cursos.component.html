@@ -2,7 +2,7 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">Mis Cursos</h1>
-      <p class="page-subtitle">Gestiona y accede a todos tus cursos académicos</p>
+      <p class="page-subtitle">Accede al contenido y tareas de cada curso</p>
     </div>
     <div class="header-actions">
       <div class="search-wrapper">
@@ -11,14 +11,10 @@
           type="text"
           class="form-input search-input"
           placeholder="Buscar curso..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
         />
       </div>
-      <select [(ngModel)]="filterPeriod" class="form-input period-select">
-        <option value="2024">Año 2024</option>
-        <option value="2023">Año 2023</option>
-      </select>
       <button class="btn btn-secondary view-toggle" (click)="toggleView()" [title]="viewMode() === 'grid' ? 'Vista de lista' : 'Vista de cuadrícula'">
         @if (viewMode() === 'grid') {
           <i class="fas fa-list"></i> Lista
@@ -29,129 +25,60 @@
     </div>
   </div>
 
-  @if (filteredCourses().length === 0) {
+  @if (loading()) {
+    <p class="loading-hint">Cargando cursos…</p>
+  } @else if (error()) {
+    <div class="empty-state">
+      <p>{{ error() }}</p>
+    </div>
+  } @else if (filteredCourses().length === 0) {
     <div class="empty-state">
       <i class="fas fa-book empty-icon"></i>
-      <h2>No tienes cursos asignados</h2>
-      <p>Contacta con la administración si crees que hay un error.</p>
+      <h2>No hay cursos que coincidan</h2>
+      <p>Si no debería estar vacío, contacta con la administración.</p>
     </div>
   } @else {
     @if (viewMode() === 'grid') {
       <div class="courses-grid grid grid-cols-3">
         @for (course of filteredCourses(); track course.id) {
-          <div class="course-card">
-            <div class="course-header">
-              <div class="course-code-wrapper">
-                <i class="fas fa-book"></i>
-                <span class="course-code">{{ course.code }}</span>
-              </div>
-              <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
-                {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
-              </span>
+          <article class="course-card">
+            <div class="course-card__media">
+              <img [src]="courseCoverUrl(course)" [alt]="courseCoverAlt(course)" class="course-card__img" loading="lazy" />
+              @if (course.course?.color) {
+                <div class="course-card__tint" [style.--course-accent]="course.course!.color"></div>
+              }
             </div>
-            
-            <h3 class="course-name">{{ course.name }}</h3>
-            
-            <div class="teacher-info">
-              <div class="teacher-photo-wrapper">
-                <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo">
-              </div>
-              <div class="teacher-details">
-                <p class="teacher-name">{{ course.teacher }}</p>
-                <a href="mailto:teacher@colegio.edu" class="teacher-email">
-                  <i class="fas fa-envelope"></i> Contactar docente
-                </a>
-              </div>
-            </div>
-
-            <div class="course-metrics">
-              <div class="metric">
-                <div class="metric-icon-wrapper">
-                  <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-label">Promedio</span>
-                  <span class="metric-value">{{ course.average }}</span>
-                </div>
-              </div>
-              <div class="metric">
-                <div class="metric-icon-wrapper">
-                  <i class="fas fa-tasks"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-label">Tareas</span>
-                  <span class="metric-value">
-                    @if (course.pendingTasks > 0) {
-                      <span class="badge badge-warning">{{ course.pendingTasks }}</span>
-                    } @else {
-                      <span class="metric-zero">0</span>
-                    }
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="course-actions">
-              <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block">
-                <i class="fas fa-arrow-right"></i> Ver Detalle
+            <div class="course-card__body">
+              <h2 class="course-card__name">{{ course.name }}</h2>
+              <p class="course-card__grade">{{ gradeLabel(course) }}</p>
+              <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block course-card__cta">
+                Ver detalle
               </a>
-              <div class="action-buttons">
-                <a [routerLink]="['/cursos', course.id, 'materiales']" class="btn btn-secondary btn-icon">
-                  <i class="fas fa-file"></i>
-                  <span>Materiales</span>
-                </a>
-                <a [routerLink]="['/tareas']" [queryParams]="{curso: course.id}" class="btn btn-secondary btn-icon">
-                  <i class="fas fa-tasks"></i>
-                  <span>Tareas</span>
-                </a>
-              </div>
             </div>
-          </div>
+          </article>
         }
       </div>
     } @else {
-      <div class="courses-list">
-        <table class="courses-table">
+      <div class="courses-list-wrap">
+        <table class="courses-table courses-table--simple">
           <thead>
             <tr>
-              <th>Código</th>
+              <th>Portada</th>
               <th>Curso</th>
-              <th>Docente</th>
-              <th>Promedio</th>
-              <th>Tareas Pendientes</th>
-              <th>Próxima Evaluación</th>
-              <th>Acciones</th>
+              <th>Grado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             @for (course of filteredCourses(); track course.id) {
               <tr>
-                <td>{{ course.code }}</td>
-                <td>
-                  <strong>{{ course.name }}</strong>
-                  <span class="badge" [class.badge-success]="course.status === 'active'">
-                    {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
-                  </span>
+                <td class="td-thumb">
+                  <img [src]="courseCoverUrl(course)" [alt]="''" class="course-thumb" loading="lazy" />
                 </td>
-                <td>
-                  <div class="teacher-cell">
-                    <img [src]="course.teacherPhoto" [alt]="course.teacher" class="teacher-photo-small">
-                    <span>{{ course.teacher }}</span>
-                  </div>
-                </td>
-                <td><strong>{{ course.average }}</strong></td>
-                <td>
-                  @if (course.pendingTasks > 0) {
-                    <span class="badge badge-warning">{{ course.pendingTasks }}</span>
-                  } @else {
-                    <span>-</span>
-                  }
-                </td>
-                <td>{{ course.nextEvaluation }}</td>
-                <td>
-                  <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right"></i> Ver
-                  </a>
+                <td><strong>{{ course.name }}</strong></td>
+                <td>{{ gradeLabel(course) }}</td>
+                <td class="td-action">
+                  <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">Ver detalle</a>
                 </td>
               </tr>
             }

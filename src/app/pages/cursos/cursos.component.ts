@@ -15,7 +15,6 @@ export class CursosComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   searchQuery = signal('');
-  filterPeriod = signal('');
   viewMode = signal<'grid' | 'list'>('grid');
   courses = signal<StudentCourse[]>([]);
 
@@ -37,10 +36,22 @@ export class CursosComponent implements OnInit {
     });
   }
 
-  getTeacherName(c: StudentCourse): string {
-    return `${c.teacher.user.firstName} ${c.teacher.user.lastName}`;
+  courseCoverUrl(c: StudentCourse): string {
+    const url = c.course?.imageUrl?.trim();
+    if (url) return url;
+    return '/images/course-default.svg';
   }
 
-  onSearch() { /* search is computed */ }
+  courseCoverAlt(c: StudentCourse): string {
+    return `Portada: ${c.course?.name ?? 'curso'}`;
+  }
+
+  gradeLabel(c: StudentCourse): string {
+    const g = (c.section?.grade ?? c.gradeSection ?? '').trim();
+    const sec = (c.section?.name ?? '').trim();
+    if (g && sec) return `${g} · ${sec}`;
+    return g || sec || '—';
+  }
+
   toggleView() { this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid'); }
 }
