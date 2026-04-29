@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -263,6 +263,54 @@ export class StudentService {
   }
   getSubmissionAttachmentDownloadUrl(taskId: string, fileId: string): string {
     return `${this.url}/student/tasks/${taskId}/submission-attachments/${fileId}/download`;
+  }
+
+  /**
+   * Descarga vía HttpClient para que el interceptor agregue Bearer (no usar window.open en URLs de API).
+   * El backend puede responder 307 hacia R2; el cliente sigue el redirect y devuelve el archivo.
+   */
+  downloadAuthenticatedBlob(url: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.http
+      .get(url, { responseType: 'blob', observe: 'response' })
+      .pipe(
+        map((res: HttpResponse<Blob>) => {
+          const body = res.body;
+          if (!body) {
+            throw new Error('Respuesta vacía');
+          }
+          let filename: string | undefined;
+          const cd = res.headers.get('Content-Disposition');
+          if (cd) {
+            const star = /filename\*=UTF-8''([^;\n]+)/i.exec(cd);
+            const quoted = /filename="([^"]+)"/i.exec(cd);
+            const plain = /filename=([^;\n]+)/i.exec(cd);
+            if (star) {
+              try {
+                filename = decodeURIComponent(star[1].trim());
+              } catch {
+                filename = star[1].trim();
+              }
+            } else if (quoted) {
+              filename = quoted[1].trim();
+            } else if (plain) {
+              filename = plain[1].trim().replace(/['"]/g, '');
+            }
+          }
+          return { blob: body, filename };
+        }),
+      );
+  }
+
+  downloadCourseMaterialBlob(courseId: string, unitOrMaterialId: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.downloadAuthenticatedBlob(this.getMaterialDownloadUrl(courseId, unitOrMaterialId));
+  }
+
+  downloadTaskMaterialBlob(taskId: string, fileId: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.downloadAuthenticatedBlob(this.getTaskMaterialDownloadUrl(taskId, fileId));
+  }
+
+  downloadSubmissionAttachmentBlob(taskId: string, fileId: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.downloadAuthenticatedBlob(this.getSubmissionAttachmentDownloadUrl(taskId, fileId));
   }
 
   // ─── GRADES ───────────────────────────────────────────────────────────────
