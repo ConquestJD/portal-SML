@@ -1,13 +1,15 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { MessagingService } from '../../../services/messaging.service';
 import { ParentService, Child } from '../../../services/parent.service';
 import { AuthService } from '../../../services/auth.service';
 
 export interface PadreConvoSummary {
   id: string;
+  /** TeacherAssignment.id — para abrir chat desde el curso. */
+  teacherAssignmentId: string;
   participantName: string;
   participantTitle: string;
   participantAvatar: string | null;
@@ -57,6 +59,7 @@ export class MensajeriaPadreComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private messagingService: MessagingService,
     private parentService: ParentService,
     private authService: AuthService,
@@ -101,6 +104,11 @@ export class MensajeriaPadreComponent implements OnInit {
           list.map((r) => this.mapSummary(r as unknown as Record<string, unknown>, myId)),
         );
         this.loading.set(false);
+        const assignmentId = this.route.snapshot.queryParamMap.get('assignmentId') ?? '';
+        const teacherId = this.route.snapshot.queryParamMap.get('teacherId') ?? '';
+        if (assignmentId) {
+          this.openAssignmentFromQuery(assignmentId, teacherId);
+        }
       },
       error: () => {
         this.error.set('No se pudieron cargar las conversaciones.');
@@ -175,6 +183,7 @@ export class MensajeriaPadreComponent implements OnInit {
 
     return {
       id: String(conv['id'] ?? ''),
+      teacherAssignmentId: String(ta?.['id'] ?? conv['teacherAssignmentId'] ?? ''),
       participantName: pName || 'Profesor',
       participantTitle: courseName,
       participantAvatar: (teacherUser?.['avatarUrl'] as string) ?? null,
@@ -182,6 +191,56 @@ export class MensajeriaPadreComponent implements OnInit {
       lastMessageTime: lastAt,
       unreadCount: Number(conv['unreadCount'] ?? 0) || 0,
     };
+  }
+
+  private openAssignmentFromQuery(assignmentId: string, teacherId: string) {
+    const match = this.summaries().find((s) => s.teacherAssignmentId === assignmentId);
+    if (match) {
+      this.selectConversation(match);
+      this.clearOpenChatQueryParams();
+      return;
+    }
+    if (!teacherId) {
+      this.clearOpenChatQueryParams();
+      return;
+    }
+    const parentId = this.selectedChild()?.parentRecordId ?? '';
+    if (!parentId) {
+      this.error.set(
+        'No se pudo abrir el chat automáticamente. Usa la lista de conversaciones o contacta a secretaría.',
+      );
+      this.clearOpenChatQueryParams();
+      return;
+    }
+    this.messagingService
+      .createConversation({
+        teacherId,
+        parentId,
+        teacherAssignmentId: assignmentId,
+        subject: 'Consulta del apoderado',
+      })
+      .subscribe({
+        next: (conv) => {
+          const myId = this.authService.user()?.id ?? '';
+          const s = this.mapSummary(conv as unknown as Record<string, unknown>, myId);
+          this.summaries.update((list) => (list.some((x) => x.id === s.id) ? list : [s, ...list]));
+          this.selectConversation(s);
+          this.clearOpenChatQueryParams();
+        },
+        error: () => {
+          this.error.set('No se pudo iniciar la conversación con el docente.');
+          this.clearOpenChatQueryParams();
+        },
+      });
+  }
+
+  private clearOpenChatQueryParams() {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { assignmentId: null, teacherId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   private teacherUserFrom(conv: Record<string, unknown>): Record<string, unknown> | null {
