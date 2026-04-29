@@ -367,6 +367,121 @@
   font-size: var(--font-size-lg);
 }
 
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.alert-banner i {
+  margin-top: 2px;
+}
+
+.alert-banner--error {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #b91c1c;
+}
+
+.alert-banner--success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #047857;
+}
+
+.schedule-gate {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+  align-items: flex-start;
+}
+
+.schedule-gate i {
+  font-size: 1.35rem;
+  margin-top: 2px;
+}
+
+.schedule-gate--open {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: var(--text-primary);
+}
+
+.schedule-gate--open i {
+  color: #059669;
+}
+
+.schedule-gate--closed {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--text-primary);
+}
+
+.schedule-gate--closed i {
+  color: #dc2626;
+}
+
+.schedule-gate--warn {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+}
+
+.schedule-gate__detail {
+  margin: var(--spacing-xs) 0 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.schedule-gate__slots {
+  margin: var(--spacing-sm) 0 0 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.date-readonly {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.field-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.empty-roster {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+}
+
+.empty-roster i {
+  font-size: 2rem;
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-md);
+}
+
+.student-attendance-card.is-readonly {
+  opacity: 0.88;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .summary-panel {
