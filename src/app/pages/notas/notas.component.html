@@ -1,118 +1,112 @@
-<div class="notas-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Mis Notas y Evaluaciones</h1>
-      <p class="page-subtitle">Consulta tus calificaciones y rendimiento académico</p>
+<div class="notas-page">
+  <header class="notas-hero">
+    <div class="notas-hero__text">
+      <p class="notas-eyebrow">Rendimiento académico</p>
+      <h1 class="notas-title">Mis notas</h1>
+      <p class="notas-lead">
+        Calificaciones por período y notas de tareas calificadas, agrupadas por curso.
+      </p>
     </div>
-    <div class="header-actions">
-      <select [(ngModel)]="selectedPeriod" class="form-input period-select">
-        <option value="2024">Año 2024</option>
-        <option value="2023">Año 2023</option>
-      </select>
-      <select [(ngModel)]="selectedCourse" class="form-input course-select">
-        <option value="todos">Todos los cursos</option>
-        @for (course of courses(); track course.id) {
-          <option [value]="course.id">{{ course.name }}</option>
-        }
-      </select>
-      <button class="btn btn-secondary export-btn">
-        <i class="fas fa-download"></i> Exportar PDF
+    <div class="notas-hero__actions">
+      <button type="button" class="btn btn-secondary notas-export" (click)="exportGrades()">
+        <i class="fas fa-download"></i> Exportar boletín
       </button>
     </div>
-  </div>
+  </header>
 
-  <div class="summary-section">
-    <div class="average-card">
-      <div class="average-header">
-        <div class="average-label-wrapper">
-          <i class="fas fa-chart-line"></i>
-          <span class="average-label">Promedio General</span>
-        </div>
-        <div class="trend-indicator-wrapper" [class.trend-up]="generalAverage() > previousAverage()" [class.trend-down]="generalAverage() <= previousAverage()">
-          @if (generalAverage() > previousAverage()) {
-            <i class="fas fa-arrow-up"></i>
-          } @else {
-            <i class="fas fa-arrow-down"></i>
+  @if (loading()) {
+    <p class="notas-state">Cargando notas…</p>
+  } @else if (error()) {
+    <div class="notas-state notas-state--error">{{ error() }}</div>
+  } @else if (totalEvaluations() === 0) {
+    <div class="notas-empty">
+      <i class="fas fa-chart-line notas-empty__icon"></i>
+      <h2 class="notas-empty__title">Aún no hay calificaciones registradas</h2>
+      <p class="notas-empty__text">
+        Cuando el docente registre notas de período o califique tareas, aparecerán aquí.
+      </p>
+    </div>
+  } @else {
+    <section class="notas-kpi">
+      <div class="notas-kpi__card notas-kpi__card--main">
+        <span class="notas-kpi__label">Promedio general</span>
+        <strong class="notas-kpi__value">{{ overallAverage() ?? '—' }}</strong>
+        <span class="notas-kpi__hint">Sobre todas las notas numéricas registradas</span>
+      </div>
+      <div class="notas-kpi__card">
+        <span class="notas-kpi__label">Registros</span>
+        <strong class="notas-kpi__value">{{ totalEvaluations() }}</strong>
+        <span class="notas-kpi__hint">Períodos y tareas calificadas</span>
+      </div>
+      <div class="notas-kpi__card">
+        <span class="notas-kpi__label">Cursos con notas</span>
+        <strong class="notas-kpi__value">{{ courseBlocks().length }}</strong>
+        <span class="notas-kpi__hint">Agrupación actual</span>
+      </div>
+    </section>
+
+    @for (block of courseBlocks(); track block.courseName) {
+      <article class="notas-block">
+        <div class="notas-block__head">
+          <div class="notas-block__title-wrap">
+            <i class="fas fa-book notas-block__icon" aria-hidden="true"></i>
+            <h2 class="notas-block__title">{{ block.courseName }}</h2>
+          </div>
+          @if (block.average) {
+            <div class="notas-block__avg">
+              <span class="notas-block__avg-label">Promedio en este curso</span>
+              <span class="notas-block__avg-val">{{ block.average }}</span>
+            </div>
           }
         </div>
-      </div>
-      <div class="average-value">{{ generalAverage() }}</div>
-      <div class="average-comparison">
-        <span class="comparison-value" [class.positive]="generalAverage() > previousAverage()" [class.negative]="generalAverage() <= previousAverage()">
-          {{ generalAverage() > previousAverage() ? '+' : '' }}{{ (generalAverage() - previousAverage()).toFixed(1) }}
-        </span>
-        <span class="comparison-text">vs período anterior</span>
-      </div>
-    </div>
-  </div>
 
-  <div class="courses-grades">
-    @for (course of courses(); track course.id) {
-      <div class="course-grade-card">
-        <div class="course-grade-header">
-          <div class="course-header-content">
-            <i class="fas fa-book"></i>
-            <h3>{{ course.name }}</h3>
-          </div>
-          <div class="course-average-wrapper">
-            <span class="course-average-label">Promedio</span>
-            <span class="course-average">{{ course.average }}</span>
-          </div>
-        </div>
-        
-        <table class="evaluations-table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Descripción</th>
-              <th>Fecha</th>
-              <th>Puntos</th>
-              <th>Obtenidos</th>
-              <th>Porcentaje</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (eval of evaluations(); track $index) {
+        <div class="notas-table-wrap">
+          <table class="notas-table">
+            <thead>
               <tr>
-                <td>{{ eval.type }}</td>
-                <td>{{ eval.description }}</td>
-                <td>{{ eval.date }}</td>
-                <td>{{ eval.points }}</td>
-                <td><strong>{{ eval.obtained }}</strong></td>
-                <td>
-                  <span class="percentage-badge" [class.high]="eval.percentage >= 80" [class.medium]="eval.percentage >= 60 && eval.percentage < 80" [class.low]="eval.percentage < 60">
-                    {{ eval.percentage }}%
-                  </span>
-                </td>
+                <th>Origen</th>
+                <th>Detalle</th>
+                <th>Fecha</th>
+                <th>Puntos máx.</th>
+                <th>Nota</th>
+                <th>%</th>
+                <th></th>
               </tr>
-            }
-          </tbody>
-        </table>
-
-        <div class="grade-summary">
-          <div class="summary-row">
-            <div class="summary-row-label">
-              <i class="fas fa-chart-line"></i>
-              <span>Promedio de Exámenes</span>
-            </div>
-            <strong class="summary-row-value">16.5</strong>
-          </div>
-          <div class="summary-row">
-            <div class="summary-row-label">
-              <i class="fas fa-tasks"></i>
-              <span>Promedio de Tareas</span>
-            </div>
-            <strong class="summary-row-value">17.0</strong>
-          </div>
-          <div class="summary-row highlight">
-            <div class="summary-row-label">
-              <i class="fas fa-chart-line"></i>
-              <span>Promedio Final</span>
-            </div>
-            <strong class="summary-row-value final">{{ course.average }}</strong>
-          </div>
+            </thead>
+            <tbody>
+              @for (row of block.rows; track row.id) {
+                <tr [class.notas-table__row-task]="row.kind === 'tarea'">
+                  <td>
+                    @if (row.kind === 'tarea') {
+                      <span class="notas-pill notas-pill--task">Tarea</span>
+                    } @else {
+                      <span class="notas-pill notas-pill--period">Período</span>
+                    }
+                  </td>
+                  <td class="notas-table__detail">{{ row.label }}</td>
+                  <td>{{ row.dateLabel }}</td>
+                  <td>{{ row.maxLabel }}</td>
+                  <td>
+                    <strong class="notas-score">{{ row.scoreLabel }}</strong>
+                  </td>
+                  <td>
+                    @if (row.pctLabel !== '—') {
+                      <span class="notas-pct" [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
+                    } @else {
+                      <span class="notas-muted">—</span>
+                    }
+                  </td>
+                  <td class="notas-table__action">
+                    @if (isTaskRow(row) && row.taskId) {
+                      <a [routerLink]="['/tareas', row.taskId]" class="notas-link">Ver tarea</a>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-      </div>
+      </article>
     }
-  </div>
+  }
 </div>
