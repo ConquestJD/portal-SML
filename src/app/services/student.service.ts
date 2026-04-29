@@ -34,7 +34,14 @@ export interface StudentTask {
   id: string; title: string; description?: string;
   dueDate?: string; maxScore: number; status: string;
   course?: { name: string };
-  submission?: { id: string; status: string; score?: number; feedback?: string; submittedAt?: string };
+  submission?: {
+    id: string;
+    status: string;
+    score?: number;
+    feedback?: string;
+    submittedAt?: string;
+    gradedAt?: string;
+  };
   attachments?: { id: string; name: string; url?: string }[];
 }
 
@@ -75,9 +82,15 @@ export class StudentService {
     const t = raw as Record<string, unknown>;
     const mySub = t['mySubmission'] as StudentTask['submission'] | undefined;
     const sub = (t['submission'] as StudentTask['submission'] | undefined) ?? mySub;
+    const ta = t['teacherAssignment'] as { course?: { name?: string } } | undefined;
+    const courseFromList = t['course'] as StudentTask['course'] | undefined;
+    const course =
+      courseFromList ??
+      (ta?.course?.name != null ? { name: String(ta.course.name) } : undefined);
     return {
       ...(t as unknown as StudentTask),
       submission: sub,
+      course,
     };
   }
 
