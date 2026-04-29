@@ -280,10 +280,51 @@ export class StudentService {
   }
 
   // ─── ATTENDANCE ───────────────────────────────────────────────────────────
+  private normalizeStudentAttendance(raw: StudentAttendance | Record<string, unknown>): StudentAttendance {
+    const r = raw as Record<string, unknown>;
+    const ta = r['teacherAssignment'] as { course?: { name?: string } } | undefined;
+    const status = String(r['status'] ?? '').toUpperCase();
+    let dateStr = '';
+    const dv = r['date'];
+    if (dv != null) {
+      const d = new Date(dv as string | number | Date);
+      dateStr = Number.isNaN(d.getTime()) ? String(dv).slice(0, 10) : d.toISOString().slice(0, 10);
+    }
+    return {
+      id: String(r['id'] ?? ''),
+      date: dateStr,
+      status,
+      notes: r['notes'] != null ? String(r['notes']) : undefined,
+      course: ta?.course?.name != null ? { name: String(ta.course.name) } : undefined,
+    };
+  }
+
+  private summarizeAttendanceRecords(records: StudentAttendance[]): Record<string, number> {
+    const summary: Record<string, number> = {};
+    for (const rec of records) {
+      const k = (rec.status || 'UNKNOWN').toUpperCase();
+      summary[k] = (summary[k] ?? 0) + 1;
+    }
+    return summary;
+  }
+
   getAttendance(f: { month?: string; courseId?: string } = {}): Observable<{ records: StudentAttendance[]; summary: Record<string, number> }> {
-    return this.http.get<{ success: boolean; data: { records: StudentAttendance[]; summary: Record<string, number> } }>(
-      `${this.url}/student/attendance`, { params: buildParams(f) }
-    ).pipe(map(r => r.data));
+    return this.http
+      .get<{ success: boolean; data: unknown }>(`${this.url}/student/attendance`, { params: buildParams(f) })
+      .pipe(
+        map((r) => {
+          const d = r.data as { records?: unknown[]; summary?: Record<string, number> } | unknown[] | null | undefined;
+          if (Array.isArray(d)) {
+            const records = d.map((row) => this.normalizeStudentAttendance(row as Record<string, unknown>));
+            return { records, summary: this.summarizeAttendanceRecords(records) };
+          }
+          const rows = (d as { records?: unknown[] })?.records ?? [];
+          const records = rows.map((row) => this.normalizeStudentAttendance(row as Record<string, unknown>));
+          const summary =
+            (d as { summary?: Record<string, number> })?.summary ?? this.summarizeAttendanceRecords(records);
+          return { records, summary };
+        }),
+      );
   }
 
   // ─── PROFILE ──────────────────────────────────────────────────────────────
