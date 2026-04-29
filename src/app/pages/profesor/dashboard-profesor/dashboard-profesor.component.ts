@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService, TeacherDashboard } from '../../../services/dashboard.service';
 import { AuthService } from '../../../services/auth.service';
+import { TeacherService, TeacherCourse } from '../../../services/teacher.service';
 
 @Component({
   selector: 'app-dashboard-profesor',
@@ -17,7 +18,10 @@ export class DashboardProfesorComponent implements OnInit {
 
   teacherName = signal('Profesor');
   specialty = signal('');
-  department = signal('');
+  /** Cursos vinculados al docente (asignaciones activas desde `GET /teacher/courses`). */
+  teacherCourses = signal<TeacherCourse[]>([]);
+  coursesLoading = signal(true);
+
   totalCourses = signal(0);
   totalStudents = signal(0);
   pendingGrading = signal(0);
@@ -36,22 +40,36 @@ export class DashboardProfesorComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private authService: AuthService
+    private authService: AuthService,
+    private teacherService: TeacherService
   ) {}
 
   ngOnInit() {
     const user = this.authService.user();
     if (user) this.teacherName.set(user.name);
 
+    this.teacherService.getCourses().subscribe({
+      next: (list) => {
+        this.teacherCourses.set(list);
+        this.totalCourses.set(list.length);
+        this.quickAccess.update(qa => qa.map(item =>
+          item.title === 'Mis Cursos' ? { ...item, count: list.length } : item
+        ));
+        this.coursesLoading.set(false);
+      },
+      error: () => {
+        this.coursesLoading.set(false);
+        this.totalCourses.set(0);
+      }
+    });
+
     this.dashboardService.getTeacherDashboard().subscribe({
       next: (data: TeacherDashboard) => {
-        this.totalCourses.set(data.summary.totalCourses);
         this.totalStudents.set(data.summary.totalStudents);
         this.pendingGrading.set(data.summary.pendingGrading);
         this.attendancePending.set(data.summary.attendancePending);
         if (data.teacher?.specialty) this.specialty.set(data.teacher.specialty);
         this.quickAccess.update(qa => qa.map(item => {
-          if (item.title === 'Mis Cursos') return { ...item, count: data.summary.totalCourses };
           if (item.title === 'Tareas') return { ...item, count: data.summary.pendingGrading };
           if (item.title === 'Asistencia') return { ...item, count: data.summary.attendancePending };
           return item;
@@ -60,6 +78,21 @@ export class DashboardProfesorComponent implements OnInit {
       },
       error: () => { this.error.set('Error al cargar dashboard'); this.loading.set(false); }
     });
+  }
+
+  courseLink(c: TeacherCourse): string[] {
+    return ['/profesor/cursos', c.id];
+  }
+
+  courseSubtitle(c: TeacherCourse): string {
+    const gs = (c.gradeSection ?? '').trim();
+    if (gs) return gs;
+    const parts: string[] = [];
+    if (c.section?.grade) parts.push(c.section.grade);
+    if (c.section?.name && c.section.name !== '—') parts.push(`Sección ${c.section.name}`);
+    const per = (c.period ?? '').trim();
+    if (per && per !== '—') parts.push(per);
+    return parts.filter(Boolean).join(' · ');
   }
 
   getCurrentDate() {

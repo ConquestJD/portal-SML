@@ -3,7 +3,9 @@
     <div class="header-content">
       <div class="welcome-section">
         <h1 class="welcome-title">Bienvenido, {{ teacherName() }}</h1>
-        <p class="welcome-subtitle">Departamento de {{ department() }}</p>
+        @if (specialty()) {
+          <p class="welcome-subtitle">{{ specialty() }}</p>
+        }
       </div>
     </div>
     <div class="current-date">
@@ -74,6 +76,47 @@
         Marcar asistencia <i class="fas fa-arrow-right"></i>
       </a>
     </div>
+  </div>
+
+  <!-- Cursos vinculados -->
+  <div class="section courses-dashboard-section">
+    <h2 class="section-title">
+      <i class="fas fa-book"></i>
+      Mis cursos
+    </h2>
+
+    @if (coursesLoading()) {
+      <div class="courses-loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Cargando tus cursos…</span>
+      </div>
+    } @else if (teacherCourses().length === 0) {
+      <div class="courses-empty-dash">
+        <i class="fas fa-book-open"></i>
+        <p class="courses-empty-title">No tienes cursos asignados</p>
+        <p class="courses-empty-hint">Cuando la administración te vincule a uno o más cursos, aparecerán aquí.</p>
+      </div>
+    } @else {
+      <div class="courses-dashboard-grid">
+        @for (c of teacherCourses(); track c.id) {
+          <a [routerLink]="courseLink(c)" class="course-dashboard-card">
+            <div class="course-dashboard-card__top">
+              <span class="course-dashboard-code">{{ c.course?.code || '—' }}</span>
+              @if (c.studentsCount != null || c.students != null) {
+                <span class="course-dashboard-students" title="Estudiantes">
+                  <i class="fas fa-users"></i> {{ c.studentsCount ?? c.students }}
+                </span>
+              }
+            </div>
+            <h3 class="course-dashboard-name">{{ c.course?.name || 'Curso' }}</h3>
+            @if (courseSubtitle(c)) {
+              <p class="course-dashboard-meta">{{ courseSubtitle(c) }}</p>
+            }
+            <span class="course-dashboard-cta">Abrir curso <i class="fas fa-arrow-right"></i></span>
+          </a>
+        }
+      </div>
+    }
   </div>
 
   <!-- Accesos Rápidos -->
