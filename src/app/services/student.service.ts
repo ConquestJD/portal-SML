@@ -80,7 +80,8 @@ export class StudentService {
       average: c.averageScore,
       teacherName: `${c.teacher.user.firstName} ${c.teacher.user.lastName}`,
       teacherPhoto: c.teacher.user.avatarUrl,
-      gradeSection: `${c.section.grade} - ${c.section.name}`
+      // Sin secciones: mostramos solo el grado del curso (o el de la sección como fallback).
+      gradeSection: c.section?.grade ?? ''
     };
   }
 

@@ -17,8 +17,9 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
  * coincide con filas donde `course`, `section` y opcionalmente `academicYear` vienen anidados;
  * `academicYear` puede faltar y solo venir `academicYearId` en la raíz.
  *
- * Para llamadas tipo `/teacher/courses/:courseId/students` hace falta el **id del curso** (`course.id`),
- * expuesto en `resourceCourseId`.
+ * Para llamadas `/teacher/courses/:courseId/...` el parámetro es el **id de la asignación docente**
+ * (`TeacherAssignment`, mismo valor que `TeacherCourse.id` en filas de asignación). El id del curso
+ * en catálogo queda en `resourceCourseId` solo para referencia (p. ej. enlaces admin).
  */
 export interface TeacherCourse {
   /** Id de la asignación (`teacher-assignments`). */
@@ -119,13 +120,15 @@ export class TeacherService {
 
   /**
    * Adapta tanto filas de **asignación** (con `course` + `section` + `academicYearId`)
-   * como un **curso plano** del catálogo (segundo formato que compartiste).
+   * como un **curso plano** del catálogo. Como en este colegio **las secciones no existen**
+   * (todos los alumnos de un grado están en el mismo curso), se ignora intencionalmente
+   * `section.grade`/`section.name` y se usa siempre el `course.grade` / `course.level`.
    */
   private normalizeCourse(raw: any): TeacherCourse {
     const flat = raw && raw.name && raw.id && !raw.course;
     if (flat) {
-      const grade = raw.grade ?? '';
-      const level = (raw.level ?? '') as string;
+      const grade = (raw.grade ?? '').trim();
+      const level = ((raw.level ?? '') as string).trim();
       const label = [grade, level].filter(Boolean).join(' · ') || '—';
       return {
         id: raw.id,
@@ -142,7 +145,7 @@ export class TeacherService {
           schedule: raw.schedule,
           color: raw.color,
         },
-        section: { id: '', name: '—', grade, level },
+        section: { id: '', name: '', grade, level },
         academicYear: { id: '', name: '' },
         studentsCount: raw.studentsCount,
         name: raw.name,
@@ -159,18 +162,13 @@ export class TeacherService {
     }
 
     const course = raw.course ?? {};
-    const section = raw.section;
     const ay = raw.academicYear;
-    const grade = section?.grade ?? course.grade ?? '';
-    const level = (section?.level ?? course.level ?? '') as string;
-    const sectionName = section?.name ?? '';
+    // La sección viene del backend pero NO la usamos para mostrar grado/nivel,
+    // porque el sistema migró a "un grado = un curso" (sin secciones).
+    const grade = (course.grade ?? '').trim();
+    const level = ((course.level ?? '') as string).trim();
     const periodName = ay?.name?.trim() ? ay.name : '';
-
-    const gStr = (grade || course.grade || '').trim();
-    const gradeSection = sectionName
-      ? (gStr ? `${gStr} · Sección ${sectionName}` : `Sección ${sectionName}`)
-      : [grade, level].filter(Boolean).join(' · ') || course.grade || '—';
-
+    const gradeSection = [grade, level].filter(Boolean).join(' · ') || '—';
     const resourceCourseId = course.id ?? raw.courseId ?? raw.id;
 
     return {
@@ -186,27 +184,24 @@ export class TeacherService {
         name: course.name ?? '—',
         code: course.code,
         description: course.description,
-        grade: course.grade ?? grade,
-        level: course.level ?? level,
+        grade,
+        level,
         hours: course.hours,
         status: course.status,
         schedule: course.schedule,
         color: course.color,
       },
-      section: section
+      // Mantenemos la información cruda de sección por compatibilidad con otros endpoints
+      // que aún la requieran, pero la UI debe usar `course.grade` / `course.level`.
+      section: raw.section
         ? {
-            id: section.id,
-            name: section.name,
-            grade: section.grade ?? grade,
-            level: section.level ?? level,
+            id: raw.section.id,
+            name: raw.section.name,
+            grade: raw.section.grade,
+            level: raw.section.level,
           }
-        : {
-            id: raw.sectionId ?? '',
-            name: '—',
-            grade,
-            level,
-          },
-      academicYear: ay ?? { id: raw.academicYearId ?? '', name: periodName || '—' },
+        : { id: raw.sectionId ?? '', name: '', grade, level },
+      academicYear: ay ?? { id: raw.academicYearId ?? '', name: periodName || '' },
       studentsCount: raw.studentsCount,
       resourceCourseId,
       name: course.name,
