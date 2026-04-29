@@ -21,6 +21,7 @@ export interface Announcement {
   readAt?: string | null;
   author: { firstName: string; lastName: string; role?: string; name?: string };
   attachments: AnnouncementAttachment[];
+  attachmentCount?: number;
   badge?: string;
   recipients?: { grade?: string; section?: string };
   readDeadline?: string;
@@ -78,8 +79,8 @@ export class AnnouncementService {
     return this.http.get<{ success: boolean; data: Announcement[]; meta: PageMeta }>(
       `${this.url}/announcements`, { params }
     ).pipe(map(r => ({
-      data: (r.data ?? []).map(a => this.normalizeAnnouncement(a)),
-      meta: r.meta
+      data: (r.data ?? []).map(a => this.normalizeAnnouncement(a as Announcement)),
+      meta: r.meta ?? { page: 1, pageSize: 20, total: 0, totalPages: 1 }
     })));
   }
 
@@ -88,18 +89,31 @@ export class AnnouncementService {
       .pipe(map(r => this.normalizeAnnouncement(r.data)));
   }
 
-  private normalizeAnnouncement(a: Announcement): Announcement {
+  private normalizeAnnouncement(a: Announcement | Record<string, unknown>): Announcement {
+    const raw = a as Record<string, unknown>;
+    const att = raw['attachments'];
+    const attachments = Array.isArray(att)
+      ? (att as AnnouncementAttachment[])
+      : [];
+    const isRead = Boolean(raw['isRead'] ?? raw['read']);
+    const author = (raw['author'] as Announcement['author']) ?? {
+      firstName: '',
+      lastName: '',
+    };
     return {
-      ...a,
-      date: a.date ?? a.publishedAt,
-      read: a.read ?? a.isRead,
-      status: a.status ?? (a.isRead ? 'read' : 'unread'),
-      fullContent: a.fullContent ?? a.content,
+      ...(raw as unknown as Announcement),
+      attachments,
+      attachmentCount: attachments.length,
+      date: (raw['date'] as string) ?? (raw['publishedAt'] as string),
+      isRead,
+      read: isRead,
+      status: (raw['status'] as string) ?? (isRead ? 'read' : 'unread'),
+      fullContent: (raw['fullContent'] as string) ?? (raw['content'] as string),
       author: {
-        ...a.author,
-        name: a.author.name ?? `${a.author.firstName} ${a.author.lastName}`,
-        role: a.author.role ?? 'Administrador'
-      }
+        ...author,
+        name: author.name ?? `${author.firstName ?? ''} ${author.lastName ?? ''}`.trim(),
+        role: author.role ?? 'Equipo',
+      },
     };
   }
 
