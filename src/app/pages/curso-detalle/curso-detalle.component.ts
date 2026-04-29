@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,18 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { StudentService, StudentCourse, StudentTask, StudentGrade } from '../../services/student.service';
 
 type TabType = 'contenido' | 'tareas' | 'calificaciones' | 'comunicados' | 'mensajes' | 'foros' | 'compañeros';
+
+/** Fila unificada: notas de período + tareas calificadas */
+export type CourseGradeRow = {
+  id: string;
+  kind: 'period' | 'task';
+  taskId?: string;
+  label: string;
+  dateLabel: string;
+  maxPoints: string;
+  scoreDisplay: string;
+  pctDisplay: string;
+};
 
 @Component({
   selector: 'app-curso-detalle',
@@ -25,6 +37,64 @@ export class CursoDetalleComponent implements OnInit {
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
 
+  courseGradeRows = computed((): CourseGradeRow[] => {
+    const withTs: { row: CourseGradeRow; ts: number }[] = [];
+
+    for (const g of this.grades()) {
+      const ts = g.createdAt ? new Date(g.createdAt).getTime() : 0;
+      withTs.push({
+        ts: Number.isFinite(ts) ? ts : 0,
+        row: {
+          id: `grade-${g.id}`,
+          kind: 'period',
+          label: g.period?.name?.trim() ? `Período: ${g.period.name}` : 'Calificación del período',
+          dateLabel: this.formatGradeDate(g),
+          maxPoints: '—',
+          scoreDisplay: g.score != null ? String(g.score) : '—',
+          pctDisplay: '—',
+        },
+      });
+    }
+
+    for (const t of this.tasks()) {
+      const sub = t.submission;
+      if (!sub) continue;
+      const st = (sub.status || '').toUpperCase();
+      const hasScore = sub.score != null && Number.isFinite(Number(sub.score));
+      if (st !== 'GRADED' && !hasScore) continue;
+
+      const max = t.maxScore ?? 20;
+      const scNum = hasScore ? Number(sub.score) : NaN;
+      const pct =
+        hasScore && max > 0 && Number.isFinite(scNum)
+          ? `${Math.round((scNum / max) * 1000) / 10}%`
+          : '—';
+
+      const dateRaw = sub.gradedAt ?? sub.submittedAt ?? t.dueDate;
+      const d = dateRaw ? new Date(dateRaw) : null;
+      const dateLabel =
+        d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('es-PE') : '—';
+      const ts = d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+
+      withTs.push({
+        ts,
+        row: {
+          id: `task-${t.id}`,
+          kind: 'task',
+          taskId: t.id,
+          label: t.title,
+          dateLabel,
+          maxPoints: String(max),
+          scoreDisplay: hasScore ? String(sub.score) : '—',
+          pctDisplay: pct,
+        },
+      });
+    }
+
+    withTs.sort((a, b) => b.ts - a.ts);
+    return withTs.map((x) => x.row);
+  });
+
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
@@ -42,7 +112,10 @@ export class CursoDetalleComponent implements OnInit {
       if (tab !== this.activeTab()) {
         this.activeTab.set(tab);
         if (tab === 'tareas') this.loadTasks();
-        if (tab === 'calificaciones') this.loadGrades();
+        if (tab === 'calificaciones') {
+          this.loadGrades();
+          this.loadTasks();
+        }
       }
     });
 
@@ -72,7 +145,10 @@ export class CursoDetalleComponent implements OnInit {
   selectTab(tab: TabType) {
     this.activeTab.set(tab);
     if (tab === 'tareas') this.loadTasks();
-    if (tab === 'calificaciones') this.loadGrades();
+    if (tab === 'calificaciones') {
+      this.loadGrades();
+      this.loadTasks();
+    }
   }
 
   loadTasks() {
@@ -124,9 +200,16 @@ export class CursoDetalleComponent implements OnInit {
   }
 
   gradesCourseAverage(): string {
-    const list = this.grades();
-    if (!list.length) return '—';
-    const avg = list.reduce((a, g) => a + (g.score ?? 0), 0) / list.length;
+    const nums: number[] = [];
+    for (const g of this.grades()) {
+      if (g.score != null && Number.isFinite(Number(g.score))) nums.push(Number(g.score));
+    }
+    for (const t of this.tasks()) {
+      const sc = t.submission?.score;
+      if (sc != null && Number.isFinite(Number(sc))) nums.push(Number(sc));
+    }
+    if (!nums.length) return '—';
+    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
     return String(Math.round(avg * 20) / 20);
   }
 

@@ -175,33 +175,54 @@
       <div class="grades-section">
         <div class="section-header">
           <h2 class="section-title">
-            <i class="fas fa-chart-line"></i> Calificaciones y Evaluaciones
+            <i class="fas fa-chart-line"></i> Calificaciones y evaluaciones
           </h2>
+          <p class="section-subtitle">
+            Incluye calificaciones por período y notas de tareas entregadas.
+          </p>
         </div>
         <table class="grades-table">
           <thead>
             <tr>
+              <th>Tipo</th>
               <th>Evaluación</th>
               <th>Fecha</th>
-              <th>Puntos</th>
+              <th>Puntos máx.</th>
               <th>Obtenidos</th>
               <th>Porcentaje</th>
             </tr>
           </thead>
           <tbody>
-            @for (g of grades(); track g.id) {
-              <tr>
-                <td><strong>Calificación</strong></td>
-                <td>{{ formatGradeDate(g) }}</td>
-                <td>—</td>
-                <td><strong>{{ g.score }}</strong></td>
+            @for (row of courseGradeRows(); track row.id) {
+              <tr [class.grade-row-task]="row.kind === 'task'">
                 <td>
-                  <span class="percentage-badge high">{{ g.score }}</span>
+                  @if (row.kind === 'task') {
+                    <span class="grade-type-badge grade-type-task">Tarea</span>
+                  } @else {
+                    <span class="grade-type-badge grade-type-period">Período</span>
+                  }
+                </td>
+                <td>
+                  @if (row.kind === 'task' && row.taskId) {
+                    <a [routerLink]="['/tareas', row.taskId]" class="grade-eval-link">{{ row.label }}</a>
+                  } @else {
+                    <strong>{{ row.label }}</strong>
+                  }
+                </td>
+                <td>{{ row.dateLabel }}</td>
+                <td>{{ row.maxPoints }}</td>
+                <td><strong>{{ row.scoreDisplay }}</strong></td>
+                <td>
+                  @if (row.pctDisplay !== '—') {
+                    <span class="percentage-badge high">{{ row.pctDisplay }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="5">No hay calificaciones registradas en este curso.</td>
+                <td colspan="6">No hay calificaciones registradas en este curso aún.</td>
               </tr>
             }
           </tbody>
@@ -210,7 +231,7 @@
           <div class="summary-item highlight">
             <div class="summary-item-label">
               <i class="fas fa-chart-line"></i>
-              <span>Promedio en este curso</span>
+              <span>Promedio (períodos y tareas con nota)</span>
             </div>
             <strong class="summary-item-value final">{{ gradesCourseAverage() }}</strong>
           </div>
