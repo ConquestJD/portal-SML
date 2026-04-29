@@ -11,14 +11,13 @@
         <h1 class="page-title">Notas y Boleta</h1>
         <p class="page-subtitle">Calificaciones por curso y periodo</p>
       </div>
-      <button class="btn-download" (click)="downloadBoleta()">
+      <button type="button" class="btn-download" (click)="downloadBoleta()">
         <i class="fas fa-download"></i>
         Descargar Boleta PDF
       </button>
     </div>
   </div>
 
-  <!-- Selector de Hijos -->
   @if (children().length > 1) {
     <div class="child-selector-section">
       <h2 class="selector-title">
@@ -27,14 +26,15 @@
       </h2>
       <div class="children-grid">
         @for (child of children(); track child.id) {
-          <button 
+          <button
+            type="button"
             class="child-card"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
             <div class="child-photo-wrapper">
               @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+                <img [src]="child.photo" [alt]="child.name ?? ''" class="child-photo" />
               } @else {
                 <div class="child-photo-placeholder">
                   <i class="fas fa-user"></i>
@@ -56,15 +56,15 @@
     </div>
   }
 
-  @if (selectedChild()) {
+  @if (selectedChild(); as ch) {
     <div class="child-header">
-      <h2 class="child-header-title">
-        Notas de {{ selectedChild()!.name }}
-      </h2>
-      <p class="child-header-subtitle">
-        {{ selectedChild()!.grade }}
-      </p>
+      <h2 class="child-header-title">Notas de {{ ch.name }}</h2>
+      <p class="child-header-subtitle">{{ ch.grade }}</p>
     </div>
+  }
+
+  @if (error()) {
+    <p class="page-error">{{ error() }}</p>
   }
 
   @if (isLoading()) {
@@ -73,43 +73,37 @@
       <p>Cargando notas...</p>
     </div>
   } @else {
-    <!-- Promedio General -->
     <div class="average-card">
       <div class="average-icon">
         <i class="fas fa-chart-line"></i>
       </div>
       <div class="average-content">
-        <h3>Promedio General</h3>
-        <p class="average-value">{{ overallAverage() | number:'1.1-1' }}</p>
+        <h3>Promedio general</h3>
+        <p class="average-value">
+          @if (overallAverage() != null) {
+            {{ overallAverage()! | number: '1.1-1' }}
+          } @else {
+            —
+          }
+        </p>
       </div>
     </div>
 
-    <!-- Notas por Curso -->
     <div class="courses-grades">
       @for (course of courses(); track course.id) {
-      <div class="course-grade-card">
-        <div class="course-header">
-          <h3>{{ course.name }}</h3>
-          <span class="course-average">Promedio: {{ course.average }}</span>
-        </div>
-        <div class="periods-grid">
-          <div class="period-item">
-            <label>{{ periods()[0] }}</label>
-            <p>{{ course.period1 }}</p>
+        <div class="course-grade-card">
+          <div class="course-header">
+            <h3>{{ course.name }}</h3>
+            <span class="course-average">Promedio: {{ course.average }}</span>
           </div>
-          <div class="period-item">
-            <label>{{ periods()[1] }}</label>
-            <p>{{ course.period2 }}</p>
+          <div class="periods-grid">
+            @for (p of periodLabels(); track p; let i = $index) {
+              <div class="period-item">
+                <label>{{ p }}</label>
+                <p>{{ course.scores[i] ?? '—' }}</p>
+              </div>
+            }
           </div>
-          <div class="period-item">
-            <label>{{ periods()[2] }}</label>
-            <p>{{ course.period3 }}</p>
-          </div>
-          <div class="period-item">
-            <label>{{ periods()[3] }}</label>
-            <p>{{ course.period4 }}</p>
-          </div>
-        </div>
         </div>
       }
     </div>
