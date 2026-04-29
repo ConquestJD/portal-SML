@@ -12,7 +12,16 @@
           <i class="fas fa-envelope"></i>
           Mensajería
         </h1>
-        <p class="page-subtitle">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</p>
+        <p class="page-subtitle">
+          @if (course(); as c) {
+            <span>{{ c.name }}</span>
+            @if (c.grade || c.section) {
+              <span> — {{ c.grade }} {{ c.section }}</span>
+            }
+          } @else {
+            Todas tus conversaciones
+          }
+        </p>
       </div>
       @if (userRole() === 'profesor' && unreadTotal() > 0) {
         <div class="unread-badge">
@@ -81,6 +90,8 @@
                 <p class="conversation-role">
                   @if (conv.participantRole === 'profesor') {
                     <i class="fas fa-chalkboard-teacher"></i> Profesor
+                  } @else if (conv.participantRole === 'padre') {
+                    <i class="fas fa-user-friends"></i> Apoderado
                   } @else {
                     <i class="fas fa-user-graduate"></i> Estudiante
                   }
