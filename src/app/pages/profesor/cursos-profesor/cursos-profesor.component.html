@@ -45,8 +45,8 @@
                 <i class="fas fa-book"></i>
                 <span class="course-code">{{ course.code }}</span>
               </div>
-              <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
-                {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
+              <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-secondary]="course.status === 'archived'" [class.badge-info]="course.status === 'finished'">
+                {{ course.status === 'active' ? 'Activo' : (course.status === 'archived' ? 'Archivado' : 'Finalizado') }}
               </span>
             </div>
             
@@ -55,7 +55,7 @@
             <div class="course-info">
               <div class="info-item">
                 <i class="fas fa-users"></i>
-                <span>{{ course.grade }} - Sección {{ course.section }}</span>
+                <span>{{ getGradeSection(course) }}</span>
               </div>
             </div>
 
@@ -84,7 +84,7 @@
                 </div>
                 <div class="metric-content">
                   <span class="metric-label">Promedio</span>
-                  <span class="metric-value">{{ course.averageGrade }}</span>
+                  <span class="metric-value">{{ course.averageGrade ?? '—' }}</span>
                 </div>
               </div>
             </div>
@@ -121,7 +121,7 @@
                     </div>
                   </div>
                 </td>
-                <td>{{ course.grade }} - {{ course.section }}</td>
+                <td>{{ getGradeSection(course) }}</td>
                 <td>{{ course.students }}</td>
                 <td>
                   @if (course.pendingGrading > 0) {
@@ -132,8 +132,8 @@
                 </td>
                 <td>{{ course.averageGrade }}</td>
                 <td>
-                  <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-info]="course.status === 'finished'">
-                    {{ course.status === 'active' ? 'Activo' : 'Finalizado' }}
+                  <span class="badge" [class.badge-success]="course.status === 'active'" [class.badge-secondary]="course.status === 'archived'" [class.badge-info]="course.status === 'finished'">
+                    {{ course.status === 'active' ? 'Activo' : (course.status === 'archived' ? 'Archivado' : 'Finalizado') }}
                   </span>
                 </td>
                 <td>

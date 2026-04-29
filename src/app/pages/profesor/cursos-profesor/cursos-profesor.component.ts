@@ -37,8 +37,15 @@ export class CursosProfesorComponent implements OnInit {
     });
   }
 
-  getCourseName(c: TeacherCourse): string { return c.course.name; }
-  getGradeSection(c: TeacherCourse): string { return `${c.section.grade} - Sección ${c.section.name}`; }
+  getCourseName(c: TeacherCourse): string { return c.course?.name ?? ''; }
+  getGradeSection(c: TeacherCourse): string {
+    const gs = (c.gradeSection ?? '').trim();
+    if (gs) return gs;
+    const g = (c.section?.grade ?? c.course?.grade ?? '').trim();
+    const sn = c.section?.name;
+    if (sn && sn !== '—') return g ? `${g} · Sección ${sn}` : `Sección ${sn}`;
+    return g || '—';
+  }
   onSearch() { /* computed */ }
   toggleView() { this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid'); }
 }
