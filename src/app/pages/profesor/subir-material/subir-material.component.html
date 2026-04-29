@@ -7,7 +7,7 @@
   } @else {
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <a (click)="cancel()" class="breadcrumb-link">
+      <a tabindex="0" (click)="cancel()" (keydown.enter)="cancel()" class="breadcrumb-link" role="button">
         <i class="fas fa-arrow-left"></i> Volver al Curso
       </a>
       <span class="breadcrumb-separator">/</span>
@@ -20,6 +20,10 @@
       </span>
     </div>
 
+    @if (error()) {
+      <div class="alert alert-error" role="alert">{{ error() }}</div>
+    }
+
     <!-- Header -->
     <div class="page-header">
       <div class="header-content">
@@ -30,49 +34,97 @@
             Subir Material del Curso
           }
         </h1>
-        <p class="page-subtitle">{{ course()!.name }} - {{ course()!.grade }} {{ course()!.section }}</p>
+        @if (course(); as hdr) {
+          <p class="page-subtitle">{{ hdr.name }} — {{ hdr.grade }} {{ hdr.section }}</p>
+        }
       </div>
     </div>
 
-    <!-- Add Unit Section -->
+    @if (isEditMode()) {
+      <div class="edit-material-panel">
+        <div class="form-group">
+          <label class="form-label" for="edit-mat-title">Título</label>
+          <input
+            id="edit-mat-title"
+            type="text"
+            class="form-input"
+            [ngModel]="formData().title"
+            (ngModelChange)="updateFormField('title', $event)"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-mat-desc">Descripción</label>
+          <textarea
+            id="edit-mat-desc"
+            class="form-input"
+            rows="4"
+            [ngModel]="formData().description"
+            (ngModelChange)="updateFormField('description', $event)"
+          ></textarea>
+        </div>
+        <p class="info-text">
+          La edición solo actualiza título y descripción. Para nuevos archivos, crea un material nuevo en el curso.
+        </p>
+        <div class="footer-actions">
+          <button type="button" class="btn btn-outline" (click)="cancel()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="saveEdit()"
+            [disabled]="!canSaveEdit() || isSaving()"
+          >
+            @if (isSaving()) {
+              <i class="fas fa-spinner fa-spin"></i> Guardando…
+            } @else {
+              <i class="fas fa-save"></i> Guardar cambios
+            }
+          </button>
+        </div>
+      </div>
+    } @else {
+
+    <!-- Add folder Section -->
     <div class="add-unit-section">
       <h2 class="section-title">
-        <i class="fas fa-layer-group"></i>
-        Unidades del Material
+        <i class="fas fa-folder"></i>
+        Carpetas de material
       </h2>
+      <p class="info-text">Cada carpeta es un bloque publicado en el curso (archivos y enlaces). No hay subcarpetas.</p>
       <div class="add-unit-form">
         <div class="form-group">
-          <label class="form-label">Nombre de la Unidad</label>
+          <label class="form-label">Nombre de la carpeta</label>
           <input
             type="text"
             class="form-input"
             [ngModel]="newUnitName()"
             (ngModelChange)="newUnitName.set($event)"
-            placeholder="Ej: Unidad 1: Álgebra Básica"
+            placeholder="Ej: Unidad 1 — Álgebra básica"
           />
         </div>
         <div class="form-group">
-          <label class="form-label">Descripción (Opcional)</label>
+          <label class="form-label">Descripción (opcional)</label>
           <textarea
             class="form-input"
             rows="2"
             [ngModel]="newUnitDescription()"
             (ngModelChange)="newUnitDescription.set($event)"
-            placeholder="Describe brevemente el contenido de esta unidad..."
+            placeholder="Breve descripción del contenido…"
           ></textarea>
         </div>
         <button class="btn btn-primary" (click)="addUnit()" [disabled]="!newUnitName().trim()">
-          <i class="fas fa-plus"></i> Agregar Unidad
+          <i class="fas fa-plus"></i> Agregar carpeta
         </button>
       </div>
     </div>
 
-    <!-- Units List -->
+    <!-- Folders List -->
     @if (units().length === 0) {
       <div class="empty-state">
-        <i class="fas fa-layer-group empty-icon"></i>
-        <h2>No hay unidades creadas</h2>
-        <p>Comienza agregando una unidad para organizar tus materiales.</p>
+        <i class="fas fa-folder-open empty-icon"></i>
+        <h2>No hay carpetas</h2>
+        <p>Crea una carpeta y agrega archivos antes de guardar.</p>
       </div>
     } @else {
       <div class="units-list">
@@ -99,7 +151,7 @@
                 <button 
                   class="btn btn-sm btn-danger"
                   (click)="removeUnit(unit.id); $event.stopPropagation()"
-                  title="Eliminar unidad"
+                  title="Eliminar carpeta"
                 >
                   <i class="fas fa-trash"></i>
                 </button>
@@ -112,7 +164,7 @@
                 <div class="add-materials-section">
                   <h4 class="subsection-title">
                     <i class="fas fa-upload"></i>
-                    Agregar Materiales a esta Unidad
+                    Agregar a esta carpeta
                   </h4>
                   
                   <div class="add-materials-options">
@@ -165,14 +217,14 @@
                 @if (unit.materials.length === 0) {
                   <div class="empty-materials">
                     <i class="fas fa-inbox"></i>
-                    <p>No hay materiales en esta unidad</p>
-                    <p class="hint">Sube archivos o agrega enlaces para comenzar</p>
+                    <p>Esta carpeta está vacía</p>
+                    <p class="hint">Sube archivos o agrega enlaces</p>
                   </div>
                 } @else {
                   <div class="materials-list">
                     <h4 class="subsection-title">
                       <i class="fas fa-list"></i>
-                      Materiales de la Unidad ({{ unit.materials.length }})
+                      Contenido ({{ unit.materials.length }})
                     </h4>
                     <div class="materials-grid">
                       @for (material of unit.materials; track material.id) {
@@ -235,8 +287,9 @@
     @if (!canSave() && units().length > 0) {
       <div class="warning-message">
         <i class="fas fa-exclamation-triangle"></i>
-        <span>Todas las unidades deben tener al menos un material antes de guardar.</span>
+        <span>Cada carpeta debe tener al menos un archivo o enlace antes de guardar.</span>
       </div>
+    }
     }
   }
 </div>
