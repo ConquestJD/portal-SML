@@ -217,6 +217,16 @@
             {{ t.submission ? 'Actualizar entrega' : 'Entregar tarea' }}
           </h2>
           <p class="form-hint">{{ deliveryHint() }}</p>
+          @if (maxSubmissionsCap() > 1) {
+            <p class="form-hint deliveries-left">
+              <i class="fas fa-redo-alt"></i>
+              Puedes enviar o actualizar tu entrega hasta {{ maxSubmissionsCap() }} veces.
+              @if (effectiveSubmitCount() > 0) {
+                Llevas {{ effectiveSubmitCount() }}; te
+                {{ remainingSubmissions() === 1 ? 'queda' : 'quedan' }} {{ remainingSubmissions() }}.
+              }
+            </p>
+          }
 
           @if (submitSuccess()) {
             <p class="alert-success">{{ submitSuccess() }}</p>
@@ -290,7 +300,7 @@
               <button
                 type="button"
                 class="btn btn-primary btn-large"
-                (click)="submit()"
+                (click)="requestSubmit()"
                 [disabled]="submitting()"
               >
                 @if (submitting()) {
@@ -311,7 +321,45 @@
             Esta tarea ya fue calificada; no se pueden enviar más cambios.
           </p>
         </div>
+      } @else {
+        <div class="info-section graded-note">
+          <p class="muted">
+            <i class="fas fa-ban"></i>
+            Ya usaste todas las entregas permitidas para esta tarea en el portal.
+          </p>
+        </div>
       }
     </div>
   }
 </div>
+
+@if (showSubmitConfirmation()) {
+  <div class="modal-overlay" (click)="cancelSubmit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirmar envío</h3>
+        <button type="button" class="modal-close" (click)="cancelSubmit()" aria-label="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Estás a punto de enviar tu entrega. ¿Deseas continuar?</p>
+        <p class="modal-warning">
+          <i class="fas fa-info-circle"></i>
+          {{ submitAttemptSummary() }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelSubmit()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="confirmSubmit()" [disabled]="submitting()">
+          @if (submitting()) {
+            <span class="spinner"></span>
+            Enviando…
+          } @else {
+            Sí, enviar
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

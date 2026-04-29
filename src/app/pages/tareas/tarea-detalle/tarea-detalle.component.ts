@@ -20,6 +20,7 @@ export class TareaDetalleComponent implements OnInit {
   submitting = signal(false);
   submitSuccess = signal('');
   submitError = signal('');
+  showSubmitConfirmation = signal(false);
   readonly isLoading = this.loading;
 
   task = signal<StudentTask | null>(null);
@@ -132,11 +133,43 @@ export class TareaDetalleComponent implements OnInit {
     return d === 'archivo' || d === 'ambos' || d === 'clase';
   }
 
+  maxSubmissionsCap(): number {
+    const t = this.task();
+    return Math.max(1, Math.min(20, t?.maxSubmissions ?? 1));
+  }
+
+  effectiveSubmitCount(): number {
+    const t = this.task();
+    if (!t) return 0;
+    const s = t.submission;
+    if (!s) return 0;
+    const c = s.submitCount;
+    if (c != null && c > 0) return c;
+    return s.submittedAt ? 1 : 0;
+  }
+
+  remainingSubmissions(): number {
+    return Math.max(0, this.maxSubmissionsCap() - this.effectiveSubmitCount());
+  }
+
+  submitAttemptSummary(): string {
+    const max = this.maxSubmissionsCap();
+    const next = this.effectiveSubmitCount() + 1;
+    if (max <= 1) {
+      return 'Solo se permite una entrega para esta tarea.';
+    }
+    if (next >= max) {
+      return `Esta será tu entrega ${next} de ${max}. Después de enviar no podrás actualizarla de nuevo.`;
+    }
+    const left = max - next;
+    return `Esta será tu entrega ${next} de ${max}. Tras enviar, aún podrás actualizarla ${left} vez${left !== 1 ? 'es' : ''} más.`;
+  }
+
   canEditSubmission(): boolean {
     const t = this.task();
     if (!t) return false;
     if (this.graded(t)) return false;
-    return true;
+    return this.remainingSubmissions() > 0;
   }
 
   onFilesSelected(event: Event) {
@@ -180,13 +213,27 @@ export class TareaDetalleComponent implements OnInit {
     return 'Error al entregar la tarea.';
   }
 
-  submit() {
+  requestSubmit() {
     const err = this.validateBeforeSubmit();
     if (err) {
       this.submitError.set(err);
       this.submitSuccess.set('');
       return;
     }
+    this.submitError.set('');
+    this.showSubmitConfirmation.set(true);
+  }
+
+  cancelSubmit() {
+    this.showSubmitConfirmation.set(false);
+  }
+
+  confirmSubmit() {
+    this.showSubmitConfirmation.set(false);
+    this.executeSubmit();
+  }
+
+  private executeSubmit() {
     this.submitting.set(true);
     this.submitError.set('');
     this.submitSuccess.set('');
