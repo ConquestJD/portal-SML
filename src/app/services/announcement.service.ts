@@ -91,9 +91,15 @@ export class AnnouncementService {
 
   private normalizeAnnouncement(a: Announcement | Record<string, unknown>): Announcement {
     const raw = a as Record<string, unknown>;
-    const att = raw['attachments'];
-    const attachments = Array.isArray(att)
-      ? (att as AnnouncementAttachment[])
+    const attRaw = raw['attachments'];
+    const attachments = Array.isArray(attRaw)
+      ? (attRaw as Record<string, unknown>[]).map((f) => ({
+          id: String(f['id'] ?? ''),
+          name: String(f['name'] ?? f['filename'] ?? 'Archivo'),
+          url: f['url'] as string | undefined,
+          size: typeof f['size'] === 'number' ? f['size'] : undefined,
+          mimeType: String(f['mimeType'] ?? ''),
+        }))
       : [];
     const isRead = Boolean(raw['isRead'] ?? raw['read']);
     const author = (raw['author'] as Announcement['author']) ?? {
