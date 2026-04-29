@@ -1,7 +1,7 @@
 <div class="crear-tarea-container">
   <div class="breadcrumb">
-    <button class="btn-back" (click)="cancel()">
-      <i class="fas fa-arrow-left"></i> Volver al Curso
+    <button type="button" class="btn-back" (click)="cancel()">
+      <i class="fas fa-arrow-left"></i> {{ backLabel() }}
     </button>
   </div>
 
@@ -10,23 +10,31 @@
       <i class="fas fa-plus-circle"></i>
       {{ isEditMode() ? 'Editar Tarea' : 'Crear Nueva Tarea' }}
     </h1>
-    <p class="page-subtitle">Completa los campos esenciales para crear la tarea. Los campos opcionales están al final.</p>
+    <p class="page-subtitle">
+      Completa los datos de la tarea. Puedes adjuntar archivos de referencia (opcional). Máximo 5 archivos según política del servidor.
+    </p>
   </div>
 
+  @if (error()) {
+    <div class="alert alert-error" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="alert alert-success" role="status">{{ success() }}</div>
+  }
+
   <form (ngSubmit)="saveTask()" class="task-form">
-    <!-- Campos Esenciales -->
     <div class="form-section essential">
       <div class="section-header">
         <h2 class="section-title">
           <i class="fas fa-info-circle"></i>
-          Información Esencial
+          Información esencial
         </h2>
         <span class="section-badge">Requerido</span>
       </div>
-      
+
       <div class="form-group">
         <label for="title" class="form-label">
-          Título de la Tarea
+          Título de la tarea
           <span class="required">*</span>
         </label>
         <input
@@ -36,18 +44,14 @@
           class="form-input"
           [ngModel]="title()"
           (ngModelChange)="title.set($event)"
-          placeholder="Ej: Tarea 1 - Resolución de Ecuaciones"
+          placeholder="Ej: Tarea 1 — Ecuaciones"
           required
         />
-        <p class="form-hint">
-          <i class="fas fa-lightbulb"></i>
-          Usa un título claro y descriptivo para que los estudiantes identifiquen fácilmente la tarea
-        </p>
       </div>
 
       <div class="form-group">
         <label for="instructions" class="form-label">
-          Instrucciones para los Estudiantes
+          Instrucciones para los estudiantes
           <span class="required">*</span>
         </label>
         <textarea
@@ -57,19 +61,15 @@
           rows="8"
           [ngModel]="instructions()"
           (ngModelChange)="instructions.set($event)"
-          placeholder="Describe claramente qué deben hacer los estudiantes. Puedes incluir pasos, ejemplos o cualquier información relevante..."
+          placeholder="Describe qué deben entregar y cómo se evaluará..."
           required
         ></textarea>
-        <p class="form-hint">
-          <i class="fas fa-lightbulb"></i>
-          Sé específico y claro. Los estudiantes agradecerán instrucciones detalladas
-        </p>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label for="dueDate" class="form-label">
-            Fecha y Hora Límite
+            Fecha y hora límite
             <span class="required">*</span>
           </label>
           <input
@@ -84,9 +84,7 @@
         </div>
 
         <div class="form-group">
-          <label for="points" class="form-label">
-            Nota Máxima
-          </label>
+          <label for="points" class="form-label">Nota máxima</label>
           <input
             type="number"
             id="points"
@@ -96,19 +94,16 @@
             readonly
             min="1"
             max="20"
-            placeholder="20"
           />
           <p class="form-hint">
             <i class="fas fa-info-circle"></i>
-            Nota máxima: 20 puntos (sistema de calificación peruano).
+            Nota máxima fija en 20 puntos (sistema peruano).
           </p>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="deliveryType" class="form-label">
-          Tipo de Entrega
-        </label>
+        <label class="form-label">Tipo de entrega (referencia para el estudiante)</label>
         <div class="delivery-type-options">
           <label class="delivery-option" [class.active]="deliveryType() === 'archivo'">
             <input
@@ -121,7 +116,7 @@
             <div class="option-content">
               <i class="fas fa-file"></i>
               <span>Archivo</span>
-              <small>PDF, Word, imágenes, etc.</small>
+              <small>PDF, Word, imágenes…</small>
             </div>
           </label>
           <label class="delivery-option" [class.active]="deliveryType() === 'texto'">
@@ -135,7 +130,6 @@
             <div class="option-content">
               <i class="fas fa-keyboard"></i>
               <span>Texto en línea</span>
-              <small>Respuesta escrita directamente</small>
             </div>
           </label>
           <label class="delivery-option" [class.active]="deliveryType() === 'ambos'">
@@ -149,258 +143,118 @@
             <div class="option-content">
               <i class="fas fa-check-double"></i>
               <span>Ambos</span>
-              <small>Archivo y texto</small>
             </div>
           </label>
-            <label class="delivery-option" [class.active]="deliveryType() === 'clase'">
-              <input
-                type="radio"
-                name="deliveryType"
-                value="clase"
-                [ngModel]="deliveryType()"
-                (ngModelChange)="deliveryType.set($event)"
-              />
-              <div class="option-content">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>En clase</span>
-                <small>Se revisa en clase</small>
-              </div>
-            </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Archivos Adjuntos -->
-    <div class="form-section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <i class="fas fa-paperclip"></i>
-          Materiales de Referencia
-        </h2>
-        <span class="section-badge optional">Opcional</span>
-      </div>
-      
-      <div class="form-group">
-        <div class="file-upload-area">
-          <input
-            type="file"
-            id="file-upload"
-            class="file-input"
-            multiple
-            (change)="onFileSelected($event)"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
-          />
-          <label for="file-upload" class="file-upload-label">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span>Haz clic para seleccionar archivos o arrastra aquí</span>
-            <small>PDF, Word, PowerPoint, imágenes (Máx. 10MB por archivo)</small>
+          <label class="delivery-option" [class.active]="deliveryType() === 'clase'">
+            <input
+              type="radio"
+              name="deliveryType"
+              value="clase"
+              [ngModel]="deliveryType()"
+              (ngModelChange)="deliveryType.set($event)"
+            />
+            <div class="option-content">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <span>En clase</span>
+            </div>
           </label>
         </div>
-
-        @if (attachments().length > 0) {
-          <div class="attachments-list">
-            @for (attachment of attachments(); track attachment.id) {
-              <div class="attachment-item">
-                <div class="attachment-icon">
-                  <i class="fas fa-file"></i>
-                </div>
-                <div class="attachment-info">
-                  <span class="attachment-name">{{ attachment.name }}</span>
-                  <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
-                </div>
-                <button 
-                  type="button" 
-                  class="btn-remove-attachment" 
-                  (click)="removeAttachment(attachment.id)"
-                  title="Eliminar archivo"
-                >
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-            }
-          </div>
-        }
-        <p class="form-hint">
-          <i class="fas fa-info-circle"></i>
-          Puedes adjuntar plantillas, ejemplos, guías o cualquier material de referencia para los estudiantes
-        </p>
       </div>
     </div>
 
-    <!-- Opciones Avanzadas (Colapsable) -->
+    @if (!isEditMode()) {
+      <div class="form-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-paperclip"></i>
+            Materiales de referencia
+          </h2>
+          <span class="section-badge optional">Opcional</span>
+        </div>
+
+        <div class="form-group">
+          <div class="file-upload-area">
+            <input
+              type="file"
+              id="file-upload"
+              class="file-input"
+              multiple
+              (change)="onFilesSelected($event)"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+            />
+            <label for="file-upload" class="file-upload-label">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span>Haz clic para seleccionar archivos</span>
+              <small>PDF, Word, PowerPoint, imágenes. Hasta 5 archivos (consulta límites de tamaño en la documentación).</small>
+            </label>
+          </div>
+
+          @if (selectedFiles().length > 0) {
+            <div class="attachments-list">
+              @for (f of selectedFiles(); track fileKey(f)) {
+                <div class="attachment-item">
+                  <div class="attachment-icon">
+                    <i class="fas fa-file"></i>
+                  </div>
+                  <div class="attachment-info">
+                    <span class="attachment-name">{{ f.name }}</span>
+                    <span class="attachment-size">{{ formatFileSize(f.size) }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-remove-attachment"
+                    (click)="removeFile(f)"
+                    title="Quitar archivo"
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <div class="form-section advanced">
       <div class="section-header clickable" (click)="toggleAdvanced()">
         <h2 class="section-title">
           <i class="fas fa-cog"></i>
-          Opciones Avanzadas
+          Opciones avanzadas
         </h2>
-        <button type="button" class="toggle-advanced">
+        <button type="button" class="toggle-advanced" tabindex="-1">
           <i class="fas" [class.fa-chevron-down]="!showAdvanced()" [class.fa-chevron-up]="showAdvanced()"></i>
         </button>
       </div>
 
       @if (showAdvanced()) {
-        <div class="advanced-content">
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                name="allowLateDelivery"
-                [ngModel]="allowLateDelivery()"
-                (ngModelChange)="allowLateDelivery.set($event)"
-              />
-              <div class="checkbox-content">
-                <span class="checkbox-title">Permitir entregas tardías</span>
-                <span class="checkbox-description">Los estudiantes podrán entregar después de la fecha límite</span>
-              </div>
-            </label>
-          </div>
-
-          <div class="form-group">
-            <div class="rubric-header">
-              <label class="form-label">
-                Rúbrica de Evaluación
-              </label>
-              <button 
-                type="button" 
-                class="btn btn-secondary btn-sm" 
-                (click)="addRubricCriterion()"
-                [disabled]="!canAddCriterion()"
-                [title]="!canAddCriterion() ? 'Ya alcanzaste 20 puntos' : 'Agregar criterio'"
-              >
-                <i class="fas fa-plus"></i> Agregar Criterio
-              </button>
-            </div>
-            
-            @if (rubricCriteria().length === 0) {
-              <div class="rubric-empty-state">
-                <i class="fas fa-clipboard-list"></i>
-                <p>No hay criterios de evaluación definidos</p>
-                <p class="rubric-empty-hint">Haz clic en "Agregar Criterio" para crear la rúbrica</p>
-              </div>
-            } @else {
-              <div class="rubric-builder">
-                <div class="rubric-criteria-list">
-                  @for (criterion of rubricCriteria(); track criterion.id) {
-                    <div class="rubric-criterion-item">
-                      <div class="criterion-header">
-                        <div class="criterion-number">{{ $index + 1 }}</div>
-                        <button 
-                          type="button" 
-                          class="btn-remove-criterion" 
-                          (click)="removeRubricCriterion(criterion.id)"
-                          title="Eliminar criterio"
-                        >
-                          <i class="fas fa-times"></i>
-                        </button>
-                      </div>
-                      
-                      <div class="criterion-fields">
-                        <div class="form-group">
-                          <label class="form-label-sm">Nombre del Criterio</label>
-                          <input
-                            type="text"
-                            class="form-input"
-                            [ngModel]="criterion.name"
-                            (ngModelChange)="updateCriterion(criterion.id, 'name', $event)"
-                            placeholder="Ej: Comprensión del tema"
-                          />
-                        </div>
-                        
-                        <div class="form-group">
-                          <label class="form-label-sm">Descripción</label>
-                          <textarea
-                            class="form-input"
-                            rows="2"
-                            [ngModel]="criterion.description"
-                            (ngModelChange)="updateCriterion(criterion.id, 'description', $event)"
-                            placeholder="Describe qué se evaluará en este criterio..."
-                          ></textarea>
-                        </div>
-                        
-                        <div class="criterion-points">
-                          <label class="form-label-sm">Puntos</label>
-                          <div class="points-input-wrapper">
-                            <input
-                              type="number"
-                              class="form-input points-input"
-                              [ngModel]="criterion.points"
-                              (input)="onPointsInput($event, criterion.id)"
-                              [max]="getMaxPointsForCriterion(criterion.id)"
-                              min="0"
-                              placeholder="0"
-                              step="1"
-                            />
-                            <span class="points-label">/ {{ getMaxPointsForCriterion(criterion.id) }}</span>
-                          </div>
-                          @if (getMaxPointsForCriterion(criterion.id) < 20) {
-                            <p class="points-hint">
-                              <i class="fas fa-info-circle"></i>
-                              Máximo disponible: {{ getMaxPointsForCriterion(criterion.id) }} puntos
-                              (Total actual: {{ totalRubricPoints() - criterion.points }} / 20)
-                            </p>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-                
-                <div class="rubric-summary">
-                  <div class="summary-item highlight">
-                    <span class="summary-label">
-                      <i class="fas fa-calculator"></i>
-                      Suma Total de Todos los Criterios:
-                    </span>
-                    <span class="summary-value" [class.summary-error]="totalRubricPoints() > 20" [class.summary-success]="totalRubricPoints() === 20 && totalRubricPoints() > 0">
-                      {{ totalRubricPoints() }} / 20
-                    </span>
-                  </div>
-                  @if (totalRubricPoints() > 20) {
-                    <div class="rubric-warning">
-                      <i class="fas fa-exclamation-triangle"></i>
-                      <span><strong>Error:</strong> La suma total de todos los criterios ({{ totalRubricPoints() }}) excede el máximo permitido de 20 puntos. Ajusta los puntos de los criterios.</span>
-                    </div>
-                  } @else if (totalRubricPoints() < 20 && rubricCriteria().length > 0) {
-                    <div class="rubric-info">
-                      <i class="fas fa-info-circle"></i>
-                      <span>Puedes agregar más criterios o aumentar los puntos de los existentes hasta completar 20 puntos. Faltan <strong>{{ 20 - totalRubricPoints() }} puntos</strong>.</span>
-                    </div>
-                  } @else if (totalRubricPoints() === 20 && rubricCriteria().length > 0) {
-                    <div class="rubric-success">
-                      <i class="fas fa-check-circle"></i>
-                      <span><strong>¡Rúbrica completa!</strong> La suma de todos los criterios es 20/20.</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-            
-            <p class="form-hint">
-              <i class="fas fa-lightbulb"></i>
-              Define los criterios de evaluación y asigna puntos a cada uno. La suma total debe ser 20 puntos.
-            </p>
-          </div>
+        <div class="form-group">
+          <label for="status" class="form-label">Estado al guardar</label>
+          <select
+            id="status"
+            name="status"
+            class="form-input"
+            [ngModel]="status()"
+            (ngModelChange)="status.set($event)"
+          >
+            <option value="DRAFT">Borrador (no visible para estudiantes)</option>
+            <option value="PUBLISHED">Publicada</option>
+          </select>
         </div>
       }
     </div>
 
-    <!-- Acciones -->
     <div class="form-actions">
       <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving()">
         <i class="fas fa-times"></i> Cancelar
       </button>
-      <button 
-        type="submit" 
-        class="btn btn-primary" 
-        [disabled]="!canSave() || isSaving()"
-      >
+      <button type="submit" class="btn btn-primary" [disabled]="!canSave() || isSaving()">
         @if (isSaving()) {
           <span class="spinner"></span>
-          <span>Guardando...</span>
+          <span>Guardando…</span>
         } @else {
           <i class="fas fa-save"></i>
-          <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} Tarea</span>
+          <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} tarea</span>
         }
       </button>
     </div>
@@ -408,7 +262,7 @@
     @if (!canSave()) {
       <div class="form-validation-hint">
         <i class="fas fa-exclamation-circle"></i>
-        <span>Completa los campos requeridos (marcados con *) para poder crear la tarea</span>
+        <span>Completa título, instrucciones y fecha límite para guardar.</span>
       </div>
     }
   </form>
