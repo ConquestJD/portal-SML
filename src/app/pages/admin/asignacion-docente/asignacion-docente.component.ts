@@ -35,8 +35,8 @@ export class AsignacionDocenteComponent implements OnInit {
   }
 
   reloadLookups() {
-    this.adminService.getTeachers({ pageSize: 500 }).subscribe({ next: ({ data }) => this.teachers.set(data) });
-    this.adminService.getCourses({ pageSize: 300 }).subscribe({ next: ({ data }) => this.courses.set(data) });
+    this.adminService.getTeachers({ pageSize: 100 }).subscribe({ next: ({ data }) => this.teachers.set(data) });
+    this.adminService.getCourses({ pageSize: 100 }).subscribe({ next: ({ data }) => this.courses.set(data) });
     this.adminService.getSections().subscribe({ next: ({ data }) => this.sections.set(data) });
     this.adminService.getAcademicYears().subscribe({ next: (d) => this.academicYears.set(d) });
   }
