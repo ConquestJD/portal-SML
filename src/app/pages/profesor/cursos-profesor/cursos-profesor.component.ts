@@ -20,12 +20,16 @@ export class CursosProfesorComponent implements OnInit {
   courses = signal<TeacherCourse[]>([]);
 
   filteredCourses = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    if (!q) return this.courses();
-    return this.courses().filter(c =>
-      c.course.name.toLowerCase().includes(q) ||
-      (c.course.code ?? '').toLowerCase().includes(q)
-    );
+    const q = this.searchQuery().toLowerCase().trim();
+    let list = this.courses();
+    if (q) {
+      list = list.filter(c =>
+        (c.course?.name ?? '').toLowerCase().includes(q) ||
+        (c.course?.code ?? '').toLowerCase().includes(q) ||
+        (c.course?.grade ?? '').toLowerCase().includes(q)
+      );
+    }
+    return list;
   });
 
   constructor(private teacherService: TeacherService) {}
@@ -38,14 +42,47 @@ export class CursosProfesorComponent implements OnInit {
   }
 
   getCourseName(c: TeacherCourse): string { return c.course?.name ?? ''; }
-  getGradeSection(c: TeacherCourse): string {
-    const gs = (c.gradeSection ?? '').trim();
-    if (gs) return gs;
-    const g = (c.section?.grade ?? c.course?.grade ?? '').trim();
-    const sn = c.section?.name;
-    if (sn && sn !== '—') return g ? `${g} · Sección ${sn}` : `Sección ${sn}`;
-    return g || '—';
+
+  /**
+   * Devuelve "Grado · Nivel" del curso (p. ej. "3 años · Inicial").
+   * El sistema usa "un grado = un curso", por eso no se muestra la sección.
+   */
+  getGradeLabel(c: TeacherCourse): string {
+    const grade = (c.course?.grade ?? '').trim();
+    const level = (c.course?.level ?? '').trim();
+    return [grade, level].filter(Boolean).join(' · ') || '—';
   }
-  onSearch() { /* computed */ }
+
+  getCourseInitial(c: TeacherCourse): string {
+    const name = (c.course?.name ?? '').trim();
+    return name ? name.charAt(0).toUpperCase() : '·';
+  }
+
+  /** Color de acento del curso, con fallback al primario del tema. */
+  getCourseColor(c: TeacherCourse): string {
+    return (c.course?.color || '').trim() || '#003366';
+  }
+
+  /** Texto y clase para la insignia de estado. */
+  getStatusBadge(c: TeacherCourse): { label: string; cls: string } {
+    switch (c.status) {
+      case 'archived': return { label: 'Archivado', cls: 'badge-secondary' };
+      case 'finished': return { label: 'Finalizado', cls: 'badge-info' };
+      default: return { label: 'Activo', cls: 'badge-success' };
+    }
+  }
+
+  formatScheduleHint(c: TeacherCourse): string {
+    const sched = c.course?.schedule;
+    if (!sched?.length) return 'Sin horario';
+    return sched
+      .slice(0, 3)
+      .map(s => `${s.day ?? ''} ${s.startTime ?? ''}-${s.endTime ?? ''}`.trim())
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  onSearch() { /* computed handles filtering */ }
+  clearSearch() { this.searchQuery.set(''); }
   toggleView() { this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid'); }
 }
