@@ -66,40 +66,62 @@
             </button>
           </div>
         </div>
-        <div class="students-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Tutor/Apoderado</th>
-                <th>Promedio</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (student of filteredStudents(); track student.id) {
+
+        @if (studentsLoading()) {
+          <div class="state-card">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando estudiantes…</p>
+          </div>
+        } @else if (students().length === 0) {
+          <div class="state-card">
+            <i class="fas fa-user-graduate"></i>
+            <h3>Aún no hay estudiantes en este curso</h3>
+            <p>
+              Los alumnos se vinculan automáticamente cuando pertenecen al grado
+              <strong>{{ getGradeLabel() || 'del curso' }}</strong>.
+              Si crees que falta vincular alumnos, contacta a administración.
+            </p>
+          </div>
+        } @else {
+          <div class="students-table">
+            <table>
+              <thead>
                 <tr>
-                  <td>{{ student.code }}</td>
-                  <td><strong>{{ student.name }}</strong></td>
-                  <td>{{ student.email }}</td>
-                  <td>{{ student.tutor }}</td>
-                  <td>{{ student.average }}</td>
-                  <td>
-                    <span class="badge badge-success">Activo</span>
-                  </td>
-                  <td>
-                    <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', student.id]" class="btn btn-sm btn-primary">
-                      <i class="fas fa-eye"></i> Ver Ficha
-                    </a>
-                  </td>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Tutor/Apoderado</th>
+                  <th>Promedio</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                @for (student of filteredStudents(); track student.id) {
+                  <tr>
+                    <td>{{ student.code || '—' }}</td>
+                    <td><strong>{{ student.name }}</strong></td>
+                    <td>{{ student.email || '—' }}</td>
+                    <td>{{ student.tutor || '—' }}</td>
+                    <td>{{ student.average }}</td>
+                    <td>
+                      <span class="badge"
+                        [class.badge-success]="student.status === 'ACTIVE'"
+                        [class.badge-secondary]="student.status !== 'ACTIVE'">
+                        {{ student.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>
+                      <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', student.id]" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> Ver Ficha
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     }
 

@@ -295,6 +295,20 @@
   gap: var(--spacing-sm);
 }
 
+.state-card {
+  background: #fff;
+  border: 1.5px dashed var(--border-color);
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  margin: var(--spacing-md) 0;
+}
+.state-card i { font-size: 36px; color: var(--primary); margin-bottom: 12px; }
+.state-card h3 { margin: 0 0 8px 0; color: var(--text-primary); font-size: 18px; font-weight: 600; }
+.state-card p { margin: 0; font-size: 14px; line-height: 1.6; max-width: 480px; margin-inline: auto; }
+.state-card strong { color: var(--primary); }
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;

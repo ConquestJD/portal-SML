@@ -21,7 +21,8 @@ export class CursoDetalleProfesorComponent implements OnInit {
   error = signal('');
 
   course = signal<TeacherCourse | null>(null);
-  students = signal<unknown[]>([]);
+  students = signal<any[]>([]);
+  studentsLoading = signal(false);
   tasks = signal<TeacherTask[]>([]);
   grades = signal<GradeEntry[]>([]);
   attendance = signal<unknown[]>([]);
@@ -29,11 +30,12 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   filteredStudents = computed(() => {
     const q = this.searchQuery().toLowerCase();
-    const list = this.students() as any[];
+    const list = this.students();
     if (!q) return list;
     return list.filter((s: any) =>
-      `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.toLowerCase().includes(q) ||
-      (s.studentCode ?? '').toLowerCase().includes(q)
+      (s.name ?? '').toLowerCase().includes(q) ||
+      (s.code ?? '').toLowerCase().includes(q) ||
+      (s.email ?? '').toLowerCase().includes(q)
     );
   });
 
@@ -63,8 +65,43 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   loadStudents() {
+    this.studentsLoading.set(true);
     this.teacherService.getStudentsInCourse(this.apiCourseResourceId()).subscribe({
-      next: (data) => this.students.set(data)
+      next: (data) => {
+        this.students.set(this.normalizeStudents(data as any[]));
+        this.studentsLoading.set(false);
+      },
+      error: () => {
+        this.students.set([]);
+        this.studentsLoading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Aplana la respuesta de `/teacher/courses/:id/students` a una forma única:
+   * `{ id, code, name, email, tutor, average, status }`.
+   * Soporta tanto `enrollment.student.user` como `student.user` o un objeto plano.
+   */
+  private normalizeStudents(raw: any[]): any[] {
+    return (raw ?? []).map(r => {
+      const s = r?.student ?? r;
+      const u = s?.user ?? r?.user ?? {};
+      const first = u.firstName ?? s?.firstName ?? '';
+      const last = u.lastName ?? s?.lastName ?? '';
+      const fullName = `${first} ${last}`.trim() || s?.name || '(sin nombre)';
+      const tutor = (s?.parents?.[0]?.user?.firstName)
+        ? `${s.parents[0].user.firstName} ${s.parents[0].user.lastName ?? ''}`.trim()
+        : (s?.tutor ?? '');
+      return {
+        id: s?.id ?? r?.studentId ?? r?.id ?? '',
+        code: s?.studentCode ?? s?.code ?? '',
+        name: fullName,
+        email: u.email ?? s?.email ?? '',
+        tutor,
+        average: s?.averageGrade ?? r?.averageGrade ?? '—',
+        status: s?.status ?? u?.status ?? 'ACTIVE',
+      };
     });
   }
 
@@ -117,22 +154,21 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   getCourseName(): string { return this.course()?.course?.name ?? ''; }
-  getGradeSection(): string {
+
+  /** "Grado · Nivel" del curso. El sistema usa "un grado = un curso" (sin secciones). */
+  getGradeLabel(): string {
     const c = this.course();
     if (!c) return '';
-    const gs = (c.gradeSection ?? '').trim();
-    if (gs) return gs;
-    const g = (c.section?.grade ?? c.course?.grade ?? '').trim();
-    const sn = c.section?.name;
-    if (sn && sn !== '—') return g ? `${g} · Sección ${sn}` : `Sección ${sn}`;
-    return g || '';
+    const grade = (c.course?.grade ?? '').trim();
+    const level = (c.course?.level ?? '').trim();
+    return [grade, level].filter(Boolean).join(' · ');
   }
 
   getCourseSubtitleParts(): string {
     const c = this.course();
     if (!c) return '';
     const code = c.code ?? c.course?.code ?? '';
-    const rest = this.getGradeSection();
+    const rest = this.getGradeLabel();
     return [code ? String(code) : '', rest].filter(Boolean).join(' · ');
   }
 
