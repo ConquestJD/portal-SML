@@ -66,7 +66,8 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Comunicación',
       items: [
-        { label: 'Comunicados', icon: 'fas fa-bullhorn', path: '/profesor/comunicados', exact: false }
+        { label: 'Comunicados', icon: 'fas fa-bullhorn', path: '/profesor/comunicados', exact: false },
+        { label: 'Mensajería', icon: 'fas fa-envelope', path: '/profesor/mensajeria', exact: false }
       ]
     },
     {
