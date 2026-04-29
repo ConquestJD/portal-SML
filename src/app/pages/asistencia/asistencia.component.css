@@ -1,7 +1,7 @@
 .asistencia-page {
-  max-width: 720px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-lg) clamp(var(--spacing-md), 4vw, var(--spacing-2xl)) var(--spacing-2xl);
 }
 
 .sr-only {
@@ -19,9 +19,9 @@
 .asis-header {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-md);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -34,24 +34,25 @@
 }
 
 .asis-title {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-3xl);
   font-weight: 700;
   color: var(--primary);
-  margin: 0 0 0.2rem;
+  margin: 0 0 var(--spacing-xs);
   letter-spacing: -0.02em;
 }
 
 .asis-lead {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
+  max-width: 40rem;
 }
 
 .asis-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   align-items: center;
 }
 
@@ -70,9 +71,10 @@
 }
 
 .asis-input {
-  padding: 0.4rem 0.65rem;
-  padding-left: 2rem;
-  font-size: var(--font-size-sm);
+  padding: 0.55rem 0.85rem;
+  padding-left: 2.25rem;
+  min-height: 2.75rem;
+  font-size: var(--font-size-base);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   background: var(--bg-primary);
@@ -81,15 +83,16 @@
 }
 
 .asis-select {
-  padding-left: 0.65rem;
-  max-width: 220px;
+  padding-left: 0.85rem;
+  min-width: 240px;
+  max-width: min(360px, 100%);
 }
 
 .asis-state {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-2xl);
   text-align: center;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .asis-state--error {
@@ -102,28 +105,30 @@
 .asis-strip {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm) var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  align-items: stretch;
+  gap: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .asis-strip__item {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.25rem;
   min-width: 0;
+  justify-content: center;
 }
 
 .asis-strip__val {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--primary);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .asis-strip__val--ok {
@@ -139,27 +144,29 @@
 }
 
 .asis-strip__lbl {
-  font-size: 0.65rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--text-tertiary);
 }
 
 .asis-strip__dot {
   width: 1px;
-  height: 1.5rem;
+  min-height: 2.5rem;
+  align-self: center;
   background: var(--border-color);
   flex-shrink: 0;
 }
 
 .asis-strip__meta {
   margin-left: auto;
+  justify-content: center;
 }
 
 .asis-strip__hint {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
 .asis-list {
@@ -168,20 +175,21 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .asis-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-sm) var(--spacing-md);
   align-items: start;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  border-left-width: 3px;
+  border-radius: var(--border-radius-lg);
+  border-left-width: 4px;
   border-left-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .asis-row.row-present {
@@ -203,27 +211,27 @@
 .asis-row__date {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .asis-row__day {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .asis-row__course {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 
 .asis-badge {
-  font-size: 0.65rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.2rem 0.45rem;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.65rem;
   border-radius: 9999px;
   justify-self: end;
   align-self: start;
@@ -253,46 +261,47 @@
 .asis-row__notes {
   grid-column: 1 / -1;
   margin: 0;
-  font-size: var(--font-size-xs);
+  padding-top: var(--spacing-xs);
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .asis-empty {
   text-align: center;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-2xl) var(--spacing-xl);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   border: 1px dashed var(--border-color);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
   background: var(--bg-primary);
 }
 
 .asis-empty i {
   display: block;
-  font-size: 1.75rem;
-  margin-bottom: var(--spacing-sm);
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-md);
   opacity: 0.45;
   color: var(--text-tertiary);
 }
 
 .asis-empty__hint {
-  margin: 0.35rem 0 0;
-  font-size: var(--font-size-xs);
+  margin: 0.5rem 0 0;
+  font-size: var(--font-size-sm);
   opacity: 0.9;
 }
 
 .asis-alert {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   align-items: flex-start;
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
   color: var(--text-primary);
   background: color-mix(in srgb, var(--secondary) 6%, var(--bg-primary));
   border: 1px solid color-mix(in srgb, var(--secondary) 22%, var(--border-color));
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
 }
 
 .asis-alert i {
