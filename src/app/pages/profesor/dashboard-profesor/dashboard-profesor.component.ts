@@ -21,6 +21,7 @@ export class DashboardProfesorComponent implements OnInit {
   /** Cursos vinculados al docente (asignaciones activas desde `GET /teacher/courses`). */
   teacherCourses = signal<TeacherCourse[]>([]);
   coursesLoading = signal(true);
+  rosterCounts = signal<Record<string, number>>({});
 
   totalCourses = signal(0);
   totalStudents = signal(0);
@@ -55,6 +56,10 @@ export class DashboardProfesorComponent implements OnInit {
         this.quickAccess.update(qa => qa.map(item =>
           item.title === 'Mis Cursos' ? { ...item, count: list.length } : item
         ));
+        this.teacherService.getRosterCountsForCourses(list).subscribe({
+          next: (map) => this.rosterCounts.set(map),
+          error: () => this.rosterCounts.set({}),
+        });
         this.coursesLoading.set(false);
       },
       error: () => {
@@ -98,6 +103,12 @@ export class DashboardProfesorComponent implements OnInit {
 
   courseColor(c: TeacherCourse): string {
     return (c.course?.color || '').trim() || '#003366';
+  }
+
+  rosterStudentCount(c: TeacherCourse): number {
+    const n = this.rosterCounts()[c.id];
+    if (n !== undefined) return n;
+    return c.studentsCount ?? c.students ?? 0;
   }
 
   getCurrentDate() {
