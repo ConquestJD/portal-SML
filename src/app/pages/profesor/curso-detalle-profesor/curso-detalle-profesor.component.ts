@@ -1,15 +1,25 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
-import { TeacherService, TeacherCourse, TeacherTask, GradeEntry, Material, filterTeacherRosterByCourseGrade } from '../../../services/teacher.service';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import {
+  TeacherService,
+  TeacherCourse,
+  TeacherTask,
+  GradeEntry,
+  Material,
+  TeacherCourseAnnouncement,
+  filterTeacherRosterByCourseGrade,
+} from '../../../services/teacher.service';
+import { MensajeriaCursoComponent } from '../../mensajeria-curso/mensajeria-curso.component';
 
 type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'mensajes' | 'comunicados' | 'foros';
 
 @Component({
   selector: 'app-curso-detalle-profesor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MensajeriaCursoComponent],
   templateUrl: './curso-detalle-profesor.component.html',
   styleUrl: './curso-detalle-profesor.component.css'
 })
@@ -27,6 +37,11 @@ export class CursoDetalleProfesorComponent implements OnInit {
   grades = signal<GradeEntry[]>([]);
   attendance = signal<unknown[]>([]);
   materials = signal<Material[]>([]);
+  announcements = signal<TeacherCourseAnnouncement[]>([]);
+  announcementsLoading = signal(false);
+  announcementsError = signal('');
+
+  private readonly destroyRef = inject(DestroyRef);
 
   filteredStudents = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -39,12 +54,41 @@ export class CursoDetalleProfesorComponent implements OnInit {
     );
   });
 
-  constructor(private route: ActivatedRoute, private teacherService: TeacherService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private teacherService: TeacherService,
+  ) {}
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.courseId.set(id);
+
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const tab = this.tabFromQuery(params.get('tab'));
+      const want: TabType = tab ?? 'estudiantes';
+      if (want !== this.activeTab()) {
+        this.activeTab.set(want);
+        this.loadTabData(want);
+      }
+    });
+
     this.loadCourse();
+  }
+
+  private tabFromQuery(raw: string | null): TabType | null {
+    if (!raw) return null;
+    const allowed: TabType[] = [
+      'estudiantes',
+      'tareas',
+      'notas',
+      'asistencia',
+      'material',
+      'mensajes',
+      'comunicados',
+      'foros',
+    ];
+    return allowed.includes(raw as TabType) ? (raw as TabType) : null;
   }
 
   /**
@@ -115,13 +159,26 @@ export class CursoDetalleProfesorComponent implements OnInit {
     });
   }
 
-  selectTab(tab: TabType) {
-    this.activeTab.set(tab);
+  /** Carga datos al cambiar de pestaña (desde la UI o desde `?tab=`). */
+  private loadTabData(tab: TabType) {
     switch (tab) {
-      case 'tareas': this.loadTasks(); break;
-      case 'notas': this.loadGrades(); break;
-      case 'asistencia': this.loadAttendance(); break;
-      case 'material': this.loadMaterials(); break;
+      case 'tareas':
+        this.loadTasks();
+        break;
+      case 'notas':
+        this.loadGrades();
+        break;
+      case 'asistencia':
+        this.loadAttendance();
+        break;
+      case 'material':
+        this.loadMaterials();
+        break;
+      case 'comunicados':
+        this.loadAnnouncements();
+        break;
+      default:
+        break;
     }
   }
 
@@ -146,6 +203,24 @@ export class CursoDetalleProfesorComponent implements OnInit {
   loadMaterials() {
     this.teacherService.getMaterials(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => this.materials.set(data)
+    });
+  }
+
+  loadAnnouncements() {
+    const aid = this.apiTeacherAssignmentId();
+    if (!aid) return;
+    this.announcementsLoading.set(true);
+    this.announcementsError.set('');
+    this.teacherService.getCourseAnnouncements(aid).subscribe({
+      next: (data) => {
+        this.announcements.set(data ?? []);
+        this.announcementsLoading.set(false);
+      },
+      error: () => {
+        this.announcements.set([]);
+        this.announcementsError.set('No se pudieron cargar los comunicados.');
+        this.announcementsLoading.set(false);
+      },
     });
   }
 
@@ -192,5 +267,31 @@ export class CursoDetalleProfesorComponent implements OnInit {
       .join(' · ') || '—';
   }
 
-  setTab(tab: TabType) { this.selectTab(tab); }
+  setTab(tab: TabType) {
+    this.activeTab.set(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab === 'estudiantes' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.loadTabData(tab);
+  }
+
+  announcementPriorityLabel(priority: string): string {
+    const u = (priority ?? '').toUpperCase();
+    if (u === 'HIGH') return 'Urgente';
+    if (u === 'LOW') return 'Normal';
+    return 'Importante';
+  }
+
+  formatAnnouncementDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('es-PE', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }
 }

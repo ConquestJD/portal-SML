@@ -57,8 +57,8 @@
                 type="text"
                 class="form-input search-input"
                 placeholder="Buscar estudiante..."
-                [(ngModel)]="searchQuery"
-                (input)="onSearchStudents()"
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event)"
               />
             </div>
             <button class="btn btn-secondary">
@@ -225,7 +225,66 @@
             <i class="fas fa-plus"></i> Nuevo Comunicado
           </a>
         </div>
-        <p class="info-text">Gestiona los comunicados dirigidos a este curso.</p>
+        <p class="info-text">
+          Cada comunicado se publica al guardarlo y lo ven los estudiantes y apoderados vinculados a este curso.
+        </p>
+
+        @if (announcementsError()) {
+          <div class="announcements-alert" role="alert">{{ announcementsError() }}</div>
+        }
+
+        @if (announcementsLoading()) {
+          <div class="state-card">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Cargando comunicados…</p>
+          </div>
+        } @else if (announcements().length === 0) {
+          <div class="state-card">
+            <i class="fas fa-bullhorn"></i>
+            <h3>Aún no hay comunicados</h3>
+            <p>Publica el primero con el botón «Nuevo Comunicado».</p>
+          </div>
+        } @else {
+          <ul class="announcements-list">
+            @for (a of announcements(); track a.id) {
+              <li class="announcement-card">
+                <div class="announcement-card-head">
+                  <h3 class="announcement-title">{{ a.title }}</h3>
+                  <span
+                    class="badge"
+                    [class.badge-warning]="a.priority === 'HIGH'"
+                    [class.badge-info]="a.priority === 'MEDIUM'"
+                    [class.badge-secondary]="a.priority === 'LOW'">
+                    {{ announcementPriorityLabel(a.priority) }}
+                  </span>
+                </div>
+                <p class="announcement-meta">
+                  <span>{{ formatAnnouncementDate(a.publishedAt ?? a.createdAt) }}</span>
+                  <span class="meta-dot">·</span>
+                  <span>Para estudiantes y apoderados</span>
+                  @if (a.author; as auth) {
+                    <span class="meta-dot">·</span>
+                    <span>{{ auth.firstName }} {{ auth.lastName }}</span>
+                  }
+                </p>
+                <div class="announcement-body">{{ a.content }}</div>
+                @if (a.attachments?.length) {
+                  <ul class="announcement-files">
+                    @for (f of a.attachments; track f.id) {
+                      <li>
+                        @if (f.url) {
+                          <a [href]="f.url" target="_blank" rel="noopener noreferrer">{{ f.name }}</a>
+                        } @else {
+                          {{ f.name }}
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+        }
       </div>
     }
 
