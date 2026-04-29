@@ -216,34 +216,6 @@
       </div>
     }
 
-    <div class="form-section advanced">
-      <div class="section-header clickable" (click)="toggleAdvanced()">
-        <h2 class="section-title">
-          <i class="fas fa-cog"></i>
-          Opciones avanzadas
-        </h2>
-        <button type="button" class="toggle-advanced" tabindex="-1">
-          <i class="fas" [class.fa-chevron-down]="!showAdvanced()" [class.fa-chevron-up]="showAdvanced()"></i>
-        </button>
-      </div>
-
-      @if (showAdvanced()) {
-        <div class="form-group">
-          <label for="status" class="form-label">Estado al guardar</label>
-          <select
-            id="status"
-            name="status"
-            class="form-input"
-            [ngModel]="status()"
-            (ngModelChange)="status.set($event)"
-          >
-            <option value="PUBLISHED">Publicada (visible para estudiantes)</option>
-            <option value="DRAFT">Borrador (no visible para estudiantes)</option>
-          </select>
-        </div>
-      }
-    </div>
-
     <div class="form-actions">
       <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving()">
         <i class="fas fa-times"></i> Cancelar

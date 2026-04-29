@@ -23,13 +23,11 @@ export class CrearTareaComponent implements OnInit {
   error = signal('');
   success = signal('');
   selectedFiles = signal<File[]>([]);
-  showAdvanced = signal(false);
   deliveryType = signal('archivo');
   title = signal('');
   instructions = signal('');
   dueDate = signal('');
   points = signal(20);
-  status = signal('PUBLISHED');
 
   backLabel = signal('Volver al curso');
 
@@ -49,8 +47,6 @@ export class CrearTareaComponent implements OnInit {
       history.back();
     }
   }
-
-  toggleAdvanced() { this.showAdvanced.update(v => !v); }
 
   ngOnInit() {
     if (this.route.snapshot.queryParamMap.get('returnTo') === 'tareas') {
@@ -75,7 +71,6 @@ export class CrearTareaComponent implements OnInit {
         this.instructions.set(data.description ?? '');
         this.dueDate.set(data.dueDate ? this.toDatetimeLocalValue(data.dueDate) : '');
         this.points.set(data.maxScore);
-        this.status.set(data.status);
         const dt = data.deliveryType ?? 'archivo';
         this.deliveryType.set(['archivo', 'texto', 'ambos', 'clase'].includes(dt) ? dt : 'archivo');
       },
@@ -139,7 +134,6 @@ export class CrearTareaComponent implements OnInit {
         description: this.instructions().trim(),
         dueDate: dueRaw ? new Date(dueRaw).toISOString() : undefined,
         maxScore: this.points(),
-        status: this.status(),
         deliveryType: this.deliveryType(),
       }).subscribe({
         next: () => {
@@ -158,7 +152,6 @@ export class CrearTareaComponent implements OnInit {
       const dueRaw = this.dueDate().trim();
       if (dueRaw) fd.append('dueDate', new Date(dueRaw).toISOString());
       fd.append('maxScore', String(this.points()));
-      fd.append('status', this.status());
       fd.append('deliveryType', this.deliveryType());
       this.selectedFiles().forEach(f => fd.append('files', f));
 
