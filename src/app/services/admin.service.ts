@@ -37,8 +37,12 @@ export interface CreateUserDto {
 // ─── STUDENTS ────────────────────────────────────────────────────────────────
 export interface StudentItem {
   id: string; studentCode: string;
-  user: { id: string; email: string; firstName: string; lastName: string; status: string; phone?: string };
+  user: {
+    id: string; email: string; firstName: string; lastName: string; status: string;
+    phone?: string; username?: string; dni?: string; address?: string; createdAt?: string;
+  };
   birthDate?: string; gender?: string; address?: string; bloodType?: string; medicalNotes?: string;
+  createdAt?: string;
   // Normalized display fields
   name?: string; code?: string; email?: string; phone?: string; status?: string;
   grade?: string; level?: string; section?: string;
@@ -55,9 +59,14 @@ export interface CreateStudentDto {
 // ─── TEACHERS ────────────────────────────────────────────────────────────────
 export interface TeacherItem {
   id: string; teacherCode?: string; specialty?: string; bio?: string;
-  user: { id: string; email: string; firstName: string; lastName: string; status: string; phone?: string };
+  user: {
+    id: string; email: string; firstName: string; lastName: string; status: string;
+    phone?: string; username?: string; dni?: string; address?: string; createdAt?: string;
+  };
+  createdAt?: string;
   // Campos normalizados para templates
   name?: string; email?: string; phone?: string; status?: string;
+  username?: string; dni?: string; address?: string;
   department?: string; courses?: number; students?: number; grades?: string[];
 }
 /** Cuerpo esperado por `POST /teachers` (validación forbidNonWhitelisted en backend). */
@@ -71,9 +80,14 @@ export interface CreateTeacherDto {
 // ─── PARENTS ─────────────────────────────────────────────────────────────────
 export interface ParentItem {
   id: string; relationship?: string; occupation?: string;
-  user: { id: string; email: string; firstName: string; lastName: string; status: string; phone?: string };
+  user: {
+    id: string; email: string; firstName: string; lastName: string; status: string;
+    phone?: string; username?: string; dni?: string; address?: string; createdAt?: string;
+  };
+  createdAt?: string;
   // Campos normalizados para templates
   name?: string; email?: string; phone?: string; status?: string; dni?: string; address?: string;
+  username?: string;
   children?: number; childrenList?: { id: string; name: string; grade: string }[];
 }
 export interface CreateParentDto {
@@ -236,25 +250,38 @@ export class AdminService {
   private normalizeStudent(s: StudentItem): StudentItem {
     const statusMap: Record<string, string> = { ACTIVE: 'activo', INACTIVE: 'retirado', SUSPENDED: 'suspendido' };
     const rawStatus = s.status ?? s.user?.status ?? '';
+    const u = s.user ?? ({} as StudentItem['user']);
     return {
       ...s,
-      name:   s.name  ?? `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim(),
-      code:   s.code  ?? s.studentCode ?? '',
-      email:  s.email ?? s.user?.email ?? '',
-      phone:  s.phone ?? s.user?.phone ?? '',
-      status: statusMap[rawStatus] ?? rawStatus.toLowerCase(),
-      grade:  s.grade ?? '',
-      level:  s.level ?? '',
+      name:     s.name  ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+      code:     s.code  ?? s.studentCode ?? '',
+      email:    s.email ?? u.email ?? '',
+      phone:    s.phone ?? u.phone ?? '',
+      username: s.username ?? u.username ?? '',
+      dni:      s.dni ?? u.dni ?? '',
+      address:  s.address ?? u.address ?? '',
+      createdAt: s.createdAt ?? u.createdAt ?? '',
+      status:   statusMap[rawStatus] ?? rawStatus.toLowerCase(),
+      grade:    s.grade ?? '',
+      level:    s.level ?? '',
     };
   }
 
   private normalizeTeacher(t: TeacherItem): TeacherItem {
+    const u = t.user ?? ({} as TeacherItem['user']);
+    const username = t.username ?? u.username ?? '';
     return {
       ...t,
-      name: t.name ?? `${t.user.firstName} ${t.user.lastName}`,
-      email: t.email ?? t.user.email,
-      phone: t.phone ?? t.user.phone,
-      status: t.status ?? t.user.status,
+      name:      t.name      ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+      email:     t.email     ?? u.email     ?? '',
+      phone:     t.phone     ?? u.phone     ?? '',
+      status:    t.status    ?? u.status    ?? '',
+      username,
+      // El backend de `/teachers` no persiste el DNI: solo se usa para generar el username,
+      // por eso el username vale como DNI cuando no viene un campo dedicado.
+      dni:       t.dni       ?? u.dni       ?? username,
+      address:   t.address   ?? u.address   ?? '',
+      createdAt: t.createdAt ?? u.createdAt ?? '',
       department: t.department ?? t.specialty ?? '',
       courses: t.courses ?? 0,
       students: t.students ?? 0,
@@ -263,12 +290,20 @@ export class AdminService {
   }
 
   private normalizeParent(p: ParentItem): ParentItem {
+    const u = p.user ?? ({} as ParentItem['user']);
+    const username = p.username ?? u.username ?? '';
     return {
       ...p,
-      name: p.name ?? `${p.user.firstName} ${p.user.lastName}`,
-      email: p.email ?? p.user.email,
-      phone: p.phone ?? p.user.phone,
-      status: p.status ?? p.user.status
+      name:      p.name      ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+      email:     p.email     ?? u.email     ?? '',
+      phone:     p.phone     ?? u.phone     ?? '',
+      status:    p.status    ?? u.status    ?? '',
+      username,
+      // El backend de `/parents` no persiste el DNI: solo se usa para generar el username,
+      // por eso el username vale como DNI cuando no viene un campo dedicado.
+      dni:       p.dni       ?? u.dni       ?? username,
+      address:   p.address   ?? u.address   ?? '',
+      createdAt: p.createdAt ?? u.createdAt ?? '',
     };
   }
 
