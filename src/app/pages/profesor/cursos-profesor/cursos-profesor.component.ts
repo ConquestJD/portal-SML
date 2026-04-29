@@ -18,6 +18,9 @@ export class CursosProfesorComponent implements OnInit {
   filterPeriod = signal('');
   viewMode = signal<'grid' | 'list'>('grid');
   courses = signal<TeacherCourse[]>([]);
+  /** Conteos reales desde GET /teacher/courses/:id/students (el API a menudo devuelve students: 0). */
+  rosterCounts = signal<Record<string, number>>({});
+  rosterCountsLoading = signal(false);
 
   filteredCourses = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -36,9 +39,30 @@ export class CursosProfesorComponent implements OnInit {
 
   ngOnInit() {
     this.teacherService.getCourses().subscribe({
-      next: (data) => { this.courses.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.courses.set(data);
+        this.loading.set(false);
+        this.rosterCountsLoading.set(true);
+        this.teacherService.getRosterCountsForCourses(data).subscribe({
+          next: (map) => {
+            this.rosterCounts.set(map);
+            this.rosterCountsLoading.set(false);
+          },
+          error: () => {
+            this.rosterCounts.set({});
+            this.rosterCountsLoading.set(false);
+          },
+        });
+      },
       error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
     });
+  }
+
+  /** Estudiantes mostrados en card/tabla (conteo por API de roster). */
+  getStudentCount(c: TeacherCourse): number {
+    const n = this.rosterCounts()[c.id];
+    if (n !== undefined) return n;
+    return c.students ?? c.studentsCount ?? 0;
   }
 
   getCourseName(c: TeacherCourse): string { return c.course?.name ?? ''; }

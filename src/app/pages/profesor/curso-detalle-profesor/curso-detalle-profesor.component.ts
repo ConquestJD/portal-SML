@@ -95,7 +95,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   /**
    * Normaliza filas de `GET /teacher/courses/:id/students` (u objetos anidados con `student`):
-   * `{ id, code, name, email, tutor, average, status }`.
+   * `{ id, code, name, email, average, status }`.
    */
   private normalizeStudents(raw: any[]): any[] {
     return (raw ?? []).map(r => {
@@ -104,15 +104,11 @@ export class CursoDetalleProfesorComponent implements OnInit {
       const first = u.firstName ?? s?.firstName ?? '';
       const last = u.lastName ?? s?.lastName ?? '';
       const fullName = `${first} ${last}`.trim() || s?.name || '(sin nombre)';
-      const tutor = (s?.parents?.[0]?.user?.firstName)
-        ? `${s.parents[0].user.firstName} ${s.parents[0].user.lastName ?? ''}`.trim()
-        : (s?.tutor ?? '');
       return {
         id: s?.id ?? r?.studentId ?? r?.id ?? '',
         code: s?.studentCode ?? s?.code ?? '',
         name: fullName,
         email: u.email ?? s?.email ?? '',
-        tutor,
         average: s?.averageGrade ?? r?.averageGrade ?? '—',
         status: s?.status ?? u?.status ?? 'ACTIVE',
       };

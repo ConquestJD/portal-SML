@@ -110,7 +110,7 @@
             <div class="metric">
               <i class="fas fa-users"></i>
               <div class="metric__text">
-                <span class="metric__value">{{ course.students ?? 0 }}</span>
+                <span class="metric__value">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</span>
                 <span class="metric__label">Estudiantes</span>
               </div>
             </div>
@@ -169,7 +169,7 @@
               </td>
               <td>{{ getGradeLabel(course) }}</td>
               <td class="text-muted">{{ formatScheduleHint(course) }}</td>
-              <td class="text-center">{{ course.students ?? 0 }}</td>
+              <td class="text-center">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</td>
               <td class="text-center">
                 @if ((course.pendingGrading ?? 0) > 0) {
                   <span class="badge badge-warning">{{ course.pendingGrading }}</span>
