@@ -104,6 +104,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profesor/configuracion-profesor/configuracion-profesor.component').then(m => m.ConfiguracionProfesorComponent)
       },
       {
+        path: 'profesor/mensajeria',
+        loadComponent: () => import('./pages/mensajeria-curso/mensajeria-curso.component').then(m => m.MensajeriaCursoComponent)
+      },
+      {
         path: 'profesor/cursos/:courseId/mensajeria',
         loadComponent: () => import('./pages/mensajeria-curso/mensajeria-curso.component').then(m => m.MensajeriaCursoComponent)
       },
