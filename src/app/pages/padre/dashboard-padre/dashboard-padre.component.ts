@@ -25,7 +25,6 @@ export class DashboardPadreComponent implements OnInit {
 
   pendingTasks = signal(0);
   unreadComunicados = signal(0);
-  upcomingDueTasks = signal(0);
   recentComunicadosList = signal<ParentDashboardComunicado[]>([]);
 
   todayAttendance = signal<{ label: string; status: string | null; sessionCount: number }>({
@@ -74,7 +73,6 @@ export class DashboardPadreComponent implements OnInit {
     this.dashboardData.set(data);
     this.pendingTasks.set(data.summary.pendingTasks);
     this.unreadComunicados.set(data.summary.unreadComunicados);
-    this.upcomingDueTasks.set(data.summary.upcomingDueTasks);
     this.todayAttendance.set({
       label: data.attendance?.today?.label ?? '—',
       status: data.attendance?.today?.status ?? null,
