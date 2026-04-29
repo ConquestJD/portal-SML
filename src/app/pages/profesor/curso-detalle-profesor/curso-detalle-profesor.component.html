@@ -11,11 +11,11 @@
         <i class="fas fa-book"></i>
       </div>
       <div class="course-info">
-        <h1 class="course-title">{{ course().name }}</h1>
-        <p class="course-subtitle">{{ course().code }} - {{ course().grade }} Grado - Sección {{ course().section }}</p>
+        <h1 class="course-title">{{ getCourseName() }}</h1>
+        <p class="course-subtitle">{{ getCourseSubtitleParts() }}</p>
         <div class="course-meta">
-          <span><i class="fas fa-users"></i> {{ course().students }} estudiantes</span>
-          <span><i class="fas fa-clock"></i> {{ course().schedule }}</span>
+          <span><i class="fas fa-users"></i> {{ course()?.students ?? 0 }} estudiantes</span>
+          <span><i class="fas fa-clock"></i> {{ formatScheduleHint() }}</span>
         </div>
       </div>
     </div>

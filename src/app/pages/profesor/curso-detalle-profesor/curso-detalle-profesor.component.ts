@@ -43,18 +43,27 @@ export class CursoDetalleProfesorComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.courseId.set(id);
     this.loadCourse();
-    this.loadStudents();
+  }
+
+  /** Rutas tipo `/teacher/courses/:courseId/alumnos` esperan el id del curso (`course.id`), no el de la asignación. */
+  private apiCourseResourceId(): string {
+    const c = this.course();
+    return c?.resourceCourseId ?? c?.course?.id ?? this.courseId();
   }
 
   loadCourse() {
     this.teacherService.getCourse(this.courseId()).subscribe({
-      next: (data) => { this.course.set(data); this.loading.set(false); },
+      next: (data) => {
+        this.course.set(data);
+        this.loading.set(false);
+        this.loadStudents();
+      },
       error: () => { this.error.set('Error al cargar el curso'); this.loading.set(false); }
     });
   }
 
   loadStudents() {
-    this.teacherService.getStudentsInCourse(this.courseId()).subscribe({
+    this.teacherService.getStudentsInCourse(this.apiCourseResourceId()).subscribe({
       next: (data) => this.students.set(data)
     });
   }
@@ -70,47 +79,71 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   loadTasks() {
-    this.teacherService.getTasks(this.courseId()).subscribe({
+    this.teacherService.getTasks(this.apiCourseResourceId()).subscribe({
       next: (data) => this.tasks.set(data)
     });
   }
 
   loadGrades() {
-    this.teacherService.getGrades(this.courseId()).subscribe({
+    this.teacherService.getGrades(this.apiCourseResourceId()).subscribe({
       next: (data) => this.grades.set(data)
     });
   }
 
   loadAttendance() {
-    this.teacherService.getAttendanceHistory(this.courseId()).subscribe({
+    this.teacherService.getAttendanceHistory(this.apiCourseResourceId()).subscribe({
       next: (data) => this.attendance.set(data)
     });
   }
 
   loadMaterials() {
-    this.teacherService.getMaterials(this.courseId()).subscribe({
+    this.teacherService.getMaterials(this.apiCourseResourceId()).subscribe({
       next: (data) => this.materials.set(data)
     });
   }
 
   deleteTask(taskId: string) {
     if (!confirm('¿Eliminar tarea?')) return;
-    this.teacherService.deleteTask(this.courseId(), taskId).subscribe({
+    this.teacherService.deleteTask(this.apiCourseResourceId(), taskId).subscribe({
       next: () => this.loadTasks()
     });
   }
 
   deleteMaterial(materialId: string) {
     if (!confirm('¿Eliminar material?')) return;
-    this.teacherService.deleteMaterial(this.courseId(), materialId).subscribe({
+    this.teacherService.deleteMaterial(this.apiCourseResourceId(), materialId).subscribe({
       next: () => this.loadMaterials()
     });
   }
 
-  getCourseName(): string { return this.course()?.course.name ?? ''; }
+  getCourseName(): string { return this.course()?.course?.name ?? ''; }
   getGradeSection(): string {
     const c = this.course();
-    return c ? `${c.section.grade} - Sección ${c.section.name}` : '';
+    if (!c) return '';
+    const gs = (c.gradeSection ?? '').trim();
+    if (gs) return gs;
+    const g = (c.section?.grade ?? c.course?.grade ?? '').trim();
+    const sn = c.section?.name;
+    if (sn && sn !== '—') return g ? `${g} · Sección ${sn}` : `Sección ${sn}`;
+    return g || '';
+  }
+
+  getCourseSubtitleParts(): string {
+    const c = this.course();
+    if (!c) return '';
+    const code = c.code ?? c.course?.code ?? '';
+    const rest = this.getGradeSection();
+    return [code ? String(code) : '', rest].filter(Boolean).join(' · ');
+  }
+
+  formatScheduleHint(): string {
+    const sched = this.course()?.course?.schedule;
+    if (!sched?.length) return '—';
+    return sched
+      .slice(0, 3)
+      .map(s => `${s.day ?? ''} ${s.startTime ?? ''}-${s.endTime ?? ''}`.trim())
+      .filter(Boolean)
+      .join(' · ') || '—';
   }
 
   setTab(tab: TabType) { this.selectTab(tab); }
