@@ -179,6 +179,23 @@
   color: var(--success);
 }
 
+.summary-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-xs);
+  line-height: 1.35;
+}
+
+.loading-hint,
+.error-hint {
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.error-hint {
+  color: var(--error);
+}
+
 .tasks-list {
   display: flex;
   flex-direction: column;
@@ -280,8 +297,23 @@
   font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: var(--spacing-lg);
+  margin: 0 0 var(--spacing-sm);
   line-height: 1.3;
+}
+
+.task-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-md);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-card.task-calificada {
+  border-left-color: var(--success);
 }
 
 .task-details {

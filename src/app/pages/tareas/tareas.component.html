@@ -10,152 +10,187 @@
         <input
           type="text"
           class="form-input search-input"
-          placeholder="Buscar tarea..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
+          placeholder="Buscar por título, curso o instrucciones..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
         />
       </div>
     </div>
   </div>
 
-  <div class="filters">
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'todas'"
-      (click)="setFilter('todas')"
-    >
-      Todas
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'pendientes'"
-      (click)="setFilter('pendientes')"
-    >
-      Pendientes
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'entregadas'"
-      (click)="setFilter('entregadas')"
-    >
-      Entregadas
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'vencidas'"
-      (click)="setFilter('vencidas')"
-    >
-      Vencidas
-    </button>
-  </div>
+  @if (loading()) {
+    <p class="loading-hint">Cargando tareas…</p>
+  } @else if (error()) {
+    <p class="error-hint">{{ error() }}</p>
+  } @else {
+    <div class="filters">
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'todas'"
+        (click)="setFilter('todas')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'pendientes'"
+        (click)="setFilter('pendientes')"
+      >
+        Pendientes
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'entregadas'"
+        (click)="setFilter('entregadas')"
+      >
+        Entregadas
+      </button>
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="filter() === 'vencidas'"
+        (click)="setFilter('vencidas')"
+      >
+        Vencidas
+      </button>
+    </div>
 
-  <div class="summary-panel">
-    <div class="summary-item">
-      <div class="summary-icon-wrapper pending">
-        <i class="fas fa-tasks"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Total Pendientes</span>
-        <span class="summary-value">{{ pendingCount() }}</span>
-      </div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-icon-wrapper error">
-        <i class="fas fa-exclamation-circle"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Vencidas</span>
-        <span class="summary-value error">{{ overdueCount() }}</span>
-      </div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-icon-wrapper success">
-        <i class="fas fa-check-circle"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Entregadas</span>
-        <span class="summary-value success">{{ completedCount() }}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="tasks-list">
-    @for (task of filteredTasks(); track task.id) {
-      <div class="task-card" [class.task-vencida]="task.status === 'vencida'">
-        <div class="task-header">
-          <div class="task-course">
-            <div class="course-badge-wrapper">
-              <i class="fas fa-book"></i>
-              <span class="course-badge">{{ task.courseCode }}</span>
-            </div>
-            <span class="course-name">{{ task.course }}</span>
-          </div>
-          <span class="badge" 
-            [class.badge-warning]="task.status === 'pendiente'"
-            [class.badge-error]="task.status === 'vencida'"
-            [class.badge-success]="task.status === 'entregada'"
-            [class.badge-info]="task.status === 'en-revision'">
-            @if (task.status === 'pendiente') { Pendiente }
-            @if (task.status === 'vencida') { Vencida }
-            @if (task.status === 'entregada') { Entregada }
-            @if (task.status === 'en-revision') { En Revisión }
-          </span>
+    <div class="summary-panel">
+      <div class="summary-item">
+        <div class="summary-icon-wrapper pending">
+          <i class="fas fa-tasks"></i>
         </div>
-        
-        <h3 class="task-name">{{ task.name }}</h3>
-        
-        <div class="task-details">
-          <div class="detail-item">
-            <div class="detail-icon-wrapper">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="detail-content">
-              <span class="detail-label">Fecha límite</span>
-              <span class="detail-value" [class.overdue]="task.status === 'vencida'">
-                {{ task.dueDate }}
+        <div class="summary-content">
+          <span class="summary-label">Pendientes</span>
+          <span class="summary-value">{{ pendingCount() }}</span>
+          <span class="summary-hint">Sin entregar, aún en plazo</span>
+        </div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-icon-wrapper error">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <div class="summary-content">
+          <span class="summary-label">Vencidas</span>
+          <span class="summary-value error">{{ overdueCount() }}</span>
+          <span class="summary-hint">Sin entregar, fecha pasada</span>
+        </div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-icon-wrapper success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="summary-content">
+          <span class="summary-label">Entregadas</span>
+          <span class="summary-value success">{{ completedCount() }}</span>
+          <span class="summary-hint">Incluye en revisión y calificadas</span>
+        </div>
+      </div>
+    </div>
+
+    @if (filteredTasks().length === 0) {
+      <div class="empty-state">
+        <i class="fas fa-tasks empty-icon"></i>
+        <h2>No hay tareas que mostrar</h2>
+        <p>No hay tareas en este filtro o en la búsqueda.</p>
+      </div>
+    } @else {
+      <div class="tasks-list">
+        @for (task of filteredTasks(); track task.id) {
+          <div
+            class="task-card"
+            [class.task-vencida]="taskUiStatus(task) === 'vencida'"
+            [class.task-calificada]="taskUiStatus(task) === 'calificada'"
+          >
+            <div class="task-header">
+              <div class="task-course">
+                <div class="course-badge-wrapper">
+                  <i class="fas fa-book"></i>
+                  <span class="course-badge">{{ courseName(task) }}</span>
+                </div>
+              </div>
+              <span
+                class="badge"
+                [class.badge-warning]="taskUiStatus(task) === 'pendiente'"
+                [class.badge-error]="taskUiStatus(task) === 'vencida'"
+                [class.badge-info]="taskUiStatus(task) === 'en-revision'"
+                [class.badge-success]="taskUiStatus(task) === 'calificada'"
+              >
+                {{ taskUiStatusLabel(task) }}
               </span>
             </div>
-          </div>
-          <div class="detail-item">
-            <div class="detail-icon-wrapper">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="detail-content">
-              <span class="detail-label">Puntos</span>
-              <span class="detail-value">{{ task.points }}</span>
-            </div>
-          </div>
-          @if (task.grade) {
-            <div class="detail-item">
-              <div class="detail-icon-wrapper success">
-                <i class="fas fa-check-circle"></i>
-              </div>
-              <div class="detail-content">
-                <span class="detail-label">Calificación</span>
-                <span class="detail-value grade">{{ task.grade }}</span>
-              </div>
-            </div>
-          }
-        </div>
 
-        <div class="task-actions">
-          <a [routerLink]="['/tareas', task.id]" class="btn btn-primary">
-            @if (task.status === 'pendiente' || task.status === 'vencida') {
-              <i class="fas fa-arrow-right"></i> Continuar / Entregar
-            } @else {
-              <i class="fas fa-arrow-right"></i> Ver Detalle
+            <h3 class="task-name">{{ task.title }}</h3>
+
+            @if (task.description?.trim()) {
+              <p class="task-desc">{{ task.description }}</p>
             }
-          </a>
-        </div>
+
+            <div class="task-details">
+              <div class="detail-item">
+                <div class="detail-icon-wrapper">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Fecha límite</span>
+                  <span
+                    class="detail-value"
+                    [class.overdue]="taskUiStatus(task) === 'vencida'"
+                  >
+                    {{ formatDue(task.dueDate) }}
+                  </span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-icon-wrapper">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Puntuación máx.</span>
+                  <span class="detail-value">{{ task.maxScore ?? '—' }}</span>
+                </div>
+              </div>
+              @if (task.submission?.submittedAt) {
+                <div class="detail-item">
+                  <div class="detail-icon-wrapper">
+                    <i class="fas fa-paper-plane"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Entregada</span>
+                    <span class="detail-value">{{ formatDue(task.submission!.submittedAt) }}</span>
+                  </div>
+                </div>
+              }
+              @if (task.submission?.score != null && task.submission.score !== undefined) {
+                <div class="detail-item">
+                  <div class="detail-icon-wrapper success">
+                    <i class="fas fa-star"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Calificación</span>
+                    <span class="detail-value grade"
+                      >{{ task.submission!.score }} / {{ task.maxScore ?? '—' }}</span
+                    >
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="task-actions">
+              <a [routerLink]="['/tareas', task.id]" class="btn btn-primary">
+                @if (taskUiStatus(task) === 'pendiente' || taskUiStatus(task) === 'vencida') {
+                  <i class="fas fa-arrow-right"></i> Ver / entregar
+                } @else {
+                  <i class="fas fa-arrow-right"></i> Ver detalle
+                }
+              </a>
+            </div>
+          </div>
+        }
       </div>
     }
-  </div>
-
-  @if (filteredTasks().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-tasks empty-icon"></i>
-      <h2>No hay tareas que mostrar</h2>
-      <p>No tienes tareas en este filtro.</p>
-    </div>
   }
 </div>
