@@ -2,55 +2,55 @@
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Cargando comunicado...</p>
+      <p>Cargando comunicado…</p>
     </div>
-  } @else if (comunicado()) {
+  } @else if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Volver a comunicados
+      </button>
+    </div>
+  } @else if (comunicado(); as c) {
     <div class="comunicado-detail">
-      <!-- Header con botón de regreso -->
       <div class="detail-header">
-        <button class="btn-back" (click)="goBack()">
-          <i class="fas fa-arrow-left"></i> Volver a Comunicados
+        <button type="button" class="btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Volver a comunicados
         </button>
       </div>
 
-      <!-- Información principal del comunicado -->
       <div class="comunicado-info-card">
         <div class="comunicado-header-info">
           <div class="comunicado-badges">
-            <span class="badge" 
-              [class.badge-info]="comunicado()!.type === 'institucional'"
-              [class.badge-success]="comunicado()!.type === 'grado'"
-              [class.badge-warning]="comunicado()!.type === 'seccion'">
-              @if (comunicado()!.type === 'institucional') {
-                <i class="fas fa-school"></i> Institucional
-              } @else if (comunicado()!.type === 'grado') {
-                <i class="fas fa-book"></i> Grado
-              } @else {
-                <i class="fas fa-user"></i> Sección
-              }
+            <span class="badge badge-info">
+              <i class="fas fa-tag"></i> {{ typeLabel(c.type) }}
             </span>
-            @if (comunicado()!.priority === 'urgente') {
+            @if (isUrgent(c)) {
               <span class="badge badge-error">
-                <i class="fas fa-exclamation-triangle"></i> Urgente
+                <i class="fas fa-exclamation-triangle"></i> {{ priorityLabel(c.priority) }}
               </span>
-            } @else if (comunicado()!.priority === 'importante') {
+            } @else if ((c.priority || '').toUpperCase() === 'MEDIUM') {
               <span class="badge badge-warning">
-                <i class="fas fa-info-circle"></i> Importante
+                <i class="fas fa-info-circle"></i> {{ priorityLabel(c.priority) }}
               </span>
             }
-            @if (!comunicado()!.read) {
-              <span class="badge badge-info">
-                <i class="fas fa-bullhorn"></i> Nuevo
+            @if (!c.isRead) {
+              <span class="badge badge-new">
+                <i class="fas fa-circle"></i> No leído
+              </span>
+            } @else {
+              <span class="badge badge-read">
+                <i class="fas fa-check"></i> Leído
               </span>
             }
           </div>
           <div class="comunicado-date-wrapper">
             <i class="fas fa-calendar-alt"></i>
-            <span class="comunicado-date">{{ comunicado()!.date }}</span>
+            <span class="comunicado-date">{{ c.date }}</span>
           </div>
         </div>
 
-        <h1 class="comunicado-title">{{ comunicado()!.title }}</h1>
+        <h1 class="comunicado-title">{{ c.title }}</h1>
 
         <div class="comunicado-meta">
           <div class="meta-item">
@@ -59,8 +59,10 @@
             </div>
             <div class="meta-content">
               <span class="meta-label">Remitente</span>
-              <span class="meta-value">{{ comunicado()!.author.name }}</span>
-              <span class="meta-subvalue">{{ comunicado()!.author.role }}</span>
+              <span class="meta-value">{{ getAuthorName() }}</span>
+              @if (c.author?.role) {
+                <span class="meta-subvalue">{{ c.author.role }}</span>
+              }
             </div>
           </div>
           <div class="meta-item">
@@ -69,82 +71,88 @@
             </div>
             <div class="meta-content">
               <span class="meta-label">Publicado</span>
-              <span class="meta-value">{{ comunicado()!.publishedAt | date:'short' }}</span>
+              <span class="meta-value">{{ c.publishedAt | date: 'short' }}</span>
             </div>
           </div>
-          @if (comunicado()!.recipients) {
+          @if (c.recipients) {
             <div class="meta-item">
               <div class="meta-icon-wrapper">
                 <i class="fas fa-users"></i>
               </div>
               <div class="meta-content">
                 <span class="meta-label">Destinatarios</span>
-                @if (comunicado()!.recipients!.grade) {
-                  <span class="meta-value">{{ comunicado()!.recipients!.grade }}</span>
+                @if (c.recipients.grade) {
+                  <span class="meta-value">{{ c.recipients.grade }}</span>
                 }
-                @if (comunicado()!.recipients!.section) {
-                  <span class="meta-subvalue">{{ comunicado()!.recipients!.section }}</span>
+                @if (c.recipients.section) {
+                  <span class="meta-subvalue">{{ c.recipients.section }}</span>
                 }
               </div>
             </div>
           }
-          @if (comunicado()!.readDeadline) {
+          @if (c.readDeadline) {
             <div class="meta-item">
               <div class="meta-icon-wrapper warning">
                 <i class="fas fa-calendar-times"></i>
               </div>
               <div class="meta-content">
                 <span class="meta-label">Fecha límite de lectura</span>
-                <span class="meta-value">{{ comunicado()!.readDeadline }}</span>
+                <span class="meta-value">{{ c.readDeadline }}</span>
               </div>
             </div>
           }
         </div>
       </div>
 
-      <!-- Contenido completo -->
       <div class="info-section">
         <h2 class="section-title">
           <i class="fas fa-file-alt"></i>
           Contenido
         </h2>
-        <div class="section-content" [innerHTML]="comunicado()!.fullContent"></div>
+        <div class="section-content" [innerHTML]="c.fullContent ?? c.content"></div>
       </div>
 
-      <!-- Archivos Adjuntos -->
-      @if (comunicado()!.attachments && comunicado()!.attachments.length > 0) {
+      @if (c.attachments?.length) {
         <div class="info-section">
           <div class="section-header-with-action">
             <h2 class="section-title">
               <i class="fas fa-paperclip"></i>
-              Archivos Adjuntos
+              Archivos adjuntos
             </h2>
-            <button class="btn btn-secondary" (click)="downloadAllAttachments()">
+            <button type="button" class="btn btn-secondary" (click)="downloadAllAttachments()">
               <i class="fas fa-download"></i>
-              Descargar Todos
+              Descargar todos
             </button>
           </div>
           <div class="attachments-list">
-            @for (attachment of comunicado()!.attachments; track attachment.id) {
+            @for (attachment of c.attachments; track attachment.id) {
               <div class="attachment-item">
                 <div class="attachment-icon">
-                  @if (attachment.type === 'PDF') {
-                    <i class="fas fa-file-pdf"></i>
-                  } @else if (attachment.type === 'DOC' || attachment.type === 'DOCX') {
-                    <i class="fas fa-file-word"></i>
-                  } @else if (attachment.type === 'XLS' || attachment.type === 'XLSX') {
-                    <i class="fas fa-file-excel"></i>
-                  } @else if (attachment.type === 'JPG' || attachment.type === 'PNG' || attachment.type === 'IMG') {
-                    <i class="fas fa-file-image"></i>
-                  } @else {
-                    <i class="fas fa-file"></i>
+                  @switch (attachmentKind(attachment)) {
+                    @case ('pdf') {
+                      <i class="fas fa-file-pdf"></i>
+                    }
+                    @case ('doc') {
+                      <i class="fas fa-file-word"></i>
+                    }
+                    @case ('xls') {
+                      <i class="fas fa-file-excel"></i>
+                    }
+                    @case ('img') {
+                      <i class="fas fa-file-image"></i>
+                    }
+                    @default {
+                      <i class="fas fa-file"></i>
+                    }
                   }
                 </div>
                 <div class="attachment-info">
                   <span class="attachment-name">{{ attachment.name }}</span>
-                  <span class="attachment-meta">{{ attachment.type }} • {{ attachment.size }}</span>
+                  @if (formatAttachmentSize(attachment.size)) {
+                    <span class="attachment-meta">{{ formatAttachmentSize(attachment.size) }}</span>
+                  }
                 </div>
-                <button class="btn-download" (click)="downloadAttachment(attachment)">
+                <button type="button" class="btn-download" (click)="downloadAttachmentFile(attachment)">
                   <i class="fas fa-download"></i>
                   Descargar
                 </button>
@@ -154,13 +162,21 @@
         </div>
       }
 
-      <!-- Acciones -->
       <div class="actions-section">
         <div class="actions-group">
-          @if (!comunicado()!.read) {
-            <button class="btn btn-primary" (click)="markAsRead()">
-              <i class="fas fa-check-circle"></i>
-              Marcar como Leído
+          @if (!c.isRead) {
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="markAsRead()"
+              [disabled]="markSubmitting()"
+            >
+              @if (markSubmitting()) {
+                <span class="spinner"></span> Guardando…
+              } @else {
+                <i class="fas fa-check-circle"></i>
+                Marcar como leído
+              }
             </button>
           } @else {
             <span class="read-indicator">
