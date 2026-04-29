@@ -63,8 +63,8 @@ export class CursosAdminComponent implements OnInit {
   load() {
     this.loading.set(true);
     forkJoin({
-      coursesResp: this.adminService.getCourses({ pageSize: 300 }),
-      assignsResp: this.adminService.getTeacherAssignments({ pageSize: 500 }),
+      coursesResp: this.adminService.getCourses({ pageSize: 100 }),
+      assignsResp: this.adminService.getTeacherAssignments({ pageSize: 100 }),
     }).subscribe({
       next: ({ coursesResp, assignsResp }) => {
         this.courses.set(coursesResp.data);
