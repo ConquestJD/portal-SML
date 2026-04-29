@@ -81,7 +81,7 @@ export class CrearTareaComponent implements OnInit {
         this.deliveryType.set(['archivo', 'texto', 'ambos', 'clase'].includes(dt) ? dt : 'archivo');
       },
       error: (err) => {
-        this.error.set(err?.error?.error?.message ?? 'No se pudo cargar la tarea');
+        this.error.set(this.extractHttpError(err));
       }
     });
   }
@@ -132,6 +132,25 @@ export class CrearTareaComponent implements OnInit {
     }
   }
 
+  private extractHttpError(err: unknown): string {
+    const e = err as {
+      error?: { message?: string | string[]; error?: { message?: string } };
+      message?: string;
+    };
+    const nested = e?.error?.error?.message;
+    const raw =
+      (typeof nested === 'string' && nested.trim() ? nested : '') ||
+      (Array.isArray(e?.error?.message) ? e.error!.message!.filter(Boolean).join('. ') : '') ||
+      (typeof e?.error?.message === 'string' ? e.error.message : '') ||
+      (typeof e?.message === 'string' ? e.message : '');
+    const msg = raw.trim();
+    if (!msg) return 'Error al guardar la tarea';
+    if (/^[a-f0-9]{32,64}$/i.test(msg)) {
+      return 'No se pudo crear la tarea con los archivos enviados. Prueba con menos archivos, tamaño menor o sin adjuntos para aislar el fallo. Si el problema continúa, puede ser un error del almacenamiento en el servidor.';
+    }
+    return msg;
+  }
+
   onSubmit() {
     if (!this.canSave()) return;
     this.isSaving.set(true);
@@ -153,7 +172,7 @@ export class CrearTareaComponent implements OnInit {
           this.afterSaveNavigate();
         },
         error: (err) => {
-          this.error.set(err?.error?.error?.message ?? 'Error al actualizar');
+          this.error.set(this.extractHttpError(err));
           this.isSaving.set(false);
         }
       });
@@ -174,7 +193,7 @@ export class CrearTareaComponent implements OnInit {
           this.afterSaveNavigate();
         },
         error: (err) => {
-          this.error.set(err?.error?.error?.message ?? 'Error al crear');
+          this.error.set(this.extractHttpError(err));
           this.isSaving.set(false);
         }
       });
