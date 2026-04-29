@@ -758,3 +758,38 @@
   cursor: not-allowed;
   opacity: 0.9;
 }
+
+.alert-inline {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--border-radius);
+  background: rgba(185, 28, 28, 0.08);
+  color: #991b1b;
+  border: 1px solid rgba(185, 28, 28, 0.25);
+}
+
+.hint-in-class {
+  border-left: 3px solid var(--secondary, #0d9488);
+}
+
+.meta-line {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: var(--spacing-sm) 0;
+}
+
+.modal-student {
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-primary);
+}
+
+.submission-files ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.feedback-text {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
