@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { TeacherService, AttendanceRecord } from '../../../services/teacher.service';
+import { TeacherService, AttendanceRecord, filterTeacherRosterByCourseGrade } from '../../../services/teacher.service';
 
 type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'JUSTIFIED';
 
@@ -53,21 +53,53 @@ export class MarcarAsistenciaComponent implements OnInit {
   }
 
   loadStudents() {
+    const cid = this.courseId();
     this.loading.set(true);
-    this.teacherService.getStudentsInCourse(this.courseId()).subscribe({
-      next: (data: any[]) => {
-        this.students.set(data.map(s => ({
-          studentId: s.id,
-          name: `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`,
-          studentCode: s.studentCode ?? '',
-          status: 'PRESENT' as AttendanceStatus,
-          notes: ''
-        })));
-        this.loading.set(false);
-        this.loadExistingAttendance();
+    this.error.set('');
+    this.teacherService.getCourse(cid).subscribe({
+      next: (course) => {
+        const grade = (course.course?.grade ?? '').trim();
+        const level = (course.course?.level ?? '').trim();
+        this.teacherService
+          .getStudentsInCourse(cid, {
+            ...(grade ? { grade } : {}),
+            ...(level ? { level } : {}),
+          })
+          .subscribe({
+            next: (data: any[]) => {
+              const rows = filterTeacherRosterByCourseGrade(data, grade, level);
+              this.applyLoadedStudents(rows as any[]);
+            },
+            error: () => {
+              this.error.set('Error al cargar estudiantes');
+              this.loading.set(false);
+            },
+          });
       },
-      error: () => { this.error.set('Error al cargar estudiantes'); this.loading.set(false); }
+      error: () => {
+        this.error.set('Error al cargar el curso');
+        this.loading.set(false);
+      },
     });
+  }
+
+  private applyLoadedStudents(data: any[]) {
+    this.students.set(
+      (data ?? []).map(s => {
+        const st = s?.student ?? s;
+        const u = st?.user ?? s?.user ?? {};
+        const id = st?.id ?? s?.studentId ?? s?.id ?? '';
+        return {
+          studentId: id,
+          name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || st?.name || '',
+          studentCode: st?.studentCode ?? s?.studentCode ?? '',
+          status: 'PRESENT' as AttendanceStatus,
+          notes: '',
+        };
+      })
+    );
+    this.loading.set(false);
+    this.loadExistingAttendance();
   }
 
   loadExistingAttendance() {

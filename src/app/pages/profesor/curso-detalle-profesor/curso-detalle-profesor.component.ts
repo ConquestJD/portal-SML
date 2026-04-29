@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { TeacherService, TeacherCourse, TeacherTask, GradeEntry, Material } from '../../../services/teacher.service';
+import { TeacherService, TeacherCourse, TeacherTask, GradeEntry, Material, filterTeacherRosterByCourseGrade } from '../../../services/teacher.service';
 
 type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'mensajes' | 'comunicados' | 'foros';
 
@@ -69,23 +69,33 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   loadStudents() {
+    const c = this.course();
+    const grade = (c?.course?.grade ?? '').trim();
+    const level = (c?.course?.level ?? '').trim();
+    const aid = this.apiTeacherAssignmentId();
     this.studentsLoading.set(true);
-    this.teacherService.getStudentsInCourse(this.apiTeacherAssignmentId()).subscribe({
-      next: (data) => {
-        this.students.set(this.normalizeStudents(data as any[]));
-        this.studentsLoading.set(false);
-      },
-      error: () => {
-        this.students.set([]);
-        this.studentsLoading.set(false);
-      }
-    });
+
+    this.teacherService
+      .getStudentsInCourse(aid, {
+        ...(grade ? { grade } : {}),
+        ...(level ? { level } : {}),
+      })
+      .subscribe({
+        next: (data) => {
+          const rows = filterTeacherRosterByCourseGrade(data as any[], grade, level);
+          this.students.set(this.normalizeStudents(rows as any[]));
+          this.studentsLoading.set(false);
+        },
+        error: () => {
+          this.students.set([]);
+          this.studentsLoading.set(false);
+        },
+      });
   }
 
   /**
-   * Aplana la respuesta de `/teacher/courses/:id/students` a una forma única:
+   * Normaliza filas de `GET /teacher/courses/:id/students` (u objetos anidados con `student`):
    * `{ id, code, name, email, tutor, average, status }`.
-   * Soporta tanto `enrollment.student.user` como `student.user` o un objeto plano.
    */
   private normalizeStudents(raw: any[]): any[] {
     return (raw ?? []).map(r => {

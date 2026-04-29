@@ -14,7 +14,7 @@
         <h1 class="course-title">{{ getCourseName() }}</h1>
         <p class="course-subtitle">{{ getCourseSubtitleParts() }}</p>
         <div class="course-meta">
-          <span><i class="fas fa-users"></i> {{ course()?.students ?? 0 }} estudiantes</span>
+          <span><i class="fas fa-users"></i> {{ studentsLoading() ? (course()?.students ?? 0) : students().length }} estudiantes</span>
           <span><i class="fas fa-clock"></i> {{ formatScheduleHint() }}</span>
         </div>
       </div>
@@ -75,11 +75,11 @@
         } @else if (students().length === 0) {
           <div class="state-card">
             <i class="fas fa-user-graduate"></i>
-            <h3>Aún no hay estudiantes en este curso</h3>
+            <h3>No hay alumnos en este curso</h3>
             <p>
-              Los alumnos se vinculan automáticamente cuando pertenecen al grado
-              <strong>{{ getGradeLabel() || 'del curso' }}</strong>.
-              Si crees que falta vincular alumnos, contacta a administración.
+              El docente solo puede usar la ruta de alumnos del curso en la API (no el listado global de estudiantes, reservado a administración).
+              Si aquí no aparece nadie pero sí hay alumnos con el mismo grado que el curso, el backend debe devolverlos en
+              <strong>GET /teacher/courses/:asignación/students</strong>, filtrando por el campo <strong>grade</strong> del estudiante.
             </p>
           </div>
         } @else {
@@ -144,7 +144,7 @@
               </div>
               <div class="task-info">
                 <p><i class="fas fa-calendar-alt"></i> Fecha límite: {{ task.dueDate }}</p>
-                <p><i class="fas fa-check-circle"></i> Entregadas: {{ task.submitted }} / {{ course().students }}</p>
+                <p><i class="fas fa-check-circle"></i> Entregadas: {{ task.submitted }} / {{ students().length || course()?.students || 0 }}</p>
                 <p><i class="fas fa-info-circle"></i> Estado: 
                   <span class="badge" [class.badge-info]="task.status === 'active'" [class.badge-secondary]="task.status === 'closed'">
                     {{ task.status === 'active' ? 'Publicada' : 'Cerrada' }}

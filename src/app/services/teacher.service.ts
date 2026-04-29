@@ -47,7 +47,7 @@ export interface TeacherCourse {
   academicYear: { id: string; name: string };
   studentsCount?: number;
 
-  /** Id del curso en catálogo; usar en `getStudentsInCourse`, tareas, etc. */
+  /** Id del curso en catálogo (referencia; la lista de alumnos del curso sale de `GET /students?grade=...`). */
   resourceCourseId: string;
 
   // Aliases planos para plantillas
@@ -234,9 +234,27 @@ export class TeacherService {
     return this.get<TeacherCourse>(`/teacher/courses/${courseId}`)
       .pipe(map(c => this.normalizeCourse(c)));
   }
-  getStudentsInCourse(courseId: string, search?: string): Observable<unknown[]> {
-    return this.get<unknown[]>(`/teacher/courses/${courseId}/students`, search ? buildParams({ search }) : undefined);
+  /**
+   * Listado de alumnos del curso para el docente. No usar `GET /students` (requiere rol ADMIN).
+   * Opcional `grade` / `level`: si el backend los soporta, filtra en servidor; si no, se ignoran.
+   * Tras recibir datos, conviene aplicar `filterTeacherRosterByCourseGrade` en cliente si cada fila trae `grade`.
+   */
+  getStudentsInCourse(
+    courseId: string,
+    f: { search?: string; grade?: string; level?: string } = {}
+  ): Observable<unknown[]> {
+    const params = buildParams({
+      search: f.search,
+      grade: f.grade,
+      level: f.level,
+    });
+    const hasParams = [...params.keys()].length > 0;
+    return this.get<unknown[]>(
+      `/teacher/courses/${courseId}/students`,
+      hasParams ? params : undefined
+    );
   }
+
   getStudentFicha(courseId: string, studentId: string): Observable<unknown> {
     return this.get<unknown>(`/teacher/courses/${courseId}/students/${studentId}`);
   }
@@ -335,4 +353,29 @@ export class TeacherService {
       `${this.url}/teacher/profile/photo`, fd
     ).pipe(map(r => r.data));
   }
+}
+
+/**
+ * Si el backend devuelve filas con `student.grade` / `student.level`, reduce la nómina al grado del curso.
+ * Las filas sin `grade` se conservan (compatibilidad con respuestas antiguas).
+ */
+export function filterTeacherRosterByCourseGrade(
+  rows: unknown[] | null | undefined,
+  courseGrade: string,
+  courseLevel?: string
+): unknown[] {
+  const list = rows ?? [];
+  const g = (courseGrade ?? '').trim();
+  if (!g) return list;
+  const wantLv = (courseLevel ?? '').trim().toLowerCase();
+  return list.filter((r: any) => {
+    const s = r?.student ?? r;
+    const sg = (s?.grade ?? r?.grade ?? '').toString().trim();
+    if (!sg) return true;
+    if (sg !== g) return false;
+    if (!wantLv) return true;
+    const sl = (s?.level ?? r?.level ?? '').toString().trim().toLowerCase();
+    if (!sl) return true;
+    return sl === wantLv;
+  });
 }
