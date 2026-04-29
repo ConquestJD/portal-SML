@@ -1,75 +1,104 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AnnouncementService, Announcement } from '../../services/announcement.service';
 
 @Component({
   selector: 'app-comunicados',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './comunicados.component.html',
-  styleUrl: './comunicados.component.css'
+  styleUrl: './comunicados.component.css',
 })
 export class ComunicadosComponent implements OnInit {
+  private readonly announcementService = inject(AnnouncementService);
+  private readonly router = inject(Router);
+
   loading = signal(true);
   error = signal('');
-  filterType = signal('');
-  filterPriority = signal('');
-  filterRead = signal('');
-  searchQuery = signal('');
-  filter = signal('all');
-  currentPage = signal(1);
-  totalPages = signal(1);
-
   announcements = signal<Announcement[]>([]);
 
-  filteredAnnouncements = computed(() => {
-    const f = this.filter();
-    if (!f || f === 'all') return this.announcements();
-    if (f === 'unread') return this.announcements().filter(a => !a.isRead);
-    return this.announcements().filter(a => a.type === f.toUpperCase() || a.priority === f.toUpperCase());
-  });
+  unreadCount = computed(() => this.announcements().filter((a) => !a.isRead).length);
 
-  urgentCount = computed(() => this.announcements().filter(a => a.priority === 'HIGH' || a.priority === 'URGENT').length);
+  urgentCount = computed(() =>
+    this.announcements().filter((a) => (a.priority || '').toUpperCase() === 'HIGH').length,
+  );
 
-  constructor(private announcementService: AnnouncementService) {}
-
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
-    this.announcementService.getAnnouncements({
-      type: this.filterType() || undefined,
-      priority: this.filterPriority() || undefined,
-      read: this.filterRead() !== '' ? this.filterRead() === 'true' : undefined,
-      search: this.searchQuery() || undefined,
-      page: this.currentPage(),
-      pageSize: 20
-    }).subscribe({
-      next: ({ data, meta }) => {
-        this.announcements.set(data);
-        this.totalPages.set(meta.totalPages);
-        this.loading.set(false);
-      },
-      error: () => { this.error.set('Error al cargar comunicados'); this.loading.set(false); }
-    });
+    this.error.set('');
+    this.announcementService
+      .getAnnouncements({
+        page: 1,
+        pageSize: 50,
+      })
+      .subscribe({
+        next: ({ data }) => {
+          this.announcements.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('No se pudieron cargar los comunicados.');
+          this.loading.set(false);
+        },
+      });
   }
 
   markAsRead(id: string, event: Event) {
+    event.preventDefault();
     event.stopPropagation();
     this.announcementService.markAsRead(id).subscribe({
-      next: () => this.announcements.update(list =>
-        list.map(a => a.id === id ? { ...a, isRead: true } : a)
-      )
+      next: () =>
+        this.announcements.update((list) =>
+          list.map((a) => (a.id === id ? { ...a, isRead: true, read: true } : a)),
+        ),
     });
   }
 
-  onFilterChange() { this.currentPage.set(1); this.load(); }
-  onSearch() { this.onFilterChange(); }
-  setFilter(f: string) { this.filter.set(f); }
-  prevPage() { if (this.currentPage() > 1) { this.currentPage.update(p => p - 1); this.load(); } }
-  nextPage() { if (this.currentPage() < this.totalPages()) { this.currentPage.update(p => p + 1); this.load(); } }
+  /** Ruta de detalle según portal (alumno vs padre). */
+  detailCommands(id: string): string[] {
+    const path = this.router.url.split('?')[0];
+    if (path.startsWith('/padre/comunicados')) return ['/padre/comunicados', id];
+    return ['/comunicados', id];
+  }
 
-  unreadCount(): number { return this.announcements().filter(a => !a.isRead).length; }
+  formatDate(a: Announcement): string {
+    const raw = a.date ?? a.publishedAt;
+    if (!raw) return '—';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+      ? raw
+      : d.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  typeLabel(type: string): string {
+    const t = (type || '').toUpperCase();
+    if (t === 'GENERAL') return 'General';
+    if (t === 'ACADEMIC') return 'Académico';
+    if (t === 'EVENT') return 'Evento';
+    if (t === 'URGENT') return 'Aviso';
+    return type || 'Comunicado';
+  }
+
+  priorityLabel(priority: string): string {
+    const p = (priority || '').toUpperCase();
+    if (p === 'HIGH') return 'Urgente';
+    if (p === 'LOW') return 'Baja';
+    if (p === 'MEDIUM') return 'Normal';
+    return priority || '—';
+  }
+
+  isUrgent(a: Announcement): boolean {
+    return (a.priority || '').toUpperCase() === 'HIGH';
+  }
+
+  excerpt(text: string, max = 220): string {
+    const t = (text ?? '').trim();
+    if (t.length <= max) return t;
+    return `${t.slice(0, max).trim()}…`;
+  }
 }

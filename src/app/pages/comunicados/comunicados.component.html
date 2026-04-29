@@ -1,124 +1,113 @@
-<div class="comunicados-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Comunicados y Avisos</h1>
-      <p class="page-subtitle">Mantente informado sobre las novedades institucionales</p>
+<div class="com-page">
+  <header class="com-hero">
+    <div>
+      <p class="com-eyebrow">Institución</p>
+      <h1 class="com-title">Comunicados y avisos</h1>
+      <p class="com-lead">
+        Mensajes oficiales del colegio y de tus cursos. Los urgentes se destacan en rojo.
+      </p>
     </div>
-    <div class="header-actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          class="form-input search-input"
-          placeholder="Buscar comunicado..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearch()"
-        />
-      </div>
-    </div>
-  </div>
+  </header>
 
-  <div class="filters">
-    <button class="filter-chip" [class.active]="filter() === 'todos'" (click)="setFilter('todos')">
-      Todos
-    </button>
-    <button class="filter-chip" [class.active]="filter() === 'institucionales'" (click)="setFilter('institucionales')">
-      Institucionales
-    </button>
-    <button class="filter-chip" [class.active]="filter() === 'grado'" (click)="setFilter('grado')">
-      Por Grado
-    </button>
-    <button class="filter-chip" [class.active]="filter() === 'seccion'" (click)="setFilter('seccion')">
-      Por Sección
-    </button>
-    <button class="filter-chip" [class.active]="filter() === 'urgentes'" (click)="setFilter('urgentes')">
-      Urgentes
-    </button>
-  </div>
-
-  <div class="summary-panel">
-    <div class="summary-item">
-      <div class="summary-icon-wrapper unread">
-        <i class="fas fa-bullhorn"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">No Leídos</span>
-        <span class="summary-value">{{ unreadCount() }}</span>
-      </div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-icon-wrapper urgent">
-        <i class="fas fa-exclamation-triangle"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Urgentes</span>
-        <span class="summary-value error">{{ urgentCount() }}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="announcements-list">
-    @for (announcement of filteredAnnouncements(); track announcement.id) {
-      <div class="announcement-card" [class.unread]="!announcement.read" [class.urgent]="announcement.priority === 'urgente'">
-        <div class="announcement-header">
-          <div class="announcement-badges">
-            <span class="badge" [class.badge-info]="announcement.type === 'institucional'" [class.badge-success]="announcement.type === 'grado'">
-              @if (announcement.type === 'institucional') {
-                <i class="fas fa-school"></i> Institucional
-              } @else if (announcement.type === 'grado') {
-                <i class="fas fa-book"></i> Grado
-              } @else {
-                <i class="fas fa-user"></i> Sección
-              }
-            </span>
-            @if (announcement.priority === 'urgente') {
-              <span class="badge badge-error">
-                <i class="fas fa-exclamation-triangle"></i> Urgente
-              </span>
-            }
-            @if (!announcement.read) {
-              <span class="badge badge-info">
-                <i class="fas fa-bullhorn"></i> Nuevo
-              </span>
-            }
-          </div>
-          <div class="announcement-date-wrapper">
-            <i class="fas fa-calendar-alt"></i>
-            <span class="announcement-date">{{ announcement.date }}</span>
-          </div>
+  @if (loading()) {
+    <p class="com-state">Cargando comunicados…</p>
+  } @else if (error()) {
+    <div class="com-state com-state--error">{{ error() }}</div>
+  } @else {
+    <section class="com-kpi">
+      <div class="com-kpi__card">
+        <div class="com-kpi__icon com-kpi__icon--unread">
+          <i class="fas fa-envelope-open" aria-hidden="true"></i>
         </div>
-        
-        <h3 class="announcement-title" (click)="viewDetail(announcement.id)" style="cursor: pointer;">{{ announcement.title }}</h3>
-        <p class="announcement-content">{{ announcement.content }}</p>
-        
-        <div class="announcement-footer">
-          <div class="announcement-meta">
-            @if (announcement.attachments > 0) {
-              <span class="attachment-info">
-                <i class="fas fa-paperclip"></i> {{ announcement.attachments }} archivo(s)
-              </span>
-            }
-          </div>
-          <div class="announcement-actions">
-            <button class="btn btn-primary btn-sm" (click)="viewDetail(announcement.id)">
-              <i class="fas fa-arrow-right"></i> Leer más
-            </button>
-            @if (!announcement.read) {
-              <button class="btn btn-secondary btn-sm" (click)="markAsRead(announcement.id); $event.stopPropagation()">
-                <i class="fas fa-check-circle"></i> Marcar como leído
-              </button>
-            }
-          </div>
+        <div>
+          <span class="com-kpi__label">No leídos</span>
+          <strong class="com-kpi__value">{{ unreadCount() }}</strong>
         </div>
       </div>
+      <div class="com-kpi__card">
+        <div class="com-kpi__icon com-kpi__icon--urgent">
+          <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+        </div>
+        <div>
+          <span class="com-kpi__label">Urgentes</span>
+          <strong class="com-kpi__value com-kpi__value--urgent">{{ urgentCount() }}</strong>
+        </div>
+      </div>
+    </section>
+
+    @if (announcements().length === 0) {
+      <div class="com-empty">
+        <i class="fas fa-bullhorn com-empty__icon"></i>
+        <h2 class="com-empty__title">No hay comunicados para mostrar</h2>
+        <p class="com-empty__text">
+          Cuando publiquen avisos dirigidos a tu perfil o a tus cursos, aparecerán aquí.
+        </p>
+      </div>
+    } @else {
+      <ul class="com-list" role="list">
+        @for (a of announcements(); track a.id) {
+          <li>
+            <article
+              class="com-card"
+              [class.com-card--unread]="!a.isRead"
+              [class.com-card--urgent]="isUrgent(a)"
+            >
+              <div class="com-card__top">
+                <div class="com-card__badges">
+                  <span class="com-badge com-badge--type">{{ typeLabel(a.type) }}</span>
+                  <span
+                    class="com-badge"
+                    [class.com-badge--prio-high]="isUrgent(a)"
+                    [class.com-badge--prio-norm]="!isUrgent(a)"
+                  >
+                    {{ priorityLabel(a.priority) }}
+                  </span>
+                  @if (!a.isRead) {
+                    <span class="com-badge com-badge--new">Nuevo</span>
+                  }
+                </div>
+                <time class="com-card__date" [attr.datetime]="a.publishedAt">{{
+                  formatDate(a)
+                }}</time>
+              </div>
+
+              <h2 class="com-card__title">
+                <a [routerLink]="detailCommands(a.id)" class="com-card__title-link">{{
+                  a.title
+                }}</a>
+              </h2>
+              <p class="com-card__excerpt">{{ excerpt(a.content) }}</p>
+
+              <div class="com-card__foot">
+                <span class="com-card__author">
+                  <i class="fas fa-user" aria-hidden="true"></i>
+                  {{ a.author?.name || '—' }}
+                </span>
+                @if ((a.attachmentCount ?? a.attachments?.length ?? 0) > 0) {
+                  <span class="com-card__attach">
+                    <i class="fas fa-paperclip" aria-hidden="true"></i>
+                    {{ a.attachmentCount ?? a.attachments.length }} adjunto(s)
+                  </span>
+                }
+                <div class="com-card__actions">
+                  <a [routerLink]="detailCommands(a.id)" class="btn btn-primary btn-sm">
+                    Ver completo
+                  </a>
+                  @if (!a.isRead) {
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="markAsRead(a.id, $event)"
+                    >
+                      Marcar leído
+                    </button>
+                  }
+                </div>
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
     }
-  </div>
-
-  @if (filteredAnnouncements().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-bullhorn empty-icon"></i>
-      <h2>No hay comunicados</h2>
-      <p>No hay comunicados que coincidan con los filtros seleccionados.</p>
-    </div>
   }
 </div>
