@@ -28,6 +28,8 @@ export class CrearTareaComponent implements OnInit {
   instructions = signal('');
   dueDate = signal('');
   points = signal(20);
+  /** Cuántas veces el alumno puede enviar o actualizar su entrega (1–20). */
+  maxSubmissions = signal(1);
 
   backLabel = signal('Volver al curso');
 
@@ -71,6 +73,10 @@ export class CrearTareaComponent implements OnInit {
         this.instructions.set(data.description ?? '');
         this.dueDate.set(data.dueDate ? this.toDatetimeLocalValue(data.dueDate) : '');
         this.points.set(data.maxScore);
+        const ms = Number(data.maxSubmissions);
+        this.maxSubmissions.set(
+          Number.isFinite(ms) ? Math.max(1, Math.min(20, Math.floor(ms))) : 1,
+        );
         const dt = data.deliveryType ?? 'archivo';
         this.deliveryType.set(['archivo', 'texto', 'ambos', 'clase'].includes(dt) ? dt : 'archivo');
       },
@@ -108,6 +114,11 @@ export class CrearTareaComponent implements OnInit {
 
   onFileSelected(event: Event) { this.onFilesSelected(event); }
 
+  onMaxSubmissionsInput(raw: string | number) {
+    const n = Math.floor(Number(raw));
+    this.maxSubmissions.set(Number.isFinite(n) ? Math.max(1, Math.min(20, n)) : 1);
+  }
+
   removeFile(file: File) {
     const k = this.fileKey(file);
     this.selectedFiles.set(this.selectedFiles().filter(f => this.fileKey(f) !== k));
@@ -134,6 +145,7 @@ export class CrearTareaComponent implements OnInit {
         description: this.instructions().trim(),
         dueDate: dueRaw ? new Date(dueRaw).toISOString() : undefined,
         maxScore: this.points(),
+        maxSubmissions: this.maxSubmissions(),
         deliveryType: this.deliveryType(),
       }).subscribe({
         next: () => {
@@ -152,6 +164,7 @@ export class CrearTareaComponent implements OnInit {
       const dueRaw = this.dueDate().trim();
       if (dueRaw) fd.append('dueDate', new Date(dueRaw).toISOString());
       fd.append('maxScore', String(this.points()));
+      fd.append('maxSubmissions', String(this.maxSubmissions()));
       fd.append('deliveryType', this.deliveryType());
       this.selectedFiles().forEach(f => fd.append('files', f));
 
