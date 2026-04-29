@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 function buildParams(f: Record<string, string | number | boolean | undefined>): HttpParams {
@@ -10,6 +10,31 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
     if (v !== undefined && v !== null && v !== '') p = p.set(k, String(v));
   }
   return p;
+}
+
+/**
+ * Si el backend devuelve filas con `student.grade` / `student.level`, reduce la nómina al grado del curso.
+ * Las filas sin `grade` se conservan (compatibilidad con respuestas antiguas).
+ */
+export function filterTeacherRosterByCourseGrade(
+  rows: unknown[] | null | undefined,
+  courseGrade: string,
+  courseLevel?: string
+): unknown[] {
+  const list = rows ?? [];
+  const g = (courseGrade ?? '').trim();
+  if (!g) return list;
+  const wantLv = (courseLevel ?? '').trim().toLowerCase();
+  return list.filter((r: any) => {
+    const s = r?.student ?? r;
+    const sg = (s?.grade ?? r?.grade ?? '').toString().trim();
+    if (!sg) return true;
+    if (sg !== g) return false;
+    if (!wantLv) return true;
+    const sl = (s?.level ?? r?.level ?? '').toString().trim().toLowerCase();
+    if (!sl) return true;
+    return sl === wantLv;
+  });
 }
 
 /**
@@ -47,7 +72,7 @@ export interface TeacherCourse {
   academicYear: { id: string; name: string };
   studentsCount?: number;
 
-  /** Id del curso en catálogo (referencia; la lista de alumnos del curso sale de `GET /students?grade=...`). */
+  /** Id del curso en catálogo; referencia para enlaces admin. */
   resourceCourseId: string;
 
   // Aliases planos para plantillas
@@ -255,6 +280,31 @@ export class TeacherService {
     );
   }
 
+  /**
+   * Cantidad de alumnos para una asignación docente (misma lógica que el detalle del curso).
+   */
+  getRosterCountForCourse(c: TeacherCourse): Observable<number> {
+    const grade = (c.course?.grade ?? '').trim();
+    const level = (c.course?.level ?? '').trim();
+    return this.getStudentsInCourse(c.id, {
+      ...(grade ? { grade } : {}),
+      ...(level ? { level } : {}),
+    }).pipe(
+      map(rows => filterTeacherRosterByCourseGrade(rows, grade, level).length),
+      catchError(() => of(0))
+    );
+  }
+
+  /** `assignmentId` → número de alumnos (cards y tablas «Mis cursos»). */
+  getRosterCountsForCourses(courses: TeacherCourse[]): Observable<Record<string, number>> {
+    if (!courses.length) return of({});
+    return forkJoin(
+      courses.map(c =>
+        this.getRosterCountForCourse(c).pipe(map(n => [c.id, n] as [string, number]))
+      )
+    ).pipe(map(pairs => Object.fromEntries(pairs) as Record<string, number>));
+  }
+
   getStudentFicha(courseId: string, studentId: string): Observable<unknown> {
     return this.get<unknown>(`/teacher/courses/${courseId}/students/${studentId}`);
   }
@@ -353,29 +403,4 @@ export class TeacherService {
       `${this.url}/teacher/profile/photo`, fd
     ).pipe(map(r => r.data));
   }
-}
-
-/**
- * Si el backend devuelve filas con `student.grade` / `student.level`, reduce la nómina al grado del curso.
- * Las filas sin `grade` se conservan (compatibilidad con respuestas antiguas).
- */
-export function filterTeacherRosterByCourseGrade(
-  rows: unknown[] | null | undefined,
-  courseGrade: string,
-  courseLevel?: string
-): unknown[] {
-  const list = rows ?? [];
-  const g = (courseGrade ?? '').trim();
-  if (!g) return list;
-  const wantLv = (courseLevel ?? '').trim().toLowerCase();
-  return list.filter((r: any) => {
-    const s = r?.student ?? r;
-    const sg = (s?.grade ?? r?.grade ?? '').toString().trim();
-    if (!sg) return true;
-    if (sg !== g) return false;
-    if (!wantLv) return true;
-    const sl = (s?.level ?? r?.level ?? '').toString().trim().toLowerCase();
-    if (!sl) return true;
-    return sl === wantLv;
-  });
 }
