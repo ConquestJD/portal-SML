@@ -140,8 +140,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Servicios',
       items: [
-        { label: 'Pagos', icon: 'fas fa-dollar-sign', path: '/padre/pagos', exact: false },
-        { label: 'Documentos', icon: 'fas fa-file-alt', path: '/padre/documentos', exact: false }
+        { label: 'Pagos', icon: 'fas fa-dollar-sign', path: '/padre/pagos', exact: false }
       ]
     },
     {
