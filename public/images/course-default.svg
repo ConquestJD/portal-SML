@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" role="img" aria-label="Curso">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#003366"/>
+      <stop offset="100%" style="stop-color:#1a5a8a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#bg)"/>
+  <g fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2">
+    <path d="M120 70 L200 45 L280 70 L280 170 L200 195 L120 170 Z"/>
+    <path d="M120 70 L200 95 L280 70"/>
+    <path d="M200 95 L200 195"/>
+  </g>
+  <ellipse cx="320" cy="180" rx="55" ry="18" fill="rgba(0,0,0,0.12)"/>
+</svg>
