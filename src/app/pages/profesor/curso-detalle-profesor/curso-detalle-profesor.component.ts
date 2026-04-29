@@ -47,10 +47,14 @@ export class CursoDetalleProfesorComponent implements OnInit {
     this.loadCourse();
   }
 
-  /** Rutas tipo `/teacher/courses/:courseId/alumnos` esperan el id del curso (`course.id`), no el de la asignación. */
-  private apiCourseResourceId(): string {
+  /**
+   * Id que debe usarse en todas las rutas `GET/POST /teacher/courses/:courseId/...`.
+   * Contrato API: `courseId` es el id de la **asignación docente** (no el id del curso en catálogo).
+   * @see FRONTEND.md sección «Portal del Profesor»
+   */
+  private apiTeacherAssignmentId(): string {
     const c = this.course();
-    return c?.resourceCourseId ?? c?.course?.id ?? this.courseId();
+    return c?.id ?? this.courseId();
   }
 
   loadCourse() {
@@ -66,7 +70,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   loadStudents() {
     this.studentsLoading.set(true);
-    this.teacherService.getStudentsInCourse(this.apiCourseResourceId()).subscribe({
+    this.teacherService.getStudentsInCourse(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => {
         this.students.set(this.normalizeStudents(data as any[]));
         this.studentsLoading.set(false);
@@ -116,39 +120,39 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   loadTasks() {
-    this.teacherService.getTasks(this.apiCourseResourceId()).subscribe({
+    this.teacherService.getTasks(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => this.tasks.set(data)
     });
   }
 
   loadGrades() {
-    this.teacherService.getGrades(this.apiCourseResourceId()).subscribe({
+    this.teacherService.getGrades(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => this.grades.set(data)
     });
   }
 
   loadAttendance() {
-    this.teacherService.getAttendanceHistory(this.apiCourseResourceId()).subscribe({
+    this.teacherService.getAttendanceHistory(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => this.attendance.set(data)
     });
   }
 
   loadMaterials() {
-    this.teacherService.getMaterials(this.apiCourseResourceId()).subscribe({
+    this.teacherService.getMaterials(this.apiTeacherAssignmentId()).subscribe({
       next: (data) => this.materials.set(data)
     });
   }
 
   deleteTask(taskId: string) {
     if (!confirm('¿Eliminar tarea?')) return;
-    this.teacherService.deleteTask(this.apiCourseResourceId(), taskId).subscribe({
+    this.teacherService.deleteTask(this.apiTeacherAssignmentId(), taskId).subscribe({
       next: () => this.loadTasks()
     });
   }
 
   deleteMaterial(materialId: string) {
     if (!confirm('¿Eliminar material?')) return;
-    this.teacherService.deleteMaterial(this.apiCourseResourceId(), materialId).subscribe({
+    this.teacherService.deleteMaterial(this.apiTeacherAssignmentId(), materialId).subscribe({
       next: () => this.loadMaterials()
     });
   }
