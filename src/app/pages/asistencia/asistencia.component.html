@@ -1,127 +1,102 @@
-<div class="asistencia-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Mi Asistencia</h1>
-      <p class="page-subtitle">Consulta tu registro de asistencia y puntualidad</p>
+<div class="asistencia-page">
+  <header class="asis-header">
+    <div>
+      <h1 class="asis-title">Mi asistencia</h1>
+      <p class="asis-lead">Registro por curso según lo marcado por tus docentes.</p>
     </div>
-    <div class="header-actions">
-      <div class="filter-wrapper">
-        <i class="fas fa-calendar-alt"></i>
-        <input type="month" [(ngModel)]="selectedMonth" class="form-input month-input">
-      </div>
-      <select [(ngModel)]="selectedCourse" class="form-input course-select">
-        <option value="todos">Todos los cursos</option>
-        <option value="mat">Matemática</option>
-        <option value="len">Lengua</option>
+    <div class="asis-filters">
+      <label class="asis-filter">
+        <span class="sr-only">Mes</span>
+        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+        <input
+          type="month"
+          class="asis-input"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="selectedMonth.set($event); onFilterChange()"
+        />
+      </label>
+      <select
+        class="asis-input asis-select"
+        [ngModel]="selectedCourse()"
+        (ngModelChange)="selectedCourse.set($event); onFilterChange()"
+      >
+        <option value="">Todos los cursos</option>
+        @for (c of courses(); track c.id) {
+          <option [value]="c.id">{{ c.name ?? c.course?.name ?? 'Curso' }}</option>
+        }
       </select>
     </div>
-  </div>
+  </header>
 
-  <div class="summary-cards grid grid-cols-4">
-    <div class="summary-card">
-      <div class="summary-icon-wrapper primary">
-        <i class="fas fa-chart-line"></i>
+  @if (loading()) {
+    <p class="asis-state">Cargando…</p>
+  } @else if (error()) {
+    <p class="asis-state asis-state--error">{{ error() }}</p>
+  } @else {
+    <section class="asis-strip" aria-label="Resumen del período filtrado">
+      <div class="asis-strip__item">
+        <span class="asis-strip__val">{{ attendancePercent() }}%</span>
+        <span class="asis-strip__lbl">Asistencia efectiva</span>
       </div>
-      <div class="summary-content">
-        <span class="summary-label">Asistencia del Mes</span>
-        <span class="summary-value">{{ summary().attendancePercentage }}%</span>
+      <span class="asis-strip__dot" aria-hidden="true"></span>
+      <div class="asis-strip__item">
+        <span class="asis-strip__val asis-strip__val--ok">{{ countStatus('PRESENT') }}</span>
+        <span class="asis-strip__lbl">Presente</span>
       </div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-icon-wrapper success">
-        <i class="fas fa-check-circle"></i>
+      <div class="asis-strip__item">
+        <span class="asis-strip__val asis-strip__val--bad">{{ countStatus('ABSENT') }}</span>
+        <span class="asis-strip__lbl">Faltas</span>
       </div>
-      <div class="summary-content">
-        <span class="summary-label">Días Asistidos</span>
-        <span class="summary-value">{{ summary().daysAttended }}</span>
+      <div class="asis-strip__item">
+        <span class="asis-strip__val asis-strip__val--warn">{{ countStatus('LATE') }}</span>
+        <span class="asis-strip__lbl">Tardanzas</span>
       </div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-icon-wrapper error">
-        <i class="fas fa-times-circle"></i>
+      <div class="asis-strip__item">
+        <span class="asis-strip__val">{{ countStatus('JUSTIFIED') }}</span>
+        <span class="asis-strip__lbl">Justif.</span>
       </div>
-      <div class="summary-content">
-        <span class="summary-label">Faltas</span>
-        <span class="summary-value error">{{ summary().absences }}</span>
+      <div class="asis-strip__item asis-strip__meta">
+        <span class="asis-strip__hint">{{ totalSessions() }} registro(s)</span>
       </div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-icon-wrapper warning">
-        <i class="fas fa-clock"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Tardanzas</span>
-        <span class="summary-value warning">{{ summary().tardies }}</span>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="attendance-section">
-    <div class="section-header">
-      <h2 class="section-title">
-        <i class="fas fa-calendar-alt"></i> Registro de Asistencia
-      </h2>
-    </div>
-    <div class="attendance-table-wrapper">
-      <table class="attendance-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Curso</th>
-            <th>Estado</th>
-            <th>Hora Ingreso</th>
-            <th>Hora Salida</th>
-            <th>Observaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (record of attendanceRecords(); track $index) {
-            <tr [class.row-presente]="record.status === 'presente'" [class.row-falta]="record.status === 'falta'" [class.row-tardanza]="record.status === 'tardanza'">
-              <td><strong>{{ record.date }}</strong></td>
-              <td>{{ record.course }}</td>
-              <td>
-                <span class="badge"
-                  [class.badge-success]="record.status === 'presente'"
-                  [class.badge-error]="record.status === 'falta'"
-                  [class.badge-warning]="record.status === 'tardanza'">
-                  @if (record.status === 'presente') { Presente }
-                  @if (record.status === 'falta') { Falta }
-                  @if (record.status === 'tardanza') { Tardanza }
-                </span>
-              </td>
-              <td>
-                @if (record.timeIn !== '-') {
-                  <span class="time-value">{{ record.timeIn }}</span>
-                } @else {
-                  <span class="time-empty">-</span>
-                }
-              </td>
-              <td>
-                @if (record.timeOut !== '-') {
-                  <span class="time-value">{{ record.timeOut }}</span>
-                } @else {
-                  <span class="time-empty">-</span>
-                }
-              </td>
-              <td>
-                <span class="observations">-</span>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
+    @if (attendanceRecords().length === 0) {
+      <div class="asis-empty">
+        <i class="fas fa-user-check" aria-hidden="true"></i>
+        <p>No hay registros con los filtros actuales.</p>
+        <p class="asis-empty__hint">Prueba otro mes o «Todos los cursos».</p>
+      </div>
+    } @else {
+      <ul class="asis-list" role="list">
+        @for (record of attendanceRecords(); track record.id) {
+          <li
+            class="asis-row"
+            [class]="rowStatusClass(record.status)"
+            [attr.data-status]="statusLabel(record.status)"
+          >
+            <div class="asis-row__date">
+              <span class="asis-row__day">{{ formatDay(record.date) }}</span>
+              <span class="asis-row__course">{{ courseLabel(record) }}</span>
+            </div>
+            <span class="asis-badge" [ngClass]="badgeClass(record.status)">
+              {{ statusLabel(record.status) }}
+            </span>
+            @if (record.notes?.trim()) {
+              <p class="asis-row__notes">{{ record.notes }}</p>
+            }
+          </li>
+        }
+      </ul>
+    }
 
-  @if (summary().absences > 3) {
-    <div class="alert alert-error">
-      <div class="alert-icon-wrapper">
-        <i class="fas fa-exclamation-triangle"></i>
+    @if (countStatus('ABSENT') > 3) {
+      <div class="asis-alert" role="status">
+        <i class="fas fa-info-circle" aria-hidden="true"></i>
+        <p>
+          Tienes más de 3 faltas en este listado. Si necesitas regularizar, habla con tutoría o
+          administración.
+        </p>
       </div>
-      <div class="alert-content">
-        <strong class="alert-title">Advertencia</strong>
-        <p class="alert-message">Tienes más de 3 faltas. Contacta con la administración.</p>
-      </div>
-    </div>
+    }
   }
 </div>
