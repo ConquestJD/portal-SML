@@ -48,15 +48,15 @@
     </div>
   }
 
-  @if (selectedChild()) {
+  @if (selectedChild(); as ch) {
     <div class="child-header">
-      <h2 class="child-header-title">
-        Asistencia de {{ selectedChild()!.name }}
-      </h2>
-      <p class="child-header-subtitle">
-        {{ selectedChild()!.grade }}
-      </p>
+      <h2 class="child-header-title">Asistencia de {{ ch.name }}</h2>
+      <p class="child-header-subtitle">{{ ch.grade }}</p>
     </div>
+  }
+
+  @if (error()) {
+    <p class="page-error">{{ error() }}</p>
   }
 
   @if (isLoading()) {
@@ -115,18 +115,21 @@
         <div>Hora</div>
         <div>Observación</div>
       </div>
-      @for (record of attendanceRecords(); track record.date) {
+      @for (record of attendanceRecords(); track record.date + record.statusRaw + record.time) {
         <div class="table-row">
-          <div>{{ record.date | date:'shortDate' }}</div>
+          <div>{{ record.date | date: 'shortDate' }}</div>
           <div>
-            <span class="status-badge" [class.present]="record.status === 'presente'"
-                                  [class.absent]="record.status === 'ausente'"
-                                  [class.late]="record.status === 'tardanza'">
-              {{ record.status | titlecase }}
+            <span
+              class="status-badge"
+              [class.present]="record.statusClass === 'presente'"
+              [class.absent]="record.statusClass === 'ausente'"
+              [class.late]="record.statusClass === 'tardanza'"
+            >
+              {{ record.statusLabel }}
             </span>
           </div>
-          <div>{{ record.time }}</div>
-          <div>{{ record.observation || '-' }}</div>
+          <div>{{ record.time || '—' }}</div>
+          <div>{{ record.observation || '—' }}</div>
         </div>
       }
       @if (attendanceRecords().length === 0) {

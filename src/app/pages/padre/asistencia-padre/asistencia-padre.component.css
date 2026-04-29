@@ -4,6 +4,11 @@
   padding: var(--spacing-lg);
 }
 
+.page-error {
+  color: #b91c1c;
+  margin-bottom: var(--spacing-md);
+}
+
 .breadcrumb {
   margin-bottom: var(--spacing-md);
   color: #666;
