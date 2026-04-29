@@ -15,6 +15,8 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
 export interface Child {
   id: string;
   studentCode: string;
+  /** ID tabla `Parent` (viene del listado StudentParent) para mensajería u otros flujos. */
+  parentRecordId?: string;
   code?: string;
   name?: string;
   grade?: string;
@@ -81,9 +83,14 @@ export class ParentService {
 
   private studentRowToChild(row: StudentParentListRow): Child {
     const s = row.student;
+    const raw = row as unknown as Record<string, unknown>;
+    const parentRecordId =
+      (raw['parentId'] as string | undefined) ??
+      ((raw['parent'] as Record<string, unknown> | undefined)?.['id'] as string | undefined);
     return {
       id: s.id,
       studentCode: s.studentCode,
+      parentRecordId,
       user: {
         firstName: s.user.firstName,
         lastName: s.user.lastName,
