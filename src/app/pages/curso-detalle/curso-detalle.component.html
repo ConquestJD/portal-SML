@@ -4,7 +4,7 @@
       <i class="fas fa-arrow-left"></i> Cursos
     </a>
     <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ course().name }}</span>
+    <span class="breadcrumb-current">{{ course()?.name ?? '…' }}</span>
   </div>
 
   <div class="course-header">
@@ -12,18 +12,18 @@
       <div class="course-title-wrapper">
         <div class="course-code-badge">
           <i class="fas fa-book"></i>
-          <span>{{ course().code }}</span>
+          <span>{{ course()?.code ?? '—' }}</span>
         </div>
-        <h1 class="course-title">{{ course().name }}</h1>
-        <p class="course-period">Período {{ course().period }}</p>
+        <h1 class="course-title">{{ course()?.name }}</h1>
+        <p class="course-period">Período {{ course()?.period ?? '—' }}</p>
       </div>
       <div class="teacher-info">
         <div class="teacher-photo-wrapper">
-          <img [src]="course().teacherPhoto" [alt]="course().teacher" class="teacher-photo">
+          <img [src]="course()?.teacherPhoto ?? ''" [alt]="course()?.teacherName ?? 'Docente'" class="teacher-photo">
         </div>
         <div class="teacher-details">
           <p class="teacher-label">Docente</p>
-          <p class="teacher-name">{{ course().teacher }}</p>
+          <p class="teacher-name">{{ course()?.teacherName ?? '—' }}</p>
           <a href="mailto:teacher@colegio.edu" class="teacher-contact">
             <i class="fas fa-envelope"></i> Contactar docente
           </a>
@@ -36,7 +36,7 @@
       </div>
       <div class="average-content">
         <span class="average-label">Promedio</span>
-        <span class="average-value">{{ course().average }}</span>
+        <span class="average-value">{{ course()?.average ?? course()?.averageScore ?? '—' }}</span>
       </div>
     </div>
   </div>
@@ -133,28 +133,28 @@
         </div>
         <div class="tasks-list">
           @for (task of tasks(); track task.id) {
-            <div class="task-item" [class.task-entregada]="task.status === 'entregada'">
+            <div class="task-item" [class.task-entregada]="taskIsDone(task)">
               <div class="task-icon-wrapper">
                 <i class="fas fa-tasks"></i>
               </div>
               <div class="task-info">
-                <h4>{{ task.name }}</h4>
+                <h4>{{ task.title }}</h4>
                 <div class="task-details">
                   <div class="task-detail-item">
                     <i class="fas fa-calendar-alt"></i>
-                    <span>Fecha límite: <strong>{{ task.dueDate }}</strong></span>
+                    <span>Fecha límite: <strong>{{ task.dueDate ?? '—' }}</strong></span>
                   </div>
-                  @if (task.grade) {
+                  @if (task.submission?.score != null) {
                     <div class="task-detail-item">
                       <i class="fas fa-check-circle"></i>
-                      <span>Calificación: <strong class="task-grade">{{ task.grade }}</strong></span>
+                      <span>Calificación: <strong class="task-grade">{{ task.submission?.score }}</strong></span>
                     </div>
                   }
                 </div>
               </div>
               <div class="task-status">
-                <span class="badge" [class.badge-success]="task.status === 'entregada'" [class.badge-warning]="task.status === 'pendiente'">
-                  {{ task.status === 'entregada' ? 'Entregada' : 'Pendiente' }}
+                <span class="badge" [class.badge-success]="taskIsDone(task)" [class.badge-warning]="!taskIsDone(task)">
+                  {{ taskStatusLabel(task) }}
                 </span>
                 <a [routerLink]="['/tareas', task.id]" class="btn btn-primary btn-sm">
                   <i class="fas fa-arrow-right"></i> Ver Detalle
@@ -184,47 +184,30 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Examen Parcial 1</strong></td>
-              <td>2024-03-10</td>
-              <td>100</td>
-              <td><strong>85</strong></td>
-              <td>
-                <span class="percentage-badge high">85%</span>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>Tarea 1</strong></td>
-              <td>2024-03-15</td>
-              <td>50</td>
-              <td><strong>45</strong></td>
-              <td>
-                <span class="percentage-badge high">90%</span>
-              </td>
-            </tr>
+            @for (g of grades(); track g.id) {
+              <tr>
+                <td><strong>Calificación</strong></td>
+                <td>{{ formatGradeDate(g) }}</td>
+                <td>—</td>
+                <td><strong>{{ g.score }}</strong></td>
+                <td>
+                  <span class="percentage-badge high">{{ g.score }}</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">No hay calificaciones registradas en este curso.</td>
+              </tr>
+            }
           </tbody>
         </table>
         <div class="grade-summary">
-          <div class="summary-item">
-            <div class="summary-item-label">
-              <i class="fas fa-chart-line"></i>
-              <span>Promedio de Exámenes</span>
-            </div>
-            <strong class="summary-item-value">16.5</strong>
-          </div>
-          <div class="summary-item">
-            <div class="summary-item-label">
-              <i class="fas fa-tasks"></i>
-              <span>Promedio de Tareas</span>
-            </div>
-            <strong class="summary-item-value">17.0</strong>
-          </div>
           <div class="summary-item highlight">
             <div class="summary-item-label">
               <i class="fas fa-chart-line"></i>
-              <span>Promedio Final</span>
+              <span>Promedio en este curso</span>
             </div>
-            <strong class="summary-item-value final">16.5</strong>
+            <strong class="summary-item-value final">{{ gradesCourseAverage() }}</strong>
           </div>
         </div>
       </div>
