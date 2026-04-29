@@ -648,18 +648,22 @@
 }
 
 .btn-download-small {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: all 0.2s;
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .btn-download-small:hover {
-  background: var(--primary-dark);
+  background: var(--bg-secondary);
 }
 
 .submission-grade {
@@ -782,6 +786,92 @@
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-top: 1px solid var(--border-color);
+}
+
+.error-state {
+  text-align: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-secondary);
+}
+
+.error-state p {
+  margin-bottom: var(--spacing-lg);
+}
+
+.delivery-type-row {
+  margin-bottom: var(--spacing-lg);
+}
+
+.delivery-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(0, 51, 102, 0.06);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.delivery-chip i {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.unit-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.form-hint {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.alert-success {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: var(--border-radius);
+  color: rgb(22, 101, 52);
+  margin-bottom: var(--spacing-md);
+}
+
+.alert-error {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--border-radius);
+  color: rgb(153, 27, 27);
+  margin-bottom: var(--spacing-md);
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.description-text {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.graded-note {
+  border-style: dashed;
+}
+
+.submission-readonly {
+  border-left: 3px solid var(--primary);
+}
+
+.submission-content-block {
+  margin-top: var(--spacing-md);
 }
 
 @media (max-width: 768px) {

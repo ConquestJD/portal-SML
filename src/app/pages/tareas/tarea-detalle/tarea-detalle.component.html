@@ -2,46 +2,67 @@
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Cargando tarea...</p>
+      <p>Cargando tarea…</p>
     </div>
-  } @else if (task()) {
+  } @else if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button type="button" class="btn-back" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+    </div>
+  } @else if (task(); as t) {
     <div class="task-detail">
-      <!-- Header con botón de regreso -->
       <div class="detail-header">
-        <button class="btn-back" (click)="goBack()">
-          <i class="fas fa-arrow-left"></i> Volver a Tareas
+        <button type="button" class="btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Volver a tareas
         </button>
       </div>
 
-      <!-- Información principal de la tarea -->
       <div class="task-info-card">
         <div class="task-header-info">
           <div class="task-course-info">
             <div class="course-badge-wrapper">
               <i class="fas fa-book"></i>
-              <span class="course-badge">{{ task()!.courseCode }}</span>
+              <span class="course-badge">{{ t.course?.name?.trim() || 'Curso' }}</span>
             </div>
             <div class="course-details">
-              <span class="course-name">{{ task()!.course }}</span>
-              <span class="teacher-name">
-                <i class="fas fa-chalkboard-teacher"></i>
-                {{ task()!.teacher }}
-              </span>
+              @if (t.unit?.title) {
+                <span class="unit-line">
+                  <i class="fas fa-folder-open"></i>
+                  @if (t.unit?.number != null) {
+                    <span>Unidad {{ t.unit.number }} — </span>
+                  }
+                  {{ t.unit!.title }}
+                </span>
+              }
+              @if (t.teacherName) {
+                <span class="teacher-name">
+                  <i class="fas fa-chalkboard-teacher"></i>
+                  {{ t.teacherName }}
+                </span>
+              }
             </div>
           </div>
-          <span class="badge" 
-            [class.badge-warning]="task()!.status === 'pendiente'"
-            [class.badge-error]="task()!.status === 'vencida'"
-            [class.badge-success]="task()!.status === 'entregada'"
-            [class.badge-info]="task()!.status === 'en-revision'">
-            @if (task()!.status === 'pendiente') { Pendiente }
-            @if (task()!.status === 'vencida') { Vencida }
-            @if (task()!.status === 'entregada') { Entregada }
-            @if (task()!.status === 'en-revision') { En Revisión }
+          <span
+            class="badge"
+            [class.badge-warning]="taskUiStatus() === 'pendiente'"
+            [class.badge-error]="taskUiStatus() === 'vencida'"
+            [class.badge-info]="taskUiStatus() === 'en-revision'"
+            [class.badge-success]="taskUiStatus() === 'calificada'"
+          >
+            {{ taskUiStatusLabel() }}
           </span>
         </div>
 
-        <h1 class="task-title">{{ task()!.name }}</h1>
+        <h1 class="task-title">{{ t.title }}</h1>
+
+        <div class="delivery-type-row">
+          <span class="delivery-chip">
+            <i class="fas fa-inbox"></i>
+            {{ deliveryHint() }}
+          </span>
+        </div>
 
         <div class="task-meta">
           <div class="meta-item">
@@ -50,18 +71,9 @@
             </div>
             <div class="meta-content">
               <span class="meta-label">Fecha límite</span>
-              <span class="meta-value" [class.overdue]="task()!.status === 'vencida'">
-                {{ task()!.dueDate }}
+              <span class="meta-value" [class.overdue]="taskUiStatus() === 'vencida'">
+                {{ formatDue(t.dueDate) }}
               </span>
-            </div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-icon-wrapper">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="meta-content">
-              <span class="meta-label">Asignada</span>
-              <span class="meta-value">{{ task()!.assignedDate }}</span>
             </div>
           </div>
           <div class="meta-item">
@@ -69,67 +81,65 @@
               <i class="fas fa-chart-line"></i>
             </div>
             <div class="meta-content">
-              <span class="meta-label">Puntos</span>
-              <span class="meta-value">{{ task()!.points }}</span>
+              <span class="meta-label">Puntuación máx.</span>
+              <span class="meta-value">{{ t.maxScore ?? '—' }}</span>
             </div>
           </div>
-          @if (task()!.grade) {
+          @if (t.submission?.submittedAt) {
+            <div class="meta-item">
+              <div class="meta-icon-wrapper">
+                <i class="fas fa-paper-plane"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Última entrega</span>
+                <span class="meta-value">{{ formatDue(t.submission!.submittedAt) }}</span>
+              </div>
+            </div>
+          }
+          @if (t.submission?.score != null && t.submission!.score !== undefined) {
             <div class="meta-item">
               <div class="meta-icon-wrapper success">
-                <i class="fas fa-check-circle"></i>
+                <i class="fas fa-star"></i>
               </div>
               <div class="meta-content">
                 <span class="meta-label">Calificación</span>
-                <span class="meta-value grade">{{ task()!.grade }} / {{ task()!.points }}</span>
+                <span class="meta-value grade">{{ t.submission!.score }} / {{ t.maxScore ?? '—' }}</span>
               </div>
             </div>
           }
         </div>
       </div>
 
-      <!-- Descripción e Instrucciones -->
       <div class="info-section">
         <h2 class="section-title">
-          <i class="fas fa-info-circle"></i>
+          <i class="fas fa-align-left"></i>
           Descripción
         </h2>
         <div class="section-content">
-          <p>{{ task()!.description }}</p>
+          @if (t.description?.trim()) {
+            <p class="description-text">{{ t.description }}</p>
+          } @else {
+            <p class="muted">Sin descripción adicional.</p>
+          }
         </div>
       </div>
 
-      <div class="info-section">
-        <h2 class="section-title">
-          <i class="fas fa-list-ol"></i>
-          Instrucciones
-        </h2>
-        <div class="section-content" [innerHTML]="task()!.instructions"></div>
-      </div>
-
-      <!-- Materiales de Referencia -->
-      @if (task()!.materials && task()!.materials.length > 0) {
+      @if (t.attachments && t.attachments.length > 0) {
         <div class="info-section">
           <h2 class="section-title">
             <i class="fas fa-paperclip"></i>
-            Materiales de Referencia
+            Material adjunto (docente)
           </h2>
           <div class="materials-list">
-            @for (material of task()!.materials; track material.id) {
+            @for (m of t.attachments; track m.id) {
               <div class="material-item">
                 <div class="material-icon">
-                  @if (material.type === 'PDF') {
-                    <i class="fas fa-file-pdf"></i>
-                  } @else if (material.type === 'Video') {
-                    <i class="fas fa-file-video"></i>
-                  } @else {
-                    <i class="fas fa-file"></i>
-                  }
+                  <i class="fas fa-file"></i>
                 </div>
                 <div class="material-info">
-                  <span class="material-name">{{ material.name }}</span>
-                  <span class="material-meta">{{ material.type }} • {{ material.size }}</span>
+                  <span class="material-name">{{ m.name }}</span>
                 </div>
-                <button class="btn-download" (click)="downloadMaterial(material)">
+                <button type="button" class="btn-download" (click)="downloadMaterial(m.id)">
                   <i class="fas fa-download"></i>
                   Descargar
                 </button>
@@ -139,194 +149,169 @@
         </div>
       }
 
-      <!-- Rúbrica -->
-      @if (task()!.rubric && task()!.rubric!.length > 0) {
-        @let rubric = task()!.rubric!;
-        <div class="info-section">
+      @if (t.submission) {
+        <div class="submission-section submission-readonly">
           <h2 class="section-title">
-            <i class="fas fa-clipboard-list"></i>
-            Rúbrica de Evaluación
+            <i class="fas fa-check-circle"></i>
+            Mi entrega
           </h2>
-          <div class="rubric-list">
-            @for (item of rubric; track item.criterion) {
-              <div class="rubric-item">
-                <div class="rubric-header">
-                  <span class="rubric-criterion">{{ item.criterion }}</span>
-                  <span class="rubric-points">{{ item.points }} pts</span>
+          <div class="submission-display">
+            <div class="submission-meta">
+              @if (t.submission.submittedAt) {
+                <span class="submission-date">
+                  <i class="fas fa-clock"></i>
+                  Enviada el {{ t.submission.submittedAt | date: 'short' }}
+                </span>
+              }
+              @if (submissionIsGraded()) {
+                <span class="submission-status graded">
+                  <i class="fas fa-check-double"></i>
+                  Calificada
+                </span>
+              } @else if (t.submission.submittedAt || t.submission.content?.trim()) {
+                <span class="submission-status pending">
+                  <i class="fas fa-hourglass-half"></i>
+                  En revisión
+                </span>
+              }
+            </div>
+
+            @if (t.submission.content?.trim()) {
+              <div class="submission-content-block">
+                <h3 class="submission-content-title">Tu respuesta</h3>
+                <p class="submission-text">{{ t.submission.content }}</p>
+              </div>
+            }
+
+            @if (t.submission.attachments && t.submission.attachments.length > 0) {
+              <div class="submission-files">
+                <h3 class="submission-content-title">Tus archivos</h3>
+                <div class="files-list">
+                  @for (f of t.submission.attachments; track f.id) {
+                    <div class="file-item">
+                      <i class="fas fa-file"></i>
+                      <span class="file-name">{{ f.name }}</span>
+                      <button type="button" class="btn-download-small" (click)="downloadSubmissionFile(f.id)">
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </div>
+                  }
                 </div>
-                <p class="rubric-description">{{ item.description }}</p>
+              </div>
+            }
+
+            @if (t.submission.feedback?.trim()) {
+              <div class="submission-feedback">
+                <h3 class="submission-content-title">Retroalimentación</h3>
+                <p class="feedback-text">{{ t.submission.feedback }}</p>
               </div>
             }
           </div>
         </div>
       }
 
-      <!-- Área de Entrega -->
-      @if (canEdit()) {
+      @if (canEditSubmission()) {
         <div class="submission-section">
           <h2 class="section-title">
             <i class="fas fa-paper-plane"></i>
-            Entregar Tarea
+            {{ t.submission ? 'Actualizar entrega' : 'Entregar tarea' }}
           </h2>
+          <p class="form-hint">{{ deliveryHint() }}</p>
+
+          @if (submitSuccess()) {
+            <p class="alert-success">{{ submitSuccess() }}</p>
+          }
+          @if (submitError()) {
+            <p class="alert-error">{{ submitError() }}</p>
+          }
+
           <div class="submission-form">
-            <div class="form-group">
-              <label for="submission-text" class="form-label">Respuesta / Comentarios</label>
-              <textarea
-                id="submission-text"
-                class="form-textarea"
-                rows="8"
-                placeholder="Escribe tu respuesta aquí..."
-                [(ngModel)]="submissionText"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label for="file-upload" class="form-label">Archivos Adjuntos</label>
-              <div class="file-upload-area">
-                <input
-                  type="file"
-                  id="file-upload"
-                  class="file-input"
-                  multiple
-                  (change)="onFileSelected($event)"
-                />
-                <label for="file-upload" class="file-upload-label">
-                  <i class="fas fa-cloud-upload-alt"></i>
-                  <span>Haz clic para seleccionar archivos o arrastra aquí</span>
-                  <small>Formatos permitidos: PDF, DOC, DOCX, JPG, PNG (Máx. 10MB por archivo)</small>
-                </label>
-              </div>
-
-              @if (uploadedFiles().length > 0) {
-                <div class="uploaded-files">
-                  @for (file of uploadedFiles(); track $index) {
-                    <div class="uploaded-file-item">
-                      <i class="fas fa-file"></i>
-                      <span class="file-name">{{ file.name }}</span>
-                      <span class="file-size">{{ formatFileSize(file.size) }}</span>
-                      <button class="btn-remove-file" (click)="removeFile($index)">
-                        <i class="fas fa-times"></i>
-                      </button>
-                    </div>
+            @if (showTextField()) {
+              <div class="form-group">
+                <label for="submission-text" class="form-label">
+                  @if (deliveryType() === 'texto') {
+                    Respuesta
+                  } @else if (deliveryType() === 'ambos') {
+                    Respuesta (texto)
+                  } @else {
+                    Comentario (opcional en portal)
                   }
+                </label>
+                <textarea
+                  id="submission-text"
+                  class="form-textarea"
+                  rows="8"
+                  [placeholder]="
+                    deliveryType() === 'clase'
+                      ? 'Ej.: comentario sobre la entrega en clase…'
+                      : 'Escribe tu respuesta aquí…'
+                  "
+                  [(ngModel)]="submissionDraft"
+                ></textarea>
+              </div>
+            }
+
+            @if (showFileField()) {
+              <div class="form-group">
+                <label for="file-upload" class="form-label">Archivos (máx. 5)</label>
+                <div class="file-upload-area">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    class="file-input"
+                    multiple
+                    (change)="onFilesSelected($event)"
+                  />
+                  <label for="file-upload" class="file-upload-label">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Elegir archivos</span>
+                    <small>Se enviarán junto con la entrega</small>
+                  </label>
                 </div>
-              }
-            </div>
+
+                @if (selectedFiles.length > 0) {
+                  <div class="uploaded-files">
+                    @for (file of selectedFiles; track $index) {
+                      <div class="uploaded-file-item">
+                        <i class="fas fa-file"></i>
+                        <span class="file-name">{{ file.name }}</span>
+                        <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                        <button type="button" class="btn-remove-file" (click)="removeFile($index)">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
 
             <div class="submission-actions">
-              <button class="btn btn-primary btn-large" (click)="openSubmitConfirmation()" [disabled]="isSubmitting()">
-                @if (isSubmitting()) {
+              <button
+                type="button"
+                class="btn btn-primary btn-large"
+                (click)="submit()"
+                [disabled]="submitting()"
+              >
+                @if (submitting()) {
                   <span class="spinner"></span>
-                  <span>Enviando...</span>
+                  <span>Enviando…</span>
                 } @else {
                   <i class="fas fa-paper-plane"></i>
-                  <span>Entregar Tarea</span>
+                  <span>{{ t.submission ? 'Actualizar entrega' : 'Enviar entrega' }}</span>
                 }
               </button>
             </div>
           </div>
         </div>
-      }
-
-      <!-- Entrega Actual / Historial -->
-      @if (task()!.submission) {
-        <div class="submission-section">
-          <h2 class="section-title">
-            <i class="fas fa-check-circle"></i>
-            Mi Entrega
-          </h2>
-          <div class="submission-display">
-            <div class="submission-meta">
-              <span class="submission-date">
-                <i class="fas fa-clock"></i>
-                Entregada el {{ task()!.submission!.submittedAt | date:'short' }}
-              </span>
-              @if (task()!.submission!.status === 'graded') {
-                <span class="submission-status graded">
-                  <i class="fas fa-check-double"></i>
-                  Calificada
-                </span>
-              } @else {
-                <span class="submission-status pending">
-                  <i class="fas fa-hourglass-half"></i>
-                  En Revisión
-                </span>
-              }
-            </div>
-
-            <div class="submission-content">
-              <h3 class="submission-content-title">Respuesta:</h3>
-              <p class="submission-text">{{ task()!.submission!.text }}</p>
-            </div>
-
-            @if (task()!.submission!.files && task()!.submission!.files.length > 0) {
-              <div class="submission-files">
-                <h3 class="submission-content-title">Archivos Adjuntos:</h3>
-                <div class="files-list">
-                  @for (file of task()!.submission!.files; track file.id) {
-                    <div class="file-item">
-                      <i class="fas fa-file"></i>
-                      <span class="file-name">{{ file.name }}</span>
-                      <span class="file-size">{{ file.size }}</span>
-                      <a [href]="file.url" class="btn-download-small" download>
-                        <i class="fas fa-download"></i>
-                      </a>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (task()!.submission!.grade !== undefined) {
-              <div class="submission-grade">
-                <div class="grade-display">
-                  <span class="grade-label">Calificación:</span>
-                  <span class="grade-value">{{ task()!.submission!.grade }} / {{ task()!.points }}</span>
-                </div>
-              </div>
-            }
-
-            @if (task()!.submission!.feedback) {
-              <div class="submission-feedback">
-                <h3 class="submission-content-title">Retroalimentación del Docente:</h3>
-                <p class="feedback-text">{{ task()!.submission!.feedback }}</p>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  }
-
-  <!-- Modal de Confirmación -->
-  @if (showSubmitConfirmation()) {
-    <div class="modal-overlay" (click)="cancelSubmit()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>Confirmar Entrega</h3>
-          <button class="modal-close" (click)="cancelSubmit()">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p>¿Estás seguro de que deseas entregar esta tarea?</p>
-          <p class="modal-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            Una vez entregada, no podrás modificarla.
+      } @else if (submissionIsGraded()) {
+        <div class="info-section graded-note">
+          <p class="muted">
+            <i class="fas fa-lock"></i>
+            Esta tarea ya fue calificada; no se pueden enviar más cambios.
           </p>
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="cancelSubmit()">Cancelar</button>
-          <button class="btn btn-primary" (click)="submitTask()" [disabled]="isSubmitting()">
-            @if (isSubmitting()) {
-              <span class="spinner"></span>
-              Enviando...
-            } @else {
-              Sí, Entregar
-            }
-          </button>
-        </div>
-      </div>
+      }
     </div>
   }
 </div>
