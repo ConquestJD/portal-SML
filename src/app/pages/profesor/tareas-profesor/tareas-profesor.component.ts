@@ -26,7 +26,7 @@ export class TareasProfesorComponent implements OnInit {
   error = signal('');
   selectedCourse = signal('');
   searchQuery = signal('');
-  filter = signal<'todas' | 'borrador' | 'publicada' | 'cerrada'>('todas');
+  filter = signal<'todas' | 'cerrada'>('todas');
   courses = signal<TeacherCourse[]>([]);
   tasks = signal<TeacherTask[]>([]);
   rosterCount = signal(0);
@@ -38,12 +38,6 @@ export class TareasProfesorComponent implements OnInit {
     const rows = this.tasksRow();
     const f = this.filter();
     if (f === 'todas') return rows;
-    if (f === 'borrador') {
-      return rows.filter(t => (t.status || '').toUpperCase() === 'DRAFT');
-    }
-    if (f === 'publicada') {
-      return rows.filter(t => (t.status || '').toUpperCase() === 'PUBLISHED');
-    }
     if (f === 'cerrada') {
       return rows.filter(t => this.isClosedTask(t));
     }
@@ -158,30 +152,23 @@ export class TareasProfesorComponent implements OnInit {
   private isClosedTask(t: TeacherTask): boolean {
     const s = (t.status || '').toUpperCase();
     if (s === 'CLOSED' || s === 'ARCHIVED' || s === 'ENDED') return true;
-    if (s !== 'PUBLISHED' && s !== 'DRAFT') return false;
     if (!t.dueDate) return false;
     const end = new Date(t.dueDate).getTime();
     return Number.isFinite(end) && end < Date.now();
   }
 
   statusLabel(t: TeacherTaskRow): string {
-    if (this.isClosedTask(t) && (t.status || '').toUpperCase() === 'PUBLISHED') {
-      return 'Cerrada';
+    if (this.isClosedTask(t)) {
+      const s = (t.status || '').toUpperCase();
+      if (s === 'CLOSED' || s === 'ARCHIVED' || s === 'ENDED') return 'Cerrada';
+      return 'Vencida';
     }
-    const s = (t.status || '').toUpperCase();
-    if (s === 'DRAFT') return 'Borrador';
-    if (s === 'PUBLISHED') return 'Publicada';
-    if (s === 'CLOSED' || s === 'ARCHIVED' || s === 'ENDED') return 'Cerrada';
-    return t.status || '—';
+    return 'Activa';
   }
 
   badgeClass(t: TeacherTaskRow): string {
-    const s = (t.status || '').toUpperCase();
-    if (s === 'DRAFT') return 'badge-secondary';
-    if (s === 'CLOSED' || s === 'ARCHIVED' || s === 'ENDED') return 'badge-warning';
-    if (s === 'PUBLISHED' && this.isClosedTask(t)) return 'badge-warning';
-    if (s === 'PUBLISHED') return 'badge-info';
-    return 'badge-secondary';
+    if (this.isClosedTask(t)) return 'badge-warning';
+    return 'badge-info';
   }
 
   formatDueDate(d?: string): string {

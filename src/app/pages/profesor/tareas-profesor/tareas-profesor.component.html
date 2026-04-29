@@ -65,26 +65,10 @@
       <button
         type="button"
         class="filter-chip"
-        [class.active]="filter() === 'borrador'"
-        (click)="filter.set('borrador')"
-      >
-        Borrador
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'publicada'"
-        (click)="filter.set('publicada')"
-      >
-        Publicadas
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
         [class.active]="filter() === 'cerrada'"
         (click)="filter.set('cerrada')"
       >
-        Cerradas
+        Vencidas o cerradas
       </button>
     </div>
 
