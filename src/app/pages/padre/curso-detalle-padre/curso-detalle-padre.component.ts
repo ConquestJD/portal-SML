@@ -16,8 +16,8 @@ export interface ParentCourseDetailVm {
   teacherEmail: string;
   teacherPhone: string;
   teacherAvatar?: string | null;
+  /** Una fila por franja: día + rango horario */
   schedule: { day: string; time: string }[];
-  classroom: string;
 }
 
 export interface ParentCourseTaskRow {
@@ -49,6 +49,9 @@ export class CursoDetallePadreComponent implements OnInit {
   courseVm = signal<ParentCourseDetailVm | null>(null);
   units = signal<Record<string, unknown>[]>([]);
   tasks = signal<ParentCourseTaskRow[]>([]);
+
+  /** ID tabla `Teacher` (para crear conversación). */
+  teacherEntityId = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -108,6 +111,9 @@ export class CursoDetallePadreComponent implements OnInit {
           return;
         }
         this.courseVm.set(this.buildCourseVm(course));
+        const a = course as Record<string, unknown>;
+        const teacher = (a['teacher'] as Record<string, unknown>) ?? {};
+        this.teacherEntityId = String(teacher['id'] ?? '');
         this.units.set(this.normalizeUnits(units as unknown[]));
         this.loading.set(false);
         if (this.activeTab() === 'tareas') this.loadTasks();
@@ -171,7 +177,13 @@ export class CursoDetallePadreComponent implements OnInit {
   }
 
   sendMessageToTeacher() {
-    void this.router.navigate(['/padre/mensajeria'], { queryParams: { childId: this.childId } });
+    void this.router.navigate(['/padre/mensajeria'], {
+      queryParams: {
+        childId: this.childId,
+        assignmentId: this.courseId,
+        teacherId: this.teacherEntityId,
+      },
+    });
   }
 
   private buildCourseVm(raw: unknown): ParentCourseDetailVm {
@@ -179,7 +191,6 @@ export class CursoDetallePadreComponent implements OnInit {
     const course = (a['course'] as Record<string, unknown>) ?? {};
     const teacher = (a['teacher'] as Record<string, unknown>) ?? {};
     const user = (teacher['user'] as Record<string, unknown>) ?? {};
-    const section = (a['section'] as Record<string, unknown>) ?? {};
     const academicYear = (a['academicYear'] as Record<string, unknown>) ?? {};
 
     const fn = (user['firstName'] as string) ?? '';
@@ -193,12 +204,9 @@ export class CursoDetallePadreComponent implements OnInit {
       avg = String(a['average']);
     }
 
-    const scheduleStr = this.formatScheduleField(course['schedule']);
-    const schedule = scheduleStr !== '—' ? [{ day: 'Horario', time: scheduleStr }] : [];
-
-    const grade = (section['grade'] as string) ?? '';
-    const secName = (section['name'] as string) ?? '';
-    const classroom = [grade, secName].filter((x) => x && String(x).trim()).join(' · ') || '—';
+    const scheduleRows = this.scheduleRowsFromField(
+      course['schedule'] ?? a['schedule'],
+    );
 
     return {
       name: (course['name'] as string) ?? '—',
@@ -209,32 +217,88 @@ export class CursoDetallePadreComponent implements OnInit {
       teacherEmail: (user['email'] as string) ?? '',
       teacherPhone: (user['phone'] as string) ?? (teacher['phone'] as string) ?? '',
       teacherAvatar: (user['avatarUrl'] as string) ?? null,
-      schedule,
-      classroom,
+      schedule: scheduleRows.length ? scheduleRows : [],
     };
   }
 
-  private formatScheduleField(s: unknown): string {
-    if (s == null) return '—';
-    if (typeof s === 'string') return s.trim() || '—';
+  /** Construye filas día + horas a partir del JSON de horario del curso. */
+  private scheduleRowsFromField(s: unknown): { day: string; time: string }[] {
+    if (s == null) return [];
+    if (typeof s === 'string') {
+      const t = s.trim();
+      return t ? [{ day: 'Horario', time: t }] : [];
+    }
     if (Array.isArray(s) && s.length) {
-      const parts = (s as Record<string, unknown>[])
+      return (s as Record<string, unknown>[])
         .map((x) => {
-          const day = x['day'] ?? x['día'];
-          const start = x['start'] ?? x['inicio'];
-          const end = x['end'] ?? x['fin'];
-          const bits = [day, start, end].filter((v) => v != null && String(v).trim() !== '');
-          return bits.map(String).join(' ');
+          const dateOnly = x['date'] ?? x['fecha'] ?? x['classDate'];
+          const day =
+            x['day'] ??
+            x['día'] ??
+            x['dayOfWeek'] ??
+            x['weekday'] ??
+            x['dayName'] ??
+            x['nombreDia'] ??
+            (dateOnly != null && String(dateOnly).trim() !== ''
+              ? this.dayLabelFromDate(String(dateOnly))
+              : null) ??
+            x['label'];
+          const start =
+            x['start'] ?? x['inicio'] ?? x['startTime'] ?? x['horaInicio'] ?? x['from'];
+          const end = x['end'] ?? x['fin'] ?? x['endTime'] ?? x['horaFin'] ?? x['to'];
+          let timeRange = this.formatTimeRange(start, end);
+          let dayStr = day != null && String(day).trim() !== '' ? String(day) : '—';
+          if (dayStr === '—' && dateOnly != null && String(dateOnly).trim() !== '') {
+            dayStr = this.dayLabelFromDate(String(dateOnly));
+          }
+          if (timeRange === '—' && dateOnly && (start || end)) {
+            timeRange = this.formatTimeRange(dateOnly, null);
+            if (start || end) {
+              const rest = this.formatTimeRange(start, end);
+              if (rest !== '—') timeRange = `${timeRange.split(' – ')[0] ?? timeRange} (${rest})`;
+            }
+          }
+          if (timeRange === '—') {
+            timeRange = this.formatTimeRange(x['time'], null);
+          }
+          return { day: dayStr, time: timeRange };
         })
-        .filter(Boolean);
-      return parts.length ? parts.join(' · ') : '—';
+        .filter((r) => r.day !== '—' || r.time !== '—');
     }
-    if (typeof s === 'object' && s !== null) {
+    if (typeof s === 'object') {
       const o = s as Record<string, unknown>;
-      if (typeof o['label'] === 'string' && o['label'].trim()) return o['label'];
-      if (typeof o['text'] === 'string' && o['text'].trim()) return o['text'];
+      const label = o['label'] ?? o['text'];
+      if (typeof label === 'string' && label.trim()) {
+        return [{ day: 'Horario', time: label.trim() }];
+      }
     }
-    return '—';
+    return [];
+  }
+
+  private formatTimeRange(start: unknown, end: unknown): string {
+    const fmt = (v: unknown): string => {
+      if (v == null || v === '') return '';
+      if (typeof v === 'string') {
+        const t = v.trim();
+        if (!t) return '';
+        const d = new Date(t);
+        if (!Number.isNaN(d.getTime()) && (t.includes('T') || t.includes(':'))) {
+          return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+        }
+        return t;
+      }
+      return String(v);
+    };
+    const a = fmt(start);
+    const b = fmt(end);
+    if (a && b) return `${a} – ${b}`;
+    return a || b || '—';
+  }
+
+  private dayLabelFromDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'short' });
   }
 
   private normalizeUnits(raw: unknown[]): Record<string, unknown>[] {

@@ -114,7 +114,7 @@
           <div class="info-card">
             <h2 class="card-title">
               <i class="fas fa-calendar-alt"></i>
-              Horarios y aula
+              Horarios
             </h2>
             <div class="schedule-info">
               <div class="schedule-list">
@@ -131,31 +131,9 @@
                   </div>
                 }
               </div>
-              <div class="classroom-info">
-                <i class="fas fa-door-open"></i>
-                <span><strong>Aula / sección:</strong> {{ c.classroom }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-card">
-            <h2 class="card-title">
-              <i class="fas fa-info-circle"></i>
-              Información general
-            </h2>
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Código del curso</label>
-                <p>{{ c.code }}</p>
-              </div>
-              <div class="info-item">
-                <label>Año académico</label>
-                <p>{{ c.academicYear }}</p>
-              </div>
-              <div class="info-item">
-                <label>Promedio actual</label>
-                <p class="highlight-value">{{ c.average }}</p>
-              </div>
+              @if (c.schedule.length === 0) {
+                <p class="schedule-empty">No hay horario registrado para este curso.</p>
+              }
             </div>
           </div>
         </div>
