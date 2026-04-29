@@ -12,20 +12,56 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
   return p;
 }
 
+/**
+ * Respuesta típica de `GET /teacher/courses`: **asignación docente** (teacher-course assignment).
+ * coincide con filas donde `course`, `section` y opcionalmente `academicYear` vienen anidados;
+ * `academicYear` puede faltar y solo venir `academicYearId` en la raíz.
+ *
+ * Para llamadas tipo `/teacher/courses/:courseId/students` hace falta el **id del curso** (`course.id`),
+ * expuesto en `resourceCourseId`.
+ */
 export interface TeacherCourse {
-  id: string; // TeacherAssignment ID
-  course: { id: string; name: string; code?: string; description?: string };
-  section: { id: string; name: string; grade: string; level: string };
+  /** Id de la asignación (`teacher-assignments`). */
+  id: string;
+  teacherId?: string;
+  courseId?: string;
+  sectionId?: string;
+  academicYearId?: string;
+  isActive?: boolean;
+  course: {
+    id: string;
+    name: string;
+    code?: string;
+    description?: string | null;
+    grade?: string;
+    level?: string;
+    hours?: number;
+    status?: string;
+    schedule?: { day?: string; startTime?: string; endTime?: string }[] | null;
+    color?: string | null;
+  };
+  /** Puede omitirse en respuestas parciales. */
+  section: { id: string; name: string; grade?: string; level?: string };
+  /** Si el backend no lo anida, generamos `{ id: academicYearId, name: '—' }`. */
   academicYear: { id: string; name: string };
   studentsCount?: number;
-  // Flat aliases for template compatibility
+
+  /** Id del curso en catálogo; usar en `getStudentsInCourse`, tareas, etc. */
+  resourceCourseId: string;
+
+  // Aliases planos para plantillas
   name?: string;
   code?: string;
   grade?: string;
-  schedule?: string;
   students?: number;
   period?: string;
   gradeSection?: string;
+  /** Copia de `course.status` en mayúsculas (p. ej. ACTIVE, ARCHIVED). */
+  courseStatus?: string;
+  /** Compatibilidad con plantillas que comparan 'active' / 'finished'. */
+  status?: 'active' | 'archived' | 'finished';
+  pendingGrading?: number;
+  averageGrade?: number;
 }
 
 export interface TeacherTask {
@@ -81,16 +117,117 @@ export class TeacherService {
       .pipe(map((r: any) => r.data));
   }
 
-  private normalizeCourse(c: TeacherCourse): TeacherCourse {
+  /**
+   * Adapta tanto filas de **asignación** (con `course` + `section` + `academicYearId`)
+   * como un **curso plano** del catálogo (segundo formato que compartiste).
+   */
+  private normalizeCourse(raw: any): TeacherCourse {
+    const flat = raw && raw.name && raw.id && !raw.course;
+    if (flat) {
+      const grade = raw.grade ?? '';
+      const level = (raw.level ?? '') as string;
+      const label = [grade, level].filter(Boolean).join(' · ') || '—';
+      return {
+        id: raw.id,
+        resourceCourseId: raw.id,
+        course: {
+          id: raw.id,
+          name: raw.name,
+          code: raw.code,
+          description: raw.description,
+          grade,
+          level,
+          hours: raw.hours,
+          status: raw.status,
+          schedule: raw.schedule,
+          color: raw.color,
+        },
+        section: { id: '', name: '—', grade, level },
+        academicYear: { id: '', name: '' },
+        studentsCount: raw.studentsCount,
+        name: raw.name,
+        code: raw.code,
+        grade,
+        students: raw.studentsCount,
+        period: '',
+        gradeSection: label,
+        courseStatus: raw.status,
+        status: this.mapCourseStatusForUi(raw.status),
+        pendingGrading: raw.pendingGrading ?? 0,
+        averageGrade: raw.averageGrade,
+      };
+    }
+
+    const course = raw.course ?? {};
+    const section = raw.section;
+    const ay = raw.academicYear;
+    const grade = section?.grade ?? course.grade ?? '';
+    const level = (section?.level ?? course.level ?? '') as string;
+    const sectionName = section?.name ?? '';
+    const periodName = ay?.name?.trim() ? ay.name : '';
+
+    const gStr = (grade || course.grade || '').trim();
+    const gradeSection = sectionName
+      ? (gStr ? `${gStr} · Sección ${sectionName}` : `Sección ${sectionName}`)
+      : [grade, level].filter(Boolean).join(' · ') || course.grade || '—';
+
+    const resourceCourseId = course.id ?? raw.courseId ?? raw.id;
+
     return {
-      ...c,
-      name: c.course.name,
-      code: c.course.code,
-      grade: c.section.grade,
-      students: c.studentsCount,
-      period: c.academicYear.name,
-      gradeSection: `${c.section.grade} - Sección ${c.section.name}`
+      ...raw,
+      id: raw.id,
+      teacherId: raw.teacherId,
+      courseId: raw.courseId,
+      sectionId: raw.sectionId,
+      academicYearId: raw.academicYearId,
+      isActive: raw.isActive,
+      course: {
+        id: resourceCourseId,
+        name: course.name ?? '—',
+        code: course.code,
+        description: course.description,
+        grade: course.grade ?? grade,
+        level: course.level ?? level,
+        hours: course.hours,
+        status: course.status,
+        schedule: course.schedule,
+        color: course.color,
+      },
+      section: section
+        ? {
+            id: section.id,
+            name: section.name,
+            grade: section.grade ?? grade,
+            level: section.level ?? level,
+          }
+        : {
+            id: raw.sectionId ?? '',
+            name: '—',
+            grade,
+            level,
+          },
+      academicYear: ay ?? { id: raw.academicYearId ?? '', name: periodName || '—' },
+      studentsCount: raw.studentsCount,
+      resourceCourseId,
+      name: course.name,
+      code: course.code,
+      grade,
+      students: raw.studentsCount,
+      period: periodName,
+      gradeSection,
+      courseStatus: course.status,
+      status: this.mapCourseStatusForUi(course.status),
+      pendingGrading: raw.pendingGrading ?? 0,
+      averageGrade: raw.averageGrade,
     };
+  }
+
+  private mapCourseStatusForUi(s?: string): 'active' | 'archived' | 'finished' {
+    const u = (s ?? '').toUpperCase();
+    if (u === 'ACTIVE') return 'active';
+    if (u === 'ARCHIVED') return 'archived';
+    if (u === 'FINISHED' || u === 'COMPLETED') return 'finished';
+    return 'active';
   }
 
   // ─── COURSES ──────────────────────────────────────────────────────────────
