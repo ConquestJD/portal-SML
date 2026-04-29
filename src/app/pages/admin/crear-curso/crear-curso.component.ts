@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import {
   AdminService,
@@ -27,7 +27,6 @@ export class CrearCursoComponent implements OnInit {
   error = signal('');
   success = signal('');
   scheduleError = signal('');
-  assignWarning = signal('');
 
   teachers = signal<TeacherItem[]>([]);
   /** Profesor que tenía asignación activa al abrir la edición (DELETE antes de reasignar). */
@@ -89,7 +88,7 @@ export class CrearCursoComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.adminService.getTeachers({ pageSize: 500 }).subscribe({
+    this.adminService.getTeachers({ pageSize: 100 }).subscribe({
       next: ({ data }) => this.teachers.set(data),
       error: () => this.teachers.set([])
     });
@@ -121,7 +120,7 @@ export class CrearCursoComponent implements OnInit {
   loadCourse(id: string) {
     forkJoin({
       course: this.adminService.getCourse(id),
-      assignments: this.adminService.getTeacherAssignments({ page: 1, pageSize: 500 }),
+      assignments: this.adminService.getTeacherAssignments({ page: 1, pageSize: 100 }),
     }).subscribe({
       next: ({ course, assignments }) => {
         const a = assignments.data.find((x: AssignmentItem) =>
@@ -241,7 +240,6 @@ export class CrearCursoComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set('');
     this.success.set('');
-    this.assignWarning.set('');
     const d = this.formData();
 
     if (!d.name || !d.code || !d.level || !d.grade) {
@@ -275,32 +273,45 @@ export class CrearCursoComponent implements OnInit {
       ? this.adminService.updateCourse(this.courseId(), dto)
       : this.adminService.createCourse(dto);
 
+    const wasCreate = !this.isEditMode();
+
     base$.pipe(
-      switchMap(course => this.syncTeacherAssignment(course.id).pipe(map(() => course))),
+      switchMap(course =>
+        this.syncTeacherAssignment(course.id).pipe(
+          map(result => ({ course, result }))
+        )
+      ),
       catchError(err => {
-        const msg = err?.error?.error?.message ?? 'Error al guardar el curso';
-        this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
+        this.error.set(this.extractApiMessage(err) || 'Error al guardar el curso');
         this.isLoading.set(false);
         throw err;
       })
     ).subscribe({
-      next: () => {
+      next: ({ course, result }) => {
         this.isLoading.set(false);
-        const fd = this.formData();
-        this.initialAssignmentTeacherId.set(fd.teacherId || '');
-        if (this.assignWarning()) {
-          alert(this.assignWarning());
+
+        if (result.ok === false) {
+          this.error.set(result.message);
+          if (wasCreate) {
+            this.isEditMode.set(true);
+            this.courseId.set(course.id);
+          }
+          return;
         }
+
+        this.initialAssignmentTeacherId.set(this.formData().teacherId || '');
         this.router.navigate(['/admin/cursos']);
       },
       error: () => {},
     });
   }
 
-  private syncTeacherAssignment(courseId: string) {
+  private syncTeacherAssignment(
+    courseId: string
+  ): Observable<{ ok: true } | { ok: false; message: string }> {
     const d = this.formData();
     const prevTeacher = this.initialAssignmentTeacherId();
-    const assign = !!(d.teacherId && d.academicYearId);
+    const wantsAssign = !!(d.teacherId && d.academicYearId);
 
     const unassignPrev$ = prevTeacher
       ? this.adminService.unassignCourseFromTeacher(prevTeacher, courseId).pipe(catchError(() => of(null)))
@@ -308,20 +319,51 @@ export class CrearCursoComponent implements OnInit {
 
     return unassignPrev$.pipe(
       switchMap(() => {
-        if (!assign || !d.teacherId) return of(undefined);
-        return this.adminService.assignCourseToTeacher(d.teacherId, {
-          courseId,
-          academicYearId: d.academicYearId,
-        }).pipe(
-          catchError(() => {
-            this.assignWarning.set(
-              'Aviso: la asignación del profesor no se pudo registrar. Complétala desde Asignación docente.'
-            );
-            return of(undefined);
+        if (!wantsAssign || !d.teacherId) {
+          return of({ ok: true } as const);
+        }
+
+        return this.resolveSectionId(d.grade, d.level, d.academicYearId).pipe(
+          switchMap(sectionId =>
+            this.adminService.assignCourseToTeacher(d.teacherId, {
+              courseId,
+              academicYearId: d.academicYearId,
+              ...(sectionId ? { sectionId } : {}),
+            })
+          ),
+          map(() => ({ ok: true } as const)),
+          catchError(err => {
+            const apiMsg = this.extractApiMessage(err);
+            const message = apiMsg
+              ? `El curso se guardó, pero no se pudo registrar al profesor: ${apiMsg}.`
+              : 'El curso se guardó, pero no se pudo registrar al profesor. Reintenta o gestiónalo desde "Asignación docente".';
+            return of({ ok: false, message } as const);
           })
         );
       })
     );
+  }
+
+  /** Busca la sección que mejor encaja con grado/nivel/año para no exponer el campo en la UI. */
+  private resolveSectionId(grade: string, levelKey: string, academicYearId: string): Observable<string | null> {
+    const levelApi = this.mapLevelToApi(levelKey).toLowerCase();
+    return this.adminService.getSections({ academicYearId }).pipe(
+      map(({ data }) => {
+        const matches = data.filter(s => {
+          const sameGrade = grade ? s.grade === grade : true;
+          const sameLevel = levelApi ? (s.level ?? '').toLowerCase() === levelApi : true;
+          return sameGrade && sameLevel;
+        });
+        return matches[0]?.id ?? data[0]?.id ?? null;
+      }),
+      catchError(() => of<string | null>(null))
+    );
+  }
+
+  private extractApiMessage(err: any): string {
+    const raw = err?.error?.error?.message ?? err?.error?.message ?? err?.message;
+    if (Array.isArray(raw)) return raw.join(', ');
+    return typeof raw === 'string' ? raw : '';
   }
 
   update(field: string, value: unknown) {
