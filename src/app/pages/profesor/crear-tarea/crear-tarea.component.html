@@ -237,8 +237,8 @@
             [ngModel]="status()"
             (ngModelChange)="status.set($event)"
           >
+            <option value="PUBLISHED">Publicada (visible para estudiantes)</option>
             <option value="DRAFT">Borrador (no visible para estudiantes)</option>
-            <option value="PUBLISHED">Publicada</option>
           </select>
         </div>
       }

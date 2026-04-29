@@ -29,7 +29,7 @@ export class CrearTareaComponent implements OnInit {
   instructions = signal('');
   dueDate = signal('');
   points = signal(20);
-  status = signal('DRAFT');
+  status = signal('PUBLISHED');
 
   backLabel = signal('Volver al curso');
 
