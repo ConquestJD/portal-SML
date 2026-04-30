@@ -46,7 +46,7 @@
                 <span class="badge badge-error">Urgente</span>
               }
             </h3>
-            <span class="comunicado-course">{{ comunicado.course }}</span>
+            <span class="comunicado-course">{{ comunicado.course || '—' }}</span>
           </div>
           <span class="badge" [class.badge-success]="comunicado.status === 'publicado'" [class.badge-secondary]="comunicado.status === 'borrador'">
             {{ comunicado.status === 'publicado' ? 'Publicado' : 'Borrador' }}
@@ -56,12 +56,21 @@
           <span><i class="fas fa-calendar-alt"></i> {{ comunicado.date }}</span>
         </div>
         <div class="comunicado-actions">
-          <a [routerLink]="['/profesor/cursos', comunicado.courseId]" [queryParams]="{tab: 'comunicados'}" class="btn btn-primary btn-sm">
-            <i class="fas fa-edit"></i> Editar
-          </a>
-          <a [routerLink]="['/profesor/cursos', comunicado.courseId]" class="btn btn-sm btn-outline">
-            <i class="fas fa-arrow-right"></i> Ver Curso
-          </a>
+          @if (comunicado.courseId) {
+            <a
+              [routerLink]="['/profesor/cursos', comunicado.courseId, 'comunicados', comunicado.id]"
+              class="btn btn-primary btn-sm">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+            <a
+              [routerLink]="['/profesor/cursos', comunicado.courseId]"
+              [queryParams]="{ tab: 'comunicados' }"
+              class="btn btn-sm btn-outline">
+              <i class="fas fa-arrow-right"></i> Ver curso
+            </a>
+          } @else {
+            <span class="comunicado-no-course">Comunicado general (no vinculado a un curso)</span>
+          }
         </div>
       </div>
     }

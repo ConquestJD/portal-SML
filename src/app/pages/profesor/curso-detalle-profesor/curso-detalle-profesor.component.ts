@@ -66,6 +66,13 @@ export class CursoDetalleProfesorComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.courseId.set(id);
+    if (!id || id === 'undefined') {
+      this.error.set(
+        'No se identificó la asignación del curso. Usa «Mis cursos» o abre el comunicado desde el curso correspondiente.',
+      );
+      this.loading.set(false);
+      return;
+    }
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const tab = this.tabFromQuery(params.get('tab'));
@@ -100,7 +107,9 @@ export class CursoDetalleProfesorComponent implements OnInit {
    */
   private apiTeacherAssignmentId(): string {
     const c = this.course();
-    return c?.id ?? this.courseId();
+    const fromCourse = c?.id ?? this.courseId();
+    if (!fromCourse || fromCourse === 'undefined') return '';
+    return fromCourse;
   }
 
   loadCourse() {

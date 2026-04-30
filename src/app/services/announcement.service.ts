@@ -25,6 +25,16 @@ export interface Announcement {
   badge?: string;
   recipients?: { grade?: string; section?: string };
   readDeadline?: string;
+  /** Id de asignación docente (mismo valor que en rutas `/profesor/cursos/:id`). */
+  teacherAssignmentId?: string | null;
+  /**
+   * Alias para el portal del profesor: id de **TeacherAssignment**, no del curso catálogo.
+   * Viene de `teacherAssignmentId` del API.
+   */
+  courseId?: string;
+  /** Texto para mostrar el curso (nombre · grado · nivel). */
+  course?: string;
+  urgent?: boolean;
 }
 
 export interface AnnouncementAttachment {
@@ -106,6 +116,33 @@ export class AnnouncementService {
       firstName: '',
       lastName: '',
     };
+    const prio = String(raw['priority'] ?? '').toUpperCase();
+    const taRaw = raw['teacherAssignment'] as
+      | {
+          id?: string;
+          course?: { name?: string; grade?: string; level?: string };
+        }
+      | undefined;
+    const fromApiTaId = raw['teacherAssignmentId'];
+    const assignmentId =
+      (fromApiTaId != null && String(fromApiTaId).trim() !== ''
+        ? String(fromApiTaId)
+        : null) ??
+      (taRaw?.id != null && String(taRaw.id).trim() !== '' ? String(taRaw.id) : null);
+
+    const courseParts: string[] = [];
+    if (typeof raw['course'] === 'string' && (raw['course'] as string).trim()) {
+      courseParts.push((raw['course'] as string).trim());
+    } else if (taRaw?.course) {
+      const cn = taRaw.course.name?.trim();
+      const g = taRaw.course.grade?.trim();
+      const lv = taRaw.course.level?.trim();
+      const gl = [g, lv].filter(Boolean).join(' · ');
+      if (cn) courseParts.push(cn);
+      if (gl) courseParts.push(gl);
+    }
+    const courseLabel = courseParts.length ? courseParts.join(' — ') : '';
+
     return {
       ...(raw as unknown as Announcement),
       attachments,
@@ -115,6 +152,10 @@ export class AnnouncementService {
       read: isRead,
       status: (raw['status'] as string) ?? (isRead ? 'read' : 'unread'),
       fullContent: (raw['fullContent'] as string) ?? (raw['content'] as string),
+      teacherAssignmentId: assignmentId,
+      courseId: assignmentId ?? undefined,
+      course: courseLabel || undefined,
+      urgent: prio === 'HIGH',
       author: {
         ...author,
         name: author.name ?? `${author.firstName ?? ''} ${author.lastName ?? ''}`.trim(),
