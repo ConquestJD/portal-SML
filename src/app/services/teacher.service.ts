@@ -132,8 +132,8 @@ export interface GradeEntry {
 
 export interface Material {
   id: string; title: string; description?: string;
-  files: { id: string; name: string; url?: string; size?: number; mimeType?: string }[];
-  unit?: { id: string; title: string };
+  files: { id: string; name: string; filename?: string; url?: string; size?: number; mimeType?: string }[];
+  unit?: { id: string; title?: string; name?: string };
   createdAt?: string;
 }
 
@@ -551,6 +551,25 @@ export class TeacherService {
   }
   deleteMaterial(courseId: string, materialId: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/teacher/courses/${courseId}/materials/${materialId}`);
+  }
+
+  appendMaterialFiles(courseId: string, materialId: string, files: File[]): Observable<Material> {
+    const fd = new FormData();
+    for (const f of files) {
+      fd.append('files', f);
+    }
+    return this.http
+      .post<{ success: boolean; data: Material }>(
+        `${this.url}/teacher/courses/${courseId}/materials/${materialId}/files`,
+        fd,
+      )
+      .pipe(map((r) => r.data));
+  }
+
+  deleteMaterialFile(courseId: string, materialId: string, fileId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.url}/teacher/courses/${courseId}/materials/${materialId}/files/${fileId}`,
+    );
   }
 
   getCourseAnnouncements(courseId: string): Observable<TeacherCourseAnnouncement[]> {

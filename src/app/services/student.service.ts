@@ -238,8 +238,8 @@ export class StudentService {
       ),
     );
   }
-  getMaterialDownloadUrl(courseId: string, unitId: string): string {
-    return `${this.url}/student/courses/${courseId}/materials/${unitId}/download`;
+  getMaterialDownloadUrl(courseId: string, fileId: string): string {
+    return `${this.url}/student/courses/${courseId}/materials/${fileId}/download`;
   }
 
   // ─── TASKS ────────────────────────────────────────────────────────────────
@@ -301,8 +301,8 @@ export class StudentService {
       );
   }
 
-  downloadCourseMaterialBlob(courseId: string, unitOrMaterialId: string): Observable<{ blob: Blob; filename?: string }> {
-    return this.downloadAuthenticatedBlob(this.getMaterialDownloadUrl(courseId, unitOrMaterialId));
+  downloadCourseMaterialBlob(courseId: string, fileId: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.downloadAuthenticatedBlob(this.getMaterialDownloadUrl(courseId, fileId));
   }
 
   downloadTaskMaterialBlob(taskId: string, fileId: string): Observable<{ blob: Blob; filename?: string }> {
