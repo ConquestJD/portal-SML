@@ -149,7 +149,7 @@ export interface TeacherCourseAnnouncement {
   createdAt?: string;
   teacherAssignmentId?: string | null;
   author: { firstName: string; lastName: string };
-  attachments?: { id: string; name: string; url?: string }[];
+  attachments?: { id: string; name: string; url?: string; size?: number; mimeType?: string }[];
 }
 
 export interface TeacherProfile {
@@ -572,8 +572,97 @@ export class TeacherService {
     );
   }
 
+  /**
+   * Adjunta de comunicado en listados del docente: el API a veces devuelve `files`, nombres en
+   * `filename` / `originalName`, objetos anidados `{ file: { ... } }`, y sin `url` público.
+   */
+  private normalizeCourseAnnouncementAttachment(
+    announcementId: string,
+    fileRow: Record<string, unknown>,
+  ): { id: string; name: string; url?: string; size?: number; mimeType?: string } {
+    const nested = fileRow['file'] as Record<string, unknown> | undefined;
+    const row = nested && typeof nested === 'object' ? { ...nested, ...fileRow } : fileRow;
+    const id = String(row['id'] ?? fileRow['id'] ?? '');
+    const name =
+      String(
+        row['name'] ??
+          row['filename'] ??
+          row['originalName'] ??
+          row['originalFilename'] ??
+          row['fileName'] ??
+          '',
+      ).trim() || 'Archivo';
+    let url =
+      row['url'] != null && String(row['url']).trim() ? String(row['url']) : undefined;
+    if (!url && id && announcementId) {
+      url = `${this.url}/announcements/${announcementId}/attachments/${id}/download`;
+    }
+    const size = typeof row['size'] === 'number' ? row['size'] : undefined;
+    const mimeType =
+      row['mimeType'] != null ? String(row['mimeType']) : undefined;
+    return { id, name, url, size, mimeType };
+  }
+
+  private attachmentArraysFromAnnouncementRaw(raw: Record<string, unknown>): unknown[] {
+    const keys = ['attachments', 'files', 'announcementAttachments'];
+    for (const k of keys) {
+      const v = raw[k];
+      if (Array.isArray(v) && v.length > 0) return v;
+    }
+    for (const k of keys) {
+      const v = raw[k];
+      if (Array.isArray(v)) return v;
+    }
+    return [];
+  }
+
+  private normalizeCourseAnnouncementRow(raw: Record<string, unknown>): TeacherCourseAnnouncement {
+    const id = String(raw['id'] ?? '');
+    const authorRaw = (raw['author'] as Record<string, unknown>) ?? {};
+    const authorUser = (authorRaw['user'] as Record<string, unknown>) ?? {};
+    const firstName = String(
+      authorRaw['firstName'] ?? authorUser['firstName'] ?? '',
+    ).trim();
+    const lastName = String(
+      authorRaw['lastName'] ?? authorUser['lastName'] ?? '',
+    ).trim();
+    const attRows = this.attachmentArraysFromAnnouncementRaw(raw);
+    const attachments = attRows.map((row) =>
+      this.normalizeCourseAnnouncementAttachment(
+        id,
+        row as Record<string, unknown>,
+      ),
+    );
+    return {
+      id,
+      title: String(raw['title'] ?? ''),
+      content: String(raw['content'] ?? ''),
+      type: String(raw['type'] ?? 'GENERAL'),
+      priority: String(raw['priority'] ?? 'MEDIUM'),
+      targetRoles: Array.isArray(raw['targetRoles'])
+        ? (raw['targetRoles'] as string[])
+        : undefined,
+      publishedAt: (raw['publishedAt'] as string | null | undefined) ?? null,
+      createdAt: raw['createdAt'] as string | undefined,
+      teacherAssignmentId: (raw['teacherAssignmentId'] as string | null | undefined) ?? null,
+      author: { firstName, lastName },
+      attachments,
+    };
+  }
+
   getCourseAnnouncements(courseId: string): Observable<TeacherCourseAnnouncement[]> {
-    return this.get<TeacherCourseAnnouncement[]>(`/teacher/courses/${courseId}/announcements`);
+    return this.http
+      .get<{ success: boolean; data: unknown[] }>(
+        `${this.url}/teacher/courses/${courseId}/announcements`,
+      )
+      .pipe(
+        map((r) => (Array.isArray(r.data) ? r.data : [])),
+        map((list) =>
+          list.map((row) =>
+            this.normalizeCourseAnnouncementRow(row as Record<string, unknown>),
+          ),
+        ),
+      );
   }
 
   createCourseAnnouncement(courseId: string, formData: FormData): Observable<TeacherCourseAnnouncement> {

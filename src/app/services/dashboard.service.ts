@@ -21,7 +21,13 @@ export interface StudentDashboard {
 
 export interface TeacherDashboard {
   teacher?: { name: string; specialty?: string };
-  summary: { totalCourses: number; totalStudents: number; pendingGrading: number; attendancePending: number };
+  summary: {
+    totalCourses: number;
+    totalStudents: number;
+    pendingGrading: number;
+    unreadComunicados: number;
+    attendancePending: number;
+  };
   recentActivity?: unknown[];
 }
 
