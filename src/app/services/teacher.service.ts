@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -383,6 +383,55 @@ export class TeacherService {
         body,
       )
       .pipe(map(r => r.data));
+  }
+
+  /**
+   * Archivos adjuntos a la entrega del alumno (equivalente a GET estudiante
+   * `/student/tasks/:taskId/submission-attachments/:fileId/download`).
+   */
+  getStudentSubmissionAttachmentDownloadUrl(courseId: string, taskId: string, fileId: string): string {
+    return `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submission-attachments/${fileId}/download`;
+  }
+
+  /** Descarga con Bearer vía interceptor (evitar abrir la URL de API en nueva pestaña). */
+  downloadAuthenticatedBlob(url: string): Observable<{ blob: Blob; filename?: string }> {
+    return this.http.get(url, { responseType: 'blob', observe: 'response' }).pipe(
+      map((res: HttpResponse<Blob>) => {
+        const body = res.body;
+        if (!body) {
+          throw new Error('Respuesta vacía');
+        }
+        let filename: string | undefined;
+        const cd = res.headers.get('Content-Disposition');
+        if (cd) {
+          const star = /filename\*=UTF-8''([^;\n]+)/i.exec(cd);
+          const quoted = /filename="([^"]+)"/i.exec(cd);
+          const plain = /filename=([^;\n]+)/i.exec(cd);
+          if (star) {
+            try {
+              filename = decodeURIComponent(star[1].trim());
+            } catch {
+              filename = star[1].trim();
+            }
+          } else if (quoted) {
+            filename = quoted[1].trim();
+          } else if (plain) {
+            filename = plain[1].trim().replace(/['"]/g, '');
+          }
+        }
+        return { blob: body, filename };
+      }),
+    );
+  }
+
+  downloadStudentSubmissionAttachmentBlob(
+    courseId: string,
+    taskId: string,
+    fileId: string,
+  ): Observable<{ blob: Blob; filename?: string }> {
+    return this.downloadAuthenticatedBlob(
+      this.getStudentSubmissionAttachmentDownloadUrl(courseId, taskId, fileId),
+    );
   }
 
   // ─── ATTENDANCE ───────────────────────────────────────────────────────────

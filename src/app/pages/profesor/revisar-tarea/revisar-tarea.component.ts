@@ -2,6 +2,7 @@ import { Component, computed, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TeacherService, TeacherTask, TaskSubmission } from '../../../services/teacher.service';
 
 type FilterChip = 'todas' | 'pendiente' | 'entregada' | 'calificada';
@@ -32,6 +33,8 @@ export class RevisarTareaComponent implements OnInit {
   gradeForm = signal({ score: 0, feedback: '' });
   saving = signal(false);
   showGradingModal = signal(false);
+  /** Error al descargar adjuntos de entregas (requiere petición autenticada). */
+  downloadError = signal('');
 
   readonly isLoading = this.loading;
 
@@ -186,5 +189,74 @@ export class RevisarTareaComponent implements OnInit {
 
   updateGradeFeedback(text: string) {
     this.gradeForm.update(g => ({ ...g, feedback: text }));
+  }
+
+  downloadSubmissionAttachment(sub: TaskSubmission, file: { id: string; name: string }) {
+    const fid = file?.id;
+    if (!fid) return;
+    this.downloadError.set('');
+    const fallback = (file.name && String(file.name).trim()) || 'archivo';
+
+    this.teacherService
+      .downloadStudentSubmissionAttachmentBlob(this.courseId(), this.taskId(), fid)
+      .subscribe({
+        next: async (res) => {
+          const apiErr = await this.messageIfBlobIsApiError(res.blob);
+          if (apiErr) {
+            this.downloadError.set(apiErr);
+            return;
+          }
+          this.triggerBlobDownload(res.blob, res.filename ?? fallback);
+        },
+        error: (err: unknown) => {
+          void this.downloadHttpFailureMessage(err).then((m) => this.downloadError.set(m));
+        },
+      });
+  }
+
+  /** Si `url` es una URL pública https, abrir en pestaña; si no, usar solo API. */
+  openAttachmentIfPublicUrl(url: string | undefined): void {
+    const u = (url ?? '').trim();
+    if (!u || !/^https?:\/\//i.test(u)) return;
+    window.open(u, '_blank', 'noopener,noreferrer');
+  }
+
+  private triggerBlobDownload(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.trim() || 'descarga';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private async messageIfBlobIsApiError(blob: Blob): Promise<string | null> {
+    if (blob.type && blob.type !== 'application/json' && !blob.type.includes('json')) {
+      return null;
+    }
+    if (blob.size > 8192) return null;
+    const text = await blob.text();
+    if (!text.trimStart().startsWith('{')) return null;
+    try {
+      const j = JSON.parse(text) as { error?: { message?: string } };
+      if (j?.error?.message?.trim()) return j.error.message.trim();
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  private async downloadHttpFailureMessage(err: unknown): Promise<string> {
+    const e = err as HttpErrorResponse;
+    if (e?.error instanceof Blob) {
+      try {
+        const t = await e.error.text();
+        const j = JSON.parse(t) as { error?: { message?: string } };
+        if (j?.error?.message) return j.error.message;
+      } catch {
+        /* ignore */
+      }
+    }
+    return 'No se pudo descargar el archivo. Si la sesión expiró, vuelve a iniciar sesión.';
   }
 }

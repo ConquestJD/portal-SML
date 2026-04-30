@@ -21,6 +21,9 @@
     @if (error()) {
       <div class="alert-inline">{{ error() }}</div>
     }
+    @if (downloadError()) {
+      <div class="alert-inline alert-error">{{ downloadError() }}</div>
+    }
 
     <div class="task-header">
       <div class="task-header-content">
@@ -131,17 +134,31 @@
                 <p>{{ sub.content }}</p>
               </div>
             }
-            @if (sub.attachments?.length && (task()!.deliveryType === 'archivo' || task()!.deliveryType === 'ambos')) {
+            @if (sub.attachments?.length && (task()!.deliveryType === 'archivo' || task()!.deliveryType === 'ambos' || task()!.deliveryType === 'clase')) {
               <div class="submission-files">
-                <h4>Archivos</h4>
-                <ul>
+                <h4>Archivos del estudiante</h4>
+                <ul class="attachment-list">
                   @for (f of sub.attachments!; track f.id) {
-                    <li>
-                      @if (f.url) {
-                        <a [href]="f.url" target="_blank" rel="noopener">{{ f.name }}</a>
-                      } @else {
-                        {{ f.name }}
-                      }
+                    <li class="attachment-row">
+                      <span class="attachment-name">{{ f.name }}</span>
+                      <div class="attachment-actions">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-primary"
+                          (click)="downloadSubmissionAttachment(sub, f)"
+                        >
+                          <i class="fas fa-download"></i> Descargar
+                        </button>
+                        @if (f.url && f.url.startsWith('http')) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline"
+                            (click)="openAttachmentIfPublicUrl(f.url)"
+                          >
+                            <i class="fas fa-external-link-alt"></i> Abrir URL
+                          </button>
+                        }
+                      </div>
                     </li>
                   }
                 </ul>
