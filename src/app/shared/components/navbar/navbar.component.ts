@@ -2,6 +2,7 @@ import { Component, signal, computed, effect, HostListener, OnInit, OnDestroy } 
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, UserRole } from '../../../services/auth.service';
+import { NavBadgesService } from '../../../services/nav-badges.service';
 import { filter, Subscription } from 'rxjs';
 
 interface NavItem {
@@ -165,7 +166,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isCollapsed = signal(false);
   isDrawerOpen = signal(false);
   isUserDropdownOpen = signal(false);
-  notificationsCount = signal(0);
   
   // Computed signals
   user = computed(() => this.authService.user());
@@ -201,12 +201,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (role === 'padre') return '/padre/dashboard';
     return '/dashboard';
   });
+
+  /** Suma de badges accionables para la campana en barra móvil (profesor / estudiante). */
+  mobileNotificationsTotal = computed(() => {
+    const role = this.userRole();
+    if (role === 'profesor') {
+      return this.navBadges.teacherTareas() + this.navBadges.teacherComunicados();
+    }
+    if (role === 'estudiante') {
+      return (
+        this.navBadges.studentTareas() +
+        this.navBadges.studentNotas() +
+        this.navBadges.studentComunicados()
+      );
+    }
+    return 0;
+  });
   
   private routerSubscription?: Subscription;
   isMobile = signal(false);
   
   constructor(
     public authService: AuthService,
+    public navBadges: NavBadgesService,
     private router: Router
   ) {
     // Detectar tamaño de pantalla
@@ -233,6 +250,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
   
   ngOnInit() {
+    if (this.authService.authenticated()) {
+      this.navBadges.refresh();
+    }
     // Detectar cambios de tamaño de ventana
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this.handleResize.bind(this));

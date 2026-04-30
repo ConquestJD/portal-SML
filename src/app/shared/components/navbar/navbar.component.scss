@@ -548,6 +548,30 @@
 .nav-text {
   transition: opacity 0.3s, width 0.3s;
   flex: 1;
+  min-width: 0;
+}
+
+.nav-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.375rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+  background: var(--secondary, #c41e3a);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link.active .nav-badge {
+  background: rgba(255, 255, 255, 0.35);
+  color: #fff;
+  box-shadow: none;
 }
 
 .sidebar.collapsed .nav-text {

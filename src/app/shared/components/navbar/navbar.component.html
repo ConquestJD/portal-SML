@@ -22,8 +22,8 @@
         aria-label="Notificaciones"
         type="button">
         <i class="fas fa-bell"></i>
-        @if (notificationsCount() > 0) {
-          <span class="notification-badge">{{ notificationsCount() }}</span>
+        @if (mobileNotificationsTotal() > 0) {
+          <span class="notification-badge">{{ navBadges.formatCount(mobileNotificationsTotal()) }}</span>
         }
       </button>
       
@@ -123,6 +123,10 @@
             [attr.aria-current]="false">
             <i [class]="item.icon + ' nav-icon'"></i>
             <span class="nav-text">{{ item.label }}</span>
+            @let navCount = navBadges.badgeForPath(item.path);
+            @if (navCount > 0) {
+              <span class="nav-badge" [attr.aria-label]="navCount + ' pendientes'">{{ navBadges.formatCount(navCount) }}</span>
+            }
             @if (isCollapsed() && !isMobile()) {
               <span class="nav-tooltip">{{ item.label }}</span>
             }
