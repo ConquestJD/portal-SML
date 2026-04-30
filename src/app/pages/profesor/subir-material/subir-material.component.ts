@@ -52,6 +52,7 @@ export class SubirMaterialComponent implements OnInit {
 
   formData = signal({ title: '', description: '' });
   existingMaterial = signal<Material | null>(null);
+  uploadingMoreFiles = signal(false);
 
   canSave = computed(() => {
     const list = this.units();
@@ -248,8 +249,11 @@ export class SubirMaterialComponent implements OnInit {
         description: d.description.trim() || undefined,
       })
       .subscribe({
-        next: () => {
+        next: (updated) => {
           this.isSaving.set(false);
+          this.existingMaterial.update((m) =>
+            m ? { ...m, title: updated.title, description: updated.description } : m,
+          );
           void this.router.navigate(['/profesor/cursos', this.courseId()], {
             queryParams: { tab: 'material' },
           });
@@ -259,6 +263,54 @@ export class SubirMaterialComponent implements OnInit {
           this.isSaving.set(false);
         },
       });
+  }
+
+  onEditFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (!files.length) return;
+    const mid = this.materialId();
+    const cid = this.courseId();
+    if (!mid || !cid) return;
+    this.uploadingMoreFiles.set(true);
+    this.error.set('');
+    this.teacherService.appendMaterialFiles(cid, mid, files).subscribe({
+      next: (mat) => {
+        this.existingMaterial.set(mat);
+        this.uploadingMoreFiles.set(false);
+      },
+      error: (err: unknown) => {
+        this.error.set(this.extractHttpError(err));
+        this.uploadingMoreFiles.set(false);
+      },
+    });
+  }
+
+  removeEditFile(fileId: string) {
+    if (!confirm('¿Eliminar este archivo de la carpeta?')) return;
+    const mid = this.materialId();
+    const cid = this.courseId();
+    if (!mid || !cid) return;
+    this.error.set('');
+    this.teacherService.deleteMaterialFile(cid, mid, fileId).subscribe({
+      next: () => this.refreshEditMaterialFiles(),
+      error: (err: unknown) => this.error.set(this.extractHttpError(err)),
+    });
+  }
+
+  private refreshEditMaterialFiles() {
+    this.teacherService.getMaterials(this.courseId()).subscribe({
+      next: (list) => {
+        const mat = list.find((m) => m.id === this.materialId());
+        if (mat) this.existingMaterial.set(mat);
+      },
+      error: () => this.error.set('No se pudo actualizar la lista de archivos.'),
+    });
+  }
+
+  editFileLabel(f: { name?: string; filename?: string }): string {
+    return (f.filename ?? f.name ?? '').trim() || 'Archivo';
   }
 
   private extractHttpError(err: unknown): string {

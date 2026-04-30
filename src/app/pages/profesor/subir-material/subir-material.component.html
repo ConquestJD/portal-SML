@@ -63,8 +63,50 @@
           ></textarea>
         </div>
         <p class="info-text">
-          La edición solo actualiza título y descripción. Para nuevos archivos, crea un material nuevo en el curso.
+          Puedes cambiar el título y la descripción (botón «Guardar cambios»). Los archivos se añaden o quitan al momento con las acciones de abajo.
         </p>
+
+        @if (existingMaterial(); as em) {
+          <div class="edit-material-files">
+            <h3 class="subsection-title">
+              <i class="fas fa-paperclip"></i>
+              Archivos en esta carpeta
+            </h3>
+            @if (!em.files?.length) {
+              <p class="hint">Aún no hay archivos. Usa «Añadir archivos» para subirlos.</p>
+            } @else {
+              <ul class="edit-file-list">
+                @for (f of em.files; track f.id) {
+                  <li>
+                    <span class="edit-file-name">{{ editFileLabel(f) }}</span>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-danger"
+                      (click)="removeEditFile(f.id)"
+                      [disabled]="uploadingMoreFiles()"
+                    >
+                      <i class="fas fa-times"></i> Quitar
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            <label class="upload-add-label">
+              <span>Añadir archivos</span>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3"
+                (change)="onEditFilesSelected($event)"
+                [disabled]="uploadingMoreFiles()"
+              />
+            </label>
+            @if (uploadingMoreFiles()) {
+              <p class="upload-status"><i class="fas fa-spinner fa-spin"></i> Subiendo archivos…</p>
+            }
+          </div>
+        }
+
         <div class="footer-actions">
           <button type="button" class="btn btn-outline" (click)="cancel()">
             <i class="fas fa-times"></i> Cancelar
