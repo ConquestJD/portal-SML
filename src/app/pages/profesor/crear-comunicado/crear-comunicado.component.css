@@ -422,6 +422,16 @@ textarea.form-input {
   margin: 0 0 var(--spacing-md) 0;
 }
 
+.existing-attachments {
+  margin-bottom: var(--spacing-lg);
+}
+
+.existing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .form-row {

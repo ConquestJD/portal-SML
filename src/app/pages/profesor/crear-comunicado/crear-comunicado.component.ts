@@ -2,21 +2,32 @@ import { Component, signal, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { TeacherService, TeacherCourse } from '../../../services/teacher.service';
+import {
+  AnnouncementService,
+  AnnouncementAttachment,
+} from '../../../services/announcement.service';
 
 @Component({
   selector: 'app-crear-comunicado',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './crear-comunicado.component.html',
-  styleUrl: './crear-comunicado.component.css'
+  styleUrl: './crear-comunicado.component.css',
 })
 export class CrearComunicadoComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly teacherService = inject(TeacherService);
+  private readonly announcementService = inject(AnnouncementService);
 
   courseId = signal('');
+  /** Id del comunicado si estamos editando; `null` en creación. */
+  editingAnnouncementId = signal<string | null>(null);
+  readonly isEditMode = computed(() => this.editingAnnouncementId() !== null);
+
   loading = signal(true);
   error = signal('');
   saving = signal(false);
@@ -28,6 +39,9 @@ export class CrearComunicadoComponent implements OnInit {
   priority = signal<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
 
   selectedFiles = signal<File[]>([]);
+  existingAttachments = signal<AnnouncementAttachment[]>([]);
+  loadedType = signal<string>('GENERAL');
+  loadedTargetRoles = signal<string[]>([]);
 
   courseSubtitle = computed(() => {
     const c = this.course();
@@ -39,12 +53,51 @@ export class CrearComunicadoComponent implements OnInit {
 
   ngOnInit() {
     const cid = this.route.snapshot.paramMap.get('courseId') ?? '';
+    const rawComunicado = this.route.snapshot.paramMap.get('comunicadoId') ?? '';
+    const editId =
+      rawComunicado && rawComunicado.toLowerCase() !== 'nuevo'
+        ? rawComunicado
+        : null;
+
     this.courseId.set(cid);
+    this.editingAnnouncementId.set(editId);
+
     if (!cid) {
       this.error.set('Curso no válido');
       this.loading.set(false);
       return;
     }
+
+    if (editId) {
+      forkJoin({
+        course: this.teacherService.getCourse(cid),
+        ann: this.announcementService.getAnnouncement(editId),
+      }).subscribe({
+        next: ({ course, ann }) => {
+          this.course.set(course);
+          this.title.set(ann.title);
+          this.content.set(ann.content);
+          const p = (ann.priority || 'MEDIUM').toUpperCase();
+          this.priority.set(
+            p === 'HIGH' || p === 'LOW' || p === 'MEDIUM'
+              ? (p as 'LOW' | 'MEDIUM' | 'HIGH')
+              : 'MEDIUM',
+          );
+          this.existingAttachments.set(ann.attachments ?? []);
+          this.loadedType.set(ann.type || 'GENERAL');
+          this.loadedTargetRoles.set(ann.targetRoles ?? []);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.error.set(
+            err?.error?.error?.message ?? 'No se pudo cargar el comunicado',
+          );
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
+
     this.teacherService.getCourse(cid).subscribe({
       next: (c) => {
         this.course.set(c);
@@ -53,7 +106,7 @@ export class CrearComunicadoComponent implements OnInit {
       error: () => {
         this.error.set('No se pudo cargar el curso');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -66,7 +119,9 @@ export class CrearComunicadoComponent implements OnInit {
   }
 
   cancel() {
-    void this.router.navigate(['/profesor/cursos', this.courseId()]);
+    void this.router.navigate(['/profesor/cursos', this.courseId()], {
+      queryParams: { tab: 'comunicados' },
+    });
   }
 
   canSave(): boolean {
@@ -86,14 +141,28 @@ export class CrearComunicadoComponent implements OnInit {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const added = Array.from(input.files ?? []);
-    const merged = [...this.selectedFiles(), ...added].slice(0, 5);
+    const existing = this.existingAttachments().length;
+    const maxNew = Math.max(0, 5 - existing);
+    const merged = [...this.selectedFiles(), ...added].slice(0, maxNew);
     this.selectedFiles.set(merged);
     input.value = '';
   }
 
   removeFile(file: File) {
     const k = this.fileKey(file);
-    this.selectedFiles.set(this.selectedFiles().filter(f => this.fileKey(f) !== k));
+    this.selectedFiles.set(
+      this.selectedFiles().filter((f) => this.fileKey(f) !== k),
+    );
+  }
+
+  openExistingAttachment(att: AnnouncementAttachment) {
+    const aid = this.editingAnnouncementId();
+    if (!aid || !att.id) return;
+    window.open(
+      this.announcementService.getDownloadUrl(aid, att.id),
+      '_blank',
+      'noopener,noreferrer',
+    );
   }
 
   priorityLabel(): string {
@@ -115,24 +184,69 @@ export class CrearComunicadoComponent implements OnInit {
     this.saving.set(true);
     this.error.set('');
 
+    const editId = this.editingAnnouncementId();
+    if (editId) {
+      const dto: {
+        title: string;
+        content: string;
+        priority: string;
+        type: string;
+        targetRoles?: string[];
+      } = {
+        title: this.title().trim(),
+        content: this.content().trim(),
+        priority: this.priority(),
+        type: this.loadedType() || 'GENERAL',
+      };
+      const tr = this.loadedTargetRoles();
+      if (tr.length) dto.targetRoles = tr;
+
+      this.announcementService
+        .update(editId, dto)
+        .pipe(
+          switchMap(() => {
+            const files = this.selectedFiles();
+            if (!files.length) return of(null);
+            return this.announcementService.uploadAttachments(editId, files);
+          }),
+        )
+        .subscribe({
+          next: () => {
+            this.saving.set(false);
+            void this.router.navigate(['/profesor/cursos', this.courseId()], {
+              queryParams: { tab: 'comunicados' },
+            });
+          },
+          error: (err) => {
+            this.error.set(
+              err?.error?.error?.message ?? 'Error al guardar el comunicado',
+            );
+            this.saving.set(false);
+          },
+        });
+      return;
+    }
+
     const fd = new FormData();
     fd.append('title', this.title().trim());
     fd.append('content', this.content().trim());
     fd.append('type', 'GENERAL');
     fd.append('priority', this.priority());
-    this.selectedFiles().forEach(f => fd.append('files', f));
+    this.selectedFiles().forEach((f) => fd.append('files', f));
 
     this.teacherService.createCourseAnnouncement(this.courseId(), fd).subscribe({
       next: () => {
         this.saving.set(false);
         void this.router.navigate(['/profesor/cursos', this.courseId()], {
-          queryParams: { tab: 'comunicados' }
+          queryParams: { tab: 'comunicados' },
         });
       },
       error: (err) => {
-        this.error.set(err?.error?.error?.message ?? 'Error al publicar el comunicado');
+        this.error.set(
+          err?.error?.error?.message ?? 'Error al publicar el comunicado',
+        );
         this.saving.set(false);
-      }
+      },
     });
   }
 }
