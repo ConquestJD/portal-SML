@@ -397,6 +397,14 @@
   background: var(--secondary);
 }
 
+.unit-number--folder {
+  font-size: var(--font-size-lg);
+}
+
+.unit-number--folder i {
+  opacity: 0.95;
+}
+
 .unit-content {
   flex: 1;
   min-width: 0;
