@@ -295,6 +295,112 @@
   gap: var(--spacing-sm);
 }
 
+.material-folder {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.material-folder-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  outline: none;
+}
+
+.material-folder-header:hover,
+.material-folder-header:focus-visible {
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-secondary));
+}
+
+.material-folder-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--border-radius);
+  flex-shrink: 0;
+}
+
+.material-folder-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.material-folder-title {
+  margin: 0 0 4px 0;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.material-folder-sub {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.material-folder-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.material-folder-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.material-folder-body {
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  border-top: 1px dashed var(--border-color);
+  background: var(--bg-primary);
+}
+
+.material-folder-files {
+  list-style: none;
+  margin: var(--spacing-md) 0 0;
+  padding: 0;
+}
+
+.material-folder-file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.material-folder-file-row:last-child {
+  border-bottom: none;
+}
+
+.material-folder-file-row .file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-folder-file-row .file-size {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.material-folder-empty {
+  margin: var(--spacing-md) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
 .state-card {
   background: #fff;
   border: 1.5px dashed var(--border-color);

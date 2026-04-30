@@ -200,34 +200,62 @@
             </div>
           } @else {
             @for (m of materials(); track m.id) {
-              <div class="material-item">
-                <div class="material-icon">
-                  <i class="fas fa-folder-open"></i>
+              <div class="material-folder" [class.expanded]="isMaterialFolderOpen(m.id)">
+                <div
+                  class="material-folder-header"
+                  (click)="toggleMaterialFolder(m.id)"
+                  (keydown.enter)="toggleMaterialFolder(m.id)"
+                  (keydown.space)="$event.preventDefault(); toggleMaterialFolder(m.id)"
+                  tabindex="0"
+                  role="button"
+                  [attr.aria-expanded]="isMaterialFolderOpen(m.id)"
+                >
+                  <div class="material-folder-icon">
+                    <i class="fas" [class.fa-folder]="!isMaterialFolderOpen(m.id)" [class.fa-folder-open]="isMaterialFolderOpen(m.id)"></i>
+                  </div>
+                  <div class="material-folder-meta">
+                    <h4 class="material-folder-title">{{ m.title }}</h4>
+                    <p class="material-folder-sub">
+                      @if (m.files?.length) {
+                        {{ m.files.length }} archivo(s)
+                      } @else {
+                        Sin archivos
+                      }
+                      @if (m.createdAt) {
+                        · {{ formatAnnouncementDate(m.createdAt) }}
+                      }
+                      @if (m.unit?.name || m.unit?.title) {
+                        · Unidad catálogo: {{ m.unit?.name ?? m.unit?.title }}
+                      }
+                    </p>
+                  </div>
+                  <i class="fas material-folder-chevron" [class.fa-chevron-down]="!isMaterialFolderOpen(m.id)" [class.fa-chevron-up]="isMaterialFolderOpen(m.id)"></i>
+                  <div class="material-folder-actions" (click)="$event.stopPropagation()">
+                    <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="btn btn-sm btn-secondary">
+                      <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <button type="button" class="btn btn-sm btn-danger" (click)="deleteMaterial(m.id)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </div>
-                <div class="material-info">
-                  <h4>{{ m.title }}</h4>
-                  <p>
+                @if (isMaterialFolderOpen(m.id)) {
+                  <div class="material-folder-body">
                     @if (m.files?.length) {
-                      {{ m.files.length }} archivo(s)
+                      <ul class="material-folder-files">
+                        @for (f of m.files; track f.id) {
+                          <li class="material-folder-file-row">
+                            <i class="fas fa-file-alt"></i>
+                            <span class="file-name">{{ materialFileLabel(f) }}</span>
+                            <span class="file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                          </li>
+                        }
+                      </ul>
                     } @else {
-                      Sin archivos
+                      <p class="material-folder-empty">Esta carpeta no tiene archivos. Edítala para subir contenido.</p>
                     }
-                    @if (m.createdAt) {
-                      · {{ formatAnnouncementDate(m.createdAt) }}
-                    }
-                    @if (m.unit?.title) {
-                      · {{ m.unit.title }}
-                    }
-                  </p>
-                </div>
-                <div class="material-actions">
-                  <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="btn btn-sm btn-secondary">
-                    <i class="fas fa-edit"></i>
-                  </a>
-                  <button type="button" class="btn btn-sm btn-danger" (click)="deleteMaterial(m.id)">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
+                  </div>
+                }
               </div>
             }
           }

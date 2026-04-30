@@ -39,6 +39,9 @@ export class CursoDetalleProfesorComponent implements OnInit {
   announcementsLoading = signal(false);
   announcementsError = signal('');
 
+  /** Carpetas de material en pestaña Material: desplegadas o no. */
+  materialExpanded = signal<Record<string, boolean>>({});
+
   private readonly destroyRef = inject(DestroyRef);
 
   filteredStudents = computed(() => {
@@ -233,6 +236,29 @@ export class CursoDetalleProfesorComponent implements OnInit {
     this.teacherService.deleteMaterial(this.apiTeacherAssignmentId(), materialId).subscribe({
       next: () => this.loadMaterials()
     });
+  }
+
+  toggleMaterialFolder(materialId: string) {
+    this.materialExpanded.update((rec) => ({
+      ...rec,
+      [materialId]: !rec[materialId],
+    }));
+  }
+
+  isMaterialFolderOpen(materialId: string): boolean {
+    return !!this.materialExpanded()[materialId];
+  }
+
+  materialFileLabel(f: { name?: string; filename?: string }): string {
+    const n = (f.filename ?? f.name ?? '').trim();
+    return n || 'Archivo';
+  }
+
+  formatMaterialFileSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   getCourseName(): string { return this.course()?.course?.name ?? ''; }
