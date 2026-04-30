@@ -12,6 +12,7 @@ import {
   TeacherCourseAnnouncement,
   filterTeacherRosterByCourseGrade,
 } from '../../../services/teacher.service';
+import { AnnouncementService } from '../../../services/announcement.service';
 type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados' | 'foros';
 
 @Component({
@@ -59,6 +60,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private teacherService: TeacherService,
+    private announcementService: AnnouncementService,
   ) {}
 
   ngOnInit() {
@@ -316,5 +318,27 @@ export class CursoDetalleProfesorComponent implements OnInit {
       dateStyle: 'short',
       timeStyle: 'short',
     });
+  }
+
+  deleteAnnouncement(a: TeacherCourseAnnouncement) {
+    if (
+      !confirm(
+        '¿Eliminar este comunicado? Los estudiantes y apoderados dejarán de verlo.',
+      )
+    ) {
+      return;
+    }
+    this.announcementsError.set('');
+    this.announcementService.delete(a.id).subscribe({
+      next: () => this.loadAnnouncements(),
+      error: () =>
+        this.announcementsError.set('No se pudo eliminar el comunicado.'),
+    });
+  }
+
+  openAnnouncementAttachment(announcementId: string, fileId: string) {
+    if (!fileId) return;
+    const url = this.announcementService.getDownloadUrl(announcementId, fileId);
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

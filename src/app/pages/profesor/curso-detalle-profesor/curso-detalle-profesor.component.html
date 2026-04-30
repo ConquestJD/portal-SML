@@ -295,14 +295,29 @@
             @for (a of announcements(); track a.id) {
               <li class="announcement-card">
                 <div class="announcement-card-head">
-                  <h3 class="announcement-title">{{ a.title }}</h3>
-                  <span
-                    class="badge"
-                    [class.badge-warning]="a.priority === 'HIGH'"
-                    [class.badge-info]="a.priority === 'MEDIUM'"
-                    [class.badge-secondary]="a.priority === 'LOW'">
-                    {{ announcementPriorityLabel(a.priority) }}
-                  </span>
+                  <div class="announcement-title-row">
+                    <h3 class="announcement-title">{{ a.title }}</h3>
+                    <span
+                      class="badge"
+                      [class.badge-warning]="a.priority === 'HIGH'"
+                      [class.badge-info]="a.priority === 'MEDIUM'"
+                      [class.badge-secondary]="a.priority === 'LOW'">
+                      {{ announcementPriorityLabel(a.priority) }}
+                    </span>
+                  </div>
+                  <div class="announcement-card-actions">
+                    <a
+                      [routerLink]="['/profesor/cursos', courseId(), 'comunicados', a.id]"
+                      class="btn btn-sm btn-outline"
+                      >Editar</a
+                    >
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-danger-outline"
+                      (click)="deleteAnnouncement(a)">
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
                 <p class="announcement-meta">
                   <span>{{ formatAnnouncementDate(a.publishedAt ?? a.createdAt) }}</span>
@@ -316,10 +331,17 @@
                 <div class="announcement-body">{{ a.content }}</div>
                 @if (a.attachments?.length) {
                   <ul class="announcement-files">
-                    @for (f of a.attachments; track f.id) {
+                    @for (f of a.attachments; track f.id || $index) {
                       <li>
                         @if (f.url) {
                           <a [href]="f.url" target="_blank" rel="noopener noreferrer">{{ f.name }}</a>
+                        } @else if (f.id) {
+                          <button
+                            type="button"
+                            class="link-like"
+                            (click)="openAnnouncementAttachment(a.id, f.id)">
+                            {{ f.name }}
+                          </button>
                         } @else {
                           {{ f.name }}
                         }
