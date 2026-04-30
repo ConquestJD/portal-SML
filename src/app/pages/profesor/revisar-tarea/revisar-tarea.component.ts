@@ -194,11 +194,18 @@ export class RevisarTareaComponent implements OnInit {
   downloadSubmissionAttachment(sub: TaskSubmission, file: { id: string; name: string }) {
     const fid = file?.id;
     if (!fid) return;
+    const submissionId = sub.id;
+    if (!submissionId) {
+      this.downloadError.set(
+        'Esta fila no tiene id de entrega en el servidor; no se puede descargar. Actualiza la página o revisa la API.',
+      );
+      return;
+    }
     this.downloadError.set('');
     const fallback = (file.name && String(file.name).trim()) || 'archivo';
 
     this.teacherService
-      .downloadStudentSubmissionAttachmentBlob(this.courseId(), this.taskId(), fid)
+      .downloadTeacherSubmissionAttachmentBlob(this.courseId(), this.taskId(), submissionId, fid)
       .subscribe({
         next: async (res) => {
           const apiErr = await this.messageIfBlobIsApiError(res.blob);
@@ -248,6 +255,12 @@ export class RevisarTareaComponent implements OnInit {
 
   private async downloadHttpFailureMessage(err: unknown): Promise<string> {
     const e = err as HttpErrorResponse;
+    if (e?.status === 403) {
+      return 'El servidor no autoriza esta descarga con tu rol. Hace falta un endpoint en el API para que el docente obtenga los adjuntos de las entregas.';
+    }
+    if (e?.status === 404) {
+      return 'Ninguna ruta de descarga del profesor respondió en el servidor. Hay que implementar en el API un GET para adjuntos de entregas (por ejemplo bajo teacher/courses/.../tasks/.../submissions/.../attachments/.../download o submission-attachments en contexto docente).';
+    }
     if (e?.error instanceof Blob) {
       try {
         const t = await e.error.text();
@@ -257,6 +270,8 @@ export class RevisarTareaComponent implements OnInit {
         /* ignore */
       }
     }
+    const nested = (e?.error as { error?: { message?: string } })?.error?.message;
+    if (typeof nested === 'string' && nested.trim()) return nested;
     return 'No se pudo descargar el archivo. Si la sesión expiró, vuelve a iniciar sesión.';
   }
 }

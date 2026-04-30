@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
+import { HttpClient, HttpParams, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -102,7 +102,7 @@ export interface TeacherTask {
   submitted?: number;
   /** Pendientes de entregar o de calificar según contexto de API. */
   pending?: number;
-  attachments?: { id: string; name: string; url?: string }[];
+  attachments?: { id: string; name: string; url?: string; filename?: string }[];
 }
 
 export interface TaskSubmission {
@@ -110,7 +110,7 @@ export interface TaskSubmission {
   status: string; score?: number | null; feedback?: string | null;
   content?: string | null; submittedAt?: string | null;
   student: { id: string; studentCode: string; user: { firstName: string; lastName: string; avatarUrl?: string } };
-  attachments?: { id: string; name: string; url?: string }[];
+  attachments?: { id: string; name: string; url?: string; filename?: string }[];
 }
 
 export interface AttendanceRecord {
@@ -165,6 +165,36 @@ export class TeacherService {
   private get<T>(path: string, params?: HttpParams): Observable<T> {
     return this.http.get<{ success: boolean; data: T }>(`${this.url}${path}`, { params })
       .pipe(map((r: any) => r.data));
+  }
+
+  /** Nombres de adjuntos: el API suele mandar `filename` u `originalName` en lugar de `name`. */
+  private normalizeSubmissionAttachment(
+    row: Record<string, unknown>,
+  ): { id: string; name: string; url?: string } {
+    const id = String(row['id'] ?? '');
+    const name =
+      String(
+        row['name'] ??
+          row['filename'] ??
+          row['originalName'] ??
+          row['originalFilename'] ??
+          row['fileName'] ??
+          '',
+      ).trim() || 'Archivo';
+    const url = row['url'] != null && String(row['url']).trim() ? String(row['url']) : undefined;
+    return { id, name, url };
+  }
+
+  private normalizeTaskSubmissionRow(raw: Record<string, unknown>): TaskSubmission {
+    const attRaw = raw['attachments'];
+    let attachments: TaskSubmission['attachments'];
+    if (Array.isArray(attRaw)) {
+      attachments = attRaw.map((item) =>
+        this.normalizeSubmissionAttachment(item as Record<string, unknown>),
+      );
+    }
+    const base = raw as unknown as TaskSubmission;
+    return { ...base, attachments: attachments ?? base.attachments };
   }
 
   /**
@@ -363,13 +393,21 @@ export class TeacherService {
 
   // ─── SUBMISSIONS ──────────────────────────────────────────────────────────
   getSubmissions(courseId: string, taskId: string, f: { status?: string; search?: string } = {}): Observable<TaskSubmission[]> {
-    return this.get<TaskSubmission[]>(`/teacher/courses/${courseId}/tasks/${taskId}/submissions`, buildParams(f));
+    return this.get<unknown[]>(`/teacher/courses/${courseId}/tasks/${taskId}/submissions`, buildParams(f)).pipe(
+      map((list) =>
+        (Array.isArray(list) ? list : []).map((row) =>
+          this.normalizeTaskSubmissionRow(row as Record<string, unknown>),
+        ),
+      ),
+    );
   }
   gradeSubmission(courseId: string, taskId: string, submissionId: string, score: number, feedback: string): Observable<TaskSubmission> {
-    return this.http.put<{ success: boolean; data: TaskSubmission }>(
-      `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submissionId}/grade`,
-      { score, feedback }
-    ).pipe(map(r => r.data));
+    return this.http
+      .put<{ success: boolean; data: unknown }>(
+        `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submissionId}/grade`,
+        { score, feedback },
+      )
+      .pipe(map((r) => this.normalizeTaskSubmissionRow(r.data as Record<string, unknown>)));
   }
 
   gradeStudentForTask(
@@ -378,19 +416,26 @@ export class TeacherService {
     body: { studentId: string; score: number; feedback?: string },
   ): Observable<TaskSubmission> {
     return this.http
-      .post<{ success: boolean; data: TaskSubmission }>(
+      .post<{ success: boolean; data: unknown }>(
         `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/grade-student`,
         body,
       )
-      .pipe(map(r => r.data));
+      .pipe(map((r) => this.normalizeTaskSubmissionRow(r.data as Record<string, unknown>)));
   }
 
   /**
-   * Archivos adjuntos a la entrega del alumno (equivalente a GET estudiante
-   * `/student/tasks/:taskId/submission-attachments/:fileId/download`).
+   * Descarga de un archivo adjunto a una entrega concreta (mismo árbol que
+   * `PUT .../submissions/:submissionId/grade`). Si el backend usa otro segmento,
+   * se reintenta con `files` en lugar de `attachments`.
    */
-  getStudentSubmissionAttachmentDownloadUrl(courseId: string, taskId: string, fileId: string): string {
-    return `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submission-attachments/${fileId}/download`;
+  private teacherSubmissionAttachmentDownloadUrl(
+    courseId: string,
+    taskId: string,
+    submissionId: string,
+    fileId: string,
+    segment: 'attachments' | 'files',
+  ): string {
+    return `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submissions/${submissionId}/${segment}/${fileId}/download`;
   }
 
   /** Descarga con Bearer vía interceptor (evitar abrir la URL de API en nueva pestaña). */
@@ -424,14 +469,42 @@ export class TeacherService {
     );
   }
 
-  downloadStudentSubmissionAttachmentBlob(
+  /**
+   * Descarga adjunto de entrega (solo rutas con prefijo `/teacher/...`).
+   * Orden: `submissions/:id/attachments|files/.../download`, luego
+   * `.../tasks/:taskId/submission-attachments/:fileId/download`.
+   * No se usa `/student/...` porque el API exige rol STUDENT (FORBIDDEN para el docente).
+   */
+  downloadTeacherSubmissionAttachmentBlob(
     courseId: string,
     taskId: string,
+    submissionId: string,
     fileId: string,
   ): Observable<{ blob: Blob; filename?: string }> {
-    return this.downloadAuthenticatedBlob(
-      this.getStudentSubmissionAttachmentDownloadUrl(courseId, taskId, fileId),
-    );
+    const urls: string[] = [
+      this.teacherSubmissionAttachmentDownloadUrl(courseId, taskId, submissionId, fileId, 'attachments'),
+      this.teacherSubmissionAttachmentDownloadUrl(courseId, taskId, submissionId, fileId, 'files'),
+      `${this.url}/teacher/courses/${courseId}/tasks/${taskId}/submission-attachments/${fileId}/download`,
+    ];
+
+    const tryIndex = (i: number): Observable<{ blob: Blob; filename?: string }> => {
+      if (i >= urls.length) {
+        return throwError(
+          () => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }),
+        );
+      }
+      return this.downloadAuthenticatedBlob(urls[i]!).pipe(
+        catchError((err: unknown) => {
+          const e = err as HttpErrorResponse;
+          if (e?.status === 404) {
+            return tryIndex(i + 1);
+          }
+          return throwError(() => err);
+        }),
+      );
+    };
+
+    return tryIndex(0);
   }
 
   // ─── ATTENDANCE ───────────────────────────────────────────────────────────

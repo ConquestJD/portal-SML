@@ -140,7 +140,7 @@
                 <ul class="attachment-list">
                   @for (f of sub.attachments!; track f.id) {
                     <li class="attachment-row">
-                      <span class="attachment-name">{{ f.name }}</span>
+                      <span class="attachment-name">{{ f.name || 'Archivo' }}</span>
                       <div class="attachment-actions">
                         <button
                           type="button"
