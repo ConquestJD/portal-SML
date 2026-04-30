@@ -308,11 +308,17 @@ export class CursoDetallePadreComponent implements OnInit {
       const materials = Array.isArray(materialsRaw)
         ? materialsRaw.map((m) => this.normalizeMaterial(m as Record<string, unknown>))
         : [];
-      const num = typeof x['number'] === 'number' ? x['number'] : Number(x['number']);
+      const numRaw = x['number'];
+      const num =
+        numRaw === null || numRaw === undefined
+          ? null
+          : typeof numRaw === 'number'
+            ? numRaw
+            : Number(numRaw);
       return {
         ...x,
-        isExpanded: false,
-        number: Number.isFinite(num) ? num : 0,
+        isExpanded: x['isExpanded'] === true,
+        number: num !== null && Number.isFinite(num) ? num : null,
         title: String(x['title'] ?? ''),
         description: String(x['description'] ?? ''),
         materials,
@@ -321,6 +327,19 @@ export class CursoDetallePadreComponent implements OnInit {
   }
 
   private normalizeMaterial(m: Record<string, unknown>): Record<string, unknown> {
+    const apiTypes = new Set(['PDF', 'Video', 'Imagen', 'Documento', 'Otro', 'Link']);
+    const dt = m['type'];
+    if (typeof dt === 'string' && apiTypes.has(dt)) {
+      return {
+        id: m['id'],
+        name: String(m['title'] ?? m['name'] ?? m['originalName'] ?? 'Material'),
+        type: dt,
+        size: typeof m['size'] === 'string' && m['size'].trim() ? m['size'] : this.kbFromSizeBytes(m['sizeBytes']),
+        date: String(m['date'] ?? m['createdAt'] ?? m['updatedAt'] ?? ''),
+        url: String((m['externalUrl'] ?? m['url'] ?? m['fileUrl'] ?? '') as string),
+      };
+    }
+
     const mime = String(m['mimeType'] ?? '').toLowerCase();
     const extType = String(m['type'] ?? '').toLowerCase();
     let type = 'Documento';
@@ -333,20 +352,20 @@ export class CursoDetallePadreComponent implements OnInit {
     if (externalUrl && /^https?:\/\//i.test(externalUrl)) type = 'Link';
 
     const created = m['createdAt'] ?? m['updatedAt'] ?? '';
-    const sizeBytes = m['sizeBytes'];
-    let size = '';
-    if (typeof sizeBytes === 'number' && sizeBytes > 0) {
-      size = `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
-    }
 
     return {
       id: m['id'],
       name: String(m['title'] ?? m['name'] ?? m['originalName'] ?? 'Material'),
       type,
-      size,
+      size: this.kbFromSizeBytes(m['sizeBytes']),
       date: created,
       url: externalUrl,
     };
+  }
+
+  private kbFromSizeBytes(sizeBytes: unknown): string {
+    if (typeof sizeBytes !== 'number' || sizeBytes <= 0) return '';
+    return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
   }
 
   private mapApiTask(t: Record<string, unknown>): ParentCourseTaskRow {

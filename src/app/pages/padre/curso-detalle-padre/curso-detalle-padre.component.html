@@ -155,7 +155,13 @@
             @for (unit of units(); track unit['id']) {
               <div class="unit-item" [class.expanded]="unit['isExpanded']">
                 <div class="unit-header" (click)="toggleUnit(String(unit['id']))">
-                  <div class="unit-number">{{ ($any(unit['number'])).toString().padStart(2, '0') }}</div>
+                  @if (unit['number'] !== null && unit['number'] !== undefined) {
+                    <div class="unit-number">{{ Number(unit['number']).toString().padStart(2, '0') }}</div>
+                  } @else {
+                    <div class="unit-number unit-number--folder" aria-hidden="true">
+                      <i class="fas fa-folder"></i>
+                    </div>
+                  }
                   <div class="unit-content">
                     <h3>{{ unit['title'] }}</h3>
                     <p>{{ unit['description'] }}</p>

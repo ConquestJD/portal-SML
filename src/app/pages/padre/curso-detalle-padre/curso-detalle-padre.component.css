@@ -491,6 +491,10 @@
   font-size: var(--font-size-lg);
 }
 
+.unit-number--folder {
+  font-size: var(--font-size-xl);
+}
+
 .unit-content {
   flex: 1;
   min-width: 0;
