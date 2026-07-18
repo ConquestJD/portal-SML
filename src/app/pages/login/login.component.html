@@ -1,89 +1,54 @@
 <div class="login-page" [class.is-visible]="isVisible()">
 
-  <!-- ══════════ LEFT: BRAND PANEL ══════════ -->
+  <!-- ══════════ BRAND PANEL ══════════ -->
   <aside class="brand-panel" aria-hidden="true">
-    <div class="brand-panel__content">
-      <div class="brand-panel__logo">
-        <img src="/only-logo.png" alt="" class="brand-panel__logo-img" />
+    <div class="brand-panel__atmosphere"></div>
+
+    <div class="brand-panel__inner">
+      <div class="brand-panel__crest">
+        <img src="/only-logo.png" alt="" class="brand-panel__crest-img" />
       </div>
 
-      <h1 class="brand-panel__title">Portal SML</h1>
+      <p class="brand-panel__eyebrow">Portal institucional</p>
+      <h1 class="brand-panel__title">
+        Colegio<br />
+        <span>Santa María Laura</span>
+      </h1>
+      <div class="brand-panel__rule" aria-hidden="true"></div>
       <p class="brand-panel__claim">
-        Tu plataforma educativa integral
+        Excelencia académica y formación integral
       </p>
-
-      <ul class="brand-panel__features">
-        <li class="brand-panel__feature">
-          <!-- icon: academic cap -->
-          <span class="feature-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c0 2 4 3 6 3s6-1 6-3v-5" />
-            </svg>
-          </span>
-          <div>
-            <strong>Gestión académica</strong>
-            <span>Notas, asistencia y cursos en un solo lugar</span>
-          </div>
-        </li>
-
-        <li class="brand-panel__feature">
-          <!-- icon: chat/messages -->
-          <span class="feature-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </span>
-          <div>
-            <strong>Comunicación directa</strong>
-            <span>Conecta con profesores y padres al instante</span>
-          </div>
-        </li>
-
-        <li class="brand-panel__feature">
-          <!-- icon: chart/progress -->
-          <span class="feature-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-          </span>
-          <div>
-            <strong>Seguimiento en tiempo real</strong>
-            <span>Reportes y avances siempre actualizados</span>
-          </div>
-        </li>
-      </ul>
     </div>
 
     <p class="brand-panel__footer">
-      &copy; {{ currentYear }} Santa María Laura &mdash; Todos los derechos reservados
+      &copy; {{ currentYear }} Santa María Laura
     </p>
   </aside>
 
-  <!-- ══════════ RIGHT: LOGIN CARD ══════════ -->
+  <!-- ══════════ LOGIN FORM ══════════ -->
   <main class="login-main">
-    <div class="login-card">
+    <div class="login-panel">
 
-      <!-- Mobile logo (hidden on desktop) -->
-      <div class="login-card__mobile-logo">
-        <img src="/only-logo.png" alt="Santa María Laura" class="login-card__mobile-logo-img" />
+      <div class="login-panel__mobile-brand">
+        <img src="/only-logo.png" alt="Santa María Laura" class="login-panel__mobile-crest" />
+        <div>
+          <p class="login-panel__mobile-eyebrow">Portal institucional</p>
+          <p class="login-panel__mobile-name">Santa María Laura</p>
+        </div>
       </div>
 
-      <header class="login-card__header">
-        <h2 class="login-card__title">Inicia sesión</h2>
-        <p class="login-card__subtitle">Ingresa tus credenciales para continuar</p>
+      <header class="login-panel__header">
+        <h2 class="login-panel__title">Iniciar sesión</h2>
+        <p class="login-panel__subtitle">
+          Ingresa con las credenciales entregadas por el colegio
+        </p>
       </header>
 
-      <!-- Global error -->
       @if (error()) {
         <div class="alert alert--error" role="alert" aria-live="polite">
           <svg class="alert__icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -91,10 +56,12 @@
           <span>{{ error() }}</span>
         </div>
       }
+
       @if (info()) {
         <div class="alert alert--info" role="status" aria-live="polite">
           <svg class="alert__icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -105,7 +72,6 @@
 
       <form (ngSubmit)="onSubmit()" class="login-form" novalidate>
 
-        <!-- ─── Username ─── -->
         <div class="field" [class.field--error]="usernameError()">
           <label for="username" class="field__label">Usuario</label>
           <div class="field__input-wrap">
@@ -130,7 +96,6 @@
           }
         </div>
 
-        <!-- ─── Password ─── -->
         <div class="field" [class.field--error]="passwordError()">
           <label for="password" class="field__label">Contraseña</label>
           <div class="field__input-wrap">
@@ -156,14 +121,16 @@
             >
               @if (showPassword()) {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                   <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
               } @else {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
@@ -175,7 +142,6 @@
           }
         </div>
 
-        <!-- ─── Options row ─── -->
         <div class="login-options">
           <label class="checkbox">
             <input
@@ -185,20 +151,19 @@
               [(ngModel)]="rememberMe"
               [disabled]="isLoading()"
             />
-            <span class="checkbox__mark"></span>
+            <span class="checkbox__mark" aria-hidden="true"></span>
             <span class="checkbox__label">Recordarme</span>
           </label>
 
           <a
             href="#"
-            class="link link--subtle"
+            class="link"
             (click)="forgotPassword(); $event.preventDefault()"
           >
             ¿Olvidaste tu contraseña?
           </a>
         </div>
 
-        <!-- ─── Submit ─── -->
         <button
           type="submit"
           class="btn-login"
@@ -206,24 +171,17 @@
           [class.btn-login--loading]="isLoading()"
         >
           @if (isLoading()) {
-            <span class="btn-login__spinner"></span>
-            <span>Iniciando sesión…</span>
+            <span class="btn-login__spinner" aria-hidden="true"></span>
+            <span>Ingresando…</span>
           } @else {
-            <span>Iniciar sesión</span>
-            <svg class="btn-login__arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
+            <span>Ingresar al portal</span>
           }
         </button>
       </form>
 
-      <!-- ─── Footer ─── -->
-      <footer class="login-card__footer">
-        <p class="login-card__help">
-          Las credenciales las entrega el colegio. Si no tienes usuario o lo olvidaste,
+      <footer class="login-panel__footer">
+        <p>
+          Si aún no tienes acceso o necesitas restablecer tu cuenta,
           comunícate con <strong>administración</strong>.
         </p>
       </footer>
