@@ -31,6 +31,16 @@ export interface TeacherDashboard {
   recentActivity?: unknown[];
 }
 
+export interface AdminAnnouncement {
+  id: string;
+  title: string;
+  content?: string;
+  type?: string;
+  priority?: string;
+  publishedAt?: string | Date | null;
+  createdAt?: string | Date;
+}
+
 export interface AdminDashboard {
   summary: {
     totalStudents: number;
@@ -40,7 +50,7 @@ export interface AdminDashboard {
     pendingJustifications: number;
     pendingPayments: number;
   };
-  recentAnnouncements?: unknown[];
+  recentAnnouncements?: AdminAnnouncement[];
 }
 
 export interface ParentDashboardChild {

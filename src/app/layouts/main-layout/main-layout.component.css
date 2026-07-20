@@ -3,15 +3,16 @@
 }
 
 .main-content {
-  margin-left: 280px;
+  margin-left: 268px;
   min-height: 100vh;
   padding: var(--spacing-xl, 2rem);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #eef1f5;
 }
 
 /* Cuando el sidebar está colapsado (desktop) */
 :host-context(.sidebar.collapsed) .main-content {
-  margin-left: 80px;
+  margin-left: 76px;
 }
 
 /* Mobile: el sidebar es un drawer, no ocupa espacio */

@@ -27,8 +27,8 @@
   --info-bg:     #eef3f9;
   --info-border: #c5d4e8;
 
-  --font-display: 'Libre Baskerville', 'Times New Roman', Georgia, serif;
-  --font-ui: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Figtree', 'Segoe UI', sans-serif;
 
   --r-sm: 6px;
   --r-md: 10px;

@@ -1,7 +1,7 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DashboardService, AdminDashboard } from '../../../services/dashboard.service';
+import { DashboardService, AdminDashboard, AdminAnnouncement } from '../../../services/dashboard.service';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -16,6 +16,7 @@ export class DashboardAdminComponent implements OnInit {
   error = signal('');
 
   adminName = signal('Administrador');
+  firstName = computed(() => this.adminName().trim().split(/\s+/)[0] || 'Administrador');
 
   totalStudents = signal(0);
   totalTeachers = signal(0);
@@ -23,24 +24,20 @@ export class DashboardAdminComponent implements OnInit {
   activeEnrollments = signal(0);
   pendingJustifications = signal(0);
   pendingPayments = signal(0);
+  recentAnnouncements = signal<AdminAnnouncement[]>([]);
 
-  recentAnnouncements = signal<unknown[]>([]);
-  totalCourses = signal(0);
-  attendanceToday = signal(0);
-  activeTasks = signal(0);
-  incidents = signal(0);
-  usersCreated = signal(0);
-  activeCourses = signal(0);
-  alerts = signal<{ type: string; message: string; link: string }[]>([]);
-  recentActivity = signal<{ type: string; message: string; time: string }[]>([]);
+  hasAttention = computed(() =>
+    this.pendingJustifications() > 0 || this.pendingPayments() > 0
+  );
 
-  quickAccess = signal([
-    { icon: 'fas fa-users', title: 'Estudiantes', link: '/admin/estudiantes', count: 0 },
-    { icon: 'fas fa-chalkboard-teacher', title: 'Profesores', link: '/admin/profesores', count: 0 },
-    { icon: 'fas fa-book', title: 'Cursos', link: '/admin/cursos', count: 0 },
-    { icon: 'fas fa-cog', title: 'Configuración', link: '/admin/configuracion' },
-    { icon: 'fas fa-chart-bar', title: 'Reportes', link: '/admin/reportes' }
-  ]);
+  shortcuts = [
+    { label: 'Estudiantes', link: '/admin/estudiantes' },
+    { label: 'Profesores', link: '/admin/profesores' },
+    { label: 'Cursos', link: '/admin/cursos' },
+    { label: 'Comunicados', link: '/admin/comunicados' },
+    { label: 'Reportes', link: '/admin/reportes' },
+    { label: 'Configuración', link: '/admin/configuracion' },
+  ];
 
   constructor(
     private dashboardService: DashboardService,
@@ -50,6 +47,12 @@ export class DashboardAdminComponent implements OnInit {
   ngOnInit() {
     const user = this.authService.user();
     if (user) this.adminName.set(user.name);
+    this.loadDashboard();
+  }
+
+  loadDashboard() {
+    this.loading.set(true);
+    this.error.set('');
 
     this.dashboardService.getAdminDashboard().subscribe({
       next: (data: AdminDashboard) => {
@@ -59,24 +62,28 @@ export class DashboardAdminComponent implements OnInit {
         this.activeEnrollments.set(data.summary.activeEnrollments);
         this.pendingJustifications.set(data.summary.pendingJustifications);
         this.pendingPayments.set(data.summary.pendingPayments);
-        if (data.recentAnnouncements) this.recentAnnouncements.set(data.recentAnnouncements);
-        this.quickAccess.update(qa => qa.map(item => {
-          if (item.title === 'Estudiantes') return { ...item, count: data.summary.totalStudents };
-          if (item.title === 'Profesores') return { ...item, count: data.summary.totalTeachers };
-          return item;
-        }));
+        this.recentAnnouncements.set(data.recentAnnouncements ?? []);
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('No se pudo cargar el dashboard');
+        this.error.set('No se pudo cargar el panel.');
         this.loading.set(false);
       }
     });
   }
 
-  getCurrentDate() {
-    return new Date().toLocaleDateString('es-ES', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+  greeting(): string {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
+  formatAnnouncementDate(item: AdminAnnouncement): string {
+    const raw = item.publishedAt ?? item.createdAt;
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
   }
 }

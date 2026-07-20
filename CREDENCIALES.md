@@ -1,38 +1,45 @@
 # Credenciales de Acceso - Portal SML
 
-Este documento contiene las credenciales de las cuentas de ejemplo para acceder al portal.
+Cuentas de ejemplo creadas por el seed del backend (`smlbaackend`).
 
-## Cuentas Disponibles
+## Cuentas disponibles
 
-### 1. Estudiante (Alumno)
-- **Usuario:** `alumno`
-- **Contraseña:** `alumno123`
-- **Rol:** Estudiante
-- **Redirección:** `/dashboard`
-
-### 2. Profesor
-- **Usuario:** `profesor`
-- **Contraseña:** `profesor123`
-- **Rol:** Profesor
-- **Redirección:** `/profesor/dashboard`
-
-### 3. Administrador
+### 1. Administrador
 - **Usuario:** `admin`
-- **Contraseña:** `admin123`
+- **Contraseña:** `Admin123!`
 - **Rol:** Administrador
 - **Redirección:** `/admin/dashboard`
 
+### 2. Profesor
+- **Usuario:** `profesor`
+- **Contraseña:** `Teacher123!`
+- **Rol:** Profesor
+- **Redirección:** `/profesor/dashboard`
+
+### 3. Estudiante
+- **Usuario:** `estudiante`
+- **Contraseña:** `Student123!`
+- **Rol:** Estudiante
+- **Redirección:** `/dashboard`
+
 ### 4. Padre de Familia
 - **Usuario:** `padre`
-- **Contraseña:** `padre123`
+- **Contraseña:** `Parent123!`
 - **Rol:** Padre de Familia
 - **Redirección:** `/padre/dashboard`
 
 ## Notas
 
-- Las credenciales son de ejemplo y están almacenadas en el servicio de autenticación.
-- En producción, estas credenciales deben ser reemplazadas por un sistema de autenticación real con base de datos.
-- El sistema mantiene la sesión en `localStorage` si se selecciona "Recordarme", o en `sessionStorage` si no.
+- También puedes iniciar sesión con el correo (`admin@colegio.edu.pe`, etc.) y la misma contraseña.
+- Para restablecer estas contraseñas a los valores de arriba, ejecuta en el backend:
+
+```bash
+cd smlbaackend
+npm run prisma:seed
+```
+
+- El seed actualiza el `passwordHash` de los usuarios demo aunque ya existan.
+- La sesión se guarda en `localStorage` si marcas "Recordarme", o en `sessionStorage` si no.
 
 ## Funcionalidades por Rol
 
