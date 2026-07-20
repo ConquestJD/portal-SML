@@ -27,8 +27,8 @@
   --info-bg:     #eef3f9;
   --info-border: #c5d4e8;
 
-  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --font-ui: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --font-display: 'Libre Baskerville', 'Times New Roman', Georgia, serif;
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', sans-serif;
 
   --r-sm: 6px;
   --r-md: 10px;
@@ -55,7 +55,7 @@
 }
 
 /* ══════════════════════════════════════════════════════
-   BRAND PANEL
+   BRAND PANEL — foto full-bleed + marca hero
    ══════════════════════════════════════════════════════ */
 .brand-panel {
   position: relative;
@@ -63,43 +63,68 @@
   flex-direction: column;
   justify-content: space-between;
   padding: clamp(2.5rem, 5vw, 4.5rem);
-  color: rgba(255 255 255 / .9);
-  background:
-    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(185 28 44 / .22), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 85%, rgba(0 64 128 / .45), transparent 50%),
-    linear-gradient(165deg, var(--navy-deep) 0%, var(--navy) 52%, #002a52 100%);
+  color: rgba(255 255 255 / .92);
+  background: var(--navy-deep);
   overflow: hidden;
 }
 
-.brand-panel__atmosphere {
+.brand-panel__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+  transition: transform 1.4s var(--ease);
+  pointer-events: none;
+}
+.login-page.is-visible .brand-panel__photo {
+  transform: scale(1);
+}
+
+.brand-panel__veil {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255 255 255 / .035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255 255 255 / .035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 75% 70% at 40% 45%, #000 20%, transparent 75%);
-  opacity: .9;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0 26 51 / .72) 0%,
+      rgba(0 26 51 / .38) 38%,
+      rgba(0 26 51 / .45) 62%,
+      rgba(0 26 51 / .88) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0 26 51 / .35) 0%,
+      transparent 55%
+    );
 }
 
-.brand-panel__atmosphere::after {
+.brand-panel__veil::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(115deg, transparent 40%, rgba(255 255 255 / .03) 50%, transparent 60%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--crimson) 0%,
+    rgba(185 28 44 / .55) 35%,
+    transparent 70%
+  );
 }
 
 .brand-panel__inner {
   position: relative;
   z-index: 1;
-  max-width: 28rem;
+  max-width: 26rem;
   margin-top: auto;
-  margin-bottom: auto;
   opacity: 0;
-  transform: translateY(14px);
-  transition: opacity .7s var(--ease) .12s, transform .7s var(--ease) .12s;
+  transform: translateY(16px);
+  transition: opacity .75s var(--ease) .15s, transform .75s var(--ease) .15s;
 }
 .login-page.is-visible .brand-panel__inner {
   opacity: 1;
@@ -107,77 +132,51 @@
 }
 
 .brand-panel__crest {
-  width: 5.25rem;
-  height: 5.25rem;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(255 255 255 / .08);
-  border: 1px solid rgba(255 255 255 / .16);
-  box-shadow: 0 12px 40px rgba(0 0 0 / .25);
-}
-
-.brand-panel__crest-img {
-  width: 3.5rem;
-  height: 3.5rem;
+  display: block;
+  width: clamp(5.5rem, 9vw, 7rem);
+  height: auto;
+  margin-bottom: 1.75rem;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0 0 0 / .25));
+  filter: drop-shadow(0 6px 18px rgba(0 0 0 / .45));
 }
 
 .brand-panel__eyebrow {
   font-size: .72rem;
   font-weight: 600;
-  letter-spacing: .18em;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  color: rgba(255 255 255 / .62);
-  margin-bottom: .85rem;
+  color: rgba(255 255 255 / .7);
+  margin: 0 0 .65rem;
 }
 
 .brand-panel__title {
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 4.2vw, 3.35rem);
+  font-size: clamp(2.55rem, 4.4vw, 3.5rem);
   font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -.01em;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
   color: var(--t-on-dark);
-  margin: 0 0 1.35rem;
-}
-
-.brand-panel__title span {
-  font-style: italic;
-  font-weight: 600;
-}
-
-.brand-panel__rule {
-  width: 3rem;
-  height: 2px;
-  background: var(--crimson);
-  margin-bottom: 1.25rem;
-  transform-origin: left;
-  transform: scaleX(0);
-  transition: transform .55s var(--ease) .35s;
-}
-.login-page.is-visible .brand-panel__rule {
-  transform: scaleX(1);
+  margin: 0 0 .85rem;
+  text-shadow: 0 2px 24px rgba(0 0 0 / .35);
 }
 
 .brand-panel__claim {
   font-size: 1.05rem;
-  line-height: 1.55;
-  color: rgba(255 255 255 / .78);
-  max-width: 22rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(255 255 255 / .82);
   margin: 0;
+  max-width: 20rem;
 }
 
 .brand-panel__footer {
   position: relative;
   z-index: 1;
   margin: 0;
+  padding-top: 2rem;
   font-size: .78rem;
   letter-spacing: .02em;
-  color: rgba(255 255 255 / .42);
+  color: rgba(255 255 255 / .5);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -246,9 +245,9 @@
   font-size: clamp(1.85rem, 3vw, 2.15rem);
   font-weight: 700;
   color: var(--t-primary);
-  letter-spacing: -.015em;
+  letter-spacing: 0.005em;
   margin: 0 0 .4rem;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .login-panel__subtitle {
@@ -620,7 +619,7 @@
 @media (prefers-reduced-motion: reduce) {
   .login-page,
   .brand-panel__inner,
-  .brand-panel__rule,
+  .brand-panel__photo,
   .login-panel,
   .btn-login,
   .field__input,
@@ -639,8 +638,8 @@
     transform: none;
   }
 
-  .brand-panel__rule,
-  .login-page.is-visible .brand-panel__rule {
+  .brand-panel__photo,
+  .login-page.is-visible .brand-panel__photo {
     transform: none;
   }
 }
