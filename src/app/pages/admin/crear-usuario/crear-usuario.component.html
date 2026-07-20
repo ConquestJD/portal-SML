@@ -1,389 +1,358 @@
-<div class="crear-usuario-container" [ngClass]="containerRoleClass()">
-  <admin-breadcrumb [items]="breadcrumbItems()"></admin-breadcrumb>
+<div class="cu-page" [ngClass]="containerRoleClass()">
 
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">{{ pageTitle() }}</h1>
-      <p class="page-subtitle">{{ pageSubtitle() }}</p>
+  <header class="cu-page__head">
+    <div class="cu-page__head-main">
+      <admin-breadcrumb [items]="breadcrumbItems()"></admin-breadcrumb>
+      <h1 class="cu-page__title">{{ pageTitle() }}</h1>
+      @if (pageSubtitle()) {
+        <p class="cu-page__subtitle">{{ pageSubtitle() }}</p>
+      }
     </div>
     @if (isEditMode()) {
-      <button class="btn btn-secondary" (click)="resetPassword()">
-        <i class="fas fa-key"></i> Resetear Contraseña
+      <button type="button" class="cu-btn cu-btn--ghost" (click)="resetPassword()">
+        Resetear contraseña
       </button>
     }
-  </div>
+  </header>
 
-  @if (error()) {
-    <div class="alert alert-error">
-      <i class="fas fa-exclamation-circle"></i> {{ error() }}
-    </div>
-  }
-  @if (success()) {
-    <div class="alert alert-success">
-      <i class="fas fa-check-circle"></i> {{ success() }}
-    </div>
-  }
-
-  <form (ngSubmit)="onSubmit()" class="user-form" #userForm="ngForm">
-
-    <!-- 1. DNI primero: será el usuario de acceso y base para datos automáticos vía API -->
-    @if (hasField('dni')) {
-      <div class="form-section form-section--identification">
-        <h2 class="section-title">Identificación</h2>
-        <p class="section-lead">
-          Ingresa primero el <strong>DNI</strong>. Será el <strong>nombre de usuario</strong> para iniciar sesión (solo números, sin espacios).
-        </p>
-        <div class="form-grid form-grid--identification">
-          <div class="form-group" [class.form-group--error]="dniError()">
-            <label class="form-label" for="dni">DNI *</label>
-            <input
-              type="text"
-              id="dni"
-              name="dni"
-              class="form-input"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="16"
-              [ngModel]="formData().dni"
-              (ngModelChange)="onDniInput($event)"
-              [disabled]="isEditMode()"
-              placeholder="Ej: 45678901"
-            />
-            <span class="field-hint">
-              <i class="fas fa-id-card"></i>
-              Mínimo {{ MIN_DNI_DIGITS }} dígitos. Puedes pegar el DNI con o sin guiones.
-            </span>
-            @if (dniError()) {
-              <span class="field-error">{{ dniError() }}</span>
-            }
-          </div>
-        </div>
-      </div>
+  <div class="cu-page__body">
+    @if (error()) {
+      <div class="cu-alert cu-alert--error" role="alert">{{ error() }}</div>
+    }
+    @if (success()) {
+      <div class="cu-alert cu-alert--success" role="status">{{ success() }}</div>
     }
 
-    <!-- Sección específica del rol -->
-    @if (hasField('level') || hasField('grade') || hasField('department')) {
-      <div class="form-section">
-        <h2 class="section-title">
-          @if (roleKind() === 'student') { Información Académica }
-          @else if (roleKind() === 'teacher') { Información Profesional }
-          @else { Información del Rol }
-        </h2>
-        <div class="form-grid">
+    <form (ngSubmit)="onSubmit()" class="cu-form" #userForm="ngForm">
 
-          @if (hasField('level')) {
-            <div class="form-group">
-              <label class="form-label">Nivel *</label>
-              <select class="form-input"
-                      [ngModel]="formData().level"
-                      (ngModelChange)="onLevelChange($event)"
-                      name="level" required>
-                <option value="">Seleccionar nivel</option>
-                <option value="inicial">Inicial</option>
-                <option value="primaria">Primaria</option>
-                <option value="secundaria">Secundaria</option>
-              </select>
-            </div>
-          }
-
-          @if (hasField('grade') && formData().level) {
-            <div class="form-group">
-              <label class="form-label">Grado *</label>
-              <select class="form-input"
-                      [ngModel]="formData().grade"
-                      (ngModelChange)="update('grade', $event)"
-                      name="grade" required>
-                <option value="">Seleccionar grado</option>
-                @for (grade of availableGrades(); track grade) {
-                  <option [value]="grade">{{ grade }}</option>
-                }
-              </select>
-            </div>
-          }
-
-          @if (hasField('studentCode')) {
-            <div class="form-group">
-              <label class="form-label">Código de estudiante</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().studentCode"
-                     (ngModelChange)="update('studentCode', $event)"
-                     name="studentCode" placeholder="Generado si se deja vacío">
-            </div>
-          }
-
-          @if (hasField('department')) {
-            <div class="form-group">
-              <label class="form-label">Departamento *</label>
-              <select class="form-input"
-                      [ngModel]="formData().department"
-                      (ngModelChange)="update('department', $event)"
-                      name="department" required>
-                <option value="">Seleccionar departamento</option>
-                @for (dep of DEPARTMENTS; track dep) {
-                  <option [value]="dep">{{ dep }}</option>
-                }
-              </select>
-            </div>
-          }
-
-          @if (hasField('specialization')) {
-            <div class="form-group">
-              <label class="form-label">Especialización</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().specialization"
-                     (ngModelChange)="update('specialization', $event)"
-                     name="specialization" placeholder="Ej: Álgebra y Geometría">
-            </div>
-          }
-
-          @if (hasField('degree')) {
-            <div class="form-group">
-              <label class="form-label">Título Profesional *</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().degree"
-                     (ngModelChange)="update('degree', $event)"
-                     name="degree" required placeholder="Ej: Licenciado en Matemáticas">
-            </div>
-          }
-
-          @if (hasField('university')) {
-            <div class="form-group">
-              <label class="form-label">Universidad</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().university"
-                     (ngModelChange)="update('university', $event)"
-                     name="university" placeholder="Ej: UNMSM">
-            </div>
-          }
-
-          @if (hasField('teacherCode')) {
-            <div class="form-group">
-              <label class="form-label">Código de docente</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().teacherCode"
-                     (ngModelChange)="update('teacherCode', $event)"
-                     name="teacherCode">
-            </div>
-          }
-
-          @if (hasField('relationship')) {
-            <div class="form-group">
-              <label class="form-label">Relación con el estudiante *</label>
-              <select class="form-input"
-                      [ngModel]="formData().relationship"
-                      (ngModelChange)="update('relationship', $event)"
-                      name="relationship" required>
-                <option value="">Seleccionar</option>
-                @for (rel of RELATIONSHIPS; track rel) {
-                  <option [value]="rel">{{ rel }}</option>
-                }
-              </select>
-            </div>
-          }
-
-          @if (hasField('occupation')) {
-            <div class="form-group">
-              <label class="form-label">Ocupación</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().occupation"
-                     (ngModelChange)="update('occupation', $event)"
-                     name="occupation" placeholder="Ej: Ingeniero">
-            </div>
-          }
-
-          @if (hasField('birthDate')) {
-            <div class="form-group">
-              <label class="form-label">Fecha de nacimiento</label>
-              <input type="date" class="form-input"
-                     [ngModel]="formData().birthDate"
-                     (ngModelChange)="update('birthDate', $event)"
-                     name="birthDate">
-            </div>
-          }
-
-          @if (hasField('gender')) {
-            <div class="form-group">
-              <label class="form-label">Género</label>
-              <select class="form-input"
-                      [ngModel]="formData().gender"
-                      (ngModelChange)="update('gender', $event)"
-                      name="gender">
-                <option value="">Seleccionar</option>
-                <option value="M">Masculino</option>
-                <option value="F">Femenino</option>
-              </select>
-            </div>
-          }
-
-          @if (hasField('bloodType')) {
-            <div class="form-group">
-              <label class="form-label">Tipo de sangre</label>
-              <input type="text" class="form-input"
-                     [ngModel]="formData().bloodType"
-                     (ngModelChange)="update('bloodType', $event)"
-                     name="bloodType" placeholder="O+, A-, etc.">
-            </div>
-          }
-
-          @if (hasField('medicalNotes')) {
-            <div class="form-group full-width">
-              <label class="form-label">Notas médicas</label>
-              <textarea class="form-input" rows="2"
-                        [ngModel]="formData().medicalNotes"
-                        (ngModelChange)="update('medicalNotes', $event)"
-                        name="medicalNotes" placeholder="Alergias, condiciones, medicación..."></textarea>
-            </div>
-          }
-        </div>
-
-        @if (showInitialNote()) {
-          <div class="info-box">
-            <i class="fas fa-info-circle"></i>
-            <div class="info-content">
-              <p><strong>Nota:</strong> Para estudiantes de inicial no se requiere crear usuario y contraseña ahora.</p>
-              <p>Las credenciales se generarán junto con la cuenta del padre de familia.</p>
-            </div>
-          </div>
-        }
-      </div>
-    }
-
-    <!-- Sección común: datos personales -->
-    <div class="form-section">
-      <h2 class="section-title">Información Personal</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Nombre *</label>
-          <input type="text" class="form-input"
-                 [ngModel]="formData().firstName"
-                 (ngModelChange)="update('firstName', $event)"
-                 name="firstName" required placeholder="Ej: Ana">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Apellido *</label>
-          <input type="text" class="form-input"
-                 [ngModel]="formData().lastName"
-                 (ngModelChange)="update('lastName', $event)"
-                 name="lastName" required placeholder="Ej: García">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email <span class="field-optional">(opcional)</span></label>
-          <input type="email" class="form-input"
-                 [ngModel]="formData().email"
-                 (ngModelChange)="update('email', $event)"
-                 name="email"
-                 placeholder="correo@ejemplo.com">
-          <span class="field-hint">
-            <i class="fas fa-info-circle"></i>
-            Solo para notificaciones. El inicio de sesión se hace con el usuario.
-          </span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Teléfono</label>
-          <input type="tel" class="form-input"
-                 [ngModel]="formData().phone"
-                 (ngModelChange)="update('phone', $event)"
-                 name="phone">
-        </div>
-        @if (hasField('emergencyPhone')) {
-          <div class="form-group">
-            <label class="form-label">Teléfono de emergencia *</label>
-            <input type="tel" class="form-input"
-                   [ngModel]="formData().emergencyPhone"
-                   (ngModelChange)="update('emergencyPhone', $event)"
-                   name="emergencyPhone" required>
-            <span class="field-hint">
-              <i class="fas fa-phone-alt"></i>
-              Contacto ante emergencias
-            </span>
-          </div>
-        }
-        @if (hasField('address')) {
-          <div class="form-group full-width">
-            <label class="form-label">Dirección</label>
-            <input type="text" class="form-input"
-                   [ngModel]="formData().address"
-                   (ngModelChange)="update('address', $event)"
-                   name="address">
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Sección de credenciales (condicional) -->
-    @if (credentialsRequired() || isEditMode()) {
-      <div class="form-section">
-        <h2 class="section-title">Credenciales de Acceso</h2>
-        <p class="section-hint">
-          <i class="fas fa-info-circle"></i>
-          El <strong>usuario de acceso</strong> es el mismo <strong>número de DNI</strong> (sin letras ni guiones).
-          El correo, si lo indicas, es solo para notificaciones.
-        </p>
-        <div class="form-grid">
-          @if (!isEditMode()) {
-            <div class="form-group">
-              <label class="form-label">Usuario (DNI)</label>
+      @if (hasField('dni')) {
+        <section class="cu-section cu-section--dni">
+          <h2 class="cu-section__title">DNI</h2>
+          <div class="cu-grid cu-grid--narrow">
+            <div class="cu-field" [class.cu-field--error]="dniError()">
+              <label class="cu-label" for="dni">Número de DNI *</label>
               <input
                 type="text"
-                class="form-input form-input--readonly-simulated"
-                readonly
-                tabindex="-1"
-                [value]="formData().username || '—'"
-                aria-readonly="true">
-              <span class="field-hint">
-                <i class="fas fa-link"></i>
-                Se toma automáticamente del DNI que ingresaste arriba.
-              </span>
+                id="dni"
+                name="dni"
+                class="cu-input"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="16"
+                [ngModel]="formData().dni"
+                (ngModelChange)="onDniInput($event)"
+                [disabled]="isEditMode()"
+                placeholder="45678901"
+              />
+              <span class="cu-hint">Será el usuario de acceso · mín. {{ MIN_DNI_DIGITS }} dígitos</span>
+              @if (dniError()) {
+                <span class="cu-error">{{ dniError() }}</span>
+              }
             </div>
-          } @else {
-            <div class="form-group">
-              <label class="form-label">Nombre de usuario</label>
-              <input type="text" class="form-input" [value]="formData().username" disabled>
-              <span class="field-hint">
-                <i class="fas fa-lock"></i>
-                El nombre de usuario no se puede modificar después de crear la cuenta.
-              </span>
+          </div>
+        </section>
+      }
+
+      @if (
+        hasField('level') || hasField('grade') || hasField('department') ||
+        hasField('relationship') || hasField('occupation') || hasField('birthDate') ||
+        hasField('gender') || hasField('bloodType') || hasField('medicalNotes') ||
+        hasField('studentCode') || hasField('specialization') || hasField('degree') ||
+        hasField('university') || hasField('teacherCode')
+      ) {
+        <section class="cu-section">
+          <h2 class="cu-section__title">
+            @if (roleKind() === 'student') { Académico }
+            @else if (roleKind() === 'teacher') { Profesional }
+            @else if (roleKind() === 'parent') { Relación }
+            @else { Datos del rol }
+          </h2>
+          <div class="cu-grid">
+
+            @if (hasField('level')) {
+              <div class="cu-field">
+                <label class="cu-label">Nivel *</label>
+                <select class="cu-input"
+                        [ngModel]="formData().level"
+                        (ngModelChange)="onLevelChange($event)"
+                        name="level" required>
+                  <option value="">Seleccionar</option>
+                  <option value="inicial">Inicial</option>
+                  <option value="primaria">Primaria</option>
+                  <option value="secundaria">Secundaria</option>
+                </select>
+              </div>
+            }
+
+            @if (hasField('grade') && formData().level) {
+              <div class="cu-field">
+                <label class="cu-label">Grado *</label>
+                <select class="cu-input"
+                        [ngModel]="formData().grade"
+                        (ngModelChange)="update('grade', $event)"
+                        name="grade" required>
+                  <option value="">Seleccionar</option>
+                  @for (grade of availableGrades(); track grade) {
+                    <option [value]="grade">{{ grade }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (hasField('studentCode')) {
+              <div class="cu-field">
+                <label class="cu-label">Código</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().studentCode"
+                       (ngModelChange)="update('studentCode', $event)"
+                       name="studentCode" placeholder="Auto si vacío">
+              </div>
+            }
+
+            @if (hasField('department')) {
+              <div class="cu-field">
+                <label class="cu-label">Departamento *</label>
+                <select class="cu-input"
+                        [ngModel]="formData().department"
+                        (ngModelChange)="update('department', $event)"
+                        name="department" required>
+                  <option value="">Seleccionar</option>
+                  @for (dep of DEPARTMENTS; track dep) {
+                    <option [value]="dep">{{ dep }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (hasField('specialization')) {
+              <div class="cu-field">
+                <label class="cu-label">Especialización</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().specialization"
+                       (ngModelChange)="update('specialization', $event)"
+                       name="specialization">
+              </div>
+            }
+
+            @if (hasField('degree')) {
+              <div class="cu-field">
+                <label class="cu-label">Título profesional *</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().degree"
+                       (ngModelChange)="update('degree', $event)"
+                       name="degree" required>
+              </div>
+            }
+
+            @if (hasField('university')) {
+              <div class="cu-field">
+                <label class="cu-label">Universidad</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().university"
+                       (ngModelChange)="update('university', $event)"
+                       name="university">
+              </div>
+            }
+
+            @if (hasField('teacherCode')) {
+              <div class="cu-field">
+                <label class="cu-label">Código docente</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().teacherCode"
+                       (ngModelChange)="update('teacherCode', $event)"
+                       name="teacherCode">
+              </div>
+            }
+
+            @if (hasField('relationship')) {
+              <div class="cu-field">
+                <label class="cu-label">Relación *</label>
+                <select class="cu-input"
+                        [ngModel]="formData().relationship"
+                        (ngModelChange)="update('relationship', $event)"
+                        name="relationship" required>
+                  <option value="">Seleccionar</option>
+                  @for (rel of RELATIONSHIPS; track rel) {
+                    <option [value]="rel">{{ rel }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            @if (hasField('occupation')) {
+              <div class="cu-field">
+                <label class="cu-label">Ocupación</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().occupation"
+                       (ngModelChange)="update('occupation', $event)"
+                       name="occupation">
+              </div>
+            }
+
+            @if (hasField('birthDate')) {
+              <div class="cu-field">
+                <label class="cu-label">Fecha de nacimiento</label>
+                <input type="date" class="cu-input"
+                       [ngModel]="formData().birthDate"
+                       (ngModelChange)="update('birthDate', $event)"
+                       name="birthDate">
+              </div>
+            }
+
+            @if (hasField('gender')) {
+              <div class="cu-field">
+                <label class="cu-label">Género</label>
+                <select class="cu-input"
+                        [ngModel]="formData().gender"
+                        (ngModelChange)="update('gender', $event)"
+                        name="gender">
+                  <option value="">Seleccionar</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                </select>
+              </div>
+            }
+
+            @if (hasField('bloodType')) {
+              <div class="cu-field">
+                <label class="cu-label">Tipo de sangre</label>
+                <input type="text" class="cu-input"
+                       [ngModel]="formData().bloodType"
+                       (ngModelChange)="update('bloodType', $event)"
+                       name="bloodType" placeholder="O+">
+              </div>
+            }
+
+            @if (hasField('medicalNotes')) {
+              <div class="cu-field cu-field--full">
+                <label class="cu-label">Notas médicas</label>
+                <textarea class="cu-input" rows="2"
+                          [ngModel]="formData().medicalNotes"
+                          (ngModelChange)="update('medicalNotes', $event)"
+                          name="medicalNotes"></textarea>
+              </div>
+            }
+          </div>
+
+          @if (showInitialNote()) {
+            <p class="cu-note">
+              En inicial no se pide contraseña ahora: las credenciales se crean con la cuenta del padre.
+            </p>
+          }
+        </section>
+      }
+
+      <section class="cu-section">
+        <h2 class="cu-section__title">Personal</h2>
+        <div class="cu-grid">
+          <div class="cu-field">
+            <label class="cu-label">Nombre *</label>
+            <input type="text" class="cu-input"
+                   [ngModel]="formData().firstName"
+                   (ngModelChange)="update('firstName', $event)"
+                   name="firstName" required placeholder="Ana">
+          </div>
+          <div class="cu-field">
+            <label class="cu-label">Apellido *</label>
+            <input type="text" class="cu-input"
+                   [ngModel]="formData().lastName"
+                   (ngModelChange)="update('lastName', $event)"
+                   name="lastName" required placeholder="García">
+          </div>
+          <div class="cu-field">
+            <label class="cu-label">Email <span class="cu-optional">opcional</span></label>
+            <input type="email" class="cu-input"
+                   [ngModel]="formData().email"
+                   (ngModelChange)="update('email', $event)"
+                   name="email"
+                   placeholder="correo@ejemplo.com">
+          </div>
+          <div class="cu-field">
+            <label class="cu-label">Teléfono</label>
+            <input type="tel" class="cu-input"
+                   [ngModel]="formData().phone"
+                   (ngModelChange)="update('phone', $event)"
+                   name="phone">
+          </div>
+          @if (hasField('emergencyPhone')) {
+            <div class="cu-field">
+              <label class="cu-label">Teléfono de emergencia *</label>
+              <input type="tel" class="cu-input"
+                     [ngModel]="formData().emergencyPhone"
+                     (ngModelChange)="update('emergencyPhone', $event)"
+                     name="emergencyPhone" required>
             </div>
           }
-          <div class="form-group">
-            <label class="form-label">
-              {{ isEditMode() ? 'Nueva Contraseña (opcional)' : 'Contraseña *' }}
-            </label>
-            <input type="password" class="form-input"
-                   [ngModel]="formData().password"
-                   (ngModelChange)="update('password', $event)"
-                   [name]="isEditMode() ? 'newPassword' : 'password'"
-                   [required]="!isEditMode()"
-                   [attr.minlength]="MIN_PASSWORD_LENGTH"
-                   autocomplete="new-password">
-            <span class="field-hint">
-              <i class="fas fa-info-circle"></i>
-              Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres
-            </span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Estado</label>
-            <select class="form-input"
-                    [ngModel]="formData().status"
-                    (ngModelChange)="update('status', $event)"
-                    name="status" required>
-              <option value="ACTIVE">Activo</option>
-              <option value="INACTIVE">Inactivo</option>
-              <option value="SUSPENDED">Suspendido</option>
-            </select>
-          </div>
+          @if (hasField('address')) {
+            <div class="cu-field cu-field--full">
+              <label class="cu-label">Dirección</label>
+              <input type="text" class="cu-input"
+                     [ngModel]="formData().address"
+                     (ngModelChange)="update('address', $event)"
+                     name="address">
+            </div>
+          }
         </div>
-      </div>
-    }
+      </section>
 
-    <div class="form-actions">
-      <a [routerLink]="strategy().listPath" class="btn btn-secondary">Cancelar</a>
-      <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
-        <i class="fas fa-save"></i>
-        @if (isLoading()) { Guardando... }
-        @else if (isEditMode()) { Guardar Cambios }
-        @else { Crear {{ strategy().singular }} }
-      </button>
-    </div>
-  </form>
+      @if (credentialsRequired() || isEditMode()) {
+        <section class="cu-section">
+          <h2 class="cu-section__title">Acceso</h2>
+          <div class="cu-grid">
+            @if (!isEditMode()) {
+              <div class="cu-field">
+                <label class="cu-label">Usuario</label>
+                <input
+                  type="text"
+                  class="cu-input cu-input--readonly"
+                  readonly
+                  tabindex="-1"
+                  [value]="formData().username || '—'"
+                  aria-readonly="true">
+                <span class="cu-hint">Igual al DNI</span>
+              </div>
+            } @else {
+              <div class="cu-field">
+                <label class="cu-label">Usuario</label>
+                <input type="text" class="cu-input" [value]="formData().username" disabled>
+              </div>
+            }
+            <div class="cu-field">
+              <label class="cu-label">
+                {{ isEditMode() ? 'Nueva contraseña' : 'Contraseña *' }}
+              </label>
+              <input type="password" class="cu-input"
+                     [ngModel]="formData().password"
+                     (ngModelChange)="update('password', $event)"
+                     [name]="isEditMode() ? 'newPassword' : 'password'"
+                     [required]="!isEditMode()"
+                     [attr.minlength]="MIN_PASSWORD_LENGTH"
+                     autocomplete="new-password">
+              <span class="cu-hint">Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres</span>
+            </div>
+            <div class="cu-field">
+              <label class="cu-label">Estado</label>
+              <select class="cu-input"
+                      [ngModel]="formData().status"
+                      (ngModelChange)="update('status', $event)"
+                      name="status" required>
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+                <option value="SUSPENDED">Suspendido</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      }
+
+      <div class="cu-actions">
+        <a [routerLink]="strategy().listPath" class="cu-btn cu-btn--ghost">Cancelar</a>
+        <button type="submit" class="cu-btn cu-btn--primary" [disabled]="isLoading()">
+          @if (isLoading()) { Guardando… }
+          @else if (isEditMode()) { Guardar }
+          @else { Crear {{ strategy().singular }} }
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

@@ -44,7 +44,7 @@ export class CrearUsuarioComponent implements OnInit {
   roleKind = signal<RoleKind>('admin');
   strategy = computed<UserFormStrategy>(() => USER_FORM_STRATEGIES[this.roleKind()]);
 
-  /** Clase CSS para tema visual por tipo de usuario (estudiante, docente, apoderado, admin). */
+  /** Clase CSS por rol (look unificado SML; se conserva para trazabilidad). */
   containerRoleClass = computed(() => `crear-usuario-container--${this.roleKind()}`);
 
   formData = signal<UserFormData>(emptyFormData());
@@ -54,8 +54,9 @@ export class CrearUsuarioComponent implements OnInit {
   pageTitle = computed(() =>
     this.isEditMode() ? `Editar ${this.strategy().singular}` : `Nuevo ${this.strategy().singular}`
   );
+  /** En alta no mostramos subtítulo; en edición un línea corta. */
   pageSubtitle = computed(() =>
-    this.isEditMode() ? 'Modifica los datos del usuario' : this.strategy().subtitle
+    this.isEditMode() ? 'Actualiza solo lo necesario' : ''
   );
 
   breadcrumbItems = computed(() => [
