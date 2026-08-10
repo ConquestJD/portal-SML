@@ -1,102 +1,111 @@
-<div class="asistencia-page">
-  <header class="asis-header">
-    <div>
-      <h1 class="asis-title">Mi asistencia</h1>
-      <p class="asis-lead">Registro por curso según lo marcado por tus docentes.</p>
+<div class="asis-page">
+
+  <header class="asis-page__hero">
+    <img class="asis-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="asis-page__hero-veil"></div>
+    <div class="asis-page__hero-content">
+      <img src="/only-logo.png" alt="" class="asis-page__crest" />
+      <div>
+        <h1 class="asis-page__title">Mi asistencia</h1>
+        <p class="asis-page__brand">Santa María Laura</p>
+      </div>
     </div>
-    <div class="asis-filters">
-      <label class="asis-filter">
-        <span class="sr-only">Mes</span>
-        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+  </header>
+
+  <div class="asis-page__body">
+
+    <div class="toolbar">
+      <label class="field">
+        <span class="field__label">Mes</span>
         <input
           type="month"
-          class="asis-input"
           [ngModel]="selectedMonth()"
           (ngModelChange)="selectedMonth.set($event); onFilterChange()"
         />
       </label>
-      <select
-        class="asis-input asis-select"
-        [ngModel]="selectedCourse()"
-        (ngModelChange)="selectedCourse.set($event); onFilterChange()"
-      >
-        <option value="">Todos los cursos</option>
-        @for (c of courses(); track c.id) {
-          <option [value]="c.id">{{ c.name ?? c.course?.name ?? 'Curso' }}</option>
-        }
-      </select>
+      <label class="field field--grow">
+        <span class="field__label">Curso</span>
+        <select
+          [ngModel]="selectedCourse()"
+          (ngModelChange)="selectedCourse.set($event); onFilterChange()"
+        >
+          <option value="">Todos los cursos</option>
+          @for (c of courses(); track c.id) {
+            <option [value]="c.id">{{ c.name ?? c.course?.name ?? 'Curso' }}</option>
+          }
+        </select>
+      </label>
     </div>
-  </header>
 
-  @if (loading()) {
-    <p class="asis-state">Cargando…</p>
-  } @else if (error()) {
-    <p class="asis-state asis-state--error">{{ error() }}</p>
-  } @else {
-    <section class="asis-strip" aria-label="Resumen del período filtrado">
-      <div class="asis-strip__item">
-        <span class="asis-strip__val">{{ attendancePercent() }}%</span>
-        <span class="asis-strip__lbl">Asistencia efectiva</span>
+    @if (loading()) {
+      <div class="skel-row" aria-busy="true">
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
       </div>
-      <span class="asis-strip__dot" aria-hidden="true"></span>
-      <div class="asis-strip__item">
-        <span class="asis-strip__val asis-strip__val--ok">{{ countStatus('PRESENT') }}</span>
-        <span class="asis-strip__lbl">Presente</span>
-      </div>
-      <div class="asis-strip__item">
-        <span class="asis-strip__val asis-strip__val--bad">{{ countStatus('ABSENT') }}</span>
-        <span class="asis-strip__lbl">Faltas</span>
-      </div>
-      <div class="asis-strip__item">
-        <span class="asis-strip__val asis-strip__val--warn">{{ countStatus('LATE') }}</span>
-        <span class="asis-strip__lbl">Tardanzas</span>
-      </div>
-      <div class="asis-strip__item">
-        <span class="asis-strip__val">{{ countStatus('JUSTIFIED') }}</span>
-        <span class="asis-strip__lbl">Justif.</span>
-      </div>
-      <div class="asis-strip__item asis-strip__meta">
-        <span class="asis-strip__hint">{{ totalSessions() }} registro(s)</span>
-      </div>
-    </section>
-
-    @if (attendanceRecords().length === 0) {
-      <div class="asis-empty">
-        <i class="fas fa-user-check" aria-hidden="true"></i>
-        <p>No hay registros con los filtros actuales.</p>
-        <p class="asis-empty__hint">Prueba otro mes o «Todos los cursos».</p>
+    } @else if (error()) {
+      <div class="asis-page__error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="asis-page__retry" (click)="load()">Reintentar</button>
       </div>
     } @else {
-      <ul class="asis-list" role="list">
-        @for (record of attendanceRecords(); track record.id) {
-          <li
-            class="asis-row"
-            [class]="rowStatusClass(record.status)"
-            [attr.data-status]="statusLabel(record.status)"
-          >
-            <div class="asis-row__date">
-              <span class="asis-row__day">{{ formatDay(record.date) }}</span>
-              <span class="asis-row__course">{{ courseLabel(record) }}</span>
-            </div>
-            <span class="asis-badge" [ngClass]="badgeClass(record.status)">
-              {{ statusLabel(record.status) }}
-            </span>
-            @if (record.notes?.trim()) {
-              <p class="asis-row__notes">{{ record.notes }}</p>
-            }
-          </li>
-        }
-      </ul>
-    }
 
-    @if (countStatus('ABSENT') > 3) {
-      <div class="asis-alert" role="status">
-        <i class="fas fa-info-circle" aria-hidden="true"></i>
-        <p>
-          Tienes más de 3 faltas en este listado. Si necesitas regularizar, habla con tutoría o
-          administración.
-        </p>
-      </div>
+      <section class="metrics" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n">{{ attendancePercent() }}%</span>
+          <span class="metric__l">Efectiva</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ countStatus('PRESENT') }}</span>
+          <span class="metric__l">Presente</span>
+        </div>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ countStatus('ABSENT') }}</span>
+          <span class="metric__l">Faltas</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ countStatus('LATE') }}</span>
+          <span class="metric__l">Tardanzas</span>
+        </div>
+      </section>
+
+      @if (countStatus('ABSENT') > 3) {
+        <section class="pulse" aria-label="Aviso">
+          <div class="pulse__item">
+            <span class="pulse__n">!</span>
+            <span class="pulse__l">Más de 3 faltas en este listado. Consulta con tutoría si necesitas regularizar.</span>
+          </div>
+        </section>
+      }
+
+      <section class="feed" aria-label="Registros">
+        <div class="feed__head">
+          <h2>Registros</h2>
+          <span class="feed__meta">{{ totalSessions() }} en total · {{ countStatus('JUSTIFIED') }} justif.</span>
+        </div>
+
+        @if (attendanceRecords().length === 0) {
+          <p class="feed__empty">Sin registros con estos filtros</p>
+        } @else {
+          <ul class="feed__list">
+            @for (record of attendanceRecords(); track record.id) {
+              <li>
+                <div class="asis-row" [attr.data-status]="(record.status || '').toUpperCase()">
+                  <span class="asis-row__body">
+                    <span class="asis-row__date">{{ formatDay(record.date) }}</span>
+                    <span class="asis-row__course">{{ courseLabel(record) }}</span>
+                    @if (record.notes?.trim()) {
+                      <span class="asis-row__notes">{{ record.notes }}</span>
+                    }
+                  </span>
+                  <span class="asis-row__status">{{ statusLabel(record.status) }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
     }
-  }
+  </div>
 </div>

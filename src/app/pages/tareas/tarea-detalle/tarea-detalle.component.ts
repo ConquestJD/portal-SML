@@ -72,6 +72,14 @@ export class TareaDetalleComponent implements OnInit {
     return Number.isNaN(x.getTime()) ? d : x.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
   }
 
+  formatDueShort(d?: string): string {
+    if (!d) return '—';
+    const x = new Date(d);
+    return Number.isNaN(x.getTime())
+      ? d
+      : x.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  }
+
   private submitted(t: StudentTask): boolean {
     const s = t.submission;
     if (!s) return false;

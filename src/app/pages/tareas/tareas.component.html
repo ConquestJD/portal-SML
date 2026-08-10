@@ -1,152 +1,95 @@
-<div class="tareas-container">
-  <header class="page-header page-header--compact">
-    <div class="header-content">
-      <h1 class="page-title">Mis tareas</h1>
-      <p class="page-subtitle">Busca, filtra y abre cada tarea desde tarjetas compactas.</p>
-    </div>
-    <div class="header-actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search" aria-hidden="true"></i>
-        <input
-          type="search"
-          class="form-input search-input"
-          placeholder="Título, curso…"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-        />
+<div class="tareas-page">
+
+  <header class="tareas-page__hero">
+    <img class="tareas-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="tareas-page__hero-veil"></div>
+    <div class="tareas-page__hero-content">
+      <img src="/only-logo.png" alt="" class="tareas-page__crest" />
+      <div>
+        <h1 class="tareas-page__title">Mis tareas</h1>
+        <p class="tareas-page__brand">Santa María Laura</p>
       </div>
     </div>
   </header>
 
-  @if (loading()) {
-    <p class="loading-hint">Cargando tareas…</p>
-  } @else if (error()) {
-    <p class="error-hint">{{ error() }}</p>
-  } @else {
-    <div class="filters">
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'todas'"
-        (click)="setFilter('todas')"
-      >
-        Todas
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'pendientes'"
-        (click)="setFilter('pendientes')"
-      >
-        Pendientes
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'entregadas'"
-        (click)="setFilter('entregadas')"
-      >
-        Entregadas
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'vencidas'"
-        (click)="setFilter('vencidas')"
-      >
-        Vencidas
-      </button>
-    </div>
+  <div class="tareas-page__body">
 
-    <div class="summary-strip" role="status">
-      <div class="summary-strip__item">
-        <span class="summary-strip__value summary-strip__value--pending">{{ pendingCount() }}</span>
-        <span class="summary-strip__label">Pendientes</span>
+    @if (loading()) {
+      <div class="skel-row" aria-busy="true">
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
       </div>
-      <div class="summary-strip__divider" aria-hidden="true"></div>
-      <div class="summary-strip__item">
-        <span class="summary-strip__value summary-strip__value--due">{{ overdueCount() }}</span>
-        <span class="summary-strip__label">Vencidas</span>
-      </div>
-      <div class="summary-strip__divider" aria-hidden="true"></div>
-      <div class="summary-strip__item">
-        <span class="summary-strip__value summary-strip__value--ok">{{ completedCount() }}</span>
-        <span class="summary-strip__label">Entregadas</span>
-      </div>
-    </div>
-
-    @if (filteredTasks().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-tasks empty-icon" aria-hidden="true"></i>
-        <h2>No hay tareas que mostrar</h2>
-        <p>No hay tareas en este filtro o en la búsqueda.</p>
+    } @else if (error()) {
+      <div class="tareas-page__error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="tareas-page__retry" (click)="load()">Reintentar</button>
       </div>
     } @else {
-      <ul class="tasks-list" role="list">
-        @for (task of filteredTasks(); track task.id) {
-          <li class="tasks-list__item">
-            <article
-              class="task-card"
-              [class.task-card--vencida]="taskUiStatus(task) === 'vencida'"
-              [class.task-card--calificada]="taskUiStatus(task) === 'calificada'"
-            >
-              <div class="task-card__main">
-                <div class="task-card__topline">
-                  <span class="course-pill">
-                    <i class="fas fa-book" aria-hidden="true"></i>
-                    {{ courseName(task) }}
-                  </span>
-                  <span
-                    class="task-status-badge"
-                    [class.task-status-badge--pendiente]="taskUiStatus(task) === 'pendiente'"
-                    [class.task-status-badge--vencida]="taskUiStatus(task) === 'vencida'"
-                    [class.task-status-badge--revision]="taskUiStatus(task) === 'en-revision'"
-                    [class.task-status-badge--calificada]="taskUiStatus(task) === 'calificada'"
-                  >
-                    {{ taskUiStatusLabel(task) }}
-                  </span>
-                </div>
-                <h3 class="task-card__title">{{ task.title }}</h3>
-                @if (task.description?.trim()) {
-                  <p class="task-card__desc">{{ task.description }}</p>
-                }
-                <div class="task-card__meta">
-                  <span class="task-meta-chip" [class.task-meta-chip--alert]="taskUiStatus(task) === 'vencida'">
-                    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                    {{ formatDue(task.dueDate) }}
-                  </span>
-                  <span class="task-meta-chip">
-                    <i class="fas fa-star" aria-hidden="true"></i>
-                    {{ task.maxScore ?? '—' }} pts
-                  </span>
-                  @if (task.submission?.submittedAt) {
-                    <span class="task-meta-chip">
-                      <i class="fas fa-paper-plane" aria-hidden="true"></i>
-                      Entregada {{ formatDue(task.submission!.submittedAt) }}
+
+      <section class="metrics" aria-label="Resumen">
+        <button type="button" class="metric" [class.metric--active]="filter() === 'pendientes'" (click)="setFilter('pendientes')">
+          <span class="metric__n">{{ pendingCount() }}</span>
+          <span class="metric__l">Pendientes</span>
+        </button>
+        <button type="button" class="metric metric--alert" [class.metric--active]="filter() === 'vencidas'" (click)="setFilter('vencidas')">
+          <span class="metric__n">{{ overdueCount() }}</span>
+          <span class="metric__l">Vencidas</span>
+        </button>
+        <button type="button" class="metric" [class.metric--active]="filter() === 'entregadas'" (click)="setFilter('entregadas')">
+          <span class="metric__n">{{ completedCount() }}</span>
+          <span class="metric__l">Entregadas</span>
+        </button>
+        <button type="button" class="metric" [class.metric--active]="filter() === 'todas'" (click)="setFilter('todas')">
+          <span class="metric__n">{{ tasks().length }}</span>
+          <span class="metric__l">Todas</span>
+        </button>
+      </section>
+
+      <div class="toolbar">
+        <label class="search">
+          <span class="visually-hidden">Buscar tarea</span>
+          <input
+            type="search"
+            placeholder="Buscar por título o curso…"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+        </label>
+        <div class="chips" role="group" aria-label="Filtro">
+          <button type="button" [class.active]="filter() === 'todas'" (click)="setFilter('todas')">Todas</button>
+          <button type="button" [class.active]="filter() === 'pendientes'" (click)="setFilter('pendientes')">Pendientes</button>
+          <button type="button" [class.active]="filter() === 'entregadas'" (click)="setFilter('entregadas')">Entregadas</button>
+          <button type="button" [class.active]="filter() === 'vencidas'" (click)="setFilter('vencidas')">Vencidas</button>
+        </div>
+      </div>
+
+      <section class="feed" aria-label="Listado de tareas">
+        @if (filteredTasks().length === 0) {
+          <p class="feed__empty">Sin tareas en este filtro</p>
+        } @else {
+          <ul class="feed__list">
+            @for (task of filteredTasks(); track task.id) {
+              <li>
+                <a [routerLink]="['/tareas', task.id]" class="task-row" [attr.data-status]="taskUiStatus(task)">
+                  <span class="task-row__body">
+                    <span class="task-row__course">{{ courseName(task) }}</span>
+                    <span class="task-row__title">{{ task.title }}</span>
+                    <span class="task-row__meta">
+                      {{ formatDue(task.dueDate) }}
+                      · {{ task.maxScore ?? '—' }} pts
+                      @if (task.submission?.score != null) {
+                        · Nota {{ task.submission!.score }}
+                      }
                     </span>
-                  }
-                  @if (task.submission?.score != null && task.submission!.score !== undefined) {
-                    <span class="task-meta-chip task-meta-chip--grade">
-                      <i class="fas fa-award" aria-hidden="true"></i>
-                      Nota {{ task.submission!.score }}/{{ task.maxScore ?? '—' }}
-                    </span>
-                  }
-                </div>
-              </div>
-              <div class="task-card__action">
-                <a [routerLink]="['/tareas', task.id]" class="btn-task-open">
-                  @if (taskUiStatus(task) === 'pendiente' || taskUiStatus(task) === 'vencida') {
-                    Entregar
-                  } @else {
-                    Ver
-                  }
-                  <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                  </span>
+                  <span class="task-row__status">{{ taskUiStatusLabel(task) }}</span>
                 </a>
-              </div>
-            </article>
-          </li>
+              </li>
+            }
+          </ul>
         }
-      </ul>
+      </section>
     }
-  }
+  </div>
 </div>
