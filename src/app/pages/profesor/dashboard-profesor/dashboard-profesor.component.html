@@ -1,177 +1,117 @@
-<div class="dashboard-container">
-  <div class="dashboard-header">
-    <div class="header-content">
-      <div class="welcome-section">
-        <h1 class="welcome-title">Bienvenido, {{ teacherName() }}</h1>
-        @if (specialty()) {
-          <p class="welcome-subtitle">{{ specialty() }}</p>
-        }
+<div class="prof-dash">
+
+  @if (loading()) {
+    <div class="prof-dash__loading" aria-busy="true">
+      <div class="skel skel--hero"></div>
+      <div class="skel-row">
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
       </div>
     </div>
-    <div class="current-date">
-      <i class="fas fa-calendar-alt"></i>
-      <span class="date-text">{{ getCurrentDate() }}</span>
+  } @else if (error()) {
+    <div class="prof-dash__error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="prof-dash__retry" (click)="loadDashboard()">Reintentar</button>
     </div>
-  </div>
+  } @else {
 
-  <!-- Alertas -->
-  @if (alerts().length > 0) {
-    <div class="alerts-section">
-      @for (alert of alerts(); track $index) {
-        <div class="alert alert-{{ alert.type }}">
-          <span class="alert-icon">
-            @if (alert.type === 'warning') { <i class="fas fa-exclamation-triangle"></i> }
-            @if (alert.type === 'info') { <i class="fas fa-info-circle"></i> }
-            @if (alert.type === 'error') { <i class="fas fa-times-circle"></i> }
-          </span>
-          <span class="alert-message">{{ alert.message }}</span>
-          <a [routerLink]="alert.link" class="alert-link">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
+    <header class="prof-dash__hero">
+      <img class="prof-dash__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="prof-dash__hero-veil"></div>
+      <div class="prof-dash__hero-content">
+        <img src="/only-logo.png" alt="" class="prof-dash__crest" />
+        <div>
+          <h1 class="prof-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
+          <p class="prof-dash__brand">
+            @if (specialty()) {
+              {{ specialty() }}
+            } @else {
+              Santa María Laura
+            }
+          </p>
         </div>
+      </div>
+    </header>
+
+    <div class="prof-dash__body">
+
+      <section class="metrics" aria-label="Resumen">
+        <a routerLink="/profesor/cursos" class="metric">
+          <span class="metric__n">{{ totalCourses() }}</span>
+          <span class="metric__l">Cursos</span>
+        </a>
+        <a routerLink="/profesor/cursos" class="metric">
+          <span class="metric__n">{{ totalStudents() }}</span>
+          <span class="metric__l">Estudiantes</span>
+        </a>
+        <a routerLink="/profesor/tareas" class="metric">
+          <span class="metric__n">{{ pendingGrading() }}</span>
+          <span class="metric__l">Por calificar</span>
+        </a>
+        <a routerLink="/profesor/asistencia" class="metric">
+          <span class="metric__n">{{ attendancePending() }}</span>
+          <span class="metric__l">Asistencias</span>
+        </a>
+      </section>
+
+      @if (hasAttention()) {
+        <section class="pulse" aria-label="Pendientes">
+          @if (pendingGrading() > 0) {
+            <a routerLink="/profesor/tareas" class="pulse__item">
+              <span class="pulse__n">{{ pendingGrading() }}</span>
+              <span class="pulse__l">Tareas por calificar</span>
+            </a>
+          }
+          @if (attendancePending() > 0) {
+            <a routerLink="/profesor/asistencia" class="pulse__item">
+              <span class="pulse__n">{{ attendancePending() }}</span>
+              <span class="pulse__l">Asistencias pendientes</span>
+            </a>
+          }
+        </section>
       }
+
+      <div class="prof-dash__split">
+        <section class="feed" aria-labelledby="courses-title">
+          <div class="feed__head">
+            <h2 id="courses-title">Mis cursos</h2>
+            @if (!coursesLoading() && teacherCourses().length > 0) {
+              <a routerLink="/profesor/cursos">Ver todos</a>
+            }
+          </div>
+
+          @if (coursesLoading()) {
+            <p class="feed__empty">Cargando cursos…</p>
+          } @else if (teacherCourses().length === 0) {
+            <p class="feed__empty">Sin cursos asignados aún</p>
+          } @else {
+            <ul class="course-list">
+              @for (c of teacherCourses(); track c.id) {
+                <li>
+                  <a [routerLink]="courseLink(c)" class="course-row">
+                    <span class="course-row__mark" [style.background]="courseColor(c)">{{ courseInitial(c) }}</span>
+                    <span class="course-row__body">
+                      <span class="course-row__name">{{ c.course?.name || 'Curso' }}</span>
+                      @if (courseSubtitle(c)) {
+                        <span class="course-row__meta">{{ courseSubtitle(c) }}</span>
+                      }
+                    </span>
+                    <span class="course-row__count">{{ rosterStudentCount(c) }} est.</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <nav class="shortcuts" aria-label="Accesos">
+          @for (s of shortcuts; track s.link) {
+            <a [routerLink]="s.link">{{ s.label }}</a>
+          }
+        </nav>
+      </div>
     </div>
   }
-
-  <!-- Resumen -->
-  <div class="summary-grid grid grid-cols-4">
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-book"></i></span>
-        <span class="summary-label">Cursos Activos</span>
-      </div>
-      <div class="summary-value">{{ totalCourses() }}</div>
-      <a [routerLink]="'/profesor/cursos'" class="summary-link">
-        Ver cursos <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-users"></i></span>
-        <span class="summary-label">Total Estudiantes</span>
-      </div>
-      <div class="summary-value">{{ totalStudents() }}</div>
-      <span class="summary-text">En todos los cursos</span>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-tasks"></i></span>
-        <span class="summary-label">Tareas Pendientes</span>
-      </div>
-      <div class="summary-value">{{ pendingGrading() }}</div>
-      <a [routerLink]="'/profesor/tareas'" class="summary-link">
-        Ver tareas <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
-
-    <div class="summary-card">
-      <div class="summary-header">
-        <span class="summary-icon"><i class="fas fa-calendar-check"></i></span>
-        <span class="summary-label">Asistencias Pendientes</span>
-      </div>
-      <div class="summary-value">{{ attendancePending() }}</div>
-      <a [routerLink]="'/profesor/asistencia'" class="summary-link">
-        Marcar asistencia <i class="fas fa-arrow-right"></i>
-      </a>
-    </div>
-  </div>
-
-  <!-- Cursos vinculados -->
-  <div class="section courses-dashboard-section">
-    <div class="courses-dashboard-header">
-      <h2 class="section-title">
-        <i class="fas fa-book"></i>
-        Mis cursos
-      </h2>
-      @if (!coursesLoading() && teacherCourses().length > 0) {
-        <a routerLink="/profesor/cursos" class="courses-dashboard-link">
-          Ver todos <i class="fas fa-arrow-right"></i>
-        </a>
-      }
-    </div>
-
-    @if (coursesLoading()) {
-      <div class="courses-loading">
-        <i class="fas fa-spinner fa-spin"></i>
-        <span>Cargando tus cursos…</span>
-      </div>
-    } @else if (teacherCourses().length === 0) {
-      <div class="courses-empty-dash">
-        <i class="fas fa-book-open"></i>
-        <p class="courses-empty-title">No tienes cursos asignados</p>
-        <p class="courses-empty-hint">Cuando la administración te vincule a uno o más cursos, aparecerán aquí.</p>
-      </div>
-    } @else {
-      <div class="courses-dashboard-grid">
-        @for (c of teacherCourses(); track c.id) {
-          <a [routerLink]="courseLink(c)"
-             class="course-dashboard-card"
-             [style.--course-accent]="courseColor(c)">
-            <div class="course-dashboard-card__accent"></div>
-            <div class="course-dashboard-card__top">
-              <div class="course-dashboard-card__logo">{{ courseInitial(c) }}</div>
-              @if (c.course?.code) {
-                <span class="course-dashboard-code">{{ c.course.code }}</span>
-              }
-            </div>
-            <h3 class="course-dashboard-name">{{ c.course?.name || 'Curso' }}</h3>
-            @if (courseSubtitle(c)) {
-              <p class="course-dashboard-meta">
-                <i class="fas fa-graduation-cap"></i> {{ courseSubtitle(c) }}
-              </p>
-            }
-            <div class="course-dashboard-card__footer">
-              <span class="course-dashboard-students" title="Estudiantes">
-                <i class="fas fa-users"></i> {{ rosterStudentCount(c) }} estudiantes
-              </span>
-              <span class="course-dashboard-cta">Abrir <i class="fas fa-arrow-right"></i></span>
-            </div>
-          </a>
-        }
-      </div>
-    }
-  </div>
-
-  <!-- Accesos Rápidos -->
-  <div class="section">
-    <h2 class="section-title">Accesos Rápidos</h2>
-    <div class="quick-access-grid grid grid-cols-3">
-      @for (item of quickAccess(); track item.title) {
-        <a [routerLink]="item.link" class="quick-access-card">
-          <div class="quick-access-icon-wrapper">
-            <i [class]="item.icon"></i>
-          </div>
-          <div class="quick-access-content">
-            <h3 class="quick-access-title">{{ item.title }}</h3>
-            @if (item.count !== undefined) {
-              <span class="quick-access-count">{{ item.count }}</span>
-            }
-          </div>
-          <i class="fas fa-arrow-right quick-access-arrow"></i>
-        </a>
-      }
-    </div>
-  </div>
-
-  <!-- Actividad Reciente -->
-  <div class="section">
-    <h2 class="section-title">Actividad Reciente</h2>
-    <div class="activity-list">
-      @for (activity of recentActivity(); track $index) {
-        <div class="activity-item">
-          <div class="activity-icon-wrapper">
-            @if (activity.type === 'grade') { <i class="fas fa-chart-line activity-icon"></i> }
-            @if (activity.type === 'attendance') { <i class="fas fa-calendar-check activity-icon"></i> }
-            @if (activity.type === 'task') { <i class="fas fa-check-circle activity-icon"></i> }
-          </div>
-          <div class="activity-content">
-            <p class="activity-message">{{ activity.message }}</p>
-            <span class="activity-time">{{ activity.time }}</span>
-          </div>
-        </div>
-      }
-    </div>
-  </div>
 </div>

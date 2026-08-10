@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { StudentService, StudentCourse } from '../../services/student.service';
+import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course-cover';
 
 @Component({
   selector: 'app-cursos',
@@ -19,31 +20,39 @@ export class CursosComponent implements OnInit {
   courses = signal<StudentCourse[]>([]);
 
   filteredCourses = computed(() => {
-    const q = this.searchQuery().toLowerCase();
+    const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.courses();
-    return this.courses().filter(c =>
-      c.course.name.toLowerCase().includes(q) ||
-      (c.course.code ?? '').toLowerCase().includes(q)
-    );
+    return this.courses().filter(c => {
+      const name = (c.name ?? c.course?.name ?? '').toLowerCase();
+      const code = (c.course?.code ?? c.code ?? '').toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
   });
 
   constructor(private studentService: StudentService) {}
 
   ngOnInit() {
+    this.reload();
+  }
+
+  reload() {
+    this.loading.set(true);
+    this.error.set('');
     this.studentService.getCourses().subscribe({
       next: (data) => { this.courses.set(data); this.loading.set(false); },
-      error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
+      error: () => { this.error.set('No se pudieron cargar los cursos.'); this.loading.set(false); }
     });
   }
 
   courseCoverUrl(c: StudentCourse): string {
-    const url = c.course?.imageUrl?.trim();
-    if (url) return url;
-    return '/images/course-default.svg';
+    return resolveCourseCoverUrl({
+      name: c.name ?? c.course?.name,
+      imageUrl: c.course?.imageUrl,
+    });
   }
 
   courseCoverAlt(c: StudentCourse): string {
-    return `Portada: ${c.course?.name ?? 'curso'}`;
+    return courseCoverAlt(c.name ?? c.course?.name);
   }
 
   gradeLabel(c: StudentCourse): string {
@@ -52,6 +61,4 @@ export class CursosComponent implements OnInit {
     if (g && sec) return `${g} · ${sec}`;
     return g || sec || '—';
   }
-
-  toggleView() { this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid'); }
 }

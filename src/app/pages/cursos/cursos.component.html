@@ -1,90 +1,90 @@
-<div class="cursos-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Mis Cursos</h1>
-      <p class="page-subtitle">Accede al contenido y tareas de cada curso</p>
+<div class="cursos-page">
+
+  <header class="cursos-page__hero">
+    <img class="cursos-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="cursos-page__hero-veil"></div>
+    <div class="cursos-page__hero-content">
+      <img src="/only-logo.png" alt="" class="cursos-page__crest" />
+      <div>
+        <h1 class="cursos-page__title">Mis cursos</h1>
+        <p class="cursos-page__brand">Santa María Laura</p>
+      </div>
     </div>
-    <div class="header-actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
+  </header>
+
+  <div class="cursos-page__body">
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar curso</span>
         <input
-          type="text"
-          class="form-input search-input"
-          placeholder="Buscar curso..."
+          type="search"
+          placeholder="Buscar curso…"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
+      </label>
+      <div class="view-toggle" role="group" aria-label="Tipo de vista">
+        <button type="button" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')">Cuadrícula</button>
+        <button type="button" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')">Lista</button>
       </div>
-      <button class="btn btn-secondary view-toggle" (click)="toggleView()" [title]="viewMode() === 'grid' ? 'Vista de lista' : 'Vista de cuadrícula'">
-        @if (viewMode() === 'grid') {
-          <i class="fas fa-list"></i> Lista
-        } @else {
-          <i class="fas fa-th"></i> Cuadrícula
-        }
-      </button>
     </div>
-  </div>
 
-  @if (loading()) {
-    <p class="loading-hint">Cargando cursos…</p>
-  } @else if (error()) {
-    <div class="empty-state">
-      <p>{{ error() }}</p>
-    </div>
-  } @else if (filteredCourses().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-book empty-icon"></i>
-      <h2>No hay cursos que coincidan</h2>
-      <p>Si no debería estar vacío, contacta con la administración.</p>
-    </div>
-  } @else {
-    @if (viewMode() === 'grid') {
-      <div class="courses-grid grid grid-cols-3">
+    @if (loading()) {
+      <div class="skel-grid" aria-busy="true">
+        <div class="skel skel--card"></div>
+        <div class="skel skel--card"></div>
+        <div class="skel skel--card"></div>
+      </div>
+    } @else if (error()) {
+      <div class="cursos-page__error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="cursos-page__retry" (click)="reload()">Reintentar</button>
+      </div>
+    } @else if (filteredCourses().length === 0) {
+      <p class="empty">Sin cursos que coincidan</p>
+    } @else if (viewMode() === 'grid') {
+      <div class="courses-grid">
         @for (course of filteredCourses(); track course.id) {
-          <article class="course-card">
-            <div class="course-card__media">
-              <img [src]="courseCoverUrl(course)" [alt]="courseCoverAlt(course)" class="course-card__img" loading="lazy" />
-              @if (course.course?.color) {
-                <div class="course-card__tint" [style.--course-accent]="course.course!.color"></div>
-              }
+          <a [routerLink]="['/cursos', course.id]" class="course-tile">
+            <div class="course-tile__media">
+              <img
+                [src]="courseCoverUrl(course)"
+                [alt]="courseCoverAlt(course)"
+                class="course-tile__img"
+                loading="lazy"
+              />
+              <div class="course-tile__veil"></div>
             </div>
-            <div class="course-card__body">
-              <h2 class="course-card__name">{{ course.name }}</h2>
-              <p class="course-card__grade">{{ gradeLabel(course) }}</p>
-              <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-block course-card__cta">
-                Ver detalle
-              </a>
+            <div class="course-tile__body">
+              <h2 class="course-tile__name">{{ course.name ?? course.course?.name }}</h2>
+              <p class="course-tile__meta">{{ gradeLabel(course) }}</p>
             </div>
-          </article>
+          </a>
         }
       </div>
     } @else {
-      <div class="courses-list-wrap">
-        <table class="courses-table courses-table--simple">
-          <thead>
-            <tr>
-              <th>Portada</th>
-              <th>Curso</th>
-              <th>Grado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (course of filteredCourses(); track course.id) {
-              <tr>
-                <td class="td-thumb">
-                  <img [src]="courseCoverUrl(course)" [alt]="''" class="course-thumb" loading="lazy" />
-                </td>
-                <td><strong>{{ course.name }}</strong></td>
-                <td>{{ gradeLabel(course) }}</td>
-                <td class="td-action">
-                  <a [routerLink]="['/cursos', course.id]" class="btn btn-primary btn-sm">Ver detalle</a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <section class="feed" aria-label="Lista de cursos">
+        <ul class="course-list">
+          @for (course of filteredCourses(); track course.id) {
+            <li>
+              <a [routerLink]="['/cursos', course.id]" class="course-row">
+                <img
+                  [src]="courseCoverUrl(course)"
+                  alt=""
+                  class="course-row__thumb"
+                  loading="lazy"
+                />
+                <span class="course-row__body">
+                  <span class="course-row__name">{{ course.name ?? course.course?.name }}</span>
+                  <span class="course-row__meta">{{ gradeLabel(course) }}</span>
+                </span>
+                <span class="course-row__cta">Abrir</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
     }
-  }
+  </div>
 </div>

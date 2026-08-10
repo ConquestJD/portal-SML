@@ -1,12 +1,8 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
-import { BadgeComponent } from '../../shared/components/badge/badge.component';
-import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 import { DashboardService, StudentDashboard } from '../../services/dashboard.service';
 import { AuthService } from '../../services/auth.service';
 import { StudentService, StudentCourse, StudentTask, StudentGrade } from '../../services/student.service';
@@ -27,16 +23,10 @@ export interface UpcomingEvalItem {
   time: string;
 }
 
-export interface ActivityItem {
-  message: string;
-  time: string;
-  type: string;
-}
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatCardComponent, BadgeComponent, EmptyStateComponent, SkeletonComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -45,44 +35,41 @@ export class DashboardComponent implements OnInit {
   error = signal('');
 
   studentName = signal('');
+  firstName = computed(() => this.studentName().trim().split(/\s+/)[0] || 'Estudiante');
   grade = signal('');
   section = signal('');
   studentCode = signal('');
+  currentPeriod = signal('');
 
   pendingTasks = signal(0);
-  totalCourses = signal(0);
   presentCount = signal(0);
   absentCount = signal(0);
   lateCount = signal(0);
-  recentGrades = signal<unknown[]>([]);
   recentAnnouncements = signal<unknown[]>([]);
 
-  /** Promedio mostrado en KPI (número o "—"). */
   averageGrade = signal<string | number>('—');
-  /** Cantidad de entregas / evaluaciones próximas (tareas con fecha límite). */
   upcomingEvaluationsCount = signal(0);
-
   newCommunications = signal(0);
   heroBanner = signal<DashboardHeroBanner | null>(null);
   alerts = signal<{ type: string; message: string; link: string }[]>([]);
   upcomingEvaluationsList = signal<UpcomingEvalItem[]>([]);
-  recentActivity = signal<ActivityItem[]>([]);
-
-  /** Cursos matriculados (vista resumen). */
   enrolledCourses = signal<StudentCourse[]>([]);
-  /** Primer curso para enlace a mensajería. */
-  firstCourseId = signal('');
 
-  quickAccess = signal([
-    { icon: 'fas fa-book', title: 'Mis Cursos', link: '/cursos', count: 0 },
-    { icon: 'fas fa-tasks', title: 'Tareas', link: '/tareas', count: 0 },
-    { icon: 'fas fa-chart-line', title: 'Notas', link: '/notas' },
-    { icon: 'fas fa-calendar-alt', title: 'Asistencia', link: '/asistencia' },
-    { icon: 'fas fa-bullhorn', title: 'Comunicados', link: '/comunicados' },
-    { icon: 'fas fa-user', title: 'Perfil', link: '/perfil' }
-  ]);
+  hasAttention = computed(() =>
+    !!this.heroBanner() ||
+    this.newCommunications() > 0 ||
+    this.alerts().length > 0 ||
+    (!this.heroBanner() && this.pendingTasks() > 0)
+  );
 
-  currentPeriod = signal('');
+  shortcuts = [
+    { label: 'Mis Cursos', link: '/cursos' },
+    { label: 'Tareas', link: '/tareas' },
+    { label: 'Notas', link: '/notas' },
+    { label: 'Asistencia', link: '/asistencia' },
+    { label: 'Comunicados', link: '/comunicados' },
+    { label: 'Perfil', link: '/perfil' },
+  ];
 
   constructor(
     private dashboardService: DashboardService,
@@ -94,6 +81,16 @@ export class DashboardComponent implements OnInit {
   ngOnInit() {
     const user = this.authService.user();
     if (user) this.studentName.set(user.name);
+    this.loadAll();
+  }
+
+  reload() {
+    this.loadAll();
+  }
+
+  private loadAll() {
+    this.loading.set(true);
+    this.error.set('');
 
     const emptyAnn = {
       data: [] as Announcement[],
@@ -112,7 +109,7 @@ export class DashboardComponent implements OnInit {
       ),
     }).subscribe(({ dashboard, courses, tasks, grades, announcements }) => {
       if (!dashboard) {
-        this.error.set('Error al cargar dashboard');
+        this.error.set('No se pudo cargar el panel.');
         this.loading.set(false);
         return;
       }
@@ -126,17 +123,13 @@ export class DashboardComponent implements OnInit {
       this.studentCode.set(dashboard.student.studentCode);
       this.currentPeriod.set(dashboard.student.academicYear ?? '');
       this.pendingTasks.set(dashboard.summary.pendingTasks);
-      this.totalCourses.set(dashboard.summary.totalCourses);
       const att = dashboard.summary.attendanceSummary;
       this.presentCount.set(att['PRESENT'] ?? 0);
       this.absentCount.set(att['ABSENT'] ?? 0);
       this.lateCount.set(att['LATE'] ?? 0);
-      this.recentGrades.set(dashboard.recentGrades);
       this.recentAnnouncements.set(dashboard.recentAnnouncements);
 
       this.enrolledCourses.set(courses);
-      this.firstCourseId.set(courses[0]?.id ?? '');
-
       this.averageGrade.set(this.computeAverageGrade(dashboard.recentGrades, grades));
 
       const upcoming = this.buildUpcomingFromTasks(tasks);
@@ -144,8 +137,7 @@ export class DashboardComponent implements OnInit {
       this.upcomingEvaluationsCount.set(upcoming.length);
 
       const ann = announcements.data ?? [];
-      const unread = ann.filter(a => !a.isRead).length;
-      this.newCommunications.set(unread);
+      this.newCommunications.set(ann.filter(a => !a.isRead).length);
 
       const urgent = ann.find(a => !a.isRead && (a.priority === 'HIGH' || (a.priority as string) === 'URGENT'));
       if (urgent) {
@@ -157,17 +149,9 @@ export class DashboardComponent implements OnInit {
           link: `/comunicados/${urgent.id}`,
           badge: 'Importante',
         });
+      } else {
+        this.heroBanner.set(null);
       }
-
-      this.recentActivity.set(this.buildRecentActivity(dashboard, tasks, ann));
-
-      this.quickAccess.update(qa =>
-        qa.map(item => {
-          if (item.title === 'Mis Cursos') return { ...item, count: courses.length || dashboard.summary.totalCourses };
-          if (item.title === 'Tareas') return { ...item, count: dashboard.summary.pendingTasks };
-          return item;
-        }),
-      );
 
       this.loading.set(false);
     });
@@ -179,14 +163,32 @@ export class DashboardComponent implements OnInit {
     return Math.round((this.presentCount() / total) * 100);
   }
 
-  getCurrentDate(): string {
-    return new Date().toLocaleDateString('es-ES', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+  greeting(): string {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 19) return 'Buenas tardes';
+    return 'Buenas noches';
   }
 
-  getCurrentTime(): string {
-    return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  courseInitial(c: StudentCourse): string {
+    const name = (c.name ?? c.course?.name ?? '').trim();
+    return name ? name.charAt(0).toUpperCase() : '·';
+  }
+
+  formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  }
+
+  previewAnnouncement(raw: unknown): { id: string; title: string; dateIso?: string } | null {
+    const o = raw as Record<string, unknown>;
+    const id = o?.['id'];
+    const title = o?.['title'];
+    if (typeof id !== 'string' || typeof title !== 'string') return null;
+    const at = o?.['publishedAt'] ?? o?.['date'];
+    const dateIso = typeof at === 'string' ? at : undefined;
+    return { id, title, dateIso };
   }
 
   private computeAverageGrade(recent: unknown[], allGrades: StudentGrade[]): string | number {
@@ -229,92 +231,5 @@ export class DashboardComponent implements OnInit {
           time: dt.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
         };
       });
-  }
-
-  private fmtRelativeTime(iso: string | undefined | null): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-  }
-
-  private buildRecentActivity(
-    dashboard: StudentDashboard,
-    tasks: StudentTask[],
-    announcements: Announcement[],
-  ): ActivityItem[] {
-    type T = ActivityItem & { ts: number };
-    const items: T[] = [];
-
-    for (const g of dashboard.recentGrades ?? []) {
-      const o = g as Record<string, unknown>;
-      const score = o['score'];
-      const course = (o['course'] as Record<string, string> | undefined)?.['name'] ?? (o['courseName'] as string) ?? 'Curso';
-      const at = (o['createdAt'] ?? o['date']) as string | undefined;
-      const ts = at ? new Date(at).getTime() : 0;
-      if (score != null && score !== '') {
-        items.push({
-          message: `Calificación en ${course}: ${String(score)}`,
-          time: this.fmtRelativeTime(at),
-          type: 'grade',
-          ts: ts || 0,
-        });
-      }
-    }
-
-    const annSeen = new Set<string>();
-    for (const a of dashboard.recentAnnouncements ?? []) {
-      const o = a as Record<string, string>;
-      const title = o['title'];
-      if (!title) continue;
-      const at = o['publishedAt'] ?? o['date'];
-      const key = `d:${title}`;
-      if (annSeen.has(key)) continue;
-      annSeen.add(key);
-      items.push({
-        message: `Comunicado: ${title}`,
-        time: this.fmtRelativeTime(at),
-        type: 'announcement',
-        ts: at ? new Date(at).getTime() : 0,
-      });
-    }
-
-    for (const a of announcements.slice(0, 8)) {
-      const key = `a:${a.id}`;
-      if (annSeen.has(key)) continue;
-      annSeen.add(key);
-      items.push({
-        message: `Comunicado: ${a.title}`,
-        time: this.fmtRelativeTime(a.publishedAt),
-        type: 'announcement',
-        ts: new Date(a.publishedAt).getTime(),
-      });
-    }
-
-    for (const t of tasks.slice(0, 6)) {
-      if (!t.dueDate) continue;
-      items.push({
-        message: `Tarea: ${t.title}`,
-        time: `Entrega ${this.fmtRelativeTime(t.dueDate)}`,
-        type: 'task',
-        ts: new Date(t.dueDate).getTime(),
-      });
-    }
-
-    return items
-      .sort((a, b) => b.ts - a.ts)
-      .slice(0, 15)
-      .map(({ ts: _t, ...rest }) => rest);
-  }
-
-  /** Fila segura para enlazar comunicados del payload del dashboard. */
-  previewAnnouncement(raw: unknown): { id: string; title: string; dateIso?: string } | null {
-    const o = raw as Record<string, unknown>;
-    const id = o?.['id'];
-    const title = o?.['title'];
-    if (typeof id !== 'string' || typeof title !== 'string') return null;
-    const at = o?.['publishedAt'] ?? o?.['date'];
-    const dateIso = typeof at === 'string' ? at : undefined;
-    return { id, title, dateIso };
   }
 }

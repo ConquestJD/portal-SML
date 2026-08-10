@@ -1,251 +1,202 @@
-<div class="curso-detalle-container">
-  <div class="breadcrumb">
-    <a routerLink="/cursos" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Cursos
-    </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ course()?.name ?? '…' }}</span>
-  </div>
+<div class="detalle">
 
-  <div class="course-header">
-    <div class="course-header-content">
-      <div class="course-title-wrapper">
-        <div class="course-code-badge">
-          <i class="fas fa-book"></i>
-          <span>{{ course()?.code ?? '—' }}</span>
-        </div>
-        <h1 class="course-title">{{ course()?.name }}</h1>
-        <p class="course-period">Período {{ course()?.period ?? '—' }}</p>
-      </div>
-      <div class="teacher-info">
-        <div class="teacher-photo-wrapper">
-          <img [src]="course()?.teacherPhoto ?? ''" [alt]="course()?.teacherName ?? 'Docente'" class="teacher-photo">
-        </div>
-        <div class="teacher-details">
-          <p class="teacher-label">Docente</p>
-          <p class="teacher-name">{{ course()?.teacherName ?? '—' }}</p>
-          <a href="mailto:teacher@colegio.edu" class="teacher-contact">
-            <i class="fas fa-envelope"></i> Contactar docente
-          </a>
-        </div>
+  @if (loading()) {
+    <div class="detalle__loading" aria-busy="true">
+      <div class="skel skel--hero"></div>
+      <div class="skel-body">
+        <div class="skel skel--line"></div>
+        <div class="skel skel--block"></div>
       </div>
     </div>
-    <div class="course-average">
-      <div class="average-icon-wrapper">
-        <i class="fas fa-chart-line"></i>
-      </div>
-      <div class="average-content">
-        <span class="average-label">Promedio</span>
-        <span class="average-value">{{ course()?.average ?? course()?.averageScore ?? '—' }}</span>
-      </div>
+  } @else if (error()) {
+    <div class="detalle__error" role="alert">
+      <p>{{ error() }}</p>
+      <a routerLink="/cursos" class="detalle__retry">Volver a cursos</a>
     </div>
-  </div>
+  } @else {
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">
-      <i class="fas fa-book"></i> Contenido
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
-      <i class="fas fa-tasks"></i> Tareas
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">
-      <i class="fas fa-chart-line"></i> Calificaciones
-    </button>
-  </div>
+    <header class="detalle__hero">
+      <img class="detalle__hero-photo" [src]="coverUrl()" [alt]="coverAlt()" decoding="async" />
+      <div class="detalle__hero-veil"></div>
+      <div class="detalle__hero-top">
+        <a routerLink="/cursos" class="detalle__back">← Cursos</a>
+      </div>
+      <div class="detalle__hero-content">
+        <p class="detalle__code">{{ course()?.code ?? course()?.course?.code ?? 'Curso' }}</p>
+        <h1 class="detalle__title">{{ course()?.name ?? course()?.course?.name }}</h1>
+        <p class="detalle__brand">
+          @if (course()?.teacherName) {
+            {{ course()?.teacherName }}
+          }
+          @if (course()?.period || course()?.academicYear?.name) {
+            @if (course()?.teacherName) { · }
+            {{ course()?.period ?? course()?.academicYear?.name }}
+          }
+          @if (!course()?.teacherName && !(course()?.period || course()?.academicYear?.name)) {
+            Santa María Laura
+          }
+        </p>
+      </div>
+    </header>
 
-  <div class="tab-content">
-    @if (activeTab() === 'contenido') {
-      <div class="content-section">
-        @if (materialDownloadError()) {
-          <p class="alert-error" role="alert">{{ materialDownloadError() }}</p>
-        }
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-book"></i> Plan de Estudios
-          </h2>
+    <div class="detalle__body">
+
+      <section class="metrics" aria-label="Resumen del curso">
+        <div class="metric">
+          <span class="metric__n">{{ course()?.average ?? course()?.averageScore ?? '—' }}</span>
+          <span class="metric__l">Promedio</span>
         </div>
-        <div class="units-list">
-          @for (unit of units(); track unit.id) {
-            <div class="unit-item" [class.expanded]="unit.isExpanded">
-              <div class="unit-header" (click)="toggleUnit(unit.id)">
-                @if (unit.number !== null && unit.number !== undefined) {
-                  <div class="unit-number">{{ unit.number.toString().padStart(2, '0') }}</div>
-                } @else {
-                  <div class="unit-number unit-number--folder" aria-hidden="true">
-                    <i class="fas fa-folder"></i>
-                  </div>
-                }
-                <div class="unit-content">
-                  <h3>{{ unit.title }}</h3>
-                  <p>{{ unit.description }}</p>
-                </div>
-                <div class="unit-toggle">
-                  <i class="fas" [class.fa-chevron-down]="!unit.isExpanded" [class.fa-chevron-up]="unit.isExpanded"></i>
-                </div>
-              </div>
-              @if (unit.isExpanded) {
-                <div class="unit-materials">
-                  <h4 class="materials-title">
-                    <i class="fas fa-file"></i> Materiales de la Unidad
-                  </h4>
-                  @if (unit.materials && unit.materials.length > 0) {
-                    <div class="materials-list">
-                      @for (material of unit.materials; track material.id) {
-                        <div class="material-item">
-                          <div class="material-icon-wrapper" 
-                            [class.pdf]="material.type === 'PDF'" 
-                            [class.video]="material.type === 'Video'"
-                            [class.documento]="material.type === 'Documento'"
-                            [class.imagen]="material.type === 'Imagen'">
-                            @if (material.type === 'PDF') { <i class="fas fa-file-pdf"></i> }
-                            @if (material.type === 'Video') { <i class="fas fa-video"></i> }
-                            @if (material.type === 'Documento') { <i class="fas fa-file-word"></i> }
-                            @if (material.type === 'Imagen') { <i class="fas fa-file-image"></i> }
-                            @if (material.type === 'Otro') { <i class="fas fa-file"></i> }
-                          </div>
-                          <div class="material-info">
-                            <h4>{{ material.name }}</h4>
-                            <div class="material-meta">
-                              <span class="material-type">{{ material.type }}</span>
-                              <span class="material-separator">•</span>
-                              <span class="material-size">{{ material.size }}</span>
-                              <span class="material-separator">•</span>
-                              <span class="material-date">{{ material.date }}</span>
-                            </div>
-                          </div>
-                          <button class="btn btn-primary" (click)="downloadMaterial(material)">
-                            <i class="fas fa-download"></i> Descargar
-                          </button>
-                        </div>
+        <div class="metric">
+          <span class="metric__n">{{ tasks().length || '—' }}</span>
+          <span class="metric__l">Tareas</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ units().length || '—' }}</span>
+          <span class="metric__l">Unidades</span>
+        </div>
+        <div class="metric metric--accent">
+          <span class="metric__n">{{ pendingTasksCount() }}</span>
+          <span class="metric__l">Pendientes</span>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Secciones del curso">
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">Contenido</button>
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">Calificaciones</button>
+      </nav>
+
+      <div class="panel">
+
+        @if (activeTab() === 'contenido') {
+          @if (materialDownloadError()) {
+            <p class="alert" role="alert">{{ materialDownloadError() }}</p>
+          }
+          <div class="panel__head">
+            <h2>Plan de estudios</h2>
+          </div>
+          @if (units().length === 0) {
+            <p class="panel__empty">Sin unidades publicadas aún</p>
+          } @else {
+            <ul class="unit-list">
+              @for (unit of units(); track unit.id) {
+                <li class="unit" [class.unit--open]="unit.isExpanded">
+                  <button type="button" class="unit__head" (click)="toggleUnit(unit.id)">
+                    <span class="unit__n">
+                      @if (unit.number != null) {
+                        {{ unit.number.toString().padStart(2, '0') }}
+                      } @else {
+                        —
+                      }
+                    </span>
+                    <span class="unit__text">
+                      <span class="unit__title">{{ unit.title }}</span>
+                      @if (unit.description) {
+                        <span class="unit__desc">{{ unit.description }}</span>
+                      }
+                    </span>
+                    <span class="unit__chev" aria-hidden="true">{{ unit.isExpanded ? '−' : '+' }}</span>
+                  </button>
+                  @if (unit.isExpanded) {
+                    <div class="unit__body">
+                      @if (unit.materials?.length) {
+                        <ul class="mat-list">
+                          @for (material of unit.materials; track material.id) {
+                            <li class="mat">
+                              <span class="mat__type">{{ material.type }}</span>
+                              <span class="mat__info">
+                                <span class="mat__name">{{ material.name }}</span>
+                                <span class="mat__meta">{{ material.size }} · {{ material.date }}</span>
+                              </span>
+                              <button type="button" class="mat__dl" (click)="downloadMaterial(material)">Descargar</button>
+                            </li>
+                          }
+                        </ul>
+                      } @else {
+                        <p class="panel__empty">Sin materiales en esta unidad</p>
                       }
                     </div>
-                  } @else {
-                    <div class="empty-materials">
-                      <i class="fas fa-folder-open"></i>
-                      <p>No hay materiales disponibles para esta unidad.</p>
-                    </div>
                   }
-                </div>
+                </li>
               }
-            </div>
+            </ul>
           }
-        </div>
-      </div>
-    }
+        }
 
-    @if (activeTab() === 'tareas') {
-      <div class="tasks-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-tasks"></i> Tareas del Curso
-          </h2>
-        </div>
-        <div class="tasks-list">
-          @for (task of tasks(); track task.id) {
-            <div class="task-item" [class.task-entregada]="taskIsDone(task)">
-              <div class="task-icon-wrapper">
-                <i class="fas fa-tasks"></i>
-              </div>
-              <div class="task-info">
-                <h4>{{ task.title }}</h4>
-                <div class="task-details">
-                  <div class="task-detail-item">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Fecha límite: <strong>{{ task.dueDate ?? '—' }}</strong></span>
-                  </div>
-                  @if (task.submission?.score != null) {
-                    <div class="task-detail-item">
-                      <i class="fas fa-check-circle"></i>
-                      <span>Calificación: <strong class="task-grade">{{ task.submission?.score }}</strong></span>
+        @if (activeTab() === 'tareas') {
+          <div class="panel__head">
+            <h2>Tareas del curso</h2>
+          </div>
+          @if (tasks().length === 0) {
+            <p class="panel__empty">Aún no hay tareas en este curso</p>
+          } @else {
+            <ul class="feed-list">
+              @for (task of tasks(); track task.id) {
+                <li>
+                  <a [routerLink]="['/tareas', task.id]" class="feed-row">
+                    <span class="feed-row__body">
+                      <span class="feed-row__title">{{ task.title }}</span>
+                      <span class="feed-row__meta">
+                        Entrega {{ task.dueDate ?? '—' }}
+                        @if (task.submission?.score != null) {
+                          · Nota {{ task.submission?.score }}
+                        }
+                      </span>
+                    </span>
+                    <span class="feed-row__badge" [class.feed-row__badge--done]="taskIsDone(task)">
+                      {{ taskStatusLabel(task) }}
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @if (activeTab() === 'calificaciones') {
+          <div class="panel__head">
+            <h2>Calificaciones</h2>
+            <span class="panel__avg">Promedio {{ gradesCourseAverage() }}</span>
+          </div>
+          @if (courseGradeRows().length === 0) {
+            <p class="panel__empty">Sin calificaciones registradas aún</p>
+          } @else {
+            <ul class="feed-list">
+              @for (row of courseGradeRows(); track row.id) {
+                <li>
+                  @if (row.kind === 'task' && row.taskId) {
+                    <a [routerLink]="['/tareas', row.taskId]" class="feed-row">
+                      <span class="feed-row__body">
+                        <span class="feed-row__kicker">{{ row.kind === 'task' ? 'Tarea' : 'Período' }}</span>
+                        <span class="feed-row__title">{{ row.label }}</span>
+                        <span class="feed-row__meta">{{ row.dateLabel }}</span>
+                      </span>
+                      <span class="feed-row__score">
+                        <strong>{{ row.scoreDisplay }}</strong>
+                        @if (row.pctDisplay !== '—') {
+                          <span>{{ row.pctDisplay }}</span>
+                        }
+                      </span>
+                    </a>
+                  } @else {
+                    <div class="feed-row feed-row--static">
+                      <span class="feed-row__body">
+                        <span class="feed-row__kicker">Período</span>
+                        <span class="feed-row__title">{{ row.label }}</span>
+                        <span class="feed-row__meta">{{ row.dateLabel }}</span>
+                      </span>
+                      <span class="feed-row__score">
+                        <strong>{{ row.scoreDisplay }}</strong>
+                      </span>
                     </div>
                   }
-                </div>
-              </div>
-              <div class="task-status">
-                <span class="badge" [class.badge-success]="taskIsDone(task)" [class.badge-warning]="!taskIsDone(task)">
-                  {{ taskStatusLabel(task) }}
-                </span>
-                <a [routerLink]="['/tareas', task.id]" class="btn btn-primary btn-sm">
-                  <i class="fas fa-arrow-right"></i> Ver Detalle
-                </a>
-              </div>
-            </div>
-          } @empty {
-            <div class="tasks-empty">
-              <i class="fas fa-folder-open"></i>
-              <p><strong>Aún no hay tareas en este curso.</strong></p>
-            </div>
+                </li>
+              }
+            </ul>
           }
-        </div>
-      </div>
-    }
+        }
 
-    @if (activeTab() === 'calificaciones') {
-      <div class="grades-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-chart-line"></i> Calificaciones y evaluaciones
-          </h2>
-          <p class="section-subtitle">
-            Incluye calificaciones por período y notas de tareas entregadas.
-          </p>
-        </div>
-        <table class="grades-table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Evaluación</th>
-              <th>Fecha</th>
-              <th>Puntos máx.</th>
-              <th>Obtenidos</th>
-              <th>Porcentaje</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of courseGradeRows(); track row.id) {
-              <tr [class.grade-row-task]="row.kind === 'task'">
-                <td>
-                  @if (row.kind === 'task') {
-                    <span class="grade-type-badge grade-type-task">Tarea</span>
-                  } @else {
-                    <span class="grade-type-badge grade-type-period">Período</span>
-                  }
-                </td>
-                <td>
-                  @if (row.kind === 'task' && row.taskId) {
-                    <a [routerLink]="['/tareas', row.taskId]" class="grade-eval-link">{{ row.label }}</a>
-                  } @else {
-                    <strong>{{ row.label }}</strong>
-                  }
-                </td>
-                <td>{{ row.dateLabel }}</td>
-                <td>{{ row.maxPoints }}</td>
-                <td><strong>{{ row.scoreDisplay }}</strong></td>
-                <td>
-                  @if (row.pctDisplay !== '—') {
-                    <span class="percentage-badge high">{{ row.pctDisplay }}</span>
-                  } @else {
-                    <span class="text-muted">—</span>
-                  }
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6">No hay calificaciones registradas en este curso aún.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <div class="grade-summary">
-          <div class="summary-item highlight">
-            <div class="summary-item-label">
-              <i class="fas fa-chart-line"></i>
-              <span>Promedio (períodos y tareas con nota)</span>
-            </div>
-            <strong class="summary-item-value final">{{ gradesCourseAverage() }}</strong>
-          </div>
-        </div>
       </div>
-    }
-  </div>
+    </div>
+  }
 </div>

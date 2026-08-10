@@ -5,8 +5,26 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentService, StudentCourse, StudentTask, StudentGrade } from '../../services/student.service';
+import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course-cover';
 
 type TabType = 'contenido' | 'tareas' | 'calificaciones' | 'comunicados' | 'mensajes' | 'foros' | 'compañeros';
+
+export type CourseUnitMaterial = {
+  id: string;
+  name: string;
+  type?: string;
+  size?: string;
+  date?: string;
+};
+
+export type CourseUnit = {
+  id: string;
+  title: string;
+  description?: string;
+  number?: number | null;
+  isExpanded?: boolean;
+  materials?: CourseUnitMaterial[];
+};
 
 /** Fila unificada: notas de período + tareas calificadas */
 export type CourseGradeRow = {
@@ -34,11 +52,25 @@ export class CursoDetalleComponent implements OnInit {
   error = signal('');
 
   course = signal<StudentCourse | null>(null);
-  units = signal<unknown[]>([]);
+  units = signal<CourseUnit[]>([]);
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
   /** Descarga de materiales del curso requiere token (no abrir URL en nueva pestaña). */
   materialDownloadError = signal('');
+
+  coverUrl = computed(() => {
+    const c = this.course();
+    return resolveCourseCoverUrl({
+      name: c?.name ?? c?.course?.name,
+      imageUrl: c?.course?.imageUrl,
+    });
+  });
+
+  coverAlt = computed(() => courseCoverAlt(this.course()?.name ?? this.course()?.course?.name));
+
+  pendingTasksCount = computed(() =>
+    this.tasks().filter((t) => !this.taskIsDone(t)).length
+  );
 
   courseGradeRows = computed((): CourseGradeRow[] => {
     const withTs: { row: CourseGradeRow; ts: number }[] = [];
@@ -124,6 +156,7 @@ export class CursoDetalleComponent implements OnInit {
 
     this.loadCourse();
     this.loadUnits();
+    this.loadTasks();
   }
 
   private tabFromQuery(raw: string | null): TabType | null {
@@ -141,7 +174,7 @@ export class CursoDetalleComponent implements OnInit {
 
   loadUnits() {
     this.studentService.getCourseUnits(this.courseId()).subscribe({
-      next: (data) => this.units.set(data)
+      next: (data) => this.units.set((data as CourseUnit[]) ?? []),
     });
   }
 
@@ -273,9 +306,7 @@ export class CursoDetalleComponent implements OnInit {
 
   toggleUnit(unitId: string) {
     this.units.update((list) =>
-      (list as Record<string, unknown>[]).map((u) =>
-        String(u['id']) === unitId ? { ...u, isExpanded: !Boolean(u['isExpanded']) } : u,
-      ),
+      list.map((u) => (u.id === unitId ? { ...u, isExpanded: !u.isExpanded } : u)),
     );
   }
 }
