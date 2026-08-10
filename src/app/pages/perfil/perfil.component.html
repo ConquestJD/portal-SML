@@ -1,257 +1,98 @@
-<div class="perfil-container">
-  <div class="perfil-header">
-    <div class="photo-section">
-      <div class="photo-wrapper">
-        <img [src]="studentData().photo" [alt]="studentData().fullName" class="student-photo">
-        <div class="photo-overlay">
-          <button class="change-photo-btn" title="Cambiar foto de perfil">
-            <i class="fas fa-camera"></i>
-          </button>
-        </div>
-      </div>
+<div class="perfil-page">
+
+  @if (loading()) {
+    <div class="perfil-page__loading" aria-busy="true">
+      <div class="skel skel--hero"></div>
+      <div class="skel-body"><div class="skel skel--block"></div></div>
     </div>
-    <div class="header-info">
-      <div class="student-badge">
-        <i class="fas fa-user"></i>
-        <span>Estudiante</span>
-      </div>
-      <h1 class="student-name">{{ studentData().fullName }}</h1>
-      <div class="student-details">
-        <div class="detail-row">
-          <i class="fas fa-book"></i>
-          <span class="student-code">Código: {{ studentData().code }}</span>
-        </div>
-        <div class="detail-row">
-          <i class="fas fa-calendar-alt"></i>
-          <span class="student-grade">{{ studentData().grade }}</span>
-        </div>
-      </div>
+  } @else if (error()) {
+    <div class="perfil-page__error" role="alert">
+      <p>{{ error() }}</p>
     </div>
-  </div>
+  } @else {
 
-  <div class="tabs">
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'personal'"
-      (click)="setTab('personal')"
-    >
-      <i class="fas fa-user"></i> Datos Personales
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'academico'"
-      (click)="setTab('academico')"
-    >
-      <i class="fas fa-book"></i> Datos Académicos
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'foto'"
-      (click)="setTab('foto')"
-    >
-      <i class="fas fa-camera"></i> Foto y Avatar
-    </button>
-  </div>
-
-  <div class="tab-content">
-    @if (activeTab() === 'personal') {
-      <div class="data-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-user"></i> Información Personal
-          </h2>
+    <header class="perfil-page__hero">
+      <img class="perfil-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="perfil-page__hero-veil"></div>
+      <div class="perfil-page__hero-content">
+        <div class="perfil-page__avatar-wrap">
+          @if (studentData().photo) {
+            <img [src]="studentData().photo" [alt]="studentData().fullName" class="perfil-page__avatar" />
+          } @else {
+            <span class="perfil-page__avatar perfil-page__avatar--initials">{{ initials() }}</span>
+          }
         </div>
-        <div class="data-grid">
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Nombre Completo</span>
-              <span class="data-value">{{ studentData().fullName }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Fecha de Nacimiento</span>
-              <span class="data-value">{{ studentData().birthDate }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Edad</span>
-              <span class="data-value">{{ studentData().age }} años</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-file"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">DNI</span>
-              <span class="data-value">{{ studentData().dni }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-home"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Dirección</span>
-              <span class="data-value">{{ studentData().address }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-phone"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Teléfono</span>
-              <span class="data-value">{{ studentData().phone }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-envelope"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Email</span>
-              <span class="data-value">{{ studentData().email }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Apoderado/Tutor</span>
-              <span class="data-value">{{ studentData().tutor }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper emergency">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Teléfono de Emergencia</span>
-              <span class="data-value">{{ studentData().emergencyPhone }}</span>
-            </div>
-          </div>
+        <div>
+          <h1 class="perfil-page__title">{{ studentData().fullName }}</h1>
+          <p class="perfil-page__brand">
+            {{ studentData().code || 'Estudiante' }}
+            @if (studentData().grade) { · {{ studentData().grade }} }
+            @if (studentData().section) { {{ studentData().section }} }
+          </p>
         </div>
       </div>
-    }
+    </header>
 
-    @if (activeTab() === 'academico') {
-      <div class="data-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-book"></i> Información Académica
-          </h2>
-        </div>
-        <div class="data-grid">
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Año Académico</span>
-              <span class="data-value">{{ academicData().academicYear }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-book"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Grado y Sección</span>
-              <span class="data-value">{{ academicData().grade }} - {{ academicData().section }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Turno</span>
-              <span class="data-value">{{ academicData().shift }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper">
-              <i class="fas fa-calendar-alt"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Fecha de Ingreso</span>
-              <span class="data-value">{{ academicData().admissionDate }}</span>
-            </div>
-          </div>
-          <div class="data-item highlight">
-            <div class="data-icon-wrapper success">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Promedio Histórico</span>
-              <span class="data-value highlight-value">{{ academicData().historicalAverage }}</span>
-            </div>
-          </div>
-          <div class="data-item">
-            <div class="data-icon-wrapper success">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="data-content">
-              <span class="data-label">Estado Académico</span>
-              <span class="data-value">
-                <span class="badge badge-success">{{ academicData().status }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
+    <div class="perfil-page__body">
 
-    @if (activeTab() === 'foto') {
-      <div class="data-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-camera"></i> Foto de Perfil
-          </h2>
-        </div>
-        <div class="photo-upload-section">
-          <div class="photo-preview-wrapper">
-            <div class="photo-preview">
-              <img [src]="studentData().photo" alt="Foto actual" class="preview-photo">
-              <div class="photo-overlay-preview">
-                <i class="fas fa-camera"></i>
-              </div>
-            </div>
-          </div>
-          <div class="upload-actions">
-            <button class="btn btn-primary">
-              <i class="fas fa-upload"></i> Subir Nueva Foto
-            </button>
-            <div class="upload-info">
-              <p class="upload-hint">
-                <i class="fas fa-file"></i> Formatos permitidos: JPG, PNG
-              </p>
-              <p class="upload-hint">
-                <i class="fas fa-info-circle"></i> Tamaño máximo: 2MB
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-  </div>
+      <nav class="tabs" aria-label="Secciones del perfil">
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'personal'" (click)="setTab('personal')">Personal</button>
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'academico'" (click)="setTab('academico')">Académico</button>
+        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'foto'" (click)="setTab('foto')">Foto</button>
+      </nav>
 
-  <div class="actions-section">
-    <button class="btn btn-secondary">
-      <i class="fas fa-download"></i> Descargar Perfil PDF
-    </button>
-  </div>
+      @if (uploadSuccess()) {
+        <p class="alert alert--ok">{{ uploadSuccess() }}</p>
+      }
+
+      @if (activeTab() === 'personal') {
+        <section class="feed">
+          <div class="feed__head"><h2>Datos personales</h2></div>
+          <ul class="data-list">
+            <li><span class="data-list__l">Nombre</span><span class="data-list__v">{{ studentData().fullName || '—' }}</span></li>
+            <li><span class="data-list__l">Email</span><span class="data-list__v">{{ studentData().email || '—' }}</span></li>
+            <li><span class="data-list__l">Teléfono</span><span class="data-list__v">{{ studentData().phone || '—' }}</span></li>
+            <li><span class="data-list__l">Fecha de nacimiento</span><span class="data-list__v">{{ formatDate(studentData().birthDate) }}</span></li>
+            <li><span class="data-list__l">Dirección</span><span class="data-list__v">{{ studentData().address || '—' }}</span></li>
+            <li><span class="data-list__l">Género</span><span class="data-list__v">{{ studentData().gender || '—' }}</span></li>
+            <li><span class="data-list__l">Grupo sanguíneo</span><span class="data-list__v">{{ studentData().bloodType || '—' }}</span></li>
+            <li><span class="data-list__l">Notas médicas</span><span class="data-list__v">{{ studentData().medicalNotes || '—' }}</span></li>
+          </ul>
+        </section>
+      }
+
+      @if (activeTab() === 'academico') {
+        <section class="feed">
+          <div class="feed__head"><h2>Datos académicos</h2></div>
+          <ul class="data-list">
+            <li><span class="data-list__l">Código</span><span class="data-list__v">{{ studentData().code || '—' }}</span></li>
+            <li><span class="data-list__l">Grado</span><span class="data-list__v">{{ studentData().grade || '—' }}</span></li>
+            <li><span class="data-list__l">Sección</span><span class="data-list__v">{{ studentData().section || '—' }}</span></li>
+            <li><span class="data-list__l">Año académico</span><span class="data-list__v">{{ academicData().academicYear || '—' }}</span></li>
+            <li><span class="data-list__l">Estado</span><span class="data-list__v">{{ academicData().status || '—' }}</span></li>
+          </ul>
+        </section>
+      }
+
+      @if (activeTab() === 'foto') {
+        <section class="feed">
+          <div class="feed__head"><h2>Foto de perfil</h2></div>
+          <div class="photo-panel">
+            @if (studentData().photo) {
+              <img [src]="studentData().photo" alt="" class="photo-panel__preview" />
+            } @else {
+              <span class="photo-panel__preview photo-panel__preview--empty">{{ initials() }}</span>
+            }
+            <div class="photo-panel__actions">
+              <label class="photo-panel__btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" hidden />
+                Subir nueva foto
+              </label>
+              <p class="photo-panel__hint">JPG, PNG o WebP · máx. 2 MB</p>
+            </div>
+          </div>
+        </section>
+      }
+    </div>
+  }
 </div>

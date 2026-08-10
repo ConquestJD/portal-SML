@@ -96,8 +96,8 @@ export class ComunicadosComponent implements OnInit {
     return (a.priority || '').toUpperCase() === 'HIGH';
   }
 
-  excerpt(text: string, max = 220): string {
-    const t = (text ?? '').trim();
+  excerpt(text: string, max = 180): string {
+    const t = (text ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     if (t.length <= max) return t;
     return `${t.slice(0, max).trim()}…`;
   }

@@ -1,191 +1,71 @@
-<div class="comunicado-detalle-container">
+<div class="cdet">
+
   @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Cargando comunicado…</p>
+    <div class="cdet__loading" aria-busy="true">
+      <div class="skel skel--hero"></div>
+      <div class="skel-body"><div class="skel skel--block"></div></div>
     </div>
   } @else if (error()) {
-    <div class="error-state">
+    <div class="cdet__error" role="alert">
       <p>{{ error() }}</p>
-      <button type="button" class="btn-back" (click)="goBack()">
-        <i class="fas fa-arrow-left"></i> Volver a comunicados
-      </button>
+      <button type="button" class="cdet__btn" (click)="goBack()">Volver</button>
     </div>
   } @else if (comunicado(); as c) {
-    <div class="comunicado-detail">
-      <div class="detail-header">
-        <button type="button" class="btn-back" (click)="goBack()">
-          <i class="fas fa-arrow-left"></i> Volver a comunicados
-        </button>
+
+    <header class="cdet__hero">
+      <img class="cdet__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="cdet__hero-veil"></div>
+      <div class="cdet__hero-top">
+        <button type="button" class="cdet__back" (click)="goBack()">← Comunicados</button>
+        <span class="cdet__badge" [attr.data-urgent]="isUrgent(c) || null">
+          {{ isUrgent(c) ? 'Urgente' : typeLabel(c.type) }}
+        </span>
       </div>
+      <div class="cdet__hero-content">
+        <p class="cdet__kicker">{{ getAuthorName() }} · {{ c.publishedAt | date: 'mediumDate' }}</p>
+        <h1 class="cdet__title">{{ c.title }}</h1>
+        <p class="cdet__brand">
+          {{ c.isRead ? 'Leído' : 'No leído' }}
+          @if (c.recipients?.grade) { · {{ c.recipients.grade }} }
+          @if (c.recipients?.section) { {{ c.recipients.section }} }
+        </p>
+      </div>
+    </header>
 
-      <div class="comunicado-info-card">
-        <div class="comunicado-header-info">
-          <div class="comunicado-badges">
-            <span class="badge badge-info">
-              <i class="fas fa-tag"></i> {{ typeLabel(c.type) }}
-            </span>
-            @if (isUrgent(c)) {
-              <span class="badge badge-error">
-                <i class="fas fa-exclamation-triangle"></i> {{ priorityLabel(c.priority) }}
-              </span>
-            } @else if ((c.priority || '').toUpperCase() === 'MEDIUM') {
-              <span class="badge badge-warning">
-                <i class="fas fa-info-circle"></i> {{ priorityLabel(c.priority) }}
-              </span>
-            }
-            @if (!c.isRead) {
-              <span class="badge badge-new">
-                <i class="fas fa-circle"></i> No leído
-              </span>
-            } @else {
-              <span class="badge badge-read">
-                <i class="fas fa-check"></i> Leído
-              </span>
-            }
-          </div>
-          <div class="comunicado-date-wrapper">
-            <i class="fas fa-calendar-alt"></i>
-            <span class="comunicado-date">{{ c.date }}</span>
-          </div>
-        </div>
-
-        <h1 class="comunicado-title">{{ c.title }}</h1>
-
-        <div class="comunicado-meta">
-          <div class="meta-item">
-            <div class="meta-icon-wrapper">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="meta-content">
-              <span class="meta-label">Remitente</span>
-              <span class="meta-value">{{ getAuthorName() }}</span>
-              @if (c.author?.role) {
-                <span class="meta-subvalue">{{ c.author.role }}</span>
-              }
-            </div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-icon-wrapper">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="meta-content">
-              <span class="meta-label">Publicado</span>
-              <span class="meta-value">{{ c.publishedAt | date: 'short' }}</span>
-            </div>
-          </div>
-          @if (c.recipients) {
-            <div class="meta-item">
-              <div class="meta-icon-wrapper">
-                <i class="fas fa-users"></i>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Destinatarios</span>
-                @if (c.recipients.grade) {
-                  <span class="meta-value">{{ c.recipients.grade }}</span>
-                }
-                @if (c.recipients.section) {
-                  <span class="meta-subvalue">{{ c.recipients.section }}</span>
-                }
-              </div>
-            </div>
-          }
-          @if (c.readDeadline) {
-            <div class="meta-item">
-              <div class="meta-icon-wrapper warning">
-                <i class="fas fa-calendar-times"></i>
-              </div>
-              <div class="meta-content">
-                <span class="meta-label">Fecha límite de lectura</span>
-                <span class="meta-value">{{ c.readDeadline }}</span>
-              </div>
-            </div>
+    <div class="cdet__body">
+      <section class="panel">
+        <div class="panel__head">
+          <h2>Contenido</h2>
+          @if (!c.isRead) {
+            <button type="button" class="cdet__btn cdet__btn--primary" (click)="markAsRead()" [disabled]="markSubmitting()">
+              {{ markSubmitting() ? 'Guardando…' : 'Marcar leído' }}
+            </button>
           }
         </div>
-      </div>
-
-      <div class="info-section">
-        <h2 class="section-title">
-          <i class="fas fa-file-alt"></i>
-          Contenido
-        </h2>
-        <div class="section-content" [innerHTML]="c.fullContent ?? c.content"></div>
-      </div>
+        <div class="panel__html" [innerHTML]="c.fullContent ?? c.content"></div>
+      </section>
 
       @if (c.attachments?.length) {
-        <div class="info-section">
-          <div class="section-header-with-action">
-            <h2 class="section-title">
-              <i class="fas fa-paperclip"></i>
-              Archivos adjuntos
-            </h2>
-            <button type="button" class="btn btn-secondary" (click)="downloadAllAttachments()">
-              <i class="fas fa-download"></i>
-              Descargar todos
-            </button>
+        <section class="panel">
+          <div class="panel__head">
+            <h2>Adjuntos</h2>
+            <button type="button" class="cdet__btn" (click)="downloadAllAttachments()">Descargar todos</button>
           </div>
-          <div class="attachments-list">
+          <ul class="file-list">
             @for (attachment of c.attachments; track attachment.id) {
-              <div class="attachment-item">
-                <div class="attachment-icon">
-                  @switch (attachmentKind(attachment)) {
-                    @case ('pdf') {
-                      <i class="fas fa-file-pdf"></i>
-                    }
-                    @case ('doc') {
-                      <i class="fas fa-file-word"></i>
-                    }
-                    @case ('xls') {
-                      <i class="fas fa-file-excel"></i>
-                    }
-                    @case ('img') {
-                      <i class="fas fa-file-image"></i>
-                    }
-                    @default {
-                      <i class="fas fa-file"></i>
-                    }
+              <li>
+                <span class="file-list__name">
+                  {{ attachment.name }}
+                  @if (formatAttachmentSize(attachment.size); as sz) {
+                    <em>{{ sz }}</em>
                   }
-                </div>
-                <div class="attachment-info">
-                  <span class="attachment-name">{{ attachment.name }}</span>
-                  @if (formatAttachmentSize(attachment.size)) {
-                    <span class="attachment-meta">{{ formatAttachmentSize(attachment.size) }}</span>
-                  }
-                </div>
-                <button type="button" class="btn-download" (click)="downloadAttachmentFile(attachment)">
-                  <i class="fas fa-download"></i>
-                  Descargar
-                </button>
-              </div>
+                </span>
+                <button type="button" class="file-list__btn" (click)="downloadAttachmentFile(attachment)">Descargar</button>
+              </li>
             }
-          </div>
-        </div>
+          </ul>
+        </section>
       }
-
-      <div class="actions-section">
-        <div class="actions-group">
-          @if (!c.isRead) {
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="markAsRead()"
-              [disabled]="markSubmitting()"
-            >
-              @if (markSubmitting()) {
-                <span class="spinner"></span> Guardando…
-              } @else {
-                <i class="fas fa-check-circle"></i>
-                Marcar como leído
-              }
-            </button>
-          } @else {
-            <span class="read-indicator">
-              <i class="fas fa-check-circle"></i>
-              Leído
-            </span>
-          }
-        </div>
-      </div>
     </div>
   }
 </div>

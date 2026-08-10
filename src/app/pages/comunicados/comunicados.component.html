@@ -1,127 +1,85 @@
 <div class="com-page">
-  <header class="com-hero">
-    <div>
-      <p class="com-eyebrow">Institución</p>
-      <h1 class="com-title">Comunicados y avisos</h1>
-      <p class="com-lead">
-        Mensajes oficiales del colegio y de tus cursos. Los urgentes se destacan en rojo.
-      </p>
+
+  <header class="com-page__hero">
+    <img class="com-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="com-page__hero-veil"></div>
+    <div class="com-page__hero-content">
+      <img src="/only-logo.png" alt="" class="com-page__crest" />
+      <div>
+        <h1 class="com-page__title">Comunicados</h1>
+        <p class="com-page__brand">Santa María Laura</p>
+      </div>
     </div>
   </header>
 
-  @if (loading()) {
-    <p class="com-state">Cargando comunicados…</p>
-  } @else if (error()) {
-    <div class="com-state com-state--error">{{ error() }}</div>
-  } @else {
-    <section class="com-kpi">
-      <div class="com-kpi__card">
-        <div class="com-kpi__icon com-kpi__icon--unread">
-          <i class="fas fa-envelope-open" aria-hidden="true"></i>
-        </div>
-        <div>
-          <span class="com-kpi__label">No leídos</span>
-          <strong class="com-kpi__value">{{ unreadCount() }}</strong>
-        </div>
-      </div>
-      <div class="com-kpi__card">
-        <div class="com-kpi__icon com-kpi__icon--urgent">
-          <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
-        </div>
-        <div>
-          <span class="com-kpi__label">Urgentes</span>
-          <strong class="com-kpi__value com-kpi__value--urgent">{{ urgentCount() }}</strong>
-        </div>
-      </div>
-    </section>
+  <div class="com-page__body">
 
-    @if (announcements().length === 0) {
-      <div class="com-empty">
-        <i class="fas fa-bullhorn com-empty__icon"></i>
-        <h2 class="com-empty__title">No hay comunicados para mostrar</h2>
-        <p class="com-empty__text">
-          Cuando publiquen avisos dirigidos a tu perfil o a tus cursos, aparecerán aquí.
-        </p>
+    @if (loading()) {
+      <div class="skel-row" aria-busy="true">
+        <div class="skel skel--tile"></div>
+        <div class="skel skel--tile"></div>
+      </div>
+    } @else if (error()) {
+      <div class="com-page__error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="com-page__retry" (click)="load()">Reintentar</button>
       </div>
     } @else {
-      <ul class="com-list" role="list">
-        @for (a of announcements(); track a.id) {
-          <li>
-            <article
-              class="com-card"
-              [class.com-card--unread]="!a.isRead"
-              [class.com-card--urgent]="isUrgent(a)"
-            >
-              <div class="com-card__top">
-                <div class="com-card__badges">
-                  <span
-                    class="com-read-pill"
-                    [class.com-read-pill--unread]="!a.isRead"
-                    [class.com-read-pill--read]="a.isRead"
-                    [attr.aria-label]="a.isRead ? 'Leído' : 'No leído'"
-                  >
-                    @if (a.isRead) {
-                      <i class="fas fa-check-double" aria-hidden="true"></i>
-                      Leído
-                    } @else {
-                      <i class="fas fa-envelope" aria-hidden="true"></i>
-                      No leído
-                    }
-                  </span>
-                  <span class="com-badge com-badge--type">{{ typeLabel(a.type) }}</span>
-                  <span
-                    class="com-badge"
-                    [class.com-badge--prio-high]="isUrgent(a)"
-                    [class.com-badge--prio-norm]="!isUrgent(a)"
-                  >
-                    {{ priorityLabel(a.priority) }}
-                  </span>
-                  @if (!a.isRead) {
-                    <span class="com-badge com-badge--new">Nuevo</span>
-                  }
-                </div>
-                <time class="com-card__date" [attr.datetime]="a.publishedAt">{{
-                  formatDate(a)
-                }}</time>
-              </div>
 
-              <h2 class="com-card__title">
-                <a [routerLink]="detailCommands(a.id)" class="com-card__title-link">{{
-                  a.title
-                }}</a>
-              </h2>
-              <p class="com-card__excerpt">{{ excerpt(a.content) }}</p>
+      <section class="metrics" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n">{{ unreadCount() }}</span>
+          <span class="metric__l">No leídos</span>
+        </div>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ urgentCount() }}</span>
+          <span class="metric__l">Urgentes</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ announcements().length }}</span>
+          <span class="metric__l">Total</span>
+        </div>
+      </section>
 
-              <div class="com-card__foot">
-                <span class="com-card__author">
-                  <i class="fas fa-user" aria-hidden="true"></i>
-                  {{ a.author?.name || '—' }}
-                </span>
-                @if ((a.attachmentCount ?? a.attachments?.length ?? 0) > 0) {
-                  <span class="com-card__attach">
-                    <i class="fas fa-paperclip" aria-hidden="true"></i>
-                    {{ a.attachmentCount ?? a.attachments.length }} adjunto(s)
-                  </span>
-                }
-                <div class="com-card__actions">
-                  <a [routerLink]="detailCommands(a.id)" class="btn btn-primary btn-sm">
-                    Ver completo
+      <section class="feed" aria-label="Listado">
+        @if (announcements().length === 0) {
+          <p class="feed__empty">Sin comunicados para mostrar</p>
+        } @else {
+          <ul class="feed__list">
+            @for (a of announcements(); track a.id) {
+              <li>
+                <article class="com-row" [attr.data-urgent]="isUrgent(a) || null" [attr.data-unread]="!a.isRead || null">
+                  <a [routerLink]="detailCommands(a.id)" class="com-row__link">
+                    <span class="com-row__body">
+                      <span class="com-row__meta">
+                        {{ typeLabel(a.type) }}
+                        @if (isUrgent(a)) { · Urgente }
+                        · {{ formatDate(a) }}
+                      </span>
+                      <span class="com-row__title">{{ a.title }}</span>
+                      <span class="com-row__excerpt">{{ excerpt(a.content) }}</span>
+                      <span class="com-row__author">
+                        {{ a.author?.name || '—' }}
+                        @if ((a.attachmentCount ?? a.attachments?.length ?? 0) > 0) {
+                          · {{ a.attachmentCount ?? a.attachments.length }} adjunto(s)
+                        }
+                      </span>
+                    </span>
+                    <span class="com-row__status" [class.com-row__status--unread]="!a.isRead">
+                      {{ a.isRead ? 'Leído' : 'Nuevo' }}
+                    </span>
                   </a>
                   @if (!a.isRead) {
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      (click)="markAsRead(a.id, $event)"
-                    >
+                    <button type="button" class="com-row__mark" (click)="markAsRead(a.id, $event)">
                       Marcar leído
                     </button>
                   }
-                </div>
-              </div>
-            </article>
-          </li>
+                </article>
+              </li>
+            }
+          </ul>
         }
-      </ul>
+      </section>
     }
-  }
+  </div>
 </div>

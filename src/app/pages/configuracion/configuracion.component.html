@@ -1,228 +1,154 @@
-<div class="configuracion-container">
-  <div class="page-header with-border">
-    <div class="header-content">
-      <h1 class="page-title">Configuración</h1>
-      <p class="page-subtitle">Gestiona tu cuenta, preferencias y notificaciones</p>
+<div class="cfg-page">
+
+  <header class="cfg-page__hero">
+    <img class="cfg-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="cfg-page__hero-veil"></div>
+    <div class="cfg-page__hero-content">
+      <img src="/only-logo.png" alt="" class="cfg-page__crest" />
+      <div>
+        <h1 class="cfg-page__title">Configuración</h1>
+        <p class="cfg-page__brand">Santa María Laura</p>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <div class="config-tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'cuenta'" (click)="setTab('cuenta')">
-      <i class="fas fa-user"></i> Cuenta y Seguridad
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'preferencias'" (click)="setTab('preferencias')">
-      <i class="fas fa-cog"></i> Preferencias
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'notificaciones'" (click)="setTab('notificaciones')">
-      <i class="fas fa-bullhorn"></i> Notificaciones
-    </button>
-  </div>
+  <div class="cfg-page__body">
 
-  <div class="config-content">
+    <nav class="tabs" aria-label="Secciones">
+      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'cuenta'" (click)="setTab('cuenta')">Cuenta</button>
+      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'preferencias'" (click)="setTab('preferencias')">Preferencias</button>
+      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'notificaciones'" (click)="setTab('notificaciones')">Notificaciones</button>
+    </nav>
+
+    @if (success()) {
+      <p class="alert alert--ok">{{ success() }}</p>
+    }
+    @if (error()) {
+      <p class="alert alert--error">{{ error() }}</p>
+    }
+
     @if (activeTab() === 'cuenta') {
-      <div class="config-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-lock"></i> Cambio de Contraseña
-          </h2>
-        </div>
-        <form class="password-form" (ngSubmit)="savePassword()">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-lock"></i> Contraseña Actual
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-lock"></i>
-              <input type="password" class="form-input" [(ngModel)]="currentPassword" name="currentPassword" placeholder="Ingresa tu contraseña actual" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-lock"></i> Nueva Contraseña
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-lock"></i>
-              <input type="password" class="form-input" [(ngModel)]="newPassword" name="newPassword" placeholder="Ingresa tu nueva contraseña" required>
-            </div>
-            <p class="form-hint">
-              <i class="fas fa-info-circle"></i> Mínimo 8 caracteres, incluir mayúscula y número
-            </p>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-lock"></i> Confirmar Nueva Contraseña
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-lock"></i>
-              <input type="password" class="form-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Confirma tu nueva contraseña" required>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check-circle"></i> Cambiar Contraseña
-          </button>
+      <section class="feed">
+        <div class="feed__head"><h2>Cambio de contraseña</h2></div>
+
+        @if (passwordSuccess()) {
+          <p class="alert alert--ok">{{ passwordSuccess() }}</p>
+        }
+        @if (passwordError()) {
+          <p class="alert alert--error">{{ passwordError() }}</p>
+        }
+
+        <form class="form" (ngSubmit)="changePassword()">
+          <label class="field">
+            <span class="field__label">Contraseña actual</span>
+            <input
+              type="password"
+              [ngModel]="changePasswordForm().currentPassword"
+              (ngModelChange)="updatePwForm('currentPassword', $event)"
+              name="currentPassword"
+              required
+              autocomplete="current-password"
+            />
+          </label>
+          <label class="field">
+            <span class="field__label">Nueva contraseña</span>
+            <input
+              type="password"
+              [ngModel]="changePasswordForm().newPassword"
+              (ngModelChange)="updatePwForm('newPassword', $event)"
+              name="newPassword"
+              required
+              autocomplete="new-password"
+            />
+            <span class="field__hint">Mínimo 8 caracteres, con mayúscula y número</span>
+          </label>
+          <label class="field">
+            <span class="field__label">Confirmar nueva contraseña</span>
+            <input
+              type="password"
+              [ngModel]="changePasswordForm().confirmPassword"
+              (ngModelChange)="updatePwForm('confirmPassword', $event)"
+              name="confirmPassword"
+              required
+              autocomplete="new-password"
+            />
+          </label>
+          <button type="submit" class="cfg-btn cfg-btn--primary">Cambiar contraseña</button>
         </form>
 
-        <div class="info-section">
-          <div class="section-header">
-            <h3 class="section-subtitle">
-              <i class="fas fa-user"></i> Información de Cuenta
-            </h3>
-          </div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-icon-wrapper">
-                <i class="fas fa-envelope"></i>
-              </div>
-              <div class="info-content">
-                <span class="info-label">Email</span>
-                <span class="info-value">estudiante@colegio.edu</span>
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="info-icon-wrapper">
-                <i class="fas fa-calendar-alt"></i>
-              </div>
-              <div class="info-content">
-                <span class="info-label">Último acceso</span>
-                <span class="info-value">2024-03-18 10:30</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <div class="feed__subhead">Cuenta</div>
+        <ul class="data-list">
+          <li>
+            <span class="data-list__l">Email</span>
+            <span class="data-list__v">{{ accountEmail() }}</span>
+          </li>
+          <li>
+            <span class="data-list__l">Usuario</span>
+            <span class="data-list__v">{{ accountName() }}</span>
+          </li>
+        </ul>
+      </section>
     }
 
     @if (activeTab() === 'preferencias') {
-      <div class="config-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-cog"></i> Preferencias de Usuario
-          </h2>
-        </div>
-        <form class="preferences-form" (ngSubmit)="savePreferences()">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-globe"></i> Idioma
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-globe"></i>
-              <select class="form-input" [(ngModel)]="language" name="language">
-                <option value="es">Español</option>
-                <option value="en">English</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-cog"></i> Tema
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-cog"></i>
-              <select class="form-input" [(ngModel)]="theme" name="theme">
-                <option value="light">Claro</option>
-                <option value="dark">Oscuro</option>
-                <option value="auto">Automático</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-calendar-alt"></i> Formato de Fecha
-            </label>
-            <div class="input-wrapper">
-              <i class="input-icon fas fa-calendar-alt"></i>
-              <select class="form-input" [(ngModel)]="dateFormat" name="dateFormat">
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check-circle"></i> Guardar Preferencias
+      <section class="feed">
+        <div class="feed__head"><h2>Preferencias</h2></div>
+        <form class="form" (ngSubmit)="saveSettings()">
+          <label class="field">
+            <span class="field__label">Idioma</span>
+            <select
+              [ngModel]="settings().language"
+              (ngModelChange)="updateSetting('language', $event)"
+              name="language"
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label class="field">
+            <span class="field__label">Tema</span>
+            <select
+              [ngModel]="settings().theme"
+              (ngModelChange)="updateSetting('theme', $event)"
+              name="theme"
+            >
+              <option value="light">Claro</option>
+              <option value="dark">Oscuro</option>
+              <option value="auto">Automático</option>
+            </select>
+          </label>
+          <button type="submit" class="cfg-btn cfg-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar preferencias' }}
           </button>
         </form>
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'notificaciones') {
-      <div class="config-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-bullhorn"></i> Preferencias de Notificaciones
-          </h2>
-        </div>
-        <form class="notifications-form" (ngSubmit)="saveNotifications()">
-          <div class="notification-item">
-            <div class="notification-icon-wrapper">
-              <i class="fas fa-tasks"></i>
-            </div>
-            <div class="notification-info">
-              <h4>Nuevas Tareas</h4>
-              <p>Recibir notificaciones cuando se asignen nuevas tareas</p>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="notifications().newTasks" (change)="toggleNewTasks()">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="notification-item">
-            <div class="notification-icon-wrapper">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="notification-info">
-              <h4>Calificaciones Publicadas</h4>
-              <p>Recibir notificaciones cuando se publiquen nuevas calificaciones</p>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="notifications().grades" (change)="toggleGrades()">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="notification-item">
-            <div class="notification-icon-wrapper urgent">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="notification-info">
-              <h4>Comunicados Urgentes</h4>
-              <p>Recibir notificaciones de comunicados marcados como urgentes</p>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="notifications().urgentAnnouncements" (change)="toggleUrgentAnnouncements()">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="notification-item">
-            <div class="notification-icon-wrapper">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="notification-info">
-              <h4>Recordatorios de Tareas</h4>
-              <p>Recibir recordatorios antes de que venzan las tareas</p>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="notifications().taskReminders" (change)="toggleTaskReminders()">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check-circle"></i> Guardar Configuración
+      <section class="feed">
+        <div class="feed__head"><h2>Notificaciones</h2></div>
+        <form class="form" (ngSubmit)="saveSettings()">
+          <label class="toggle-row">
+            <span class="toggle-row__text">
+              <span class="toggle-row__title">Recibir notificaciones</span>
+              <span class="toggle-row__hint">Avisos de tareas, notas y comunicados del colegio</span>
+            </span>
+            <input
+              type="checkbox"
+              class="toggle"
+              [checked]="!!settings().notifications"
+              (change)="updateSetting('notifications', $any($event.target).checked)"
+            />
+          </label>
+          <button type="submit" class="cfg-btn cfg-btn--primary" [disabled]="saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar' }}
           </button>
         </form>
-      </div>
+      </section>
     }
-  </div>
 
-  <div class="config-footer">
-    <div class="footer-content">
-      <p class="footer-text">¿Necesitas ayuda? Contacta al soporte técnico</p>
-      <a routerLink="/login" class="btn btn-danger">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-      </a>
-    </div>
+    <footer class="cfg-footer">
+      <button type="button" class="cfg-btn cfg-btn--danger" (click)="logout()">Cerrar sesión</button>
+    </footer>
   </div>
 </div>
