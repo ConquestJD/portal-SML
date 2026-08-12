@@ -62,6 +62,32 @@ export class EstudiantesComponent implements OnInit {
     });
   });
 
+  private readonly gradeOrder = [
+    '3 años', '4 años', '5 años',
+    '1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+    '1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria',
+  ];
+
+  groupedStudents = computed(() => {
+    const groups = new Map<string, StudentItem[]>();
+    for (const s of this.filteredStudents()) {
+      const key = (s.grade ?? '').trim() || 'Sin matrícula';
+      const list = groups.get(key) ?? [];
+      list.push(s);
+      groups.set(key, list);
+    }
+
+    const keys = Array.from(groups.keys()).sort((a, b) => this.compareGrades(a, b));
+    return keys.map(grade => {
+      const students = groups.get(grade) ?? [];
+      return {
+        grade,
+        level: students.find(s => !!s.level)?.level ?? '',
+        students,
+      };
+    });
+  });
+
   totalActive = computed(() => this.students().filter(s => s.status === 'activo').length);
   totalEnrolled = computed(() => this.students().filter(s => !!s.grade).length);
 
@@ -100,6 +126,21 @@ export class EstudiantesComponent implements OnInit {
     const parts = name.split(/\s+/).filter(Boolean);
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  studentCode(s: StudentItem): string {
+    return s.code || s.studentCode || s.username || '—';
+  }
+
+  private compareGrades(a: string, b: string): number {
+    if (a === 'Sin matrícula') return 1;
+    if (b === 'Sin matrícula') return -1;
+    const ia = this.gradeOrder.indexOf(a);
+    const ib = this.gradeOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b, 'es');
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
   }
 
   importStudents() {

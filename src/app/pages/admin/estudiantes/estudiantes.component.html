@@ -71,49 +71,71 @@
     </div>
 
     @if (hasActiveFilters()) {
-      <p class="feed-row__meta" style="margin:0 0 1rem">{{ filteredStudents().length }} de {{ total() }}</p>
+      <p class="roster-count">{{ filteredStudents().length }} de {{ total() }}</p>
     }
 
-    <section class="feed" aria-label="Estudiantes">
-      <div class="feed__head">
-        <h2>Directorio</h2>
-      </div>
-
-      @if (loading()) {
-        <p class="feed__empty">Cargando…</p>
-      } @else if (filteredStudents().length === 0) {
-        <admin-empty-state message="No se encontraron estudiantes"></admin-empty-state>
-      } @else {
-        <ul class="feed__list">
-          @for (student of filteredStudents(); track student.id) {
-            <li>
-              <div class="feed-row">
-                <span class="feed-row__mark">{{ getInitials(student) }}</span>
-                <span class="feed-row__body">
-                  <a [routerLink]="['/admin/estudiantes', student.id]" class="feed-row__title" style="text-decoration:none;color:inherit">
-                    {{ student.name || '—' }}
-                  </a>
-                  <span class="feed-row__meta">
-                    {{ student.code || '—' }}
-                    @if (student.dni) { · DNI {{ student.dni }} }
-                    @if (student.email) { · {{ student.email }} }
-                  </span>
-                  <span class="feed-row__meta">
-                    @if (student.level) { {{ student.level | levelLabel }} }
-                    @if (student.grade) { · {{ student.grade }} }
-                    @if (!student.grade) { · Sin matrícula }
-                  </span>
-                </span>
-                <admin-status-badge [value]="student.status"></admin-status-badge>
-                <span class="feed-row__actions">
-                  <a [routerLink]="['/admin/estudiantes', student.id]" class="adm-link">Ver</a>
-                  <a [routerLink]="['/admin/estudiantes', student.id, 'editar']" class="adm-link">Editar</a>
-                </span>
+    @if (loading()) {
+      <p class="feed__empty">Cargando directorio…</p>
+    } @else if (filteredStudents().length === 0) {
+      <admin-empty-state message="No se encontraron estudiantes"></admin-empty-state>
+    } @else {
+      <div class="roster" aria-label="Directorio de estudiantes">
+        @for (group of groupedStudents(); track group.grade) {
+          <section class="roster-group">
+            <header class="roster-group__head">
+              <div>
+                @if (group.level) {
+                  <p class="roster-group__kicker">{{ group.level | levelLabel }}</p>
+                }
+                <h2 class="roster-group__title">{{ group.grade }}</h2>
               </div>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+              <span class="roster-group__n">{{ group.students.length }}</span>
+            </header>
+
+            <div class="roster-table-wrap">
+              <table class="roster-table">
+                <thead>
+                  <tr>
+                    <th>Alumno</th>
+                    <th>Código</th>
+                    <th>DNI</th>
+                    <th>Estado</th>
+                    <th><span class="visually-hidden">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (student of group.students; track student.id) {
+                    <tr>
+                      <td>
+                        <a [routerLink]="['/admin/estudiantes', student.id]" class="roster-person">
+                          <span class="roster-person__mark">{{ getInitials(student) }}</span>
+                          <span class="roster-person__text">
+                            <span class="roster-person__name">{{ student.name || '—' }}</span>
+                            @if (student.email) {
+                              <span class="roster-person__meta">{{ student.email }}</span>
+                            }
+                          </span>
+                        </a>
+                      </td>
+                      <td>
+                        <span class="roster-code">{{ studentCode(student) }}</span>
+                      </td>
+                      <td class="roster-dni">{{ student.dni || '—' }}</td>
+                      <td>
+                        <admin-status-badge [value]="student.status"></admin-status-badge>
+                      </td>
+                      <td class="roster-actions">
+                        <a [routerLink]="['/admin/estudiantes', student.id]" class="adm-link">Ver</a>
+                        <a [routerLink]="['/admin/estudiantes', student.id, 'editar']" class="adm-link">Editar</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      </div>
+    }
   </div>
 </div>
