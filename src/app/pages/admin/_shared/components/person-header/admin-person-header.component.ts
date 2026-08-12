@@ -19,7 +19,7 @@ export interface PersonHeaderAction {
   template: `
     <header class="person-header">
       <div class="person-header-main">
-        <div class="person-avatar" [style.background]="avatarColor">
+        <div class="person-avatar" [style.background]="avatarColor || null">
           @if (avatarIcon) {
             <i class="fas" [ngClass]="avatarIcon"></i>
           } @else {
@@ -39,7 +39,7 @@ export interface PersonHeaderAction {
           @if (meta?.length) {
             <div class="person-meta">
               @for (item of meta; track item) {
-                <span class="meta-item"><i class="fas fa-circle"></i> {{ item }}</span>
+                <span class="meta-item">{{ item }}</span>
               }
             </div>
           }
@@ -50,21 +50,19 @@ export interface PersonHeaderAction {
           @for (action of actions; track action.label) {
             @if (action.link) {
               <a [routerLink]="action.link"
-                 class="btn"
-                 [class.btn-primary]="(action.variant ?? 'primary') === 'primary'"
-                 [class.btn-secondary]="action.variant === 'secondary'"
-                 [class.btn-danger]="action.variant === 'danger'">
-                @if (action.icon) { <i class="fas" [ngClass]="action.icon"></i> }
+                 class="ph-btn"
+                 [class.ph-btn--primary]="(action.variant ?? 'primary') === 'primary'"
+                 [class.ph-btn--secondary]="action.variant === 'secondary'"
+                 [class.ph-btn--danger]="action.variant === 'danger'">
                 {{ action.label }}
               </a>
             } @else {
               <button type="button"
-                      class="btn"
-                      [class.btn-primary]="(action.variant ?? 'primary') === 'primary'"
-                      [class.btn-secondary]="action.variant === 'secondary'"
-                      [class.btn-danger]="action.variant === 'danger'"
+                      class="ph-btn"
+                      [class.ph-btn--primary]="(action.variant ?? 'primary') === 'primary'"
+                      [class.ph-btn--secondary]="action.variant === 'secondary'"
+                      [class.ph-btn--danger]="action.variant === 'danger'"
                       (click)="handleClick(action)">
-                @if (action.icon) { <i class="fas" [ngClass]="action.icon"></i> }
                 {{ action.label }}
               </button>
             }
@@ -74,74 +72,107 @@ export interface PersonHeaderAction {
     </header>
   `,
   styles: [`
+    :host {
+      --navy: #003366;
+      --navy-deep: #001528;
+      --crimson: #c41e3a;
+      --ink: #142033;
+      --muted: #5c6b7e;
+      --line: rgba(20 32 51 / .1);
+      --font-display: 'Newsreader', Georgia, serif;
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .person-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: var(--spacing-lg, 1.5rem);
-      padding: var(--spacing-lg, 1.5rem) 0;
-      border-bottom: 2px solid var(--border-color, #e5e7eb);
-      margin-bottom: var(--spacing-xl, 2rem);
+      gap: 1.25rem;
+      padding: 1.25rem 0 1.35rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 1.25rem;
       flex-wrap: wrap;
     }
     .person-header-main {
       display: flex;
       align-items: center;
-      gap: var(--spacing-md, 1rem);
+      gap: 1rem;
       min-width: 0;
       flex: 1;
     }
     .person-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary, #003366), var(--primary-dark, #001a33));
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.75rem;
-      font-weight: 700;
+      width: 4rem;
+      height: 4rem;
+      background: var(--navy);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
       flex-shrink: 0;
     }
     .person-heading { min-width: 0; }
     .person-title-row {
       display: flex;
       align-items: center;
-      gap: var(--spacing-sm, 0.5rem);
+      gap: .65rem;
       flex-wrap: wrap;
     }
     .person-name {
       margin: 0;
-      font-size: var(--font-size-2xl, 1.5rem);
-      font-weight: 700;
-      color: var(--primary, #003366);
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 2.5vw, 2rem);
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1.15;
       word-break: break-word;
     }
     .person-subtitle {
-      margin: var(--spacing-xs, 0.25rem) 0 0 0;
-      color: var(--text-secondary, #6b7280);
-      font-size: var(--font-size-base, 1rem);
+      margin: .3rem 0 0;
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
     }
     .person-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--spacing-md, 1rem);
-      margin-top: var(--spacing-xs, 0.25rem);
-      font-size: var(--font-size-sm, 0.875rem);
-      color: var(--text-secondary, #6b7280);
-    }
-    .person-meta i {
-      font-size: 6px;
-      vertical-align: middle;
-      margin-right: 4px;
-      color: var(--text-tertiary, #9ca3af);
+      gap: .75rem;
+      margin-top: .4rem;
+      font-size: .8rem;
+      color: var(--muted);
+      font-family: var(--font-display);
+      font-style: italic;
     }
     .person-actions {
       display: flex;
-      gap: var(--spacing-sm, 0.5rem);
+      gap: .45rem;
       flex-wrap: wrap;
     }
+    .ph-btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.4rem;
+      padding: .5rem 1rem;
+      border: none;
+      font-family: inherit;
+      font-size: .8rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .ph-btn--primary { background: var(--navy); color: #fff; }
+    .ph-btn--primary:hover { background: var(--navy-deep); }
+    .ph-btn--secondary {
+      background: transparent;
+      color: var(--navy);
+      border-bottom: 2px solid var(--line);
+    }
+    .ph-btn--danger { background: transparent; color: var(--crimson); border-bottom: 2px solid transparent; }
+    .ph-btn--danger:hover { border-bottom-color: var(--crimson); }
   `],
 })
 export class AdminPersonHeaderComponent {

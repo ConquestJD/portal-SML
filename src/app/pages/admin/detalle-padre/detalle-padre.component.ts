@@ -1,5 +1,5 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
@@ -11,7 +11,7 @@ import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 @Component({
   selector: 'app-detalle-padre',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ...ADMIN_SHARED],
+  imports: [CommonModule, DatePipe, RouterLink, FormsModule, ...ADMIN_SHARED],
   templateUrl: './detalle-padre.component.html',
   styleUrl: './detalle-padre.component.css'
 })
@@ -130,6 +130,8 @@ export class DetallePadreComponent implements OnInit {
     });
   }
 
+  onResetPassword() { this.resetPassword(); }
+
   // ─── Vincular hijos ────────────────────────────────────────────────────
   openLinkPanel() {
     this.showLinkPanel.set(true);
@@ -244,6 +246,15 @@ export class DetallePadreComponent implements OnInit {
     const p = this.parent();
     if (!p) return '';
     return p.name ?? `${p.user.firstName} ${p.user.lastName}`;
+  }
+
+  getHeroSubtitle(): string {
+    const p = this.parent();
+    if (!p) return '';
+    const rel = p.relationship ?? '';
+    const email = p.email ?? '';
+    const parts = [rel, email].filter(Boolean);
+    return parts.join(' · ');
   }
   get padre() { return this.parent; }
   totalPaid = () => (this.payments() as any[]).filter(p => p.status === 'PAID').reduce((a, p) => a + (p.amount ?? 0), 0);

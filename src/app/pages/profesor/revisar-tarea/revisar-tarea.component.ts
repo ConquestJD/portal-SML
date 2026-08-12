@@ -74,6 +74,10 @@ export class RevisarTareaComponent implements OnInit {
     void this.router.navigate(['/profesor/cursos', this.courseId()]);
   }
 
+  setFilterChip(chip: FilterChip) {
+    this.filterChip.set(chip);
+  }
+
   loadTask() {
     this.teacherService.getTask(this.courseId(), this.taskId()).subscribe({
       next: (data) => this.task.set(data),

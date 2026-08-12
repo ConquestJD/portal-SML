@@ -1,281 +1,262 @@
-<div class="perfil-profesor-container">
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando perfil...</p>
-    </div>
-  } @else {
-    <!-- Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">
-          <i class="fas fa-user-circle"></i>
-          Mi Perfil
-        </h1>
-        <p class="page-subtitle">Gestiona tu información personal</p>
+<div class="prof-page">
+
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">Mi perfil</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
       </div>
     </div>
+  </header>
 
-    <!-- Pestañas -->
-    <div class="tabs">
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'perfil'" 
-        (click)="setTab('perfil')"
-      >
-        <i class="fas fa-user"></i> Perfil
-      </button>
-      <button 
-        class="tab-btn" 
-        [class.active]="activeTab() === 'seguridad'" 
-        (click)="setTab('seguridad')"
-      >
-        <i class="fas fa-shield-alt"></i> Seguridad
-      </button>
-    </div>
+  <div class="prof-page__body">
 
-    <!-- Contenido de Pestañas -->
-    <div class="tab-content">
-      <!-- Pestaña Perfil -->
+    @if (isLoading()) {
+      <p class="feed__empty">Cargando perfil…</p>
+    } @else {
+
+      @if (error()) {
+        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
+      }
+      @if (success()) {
+        <div class="prof-alert prof-alert--ok" role="status"><p>{{ success() }}</p></div>
+      }
+
+      <nav class="prof-tabs" aria-label="Secciones del perfil">
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="activeTab() === 'perfil'"
+          (click)="setTab('perfil')"
+        >
+          Perfil
+        </button>
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="activeTab() === 'seguridad'"
+          (click)="setTab('seguridad')"
+        >
+          Seguridad
+        </button>
+      </nav>
+
       @if (activeTab() === 'perfil') {
-        <div class="content-section">
-          <div class="profile-header">
-            <div class="photo-section">
-              <div class="photo-wrapper">
-                <img [src]="profileData().photo" [alt]="profileData().name" class="profile-photo">
+        <section class="feed perf-panel">
+          <div class="perf-header">
+            <div class="perf-photo-block">
+              <div class="perf-photo-wrap">
+                <img [src]="profileData().photo" [alt]="profileData().name" class="perf-photo" />
                 @if (isEditing()) {
-                  <label class="photo-upload-btn">
-                    <i class="fas fa-camera"></i>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
+                  <label class="perf-photo-upload">
+                    <span class="visually-hidden">Cambiar foto</span>
+                    <input
+                      type="file"
+                      accept="image/*"
                       (change)="onPhotoSelected($event)"
-                      class="file-input"
                     />
                   </label>
                 }
               </div>
-              <div class="profile-info">
-                <h2 class="profile-name">{{ profileData().name }}</h2>
-                <p class="profile-department">
-                  <i class="fas fa-building"></i>
-                  {{ profileData().department }}
-                </p>
-                <p class="profile-specialization">
-                  <i class="fas fa-graduation-cap"></i>
-                  {{ profileData().specialization }}
-                </p>
+              <div>
+                <h2 class="perf-name">{{ profileData().name }}</h2>
+                <p class="perf-meta">{{ profileData().department }}</p>
+                <p class="perf-meta">{{ profileData().specialization }}</p>
               </div>
             </div>
-            <div class="profile-actions">
+            <div class="perf-actions">
               @if (!isEditing()) {
-                <button class="btn btn-primary" (click)="startEditing()">
-                  <i class="fas fa-edit"></i> Editar Perfil
-                </button>
+                <button type="button" class="prof-btn prof-btn--solid" (click)="startEditing()">Editar perfil</button>
               } @else {
-                <div class="action-buttons">
-                  <button class="btn btn-outline" (click)="cancelEditing()" [disabled]="isSaving()">
-                    <i class="fas fa-times"></i> Cancelar
-                  </button>
-                  <button class="btn btn-primary" (click)="saveProfile()" [disabled]="isSaving()">
-                    @if (isSaving()) {
-                      <i class="fas fa-spinner fa-spin"></i> Guardando...
-                    } @else {
-                      <i class="fas fa-save"></i> Guardar Cambios
-                    }
-                  </button>
-                </div>
+                <button type="button" class="prof-btn prof-btn--outline" (click)="cancelEditing()" [disabled]="isSaving()">Cancelar</button>
+                <button type="button" class="prof-btn prof-btn--solid" (click)="saveProfile()" [disabled]="isSaving()">
+                  @if (isSaving()) { Guardando… } @else { Guardar cambios }
+                </button>
               }
             </div>
           </div>
 
-          <form (ngSubmit)="saveProfile()" class="profile-form">
-            <div class="form-section">
-              <h3 class="section-title">
-                <i class="fas fa-info-circle"></i>
-                Información Personal
-              </h3>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label class="form-label">Nombre Completo</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    [ngModel]="profileData().name"
-                    (ngModelChange)="updateName($event)"
-                    [readonly]="!isEditing()"
-                    name="name"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Correo Electrónico</label>
-                  <input 
-                    type="email" 
-                    class="form-input" 
-                    [ngModel]="profileData().email"
-                    (ngModelChange)="updateEmail($event)"
-                    [readonly]="!isEditing()"
-                    name="email"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Teléfono</label>
-                  <input 
-                    type="tel" 
-                    class="form-input" 
-                    [ngModel]="profileData().phone"
-                    (ngModelChange)="updatePhone($event)"
-                    [readonly]="!isEditing()"
-                    name="phone"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Dirección</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    [ngModel]="profileData().address"
-                    (ngModelChange)="updateAddress($event)"
-                    [readonly]="!isEditing()"
-                    name="address"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Fecha de Nacimiento</label>
-                  <input 
-                    type="date" 
-                    class="form-input" 
-                    [ngModel]="profileData().birthDate"
-                    (ngModelChange)="updateBirthDate($event)"
-                    [readonly]="!isEditing()"
-                    name="birthDate"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Fecha de Contratación</label>
-                  <input 
-                    type="date" 
-                    class="form-input" 
-                    [ngModel]="profileData().hireDate"
-                    (ngModelChange)="updateHireDate($event)"
-                    [readonly]="!isEditing()"
-                    name="hireDate"
-                  />
-                </div>
+          <form (ngSubmit)="saveProfile()" class="perf-form">
+            <div class="feed__head">
+              <h2>Información personal</h2>
+            </div>
+            <div class="perf-grid">
+              <div class="perf-field">
+                <label class="perf-label">Nombre completo</label>
+                <input
+                  type="text"
+                  class="perf-input"
+                  [ngModel]="profileData().name"
+                  (ngModelChange)="updateName($event)"
+                  [readonly]="!isEditing()"
+                  name="name"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Correo electrónico</label>
+                <input
+                  type="email"
+                  class="perf-input"
+                  [ngModel]="profileData().email"
+                  (ngModelChange)="updateEmail($event)"
+                  [readonly]="!isEditing()"
+                  name="email"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Teléfono</label>
+                <input
+                  type="tel"
+                  class="perf-input"
+                  [ngModel]="profileData().phone"
+                  (ngModelChange)="updatePhone($event)"
+                  [readonly]="!isEditing()"
+                  name="phone"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Dirección</label>
+                <input
+                  type="text"
+                  class="perf-input"
+                  [ngModel]="profileData().address"
+                  (ngModelChange)="updateAddress($event)"
+                  [readonly]="!isEditing()"
+                  name="address"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Fecha de nacimiento</label>
+                <input
+                  type="date"
+                  class="perf-input"
+                  [ngModel]="profileData().birthDate"
+                  (ngModelChange)="updateBirthDate($event)"
+                  [readonly]="!isEditing()"
+                  name="birthDate"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Fecha de contratación</label>
+                <input
+                  type="date"
+                  class="perf-input"
+                  [ngModel]="profileData().hireDate"
+                  (ngModelChange)="updateHireDate($event)"
+                  [readonly]="!isEditing()"
+                  name="hireDate"
+                />
               </div>
             </div>
 
-            <div class="form-section">
-              <h3 class="section-title">
-                <i class="fas fa-briefcase"></i>
-                Información Profesional
-              </h3>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label class="form-label">Departamento</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    [ngModel]="profileData().department"
-                    (ngModelChange)="updateDepartment($event)"
-                    [readonly]="!isEditing()"
-                    name="department"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Especialización</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    [ngModel]="profileData().specialization"
-                    (ngModelChange)="updateSpecialization($event)"
-                    [readonly]="!isEditing()"
-                    name="specialization"
-                  />
-                </div>
-                <div class="form-group full-width">
-                  <label class="form-label">Biografía</label>
-                  <textarea 
-                    class="form-input" 
-                    rows="4"
-                    [ngModel]="profileData().bio"
-                    (ngModelChange)="updateBio($event)"
-                    [readonly]="!isEditing()"
-                    name="bio"
-                    placeholder="Escribe una breve descripción sobre ti..."
-                  ></textarea>
-                </div>
+            <div class="feed__head perf-section-head">
+              <h2>Información profesional</h2>
+            </div>
+            <div class="perf-grid">
+              <div class="perf-field">
+                <label class="perf-label">Departamento</label>
+                <input
+                  type="text"
+                  class="perf-input"
+                  [ngModel]="profileData().department"
+                  (ngModelChange)="updateDepartment($event)"
+                  [readonly]="!isEditing()"
+                  name="department"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Especialización</label>
+                <input
+                  type="text"
+                  class="perf-input"
+                  [ngModel]="profileData().specialization"
+                  (ngModelChange)="updateSpecialization($event)"
+                  [readonly]="!isEditing()"
+                  name="specialization"
+                />
+              </div>
+              <div class="perf-field perf-field--full">
+                <label class="perf-label">Biografía</label>
+                <textarea
+                  class="perf-input"
+                  rows="4"
+                  [ngModel]="profileData().bio"
+                  (ngModelChange)="updateBio($event)"
+                  [readonly]="!isEditing()"
+                  name="bio"
+                  placeholder="Escribe una breve descripción sobre ti…"
+                ></textarea>
               </div>
             </div>
           </form>
-        </div>
+        </section>
       }
 
-      <!-- Pestaña Seguridad -->
       @if (activeTab() === 'seguridad') {
-        <div class="content-section">
-          <form (ngSubmit)="changePassword()" class="security-form">
-            <div class="form-section">
-              <h3 class="section-title">
-                <i class="fas fa-key"></i>
-                Cambiar Contraseña
-              </h3>
-              <p class="section-description">
-                Para cambiar tu contraseña, ingresa tu contraseña actual y la nueva contraseña.
-              </p>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label class="form-label">Contraseña Actual</label>
-                  <input 
-                    type="password" 
-                    class="form-input" 
-                    [ngModel]="passwordData().currentPassword"
-                    (ngModelChange)="updateCurrentPassword($event)"
-                    name="currentPassword"
-                    placeholder="Ingresa tu contraseña actual"
-                  />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Nueva Contraseña</label>
-                  <input 
-                    type="password" 
-                    class="form-input" 
-                    [ngModel]="passwordData().newPassword"
-                    (ngModelChange)="updateNewPassword($event)"
-                    name="newPassword"
-                    placeholder="Mínimo 6 caracteres"
-                  />
-                  <p class="form-hint">
-                    <i class="fas fa-info-circle"></i>
-                    La contraseña debe tener al menos 6 caracteres.
-                  </p>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Confirmar Nueva Contraseña</label>
-                  <input 
-                    type="password" 
-                    class="form-input" 
-                    [ngModel]="passwordData().confirmPassword"
-                    (ngModelChange)="updateConfirmPassword($event)"
-                    name="confirmPassword"
-                    placeholder="Confirma tu nueva contraseña"
-                  />
-                </div>
+        <section class="feed perf-panel">
+          <form (ngSubmit)="changePassword()" class="perf-form">
+            <div class="feed__head">
+              <h2>Cambiar contraseña</h2>
+            </div>
+            <p class="perf-hint">
+              Para cambiar tu contraseña, ingresa tu contraseña actual y la nueva contraseña.
+            </p>
+
+            @if (passwordError()) {
+              <div class="prof-alert" role="alert"><p>{{ passwordError() }}</p></div>
+            }
+            @if (passwordSuccess()) {
+              <div class="prof-alert prof-alert--ok" role="status"><p>{{ passwordSuccess() }}</p></div>
+            }
+
+            <div class="perf-grid">
+              <div class="perf-field">
+                <label class="perf-label">Contraseña actual</label>
+                <input
+                  type="password"
+                  class="perf-input"
+                  [ngModel]="passwordData().currentPassword"
+                  (ngModelChange)="updateCurrentPassword($event)"
+                  name="currentPassword"
+                  placeholder="Ingresa tu contraseña actual"
+                />
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Nueva contraseña</label>
+                <input
+                  type="password"
+                  class="perf-input"
+                  [ngModel]="passwordData().newPassword"
+                  (ngModelChange)="updateNewPassword($event)"
+                  name="newPassword"
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <p class="perf-hint">La contraseña debe tener al menos 6 caracteres.</p>
+              </div>
+              <div class="perf-field">
+                <label class="perf-label">Confirmar nueva contraseña</label>
+                <input
+                  type="password"
+                  class="perf-input"
+                  [ngModel]="passwordData().confirmPassword"
+                  (ngModelChange)="updateConfirmPassword($event)"
+                  name="confirmPassword"
+                  placeholder="Confirma tu nueva contraseña"
+                />
               </div>
             </div>
 
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-                @if (isSaving()) {
-                  <i class="fas fa-spinner fa-spin"></i> Cambiando...
-                } @else {
-                  <i class="fas fa-key"></i> Cambiar Contraseña
-                }
+            <div class="perf-actions perf-actions--end">
+              <button type="submit" class="prof-btn prof-btn--solid" [disabled]="isSaving()">
+                @if (isSaving()) { Cambiando… } @else { Cambiar contraseña }
               </button>
             </div>
           </form>
-        </div>
+        </section>
       }
-    </div>
-  }
+    }
+  </div>
 </div>

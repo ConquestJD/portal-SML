@@ -1,242 +1,270 @@
-<div class="detalle-profesor-container">
-  @if (loading()) {
-    <div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
-  } @else if (error()) {
-    <div class="error-state"><i class="fas fa-exclamation-circle"></i> {{ error() }}</div>
-  } @else {
-  <admin-breadcrumb [items]="[
-    { label: 'Profesores', link: '/admin/profesores' },
-    { label: profesor()?.name ?? 'Profesor' }
-  ]"></admin-breadcrumb>
+<div class="adm-page">
 
-  <admin-person-header
-    [name]="profesor().name"
-    [subtitle]="profesor().department || profesor().specialty || 'Docente'"
-    [status]="profesor().status"
-    [actions]="[
-      { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/profesores', teacherId, 'editar'] },
-      { label: 'Resetear contraseña', icon: 'fa-key', variant: 'secondary', onClick: resetPassword.bind(this) }
-    ]">
-  </admin-person-header>
-
-  <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
-
-  <div class="tab-content">
-    @if (activeTab() === 'perfil') {
-      <div class="content-section">
-        <div class="info-grid">
-          <div class="info-card">
-            <h3>Información Personal</h3>
-            <div class="info-item">
-              <span class="label">Nombre Completo:</span>
-              <span class="value">{{ profesor().name || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">DNI:</span>
-              <span class="value">{{ profesor().dni || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Email:</span>
-              <span class="value">{{ profesor().email || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Teléfono:</span>
-              <span class="value">{{ profesor().phone || '—' }}</span>
-            </div>
-            @if (profesor().address) {
-              <div class="info-item">
-                <span class="label">Dirección:</span>
-                <span class="value">{{ profesor().address }}</span>
-              </div>
-            }
-          </div>
-          <div class="info-card">
-            <h3>Credenciales de Acceso</h3>
-            <div class="info-item">
-              <span class="label">Usuario:</span>
-              <span class="value">{{ profesor().username || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Fecha de Registro:</span>
-              <span class="value">{{ profesor().createdAt ? (profesor().createdAt | date:'longDate') : '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Estado:</span>
-              <span class="value">
-                <admin-status-badge [value]="profesor().status"></admin-status-badge>
-              </span>
-            </div>
-          </div>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">{{ getFullName() || 'Profesor' }}</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
-    }
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/profesores" class="adm-btn adm-btn--ghost">Volver</a>
+        @if (teacher()) {
+          <a [routerLink]="['/admin/profesores', teacherId, 'editar']" class="adm-btn adm-btn--primary">Editar</a>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="onResetPassword()">Resetear contraseña</button>
+        }
+      </div>
+    </div>
+  </header>
 
-    @if (activeTab() === 'cursos') {
-      <div class="content-section">
-        <div class="courses-header">
-          <h3>Cursos Activos</h3>
-          <button class="btn btn-primary" (click)="openAssignCourseModal()">
-            <i class="fas fa-plus"></i> Asignar Curso
-          </button>
-        </div>
-        <div class="courses-list">
-          @if (activeCourses().length === 0) {
-            <admin-empty-state icon="fa-book" title="No hay cursos activos asignados"
-              message="Haz clic en &quot;Asignar Curso&quot; para agregar uno">
-            </admin-empty-state>
-          } @else {
-            @for (course of activeCourses(); track course.id) {
-              <div class="course-card">
-                <div class="course-header">
-                  <div class="course-info">
-                    <h4><a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a></h4>
-                    <div class="course-meta">
-                      @if (course.code) { <span class="course-code">{{ course.code }}</span> }
-                      @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
-                      @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
-                    </div>
+  <div class="adm-page__body">
+    <admin-breadcrumb [items]="[
+      { label: 'Profesores', link: '/admin/profesores' },
+      { label: getFullName() || 'Profesor' }
+    ]"></admin-breadcrumb>
+
+    @if (loading()) {
+      <p class="detail-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+    } @else if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    } @else {
+      <div class="detail-meta">
+        <p class="detail-meta__sub">{{ getHeroSubtitle() }}</p>
+        <admin-status-badge [value]="profesor().status"></admin-status-badge>
+      </div>
+
+      <p class="detail-kicker">Portafolio docente</p>
+
+      <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
+
+      <div class="tab-content">
+        @if (activeTab() === 'perfil') {
+          <div class="content-section">
+            <div class="info-grid">
+              <section class="panel">
+                <h3 class="panel__title">Información Personal</h3>
+                <div class="data-list">
+                  <div class="data-row">
+                    <span class="label">Nombre Completo</span>
+                    <span class="value">{{ profesor().name || '—' }}</span>
                   </div>
-                  <div class="course-stats">
-                    @if (course.students) {
-                      <div class="stat-item">
-                        <i class="fas fa-users"></i>
-                        <span>{{ course.students }} estudiantes</span>
-                      </div>
-                    }
-                    @if (course.academicYear) {
-                      <div class="stat-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>{{ course.academicYear }}</span>
-                      </div>
-                    }
+                  <div class="data-row">
+                    <span class="label">DNI</span>
+                    <span class="value">{{ profesor().dni || '—' }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Email</span>
+                    <span class="value">{{ profesor().email || '—' }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Teléfono</span>
+                    <span class="value">{{ profesor().phone || '—' }}</span>
+                  </div>
+                  @if (profesor().address) {
+                    <div class="data-row">
+                      <span class="label">Dirección</span>
+                      <span class="value">{{ profesor().address }}</span>
+                    </div>
+                  }
+                </div>
+              </section>
+              <section class="panel">
+                <h3 class="panel__title">Credenciales de Acceso</h3>
+                <div class="data-list">
+                  <div class="data-row">
+                    <span class="label">Usuario</span>
+                    <span class="value">{{ profesor().username || '—' }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Fecha de Registro</span>
+                    <span class="value">{{ profesor().createdAt ? (profesor().createdAt | date:'longDate') : '—' }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Estado</span>
+                    <span class="value">
+                      <admin-status-badge [value]="profesor().status"></admin-status-badge>
+                    </span>
                   </div>
                 </div>
-                @if (course.schedule?.length) {
-                  <div class="course-details">
-                    <div class="detail-section">
-                      <h5><i class="fas fa-clock"></i> Horario</h5>
-                      <div class="schedule-list">
-                        @for (schedule of course.schedule; track schedule.day) {
-                          <div class="schedule-item">
-                            <strong>{{ schedule.day }}:</strong> {{ schedule.time }}
+              </section>
+            </div>
+          </div>
+        }
+
+        @if (activeTab() === 'cursos') {
+          <div class="content-section">
+            <div class="section-toolbar">
+              <h3 class="panel__title panel__title--inline">Cursos Activos</h3>
+              <button class="btn btn-primary" (click)="openAssignCourseModal()">
+                <i class="fas fa-plus"></i> Asignar Curso
+              </button>
+            </div>
+            <div class="courses-list">
+              @if (activeCourses().length === 0) {
+                <admin-empty-state icon="fa-book" title="No hay cursos activos asignados"
+                  message="Haz clic en &quot;Asignar Curso&quot; para agregar uno">
+                </admin-empty-state>
+              } @else {
+                @for (course of activeCourses(); track course.id) {
+                  <article class="course-stripe" [style.--stripe]="course.color || '#003366'">
+                    <div class="course-stripe__bar" aria-hidden="true"></div>
+                    <div class="course-stripe__body">
+                      <div class="course-header">
+                        <div class="course-info">
+                          <h4><a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a></h4>
+                          <div class="course-meta">
+                            @if (course.code) { <span class="course-code">{{ course.code }}</span> }
+                            @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
+                            @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
                           </div>
-                        }
+                        </div>
+                        <div class="course-stats">
+                          @if (course.students) {
+                            <div class="stat-item">
+                              <i class="fas fa-users"></i>
+                              <span>{{ course.students }} estudiantes</span>
+                            </div>
+                          }
+                          @if (course.academicYear) {
+                            <div class="stat-item">
+                              <i class="fas fa-calendar"></i>
+                              <span>{{ course.academicYear }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                      @if (course.schedule?.length) {
+                        <div class="course-details">
+                          <div class="detail-section">
+                            <h5><i class="fas fa-clock"></i> Horario</h5>
+                            <div class="schedule-list">
+                              @for (schedule of course.schedule; track schedule.day) {
+                                <div class="schedule-item">
+                                  <strong>{{ schedule.day }}:</strong> {{ schedule.time }}
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      <div class="course-actions">
+                        <button class="btn-icon btn-danger" (click)="removeCourse(course.id)" title="Desasignar Curso">
+                          <i class="fas fa-times"></i>
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 }
-                <div class="course-actions">
-                  <button class="btn-icon btn-danger" (click)="removeCourse(course.id)" title="Desasignar Curso">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              </div>
-            }
-          }
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'historial') {
-      <div class="content-section">
-        <h3>Historial de Cursos</h3>
-        <div class="courses-list">
-          @if (finishedCourses().length === 0) {
-            <admin-empty-state icon="fa-history" message="No hay cursos finalizados"></admin-empty-state>
-          } @else {
-            @for (course of finishedCourses(); track course.id) {
-              <div class="course-card finished">
-                <div class="course-header">
-                  <div class="course-info">
-                    <h4>{{ course.name }}</h4>
-                    <div class="course-meta">
-                      @if (course.code) { <span class="course-code">{{ course.code }}</span> }
-                      @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
-                      @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
-                    </div>
-                  </div>
-                  <div class="course-stats">
-                    @if (course.academicYear) {
-                      <div class="stat-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>{{ course.academicYear }}</span>
-                      </div>
-                    }
-                    <span class="badge badge-secondary">Finalizado</span>
-                  </div>
-                </div>
-              </div>
-            }
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Modal de Asignar Curso -->
-    @if (showAssignCourseModal()) {
-      <div class="modal-overlay" (click)="closeAssignCourseModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Asignar Curso</h3>
-            <button class="modal-close" (click)="closeAssignCourseModal()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Seleccionar Curso *</label>
-              <select class="form-input" [(ngModel)]="selectedCourseId" name="courseId" required>
-                <option value="">Seleccionar curso</option>
-                @for (course of availableCoursesForAssignment(); track course.id) {
-                  <option [value]="course.id">
-                    {{ course.name }} - {{ course.grade }} {{ course.section }} ({{ course.code }})
-                  </option>
-                }
-              </select>
-              @if (availableCoursesForAssignment().length === 0) {
-                <p class="form-hint">
-                  <i class="fas fa-info-circle"></i>
-                  No hay cursos disponibles para asignar
-                </p>
               }
             </div>
-            @if (selectedCourse()) {
-              <div class="course-preview">
-                <h4>Información del Curso</h4>
-                <div class="preview-info">
-                  <div class="preview-item">
-                    <strong>Código:</strong> {{ selectedCourse()!.code }}
-                  </div>
-                  <div class="preview-item">
-                    <strong>Nombre:</strong> {{ selectedCourse()!.name }}
-                  </div>
-                  <div class="preview-item">
-                    <strong>Nivel:</strong> {{ getLevelLabel(selectedCourse()!.level) }}
-                  </div>
-                  <div class="preview-item">
-                    <strong>Grado y Sección:</strong> {{ selectedCourse()!.grade }} - {{ selectedCourse()!.section }}
-                  </div>
-                  <div class="preview-item">
-                    <strong>Aula:</strong> {{ selectedCourse()!.classroom }}
-                  </div>
-                  <div class="preview-item">
-                    <strong>Año Académico:</strong> {{ selectedCourse()!.academicYear }}
-                  </div>
-                </div>
+          </div>
+        }
+
+        @if (activeTab() === 'historial') {
+          <div class="content-section content-section--muted">
+            <h3 class="panel__title panel__title--inline history-heading">Historial de Cursos</h3>
+            <div class="courses-list courses-list--archive">
+              @if (finishedCourses().length === 0) {
+                <admin-empty-state icon="fa-history" message="No hay cursos finalizados"></admin-empty-state>
+              } @else {
+                @for (course of finishedCourses(); track course.id) {
+                  <article class="course-stripe course-stripe--finished" [style.--stripe]="course.color || '#5c6b7e'">
+                    <div class="course-stripe__bar" aria-hidden="true"></div>
+                    <div class="course-stripe__body">
+                      <div class="course-header">
+                        <div class="course-info">
+                          <h4>{{ course.name }}</h4>
+                          <div class="course-meta">
+                            @if (course.code) { <span class="course-code">{{ course.code }}</span> }
+                            @if (course.level) { <span class="course-level">{{ getLevelLabel(course.level) }}</span> }
+                            @if (course.grade) { <span class="course-grade">{{ course.grade }}</span> }
+                          </div>
+                        </div>
+                        <div class="course-stats">
+                          @if (course.academicYear) {
+                            <div class="stat-item">
+                              <i class="fas fa-calendar"></i>
+                              <span>{{ course.academicYear }}</span>
+                            </div>
+                          }
+                          <span class="badge badge-secondary">Finalizado</span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                }
+              }
+            </div>
+          </div>
+        }
+
+        @if (showAssignCourseModal()) {
+          <div class="modal-overlay" (click)="closeAssignCourseModal()">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <h3>Asignar Curso</h3>
+                <button class="modal-close" (click)="closeAssignCourseModal()">
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
-            }
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Seleccionar Curso *</label>
+                  <select class="form-input" [(ngModel)]="selectedCourseId" name="courseId" required>
+                    <option value="">Seleccionar curso</option>
+                    @for (course of availableCoursesForAssignment(); track course.id) {
+                      <option [value]="course.id">
+                        {{ course.name }} - {{ course.grade }} {{ course.section }} ({{ course.code }})
+                      </option>
+                    }
+                  </select>
+                  @if (availableCoursesForAssignment().length === 0) {
+                    <p class="form-hint">
+                      <i class="fas fa-info-circle"></i>
+                      No hay cursos disponibles para asignar
+                    </p>
+                  }
+                </div>
+                @if (selectedCourse()) {
+                  <div class="course-preview">
+                    <h4>Información del Curso</h4>
+                    <div class="preview-info">
+                      <div class="preview-item">
+                        <strong>Código:</strong> {{ selectedCourse()!.code }}
+                      </div>
+                      <div class="preview-item">
+                        <strong>Nombre:</strong> {{ selectedCourse()!.name }}
+                      </div>
+                      <div class="preview-item">
+                        <strong>Nivel:</strong> {{ getLevelLabel(selectedCourse()!.level) }}
+                      </div>
+                      <div class="preview-item">
+                        <strong>Grado y Sección:</strong> {{ selectedCourse()!.grade }} - {{ selectedCourse()!.section }}
+                      </div>
+                      <div class="preview-item">
+                        <strong>Aula:</strong> {{ selectedCourse()!.classroom }}
+                      </div>
+                      <div class="preview-item">
+                        <strong>Año Académico:</strong> {{ selectedCourse()!.academicYear }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeAssignCourseModal()">
+                  Cancelar
+                </button>
+                <button class="btn btn-primary" (click)="assignCourse()" [disabled]="!selectedCourseId">
+                  <i class="fas fa-plus"></i> Asignar
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeAssignCourseModal()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" (click)="assignCourse()" [disabled]="!selectedCourseId()">
-              <i class="fas fa-plus"></i> Asignar
-            </button>
-          </div>
-        </div>
+        }
       </div>
     }
   </div>
-  } <!-- end @else (loaded) -->
 </div>

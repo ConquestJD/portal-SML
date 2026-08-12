@@ -186,6 +186,44 @@ export class CursoDetallePadreComponent implements OnInit {
     });
   }
 
+  teacherInitial(c: ParentCourseDetailVm): string {
+    return (c.teacher?.charAt(0) ?? '?').toUpperCase();
+  }
+
+  scheduleDayMark(day: string): string {
+    return (day?.charAt(0) ?? 'H').toUpperCase();
+  }
+
+  padUnitNumber(n: unknown): string {
+    const num = typeof n === 'number' ? n : Number(n);
+    if (!Number.isFinite(num)) return '—';
+    return String(num).padStart(2, '0');
+  }
+
+  materialTypeMark(type: unknown): string {
+    const t = String(type ?? '').toLowerCase();
+    if (t.includes('pdf')) return 'PDF';
+    if (t.includes('video')) return 'VID';
+    if (t.includes('link')) return 'URL';
+    if (t.includes('imagen') || t.includes('image')) return 'IMG';
+    return 'DOC';
+  }
+
+  taskStatusLabel(status: ParentCourseTaskRow['status']): string {
+    const map: Record<ParentCourseTaskRow['status'], string> = {
+      pendiente: 'Pendiente',
+      entregada: 'Entregada',
+      vencida: 'Vencida',
+    };
+    return map[status];
+  }
+
+  taskStatusMark(status: ParentCourseTaskRow['status']): string {
+    if (status === 'entregada') return '✓';
+    if (status === 'vencida') return '!';
+    return '◷';
+  }
+
   private buildCourseVm(raw: unknown): ParentCourseDetailVm {
     const a = raw as Record<string, unknown>;
     const course = (a['course'] as Record<string, unknown>) ?? {};

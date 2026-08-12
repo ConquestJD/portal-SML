@@ -1,78 +1,125 @@
-<div class="comunicados-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Comunicados</h1>
-      <p class="page-subtitle">Gestiona los comunicados de tus cursos</p>
-    </div>
-    <div class="header-actions">
-      <a [routerLink]="['/profesor/cursos']" class="btn btn-primary" title="Selecciona un curso para crear un comunicado">
-        <i class="fas fa-plus"></i> Nuevo Comunicado
-      </a>
-    </div>
-  </div>
+<div class="prof-page">
 
-  <div class="filters">
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'todos'"
-      (click)="filter.set('todos')"
-    >
-      Todos
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'publicados'"
-      (click)="filter.set('publicados')"
-    >
-      Publicados
-    </button>
-    <button
-      class="filter-chip"
-      [class.active]="filter() === 'borradores'"
-      (click)="filter.set('borradores')"
-    >
-      Borradores
-    </button>
-  </div>
-
-  <div class="comunicados-list">
-    @for (comunicado of comunicados(); track comunicado.id) {
-      <div class="comunicado-card">
-        <div class="comunicado-header">
-          <div class="comunicado-title-section">
-            <h3 class="comunicado-title">
-              {{ comunicado.title }}
-              @if (comunicado.urgent) {
-                <span class="badge badge-error">Urgente</span>
-              }
-            </h3>
-            <span class="comunicado-course">{{ comunicado.course || '—' }}</span>
-          </div>
-          <span class="badge" [class.badge-success]="comunicado.status === 'publicado'" [class.badge-secondary]="comunicado.status === 'borrador'">
-            {{ comunicado.status === 'publicado' ? 'Publicado' : 'Borrador' }}
-          </span>
-        </div>
-        <div class="comunicado-info">
-          <span><i class="fas fa-calendar-alt"></i> {{ comunicado.date }}</span>
-        </div>
-        <div class="comunicado-actions">
-          @if (comunicado.courseId) {
-            <a
-              [routerLink]="['/profesor/cursos', comunicado.courseId, 'comunicados', comunicado.id]"
-              class="btn btn-primary btn-sm">
-              <i class="fas fa-edit"></i> Editar
-            </a>
-            <a
-              [routerLink]="['/profesor/cursos', comunicado.courseId]"
-              [queryParams]="{ tab: 'comunicados' }"
-              class="btn btn-sm btn-outline">
-              <i class="fas fa-arrow-right"></i> Ver curso
-            </a>
-          } @else {
-            <span class="comunicado-no-course">Comunicado general (no vinculado a un curso)</span>
-          }
-        </div>
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">Comunicados</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
       </div>
+      <div class="prof-page__hero-actions">
+        <a routerLink="/profesor/cursos" class="prof-btn prof-btn--primary" title="Selecciona un curso para crear un comunicado">
+          Nuevo comunicado
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="prof-page__body">
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando comunicados…</p>
+    } @else if (error()) {
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="prof-btn prof-btn--solid" (click)="load()">Reintentar</button>
+      </div>
+    } @else {
+
+      <section class="metrics metrics--3" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n">{{ unreadCount() }}</span>
+          <span class="metric__l">No leídos</span>
+        </div>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ urgentCount() }}</span>
+          <span class="metric__l">Urgentes</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ announcements().length }}</span>
+          <span class="metric__l">Total</span>
+        </div>
+      </section>
+
+      <nav class="prof-tabs" aria-label="Filtros">
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="filter() === 'todos'"
+          (click)="filter.set('todos')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="filter() === 'publicados'"
+          (click)="filter.set('publicados')"
+        >
+          Publicados
+        </button>
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="filter() === 'borradores'"
+          (click)="filter.set('borradores')"
+        >
+          Borradores
+        </button>
+      </nav>
+
+      <section class="feed" aria-label="Listado de comunicados">
+        @if (comunicados().length === 0) {
+          <p class="feed__empty">Sin comunicados para mostrar</p>
+        } @else {
+          <ul class="feed__list">
+            @for (comunicado of comunicados(); track comunicado.id) {
+              <li>
+                <article class="com-item">
+                  <div class="com-item__main">
+                    <div class="com-item__head">
+                      <div>
+                        <span class="feed-row__kicker">{{ comunicado.course || 'General' }}</span>
+                        <h2 class="com-item__title">
+                          {{ comunicado.title }}
+                          @if (comunicado.urgent) {
+                            <span class="com-item__urgent">Urgente</span>
+                          }
+                        </h2>
+                      </div>
+                      <span class="com-item__status" [class.com-item__status--draft]="comunicado.status === 'borrador'">
+                        {{ comunicado.status === 'publicado' ? 'Publicado' : 'Borrador' }}
+                      </span>
+                    </div>
+                    <p class="com-item__meta">{{ comunicado.date }}</p>
+                  </div>
+                  <div class="feed-row__actions">
+                    @if (comunicado.courseId) {
+                      <a
+                        [routerLink]="['/profesor/cursos', comunicado.courseId, 'comunicados', comunicado.id]"
+                        class="prof-link"
+                      >
+                        Editar
+                      </a>
+                      <a
+                        [routerLink]="['/profesor/cursos', comunicado.courseId]"
+                        [queryParams]="{ tab: 'comunicados' }"
+                        class="prof-link"
+                      >
+                        Ver curso
+                      </a>
+                    } @else {
+                      <span class="com-item__no-course">Comunicado general</span>
+                    }
+                  </div>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      </section>
     }
   </div>
 </div>

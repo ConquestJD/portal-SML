@@ -49,10 +49,10 @@ export interface StudentItem {
   dni?: string; emergencyPhone?: string; username?: string; tutor?: string;
 }
 export interface CreateStudentDto {
-  username: string;
-  email?: string; password: string; firstName: string; lastName: string;
+  username?: string;
+  email?: string; password?: string; firstName: string; lastName: string;
   phone?: string; studentCode?: string; birthDate?: string; gender?: string;
-  address?: string; bloodType?: string; medicalNotes?: string; dni?: string;
+  address?: string; bloodType?: string; medicalNotes?: string; dni: string;
   grade?: string; level?: string;
 }
 

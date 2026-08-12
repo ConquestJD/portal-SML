@@ -155,6 +155,11 @@ export class MensajeriaCursoComponent implements OnInit {
     });
   }
 
+  onMessageEnter(event: KeyboardEvent) {
+    event.preventDefault();
+    this.sendMessage();
+  }
+
   sendMessage() {
     const conv = this.selectedConversation();
     const content = this.newMessageText().trim();

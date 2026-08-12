@@ -149,7 +149,7 @@ export class TareasProfesorComponent implements OnInit {
     });
   }
 
-  private isClosedTask(t: TeacherTask): boolean {
+  isClosedTask(t: TeacherTask): boolean {
     const s = (t.status || '').toUpperCase();
     if (s === 'CLOSED' || s === 'ARCHIVED' || s === 'ENDED') return true;
     if (!t.dueDate) return false;

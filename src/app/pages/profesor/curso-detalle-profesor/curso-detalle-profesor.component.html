@@ -1,77 +1,76 @@
-<div class="curso-detalle-container">
-  <div class="breadcrumb">
-    <a routerLink="/profesor/cursos" class="breadcrumb-link">
-      <i class="fas fa-arrow-left"></i> Volver a Cursos
-    </a>
-  </div>
+<div class="prof-page">
 
-  <div class="course-header">
-    <div class="header-content">
-      <div class="course-icon-wrapper">
-        <i class="fas fa-book"></i>
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">{{ getCourseName() || 'Detalle del curso' }}</h1>
+        <p class="prof-page__brand">{{ getCourseSubtitleParts() || 'Santa María Laura' }}</p>
       </div>
-      <div class="course-info">
-        <h1 class="course-title">{{ getCourseName() }}</h1>
-        <p class="course-subtitle">{{ getCourseSubtitleParts() }}</p>
-        <div class="course-meta">
-          <span><i class="fas fa-users"></i> {{ studentsLoading() ? (course()?.students ?? 0) : students().length }} estudiantes</span>
-          <span><i class="fas fa-clock"></i> {{ formatScheduleHint() }}</span>
-        </div>
+      <div class="prof-page__hero-actions">
+        <a routerLink="/profesor/cursos" class="prof-btn prof-btn--ghost">Volver a cursos</a>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'estudiantes'" (click)="setTab('estudiantes')">
-      <i class="fas fa-users"></i> Estudiantes
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
-      <i class="fas fa-tasks"></i> Tareas
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">
-      <i class="fas fa-chart-line"></i> Notas
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
-      <i class="fas fa-calendar-check"></i> Asistencia
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">
-      <i class="fas fa-file"></i> Material
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'comunicados'" (click)="setTab('comunicados')">
-      <i class="fas fa-bullhorn"></i> Comunicados
-    </button>
-  </div>
+  <div class="prof-page__body">
 
-  <div class="tab-content">
+    <section class="metrics metrics--2" aria-label="Resumen del curso">
+      <div class="metric">
+        <span class="metric__n">{{ studentsLoading() ? (course()?.students ?? 0) : students().length }}</span>
+        <span class="metric__l">Estudiantes</span>
+      </div>
+      <div class="metric">
+        <span class="metric__l metric__l--plain">{{ formatScheduleHint() }}</span>
+        <span class="metric__l">Horario</span>
+      </div>
+    </section>
+
+    <nav class="prof-tabs" aria-label="Secciones del curso">
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'estudiantes'" (click)="setTab('estudiantes')">
+        Estudiantes
+      </button>
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">
+        Tareas
+      </button>
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">
+        Notas
+      </button>
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">
+        Asistencia
+      </button>
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">
+        Material
+      </button>
+      <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'comunicados'" (click)="setTab('comunicados')">
+        Comunicados
+      </button>
+    </nav>
+
     @if (activeTab() === 'estudiantes') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Lista de Estudiantes</h2>
-          <div class="header-actions">
-            <div class="search-wrapper">
-              <i class="fas fa-search"></i>
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Lista de estudiantes</h2>
+          <div class="feed__head-actions">
+            <label class="search">
+              <span class="visually-hidden">Buscar estudiante</span>
               <input
-                type="text"
-                class="form-input search-input"
-                placeholder="Buscar estudiante..."
+                type="search"
+                placeholder="Buscar estudiante…"
                 [ngModel]="searchQuery()"
                 (ngModelChange)="searchQuery.set($event)"
               />
-            </div>
-            <button class="btn btn-secondary">
-              <i class="fas fa-download"></i> Exportar
-            </button>
+            </label>
+            <button type="button" class="prof-btn prof-btn--solid prof-btn--sm">Exportar</button>
           </div>
         </div>
 
         @if (studentsLoading()) {
-          <div class="state-card">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Cargando estudiantes…</p>
-          </div>
+          <p class="feed__empty">Cargando estudiantes…</p>
         } @else if (students().length === 0) {
           <div class="state-card">
-            <i class="fas fa-user-graduate"></i>
             <h3>No hay alumnos en este curso</h3>
             <p>
               El docente solo puede usar la ruta de alumnos del curso en la API (no el listado global de estudiantes, reservado a administración).
@@ -107,9 +106,7 @@
                       </span>
                     </td>
                     <td>
-                      <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', student.id]" class="btn btn-sm btn-primary">
-                        <i class="fas fa-eye"></i> Ver Ficha
-                      </a>
+                      <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', student.id]" class="prof-link">Ver ficha</a>
                     </td>
                   </tr>
                 }
@@ -117,15 +114,15 @@
             </table>
           </div>
         }
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'tareas') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Tareas del Curso</h2>
-          <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', 'nueva']" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nueva Tarea
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Tareas del curso</h2>
+          <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', 'nueva']" class="prof-btn prof-btn--solid prof-btn--sm">
+            Nueva tarea
           </a>
         </div>
         <div class="tasks-grid">
@@ -138,64 +135,59 @@
                 </span>
               </div>
               <div class="task-info">
-                <p><i class="fas fa-calendar-alt"></i> Fecha límite: {{ task.dueDate }}</p>
-                <p><i class="fas fa-check-circle"></i> Entregadas: {{ task.submitted }} / {{ students().length || course()?.students || 0 }}</p>
-                <p><i class="fas fa-info-circle"></i> Estado: 
+                <p>Fecha límite: {{ task.dueDate }}</p>
+                <p>Entregadas: {{ task.submitted }} / {{ students().length || course()?.students || 0 }}</p>
+                <p>Estado:
                   <span class="badge" [class.badge-info]="task.status === 'active'" [class.badge-secondary]="task.status === 'closed'">
                     {{ task.status === 'active' ? 'Publicada' : 'Cerrada' }}
                   </span>
                 </p>
               </div>
               <div class="task-actions">
-                <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', task.id]" [queryParams]="{action: 'editar'}" class="btn btn-primary btn-sm">
-                  <i class="fas fa-edit"></i> Editar
-                </a>
-                <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', task.id, 'revisar']" class="btn btn-secondary btn-sm">
-                  <i class="fas fa-check"></i> Revisar ({{ task.submitted }})
+                <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', task.id]" [queryParams]="{action: 'editar'}" class="prof-link">Editar</a>
+                <a [routerLink]="['/profesor/cursos', courseId(), 'tareas', task.id, 'revisar']" class="prof-link">
+                  Revisar ({{ task.submitted }})
                 </a>
               </div>
             </div>
           }
         </div>
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'notas') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Calificaciones</h2>
-          <button class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nueva Evaluación
-          </button>
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Calificaciones</h2>
+          <button type="button" class="prof-btn prof-btn--solid prof-btn--sm">Nueva evaluación</button>
         </div>
         <p class="info-text">Gestiona las calificaciones de los estudiantes en este curso.</p>
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'asistencia') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Asistencia</h2>
-          <a [routerLink]="['/profesor/cursos', courseId(), 'asistencia', 'marcar']" class="btn btn-primary">
-            <i class="fas fa-calendar-check"></i> Marcar Asistencia
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Asistencia</h2>
+          <a [routerLink]="['/profesor/cursos', courseId(), 'asistencia', 'marcar']" class="prof-btn prof-btn--solid prof-btn--sm">
+            Marcar asistencia
           </a>
         </div>
         <p class="info-text">Registra y gestiona la asistencia de los estudiantes.</p>
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'material') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Material del Curso</h2>
-          <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', 'nuevo']" class="btn btn-primary">
-            <i class="fas fa-upload"></i> Subir Material
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Material del curso</h2>
+          <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', 'nuevo']" class="prof-btn prof-btn--solid prof-btn--sm">
+            Subir material
           </a>
         </div>
         <div class="materials-list">
           @if (materials().length === 0) {
             <div class="state-card">
-              <i class="fas fa-file"></i>
               <p>No hay materiales publicados. Usa «Subir Material» para agregar carpetas y archivos.</p>
             </div>
           } @else {
@@ -210,9 +202,6 @@
                   role="button"
                   [attr.aria-expanded]="isMaterialFolderOpen(m.id)"
                 >
-                  <div class="material-folder-icon">
-                    <i class="fas" [class.fa-folder]="!isMaterialFolderOpen(m.id)" [class.fa-folder-open]="isMaterialFolderOpen(m.id)"></i>
-                  </div>
                   <div class="material-folder-meta">
                     <h4 class="material-folder-title">{{ m.title }}</h4>
                     <p class="material-folder-sub">
@@ -229,14 +218,9 @@
                       }
                     </p>
                   </div>
-                  <i class="fas material-folder-chevron" [class.fa-chevron-down]="!isMaterialFolderOpen(m.id)" [class.fa-chevron-up]="isMaterialFolderOpen(m.id)"></i>
                   <div class="material-folder-actions" (click)="$event.stopPropagation()">
-                    <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="btn btn-sm btn-secondary">
-                      <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <button type="button" class="btn btn-sm btn-danger" (click)="deleteMaterial(m.id)">
-                      <i class="fas fa-trash"></i>
-                    </button>
+                    <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="prof-link">Editar</a>
+                    <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterial(m.id)">Eliminar</button>
                   </div>
                 </div>
                 @if (isMaterialFolderOpen(m.id)) {
@@ -245,7 +229,6 @@
                       <ul class="material-folder-files">
                         @for (f of m.files; track f.id) {
                           <li class="material-folder-file-row">
-                            <i class="fas fa-file-alt"></i>
                             <span class="file-name">{{ materialFileLabel(f) }}</span>
                             <span class="file-size">{{ formatMaterialFileSize(f.size) }}</span>
                           </li>
@@ -260,15 +243,15 @@
             }
           }
         </div>
-      </div>
+      </section>
     }
 
     @if (activeTab() === 'comunicados') {
-      <div class="content-section">
-        <div class="section-header">
-          <h2 class="section-title">Comunicados del Curso</h2>
-          <a [routerLink]="['/profesor/cursos', courseId(), 'comunicados', 'nuevo']" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuevo Comunicado
+      <section class="feed">
+        <div class="feed__head">
+          <h2>Comunicados del curso</h2>
+          <a [routerLink]="['/profesor/cursos', courseId(), 'comunicados', 'nuevo']" class="prof-btn prof-btn--solid prof-btn--sm">
+            Nuevo comunicado
           </a>
         </div>
         <p class="info-text">
@@ -276,17 +259,13 @@
         </p>
 
         @if (announcementsError()) {
-          <div class="announcements-alert" role="alert">{{ announcementsError() }}</div>
+          <div class="prof-alert" role="alert">{{ announcementsError() }}</div>
         }
 
         @if (announcementsLoading()) {
-          <div class="state-card">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Cargando comunicados…</p>
-          </div>
+          <p class="feed__empty">Cargando comunicados…</p>
         } @else if (announcements().length === 0) {
           <div class="state-card">
-            <i class="fas fa-bullhorn"></i>
             <h3>Aún no hay comunicados</h3>
             <p>Publica el primero con el botón «Nuevo Comunicado».</p>
           </div>
@@ -306,15 +285,8 @@
                     </span>
                   </div>
                   <div class="announcement-card-actions">
-                    <a
-                      [routerLink]="['/profesor/cursos', courseId(), 'comunicados', a.id]"
-                      class="btn btn-sm btn-outline"
-                      >Editar</a
-                    >
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-danger-outline"
-                      (click)="deleteAnnouncement(a)">
+                    <a [routerLink]="['/profesor/cursos', courseId(), 'comunicados', a.id]" class="prof-link">Editar</a>
+                    <button type="button" class="prof-link prof-link--danger" (click)="deleteAnnouncement(a)">
                       Eliminar
                     </button>
                   </div>
@@ -336,10 +308,7 @@
                         @if (f.url) {
                           <a [href]="f.url" target="_blank" rel="noopener noreferrer">{{ f.name }}</a>
                         } @else if (f.id) {
-                          <button
-                            type="button"
-                            class="link-like"
-                            (click)="openAnnouncementAttachment(a.id, f.id)">
+                          <button type="button" class="link-like" (click)="openAnnouncementAttachment(a.id, f.id)">
                             {{ f.name }}
                           </button>
                         } @else {
@@ -353,6 +322,7 @@
             }
           </ul>
         }
-      </div>
+      </section>
     }
-
+  </div>
+</div>

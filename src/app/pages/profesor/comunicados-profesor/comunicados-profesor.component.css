@@ -1,167 +1,67 @@
-.comunicados-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
+@import '../_shared/profesor-editorial.css';
+
+.com-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .85rem 0;
+  flex-wrap: wrap;
 }
 
-.page-header {
+.com-item__main { flex: 1; min-width: 0; }
+
+.com-item__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--spacing-xl);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--border-color);
+  gap: .75rem;
+  margin-bottom: .35rem;
+}
+
+.com-item__title {
+  margin: .15rem 0 0;
+  font-size: 1rem; font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
   flex-wrap: wrap;
-  gap: var(--spacing-lg);
 }
 
-.header-content {
-  flex: 1;
-  min-width: 250px;
+.com-item__urgent {
+  padding: .15rem .45rem;
+  font-size: .62rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  background: #fff5f6; color: var(--crimson);
 }
 
-.page-title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0 0 var(--spacing-xs) 0;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
+.com-item__meta {
   margin: 0;
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display); font-style: italic;
 }
 
-.header-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  align-items: center;
+.com-item__status {
+  flex-shrink: 0;
+  padding: .2rem .55rem;
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  background: #f0faf4; color: #1a6b4a;
 }
 
-.filters {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xl);
-  flex-wrap: wrap;
+.com-item__status--draft {
+  background: #eef1f5; color: var(--muted);
 }
 
-.filter-chip {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 9999px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+.com-item__no-course {
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display); font-style: italic;
 }
 
-.filter-chip:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.filter-chip.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-.comunicados-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.comunicado-card {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
-}
-
-.comunicado-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary);
-}
-
-.comunicado-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.comunicado-title-section {
-  flex: 1;
-}
-
-.comunicado-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0 0 var(--spacing-xs) 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.comunicado-course {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.comunicado-info {
-  margin-bottom: var(--spacing-lg);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.comunicado-info i {
-  color: var(--primary);
-}
-
-.comunicado-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.comunicado-no-course {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    width: 100%;
-  }
-
-  .header-actions .btn {
-    width: 100%;
-  }
-
-  .comunicado-actions {
-    flex-direction: column;
-  }
-
-  .comunicado-actions .btn {
-    width: 100%;
-  }
+@media (max-width: 560px) {
+  .com-item { flex-direction: column; }
+  .feed-row__actions { width: 100%; }
 }

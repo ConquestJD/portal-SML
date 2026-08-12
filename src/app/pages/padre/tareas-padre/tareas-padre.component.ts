@@ -116,6 +116,36 @@ export class TareasPadreComponent implements OnInit {
     return `${c.user.firstName} ${c.user.lastName}`;
   }
 
+  getChildGrade(c: Child): string {
+    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(c: Child): string {
+    const fn = c.user?.firstName?.charAt(0) ?? '';
+    const ln = c.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
+  taskStatusLabel(status: ParentTaskRow['status']): string {
+    const map: Record<ParentTaskRow['status'], string> = {
+      pendiente: 'Pendiente',
+      entregada: 'Entregada',
+      vencida: 'Vencida',
+    };
+    return map[status];
+  }
+
+  taskStatusMark(status: ParentTaskRow['status']): string {
+    if (status === 'entregada') return '✓';
+    if (status === 'vencida') return '!';
+    return '◷';
+  }
+
+  onSearchInput(event: Event) {
+    const el = event.target as HTMLInputElement;
+    this.searchQuery.set(el.value);
+  }
+
   private mapApiTask(t: Record<string, unknown>): ParentTaskRow {
     const ta = t['teacherAssignment'] as Record<string, unknown> | undefined;
     const courseObj = ta?.['course'] as Record<string, unknown> | undefined;

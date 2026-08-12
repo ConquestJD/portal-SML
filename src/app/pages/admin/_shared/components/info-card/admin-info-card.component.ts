@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
     <div class="admin-info-card">
       @if (title) {
         <div class="card-header">
-          @if (icon) { <i class="fas" [ngClass]="icon"></i> }
           <h3>{{ title }}</h3>
         </div>
       }
@@ -20,28 +19,32 @@ import { CommonModule } from '@angular/common';
     </div>
   `,
   styles: [`
+    :host {
+      --navy: #003366;
+      --surface: #ffffff;
+      --line: rgba(20 32 51 / .1);
+      --font-display: 'Newsreader', Georgia, serif;
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .admin-info-card {
-      background: var(--bg-primary, #fff);
-      border: 1px solid var(--border-color, #e5e7eb);
-      border-radius: var(--border-radius, 0.5rem);
-      padding: var(--spacing-lg, 1.5rem);
+      background: var(--surface);
+      padding: 1.1rem 1.2rem 1.15rem;
     }
     .card-header {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm, 0.5rem);
-      margin-bottom: var(--spacing-md, 1rem);
-      padding-bottom: var(--spacing-sm, 0.5rem);
-      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      margin-bottom: .75rem;
+      padding-bottom: .55rem;
+      border-bottom: 1px solid var(--line);
     }
     .card-header h3 {
       margin: 0;
-      font-size: var(--font-size-lg, 1.125rem);
-      color: var(--primary, #003366);
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      color: var(--navy);
       font-weight: 600;
     }
-    .card-header i { color: var(--primary, #003366); }
-    .card-body { display: flex; flex-direction: column; gap: var(--spacing-sm, 0.5rem); }
+    .card-body { display: flex; flex-direction: column; gap: .15rem; }
   `],
 })
 export class AdminInfoCardComponent {
@@ -63,23 +66,37 @@ export class AdminInfoCardComponent {
     </div>
   `,
   styles: [`
+    :host {
+      --ink: #142033;
+      --muted: #5c6b7e;
+      --line: rgba(20 32 51 / .1);
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .admin-info-item {
       display: flex;
       justify-content: space-between;
-      gap: var(--spacing-md, 1rem);
-      padding: var(--spacing-xs, 0.25rem) 0;
-      align-items: center;
+      gap: 1rem;
+      padding: .65rem 0;
+      border-bottom: 1px solid var(--line);
+      align-items: baseline;
       flex-wrap: wrap;
     }
+    :host(:last-child) .admin-info-item { border-bottom: none; }
     .label {
-      color: var(--text-secondary, #6b7280);
-      font-size: var(--font-size-sm, 0.875rem);
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
     .value {
-      color: var(--text-primary, #111827);
+      color: var(--ink);
       font-weight: 500;
       text-align: right;
       word-break: break-word;
+      font-size: .95rem;
     }
   `],
 })

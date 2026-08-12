@@ -1,173 +1,106 @@
-<div class="padres-admin-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Padres de Familia</h1>
-      <p class="page-subtitle">Listado completo de apoderados y sus hijos vinculados</p>
-    </div>
-    <div class="header-actions">
-      <a routerLink="/admin/padres/nuevo" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nuevo Padre de Familia
-      </a>
-    </div>
-  </div>
+<div class="adm-page">
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <span class="stat-icon"><i class="fas fa-users"></i></span>
-      <div class="stat-text">
-        <span class="stat-value">{{ total() }}</span>
-        <span class="stat-label">Padres registrados</span>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Padres de familia</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/padres/nuevo" class="adm-btn adm-btn--primary">Nuevo</a>
       </div>
     </div>
-    <div class="stat-card">
-      <span class="stat-icon stat-icon--success"><i class="fas fa-user-check"></i></span>
-      <div class="stat-text">
-        <span class="stat-value">{{ activeCount() }}</span>
-        <span class="stat-label">Activos</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-icon stat-icon--info"><i class="fas fa-child"></i></span>
-      <div class="stat-text">
-        <span class="stat-value">{{ totalChildren() }}</span>
-        <span class="stat-label">Hijos vinculados</span>
-      </div>
-    </div>
-  </div>
+  </header>
 
-  <div class="admin-toolbar">
-    <div class="admin-toolbar__search">
-      <i class="fas fa-search admin-toolbar__search-icon"></i>
-      <input
-        type="text"
-        class="admin-toolbar__input"
-        placeholder="Buscar por nombre, DNI, email, teléfono o nombre del hijo..."
-        [(ngModel)]="searchQuery"
-        name="searchQuery" />
-      @if (searchQuery) {
-        <button type="button" class="admin-toolbar__clear" (click)="clearSearch()" title="Limpiar búsqueda">
-          <i class="fas fa-times"></i>
-        </button>
-      }
-    </div>
-    <div class="admin-toolbar__filters">
-      <div class="admin-toolbar__select-wrapper">
-        <select class="admin-toolbar__select" [(ngModel)]="filterStatus" (change)="load()" name="filterStatus">
-          <option value="">Todos los estados</option>
-          <option value="activo">Activos</option>
-          <option value="inactivo">Inactivos</option>
-        </select>
+  <div class="adm-page__body">
+
+    <section class="metrics metrics--3" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ total() }}</span>
+        <span class="metric__l">Padres</span>
       </div>
-      @if (hasActiveFilters()) {
-        <button type="button" class="admin-toolbar__reset" (click)="resetFilters()" title="Quitar filtros">
-          <i class="fas fa-rotate-left"></i> Limpiar
-        </button>
-      }
-    </div>
-  </div>
-
-  @if (hasActiveFilters()) {
-    <div class="admin-results-bar">
-      <span>
-        Mostrando <span class="admin-results-bar__count">{{ filteredPadres().length }}</span>
-        de <span class="admin-results-bar__count">{{ total() }}</span> padres
-      </span>
-    </div>
-  }
-
-  @if (error()) {
-    <div class="alert alert-error">
-      <i class="fas fa-exclamation-circle"></i> {{ error() }}
-    </div>
-  }
-
-  <div class="table-container">
-    @if (loading()) {
-      <div class="table-loading">
-        <i class="fas fa-spinner fa-spin"></i> Cargando padres de familia...
+      <div class="metric">
+        <span class="metric__n">{{ activeCount() }}</span>
+        <span class="metric__l">Activos</span>
       </div>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Padre / Madre</th>
-            <th>DNI</th>
-            <th>Contacto</th>
-            <th>Hijo(s)</th>
-            <th>Estado</th>
-            <th class="actions-col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (padre of filteredPadres(); track padre.id) {
-            <tr>
-              <td>
-                <div class="parent-cell">
-                  <span class="parent-avatar">{{ getInitials(padre) }}</span>
-                  <div class="parent-id">
-                    <a [routerLink]="['/admin/padres', padre.id]" class="parent-name-link">{{ getFullName(padre) }}</a>
-                    @if (padre.email ?? padre.user?.email) {
-                      <small class="parent-email">{{ padre.email ?? padre.user?.email }}</small>
-                    }
-                  </div>
-                </div>
-              </td>
-              <td>{{ padre.dni || '—' }}</td>
-              <td>
-                <div class="contact-cell">
-                  @if (padre.phone ?? padre.user?.phone) {
-                    <span class="contact-line"><i class="fas fa-phone"></i> {{ padre.phone ?? padre.user?.phone }}</span>
-                  } @else {
-                    <span class="muted">—</span>
-                  }
-                </div>
-              </td>
-              <td>
-                <div class="children-cell">
-                  @if (padre.childrenCount > 0) {
-                    @for (child of padre.childrenList; track child.id || child.name) {
-                      <span class="child-chip" [title]="child.name + (child.grade ? ' · ' + child.grade : '')">
-                        <i class="fas fa-user-graduate"></i>
-                        <span class="child-chip__name">{{ child.name }}</span>
-                        @if (child.grade) {
-                          <span class="child-chip__grade">{{ child.grade }}</span>
-                        }
-                      </span>
-                    }
-                  } @else {
-                    <span class="muted">Sin hijos vinculados</span>
-                  }
-                </div>
-              </td>
-              <td>
-                <admin-status-badge [value]="padre.status ?? padre.user?.status"></admin-status-badge>
-              </td>
-              <td class="actions-col">
-                <div class="action-buttons">
-                  <a [routerLink]="['/admin/padres', padre.id]" class="btn btn-sm btn-primary" title="Ver detalle">
-                    <i class="fas fa-eye"></i>
-                  </a>
-                  <a [routerLink]="['/admin/padres', padre.id, 'editar']" class="btn btn-sm btn-secondary" title="Editar">
-                    <i class="fas fa-edit"></i>
-                  </a>
-                  <button type="button" class="btn btn-sm btn-icon" (click)="toggleStatus(padre)" title="Activar / Desactivar">
-                    <i class="fas fa-power-off"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6">
-                <admin-empty-state
-                  icon="fa-users"
-                  message="No se encontraron padres de familia con esos criterios">
-                </admin-empty-state>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <div class="metric metric--alert">
+        <span class="metric__n">{{ totalChildren() }}</span>
+        <span class="metric__l">Hijos vinculados</span>
+      </div>
+    </section>
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
     }
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Nombre, DNI, email o hijo…"
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+        />
+      </label>
+      <select [(ngModel)]="filterStatus" (change)="load()" name="filterStatus" aria-label="Estado">
+        <option value="">Estado</option>
+        <option value="activo">Activos</option>
+        <option value="inactivo">Inactivos</option>
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="adm-link" (click)="resetFilters()">Limpiar</button>
+      }
+    </div>
+
+    <section class="feed" aria-label="Padres">
+      <div class="feed__head">
+        <h2>Familias</h2>
+        <span class="feed-row__meta">{{ filteredPadres().length }} de {{ total() }}</span>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando…</p>
+      } @else if (filteredPadres().length === 0) {
+        <admin-empty-state title="Sin resultados" message="No se encontraron padres con esos criterios."></admin-empty-state>
+      } @else {
+        <ul class="feed__list">
+          @for (padre of filteredPadres(); track padre.id) {
+            <li>
+              <div class="feed-row">
+                <span class="feed-row__mark">{{ getInitials(padre) }}</span>
+                <span class="feed-row__body">
+                  <a [routerLink]="['/admin/padres', padre.id]" class="feed-row__title" style="text-decoration:none;color:inherit">
+                    {{ getFullName(padre) }}
+                  </a>
+                  <span class="feed-row__meta">
+                    {{ padre.dni || 'Sin DNI' }}
+                    @if (padre.phone ?? padre.user?.phone) { · {{ padre.phone ?? padre.user?.phone }} }
+                  </span>
+                  <span class="feed-row__meta">
+                    @if (padre.childrenCount > 0) {
+                      @for (child of padre.childrenList; track child.id || child.name; let last = $last) {
+                        {{ child.name }}@if (child.grade) { ({{ child.grade }}) }@if (!last) { · }
+                      }
+                    } @else {
+                      Sin hijos vinculados
+                    }
+                  </span>
+                </span>
+                <admin-status-badge [value]="padre.status ?? padre.user?.status"></admin-status-badge>
+                <span class="feed-row__actions">
+                  <a [routerLink]="['/admin/padres', padre.id]" class="adm-link">Ver</a>
+                  <a [routerLink]="['/admin/padres', padre.id, 'editar']" class="adm-link">Editar</a>
+                  <button type="button" class="adm-link" (click)="toggleStatus(padre)">Estado</button>
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </div>
 </div>

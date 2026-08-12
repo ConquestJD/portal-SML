@@ -41,6 +41,16 @@ export class DashboardPadreComponent implements OnInit {
 
   selectedChildData = computed(() => this.children().find((c) => c.id === this.selectedChildId()));
 
+  readonly shortcuts = [
+    { label: 'Perfil del hijo', link: '/padre/perfil-hijo' },
+    { label: 'Cursos', link: '/padre/cursos' },
+    { label: 'Tareas', link: '/padre/tareas' },
+    { label: 'Notas', link: '/padre/notas' },
+    { label: 'Asistencia', link: '/padre/asistencia' },
+    { label: 'Mensajería', link: '/padre/mensajeria' },
+    { label: 'Pagos', link: '/padre/pagos' },
+  ];
+
   constructor(
     private dashboardService: DashboardService,
     private parentService: ParentService,
@@ -121,6 +131,12 @@ export class DashboardPadreComponent implements OnInit {
   }
 
   getChildGrade(child: Child): string {
-    return child.enrollments?.[0]?.section?.grade ?? '';
+    return child.grade ?? child.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(child: Child): string {
+    const fn = child.user?.firstName?.charAt(0) ?? '';
+    const ln = child.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
   }
 }

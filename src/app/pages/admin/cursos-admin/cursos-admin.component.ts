@@ -89,6 +89,8 @@ export class CursosAdminComponent implements OnInit {
 
   selectGrade(grade: string) { this.selectedGrade.set(grade); }
 
+  clearGrade() { this.selectedGrade.set(''); }
+
   getCoursesCountByGrade(grade: string): number {
     return this.courses().filter(c => c.grade === grade).length;
   }

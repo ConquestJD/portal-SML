@@ -40,6 +40,10 @@ export class ProfesoresComponent implements OnInit {
 
   hasActiveFilters = computed(() => !!this._searchQuery() || !!this._filterStatus());
 
+  totalCourses = computed(() =>
+    this.filteredProfesores().reduce((acc, p) => acc + (p.courses ?? 0), 0),
+  );
+
   clearSearch() { this._searchQuery.set(''); }
 
   resetFilters() {

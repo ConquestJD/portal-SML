@@ -1,156 +1,105 @@
-<div class="usuarios-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Administradores</h1>
-      <p class="page-subtitle">Gestiona las cuentas con permisos administrativos del sistema</p>
-    </div>
-    <div class="header-actions">
-      <a routerLink="/admin/administradores/crear" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nuevo Administrador
-      </a>
-    </div>
-  </div>
+<div class="adm-page">
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <span class="stat-icon"><i class="fas fa-user-shield"></i></span>
-      <div class="stat-text">
-        <span class="stat-value">{{ total() }}</span>
-        <span class="stat-label">Administradores registrados</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-icon stat-icon--success"><i class="fas fa-user-check"></i></span>
-      <div class="stat-text">
-        <span class="stat-value">{{ totalActive() }}</span>
-        <span class="stat-label">Activos</span>
-      </div>
-    </div>
-  </div>
-
-  @if (resetPasswordResult(); as r) {
-    <div class="alert alert-info">
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
       <div>
-        <i class="fas fa-key"></i>
-        Se generó una contraseña temporal: <strong>{{ r.tempPassword }}</strong>
+        <h1 class="adm-page__title">Administradores</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
-      <button type="button" class="alert-dismiss" (click)="dismissResetResult()" aria-label="Cerrar">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  }
-
-  <div class="admin-toolbar">
-    <div class="admin-toolbar__search">
-      <i class="fas fa-search admin-toolbar__search-icon"></i>
-      <input
-        type="text"
-        class="admin-toolbar__input"
-        placeholder="Buscar por nombre, usuario o email..."
-        [(ngModel)]="searchQuery"
-        name="searchQuery" />
-      @if (searchQuery) {
-        <button type="button" class="admin-toolbar__clear" (click)="clearSearch()" title="Limpiar búsqueda">
-          <i class="fas fa-times"></i>
-        </button>
-      }
-    </div>
-    <div class="admin-toolbar__filters">
-      <div class="admin-toolbar__select-wrapper">
-        <select class="admin-toolbar__select" [(ngModel)]="filterStatus" (change)="onFilterChange()" name="filterStatus">
-          <option value="">Todos los estados</option>
-          <option value="activo">Activos</option>
-          <option value="inactivo">Inactivos</option>
-          <option value="suspendido">Suspendidos</option>
-        </select>
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/administradores/crear" class="adm-btn adm-btn--primary">Nuevo</a>
       </div>
-      @if (hasActiveFilters()) {
-        <button type="button" class="admin-toolbar__reset" (click)="resetFilters()" title="Quitar filtros">
-          <i class="fas fa-rotate-left"></i> Limpiar
-        </button>
-      }
     </div>
-  </div>
+  </header>
 
-  @if (hasActiveFilters()) {
-    <div class="admin-results-bar">
-      <span>
-        Mostrando <span class="admin-results-bar__count">{{ filteredUsers().length }}</span>
-        de <span class="admin-results-bar__count">{{ total() }}</span> administradores
-      </span>
-    </div>
-  }
+  <div class="adm-page__body">
 
-  @if (error()) {
-    <div class="alert alert-error">
-      <i class="fas fa-exclamation-circle"></i> {{ error() }}
-    </div>
-  }
-
-  <div class="table-container">
-    @if (loading()) {
-      <div class="table-loading">
-        <i class="fas fa-spinner fa-spin"></i> Cargando administradores...
+    <section class="metrics metrics--2" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ total() }}</span>
+        <span class="metric__l">Registrados</span>
       </div>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Administrador</th>
-            <th>Usuario</th>
-            <th>Email</th>
-            <th>Estado</th>
-            <th>Último acceso</th>
-            <th class="actions-col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of filteredUsers(); track user.id) {
-            <tr>
-              <td>
-                <div class="user-cell">
-                  <span class="user-avatar">{{ getInitials(user) }}</span>
-                  <span class="user-name">{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
-                </div>
-              </td>
-              <td>{{ user.username || '—' }}</td>
-              <td>{{ user.email || '—' }}</td>
-              <td>
-                <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
-              </td>
-              <td>{{ user.lastLogin || 'Nunca' }}</td>
-              <td class="actions-col">
-                <div class="action-buttons">
-                  <button type="button" class="btn btn-sm btn-primary" title="Editar" (click)="navigateToEdit(user)">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-secondary" title="Resetear contraseña" (click)="resetPassword(user.id)">
-                    <i class="fas fa-key"></i>
-                  </button>
-                  <button type="button"
-                          class="btn btn-sm"
-                          [class.btn-error]="user.displayStatus === 'activo'"
-                          [class.btn-success]="user.displayStatus !== 'activo'"
-                          [title]="user.displayStatus === 'activo' ? 'Desactivar' : 'Activar'"
-                          (click)="toggleStatus(user)">
-                    <i [class]="user.displayStatus === 'activo' ? 'fas fa-ban' : 'fas fa-check'"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="6">
-                <admin-empty-state
-                  icon="fa-user-shield"
-                  title="No hay administradores"
-                  message="Crea el primer administrador con el botón superior.">
-                </admin-empty-state>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <div class="metric">
+        <span class="metric__n">{{ totalActive() }}</span>
+        <span class="metric__l">Activos</span>
+      </div>
+    </section>
+
+    @if (resetPasswordResult(); as r) {
+      <div class="pulse" role="status">
+        <div class="pulse__item" style="background:#fff8e8;border-left-color:#9a6b12;flex:1">
+          <span class="pulse__n" style="color:#9a6b12">!</span>
+          <span class="pulse__l">Contraseña temporal: <strong>{{ r.tempPassword }}</strong></span>
+          <button type="button" class="adm-link" (click)="dismissResetResult()">Cerrar</button>
+        </div>
+      </div>
     }
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Nombre, usuario o email…"
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+        />
+      </label>
+      <select [(ngModel)]="filterStatus" (change)="onFilterChange()" name="filterStatus" aria-label="Estado">
+        <option value="">Estado</option>
+        <option value="activo">Activos</option>
+        <option value="inactivo">Inactivos</option>
+        <option value="suspendido">Suspendidos</option>
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="adm-link" (click)="resetFilters()">Limpiar</button>
+      }
+    </div>
+
+    <section class="feed" aria-label="Administradores">
+      <div class="feed__head">
+        <h2>Accesos</h2>
+        <span class="feed-row__meta">{{ filteredUsers().length }} de {{ total() }}</span>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando…</p>
+      } @else if (filteredUsers().length === 0) {
+        <admin-empty-state title="Sin administradores" message="Crea el primero con el botón Nuevo."></admin-empty-state>
+      } @else {
+        <ul class="feed__list">
+          @for (user of filteredUsers(); track user.id) {
+            <li>
+              <div class="feed-row">
+                <span class="feed-row__mark">{{ getInitials(user) }}</span>
+                <span class="feed-row__body">
+                  <span class="feed-row__title">{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
+                  <span class="feed-row__meta">{{ user.username || '—' }} · {{ user.email || '—' }}</span>
+                </span>
+                <span class="feed-row__side">
+                  <span class="feed-row__kicker">Último acceso</span>
+                  <span class="feed-row__title" style="font-family:var(--font-display)">{{ user.lastLogin || 'Nunca' }}</span>
+                  <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
+                </span>
+                <span class="feed-row__actions">
+                  <button type="button" class="adm-link" (click)="navigateToEdit(user)">Editar</button>
+                  <button type="button" class="adm-link" (click)="resetPassword(user.id)">Reset clave</button>
+                  <button type="button" class="adm-link adm-link--danger" (click)="toggleStatus(user)">
+                    {{ user.displayStatus === 'activo' ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </div>
 </div>

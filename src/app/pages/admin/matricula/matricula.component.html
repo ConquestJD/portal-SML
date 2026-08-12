@@ -1,52 +1,217 @@
-<div class="matricula-container">
-  <div class="page-header">
-    <h1 class="page-title">Matrícula / Asignación de Sección</h1>
-    <p class="page-subtitle">Gestiona la matrícula y asignación de estudiantes a secciones</p>
-  </div>
+<div class="adm-page">
 
-  <form (ngSubmit)="enrollStudent()" class="enrollment-form">
-    <div class="form-section">
-      <h2 class="section-title">Datos de Matrícula</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Estudiante *</label>
-          <input type="text" class="form-input" [(ngModel)]="formData().studentId" name="studentId" placeholder="Buscar estudiante..." required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Año Académico *</label>
-          <select class="form-input" [(ngModel)]="formData().academicYear" name="academicYear" required>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Grado *</label>
-          <select class="form-input" [(ngModel)]="formData().grade" name="grade" required>
-            <option value="">Seleccionar</option>
-            <option value="1ro">1ro</option>
-            <option value="2do">2do</option>
-            <option value="3ro">3ro</option>
-            <option value="4to">4to</option>
-            <option value="5to">5to</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Sección *</label>
-          <select class="form-input" [(ngModel)]="formData().section" name="section" required>
-            <option value="">Seleccionar</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Matrícula</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="enrollStudent()">
+          Nueva matrícula
+        </button>
       </div>
     </div>
+  </header>
 
-    <div class="form-actions">
-      <button type="button" class="btn btn-secondary">Cancelar</button>
-      <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> Matricular
-      </button>
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (showForm()) {
+      <form class="mat-flow feed" (ngSubmit)="save()">
+        <ol class="mat-steps" aria-label="Pasos de matrícula">
+          <li class="mat-step" [class.mat-step--done]="!!formData().studentId">
+            <span class="mat-step__num">1</span>
+            <span class="mat-step__label">Estudiante</span>
+          </li>
+          <li class="mat-step__rail" aria-hidden="true"></li>
+          <li class="mat-step" [class.mat-step--done]="!!formData().academicYearId">
+            <span class="mat-step__num">2</span>
+            <span class="mat-step__label">Año</span>
+          </li>
+          <li class="mat-step__rail" aria-hidden="true"></li>
+          <li class="mat-step" [class.mat-step--done]="!!formData().sectionId">
+            <span class="mat-step__num">3</span>
+            <span class="mat-step__label">Grado / Sección</span>
+          </li>
+        </ol>
+
+        <div class="mat-panels">
+          <section class="mat-panel" [class.mat-panel--active]="!formData().studentId">
+            <h2 class="mat-panel__title">Estudiante</h2>
+            <p class="mat-panel__hint">Quién se matricula</p>
+            <label class="mat-label" for="mat-student">Seleccionar *</label>
+            <select
+              id="mat-student"
+              class="mat-input"
+              name="studentId"
+              required
+              [ngModel]="formData().studentId"
+              (ngModelChange)="update('studentId', $event)"
+            >
+              <option value="">Buscar estudiante…</option>
+              @for (s of students(); track s.id) {
+                <option [value]="s.id">
+                  {{ s.user?.firstName }} {{ s.user?.lastName }}
+                  @if (s.studentCode) { · {{ s.studentCode }} }
+                </option>
+              }
+            </select>
+          </section>
+
+          <section class="mat-panel" [class.mat-panel--active]="!!formData().studentId && !formData().academicYearId">
+            <h2 class="mat-panel__title">Año académico</h2>
+            <p class="mat-panel__hint">Periodo de vigencia</p>
+            <label class="mat-label" for="mat-year">Año *</label>
+            <select
+              id="mat-year"
+              class="mat-input"
+              name="academicYearId"
+              required
+              [ngModel]="formData().academicYearId"
+              (ngModelChange)="update('academicYearId', $event)"
+            >
+              <option value="">Seleccionar año</option>
+              @for (y of academicYears(); track y.id) {
+                <option [value]="y.id">{{ y.name }}</option>
+              }
+            </select>
+          </section>
+
+          <section class="mat-panel" [class.mat-panel--active]="!!formData().academicYearId">
+            <h2 class="mat-panel__title">Grado y sección</h2>
+            <p class="mat-panel__hint">Destino académico</p>
+            <label class="mat-label" for="mat-section">Sección *</label>
+            <select
+              id="mat-section"
+              class="mat-input"
+              name="sectionId"
+              required
+              [ngModel]="formData().sectionId"
+              (ngModelChange)="update('sectionId', $event)"
+            >
+              <option value="">Seleccionar sección</option>
+              @for (sec of sections(); track sec.id) {
+                <option [value]="sec.id">{{ sec.grade }} — {{ sec.name }}</option>
+              }
+            </select>
+          </section>
+        </div>
+
+        <div class="mat-flow__actions">
+          <button type="button" class="adm-btn adm-btn--ghost mat-btn--body" (click)="showForm.set(false)">Cancelar</button>
+          <button
+            type="submit"
+            class="adm-btn adm-btn--solid"
+            [disabled]="!formData().studentId || !formData().academicYearId || !formData().sectionId"
+          >
+            Matricular
+          </button>
+        </div>
+      </form>
+    }
+
+    <div class="toolbar">
+      <select
+        [ngModel]="filterYear()"
+        (ngModelChange)="filterYear.set($event); currentPage.set(1); load()"
+        name="filterYear"
+        aria-label="Filtrar por año"
+      >
+        <option value="">Todos los años</option>
+        @for (y of academicYears(); track y.id) {
+          <option [value]="y.name">{{ y.name }}</option>
+        }
+      </select>
+      <select
+        [ngModel]="filterGrade()"
+        (ngModelChange)="filterGrade.set($event); currentPage.set(1); load()"
+        name="filterGrade"
+        aria-label="Filtrar por grado"
+      >
+        <option value="">Todos los grados</option>
+        <option value="1ro">1ro</option>
+        <option value="2do">2do</option>
+        <option value="3ro">3ro</option>
+        <option value="4to">4to</option>
+        <option value="5to">5to</option>
+      </select>
     </div>
-  </form>
+
+    <section class="feed" aria-label="Matrículas">
+      <div class="feed__head">
+        <h2>Registro de matrículas</h2>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando matrículas…</p>
+      } @else if (enrollments().length === 0) {
+        <p class="feed__empty">No hay matrículas con estos filtros.</p>
+      } @else {
+        <div class="mat-table-wrap">
+          <table class="mat-table">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Código</th>
+                <th>Grado</th>
+                <th>Sección</th>
+                <th>Año</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of enrollments(); track e.id) {
+                <tr>
+                  <td class="mat-table__name">
+                    {{ e.student?.user?.firstName }} {{ e.student?.user?.lastName }}
+                  </td>
+                  <td>{{ e.student?.studentCode || '—' }}</td>
+                  <td>{{ e.grade || e.section?.grade || '—' }}</td>
+                  <td>{{ e.section?.name || '—' }}</td>
+                  <td>{{ e.academicYear?.name || '—' }}</td>
+                  <td>
+                    <span class="mat-pill" [attr.data-status]="e.status">{{ e.status }}</span>
+                  </td>
+                  <td class="mat-table__actions">
+                    @if (e.status !== 'ACTIVE') {
+                      <button type="button" class="adm-link" (click)="updateStatus(e.id, 'ACTIVE')">Activar</button>
+                    }
+                    @if (e.status === 'ACTIVE') {
+                      <button type="button" class="adm-link" (click)="updateStatus(e.id, 'INACTIVE')">Desactivar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="mat-pager">
+            <button
+              type="button"
+              class="adm-btn adm-btn--solid mat-btn--pager"
+              [disabled]="currentPage() <= 1"
+              (click)="currentPage.set(currentPage() - 1); load()"
+            >Anterior</button>
+            <span>{{ currentPage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="adm-btn adm-btn--solid mat-btn--pager"
+              [disabled]="currentPage() >= totalPages()"
+              (click)="currentPage.set(currentPage() + 1); load()"
+            >Siguiente</button>
+          </div>
+        }
+      }
+    </section>
+  </div>
 </div>

@@ -5,6 +5,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { AdminService, UserItem } from '../../../services/admin.service';
 import {
   USER_FORM_STRATEGIES, UserFormStrategy, UserFormData, emptyFormData, FieldKey, usernameFromDni,
+  studentAccessCodeExample,
 } from './user-form.strategies';
 import { RoleKind, apiRoleToKind } from '../_shared/models/role.model';
 import { AdminBreadcrumbComponent } from '../_shared/components/breadcrumb/admin-breadcrumb.component';
@@ -68,10 +69,46 @@ export class CrearUsuarioComponent implements OnInit {
     this.strategy().requiresCredentials(this.formData(), this.isEditMode())
   );
 
-  /** En "inicial" no se piden credenciales porque se crean más adelante. */
+  /** En "inicial" el acceso también es automático (código + DNI). */
   showInitialNote = computed(() =>
     this.roleKind() === 'student' && this.formData().level === 'inicial' && !this.isEditMode()
   );
+
+  showAccessSection = computed(() =>
+    this.isEditMode() || this.credentialsRequired() || this.roleKind() === 'student'
+  );
+
+  /** Código de acceso que asignará el backend al crear un alumno (s + año + correlativo). */
+  studentCodePreview = computed(() => studentAccessCodeExample());
+
+  studentPasswordPreview = computed(() => usernameFromDni(this.formData().dni));
+
+  isStudentForm = computed(() => this.roleKind() === 'student');
+
+  showOptional = signal(false);
+
+  optionalFilledCount = computed(() => {
+    const d = this.formData();
+    return [d.email, d.phone, d.emergencyPhone, d.address, d.birthDate, d.gender]
+      .filter(v => !!String(v ?? '').trim()).length;
+  });
+
+  studentReadyCount = computed(() => {
+    const d = this.formData();
+    let n = 0;
+    if (usernameFromDni(d.dni).length >= this.MIN_DNI_DIGITS) n++;
+    if (d.firstName.trim()) n++;
+    if (d.lastName.trim()) n++;
+    if (d.level) n++;
+    if (d.grade) n++;
+    return n;
+  });
+
+  dniReady = computed(() => usernameFromDni(this.formData().dni).length >= this.MIN_DNI_DIGITS);
+
+  toggleOptional() {
+    this.showOptional.update(v => !v);
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -95,6 +132,7 @@ export class CrearUsuarioComponent implements OnInit {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode.set(true);
+        this.showOptional.set(true);
         this.userId.set(params['id']);
         this.loadUserData(params['id']);
       }
@@ -138,7 +176,7 @@ export class CrearUsuarioComponent implements OnInit {
       email:     user.email ?? '',
       phone:     user.phone ?? '',
       status:    (user.status as UserFormData['status']) ?? 'ACTIVE',
-      dni:       user.dni ?? usernameFromDni(user.username ?? ''),
+      dni: user.dni ?? (/^\d+$/.test(user.username ?? '') ? usernameFromDni(user.username ?? '') : ''),
     }));
   }
 
@@ -158,10 +196,10 @@ export class CrearUsuarioComponent implements OnInit {
     this.formData.update(d => ({ ...d, level, grade: '' }));
   }
 
-  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta. */
+  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta, excepto alumnos. */
   onDniInput(value: string) {
     this.formData.update(d => ({ ...d, dni: value }));
-    if (!this.isEditMode()) {
+    if (!this.isEditMode() && this.roleKind() !== 'student') {
       const u = usernameFromDni(value);
       this.formData.update(d => ({ ...d, username: u }));
     }
@@ -191,7 +229,6 @@ export class CrearUsuarioComponent implements OnInit {
     this.success.set('');
     const d = this.formData();
 
-    // DNI obligatorio en creación y base del usuario de acceso
     if (!this.isEditMode()) {
       const dErr = this.dniError();
       if (dErr) {
@@ -201,7 +238,23 @@ export class CrearUsuarioComponent implements OnInit {
       }
     }
 
-    const mustValidatePassword = this.credentialsRequired() && (!this.isEditMode() || !!d.password);
+    if (this.roleKind() === 'student' && !this.isEditMode()) {
+      if (!d.firstName.trim() || !d.lastName.trim()) {
+        this.error.set('Nombre y apellido son obligatorios');
+        this.isLoading.set(false);
+        return;
+      }
+      if (!d.level || !d.grade) {
+        this.error.set('Nivel y grado son obligatorios');
+        this.isLoading.set(false);
+        return;
+      }
+    }
+
+    const mustValidatePassword =
+      this.isEditMode()
+        ? !!d.password
+        : this.roleKind() !== 'student' && this.credentialsRequired();
     if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {
       this.error.set(`La contraseña debe tener al menos ${this.MIN_PASSWORD_LENGTH} caracteres`);
       this.isLoading.set(false);
@@ -219,9 +272,18 @@ export class CrearUsuarioComponent implements OnInit {
     const strategy = this.strategy();
     const dto = strategy.buildCreateDto(d);
     strategy.create(this.adminService, dto).subscribe({
-      next: () => {
-        this.success.set(strategy.successMessage);
+      next: (created) => {
+        const code = this.extractCreatedStudentCode(created);
+        this.success.set(
+          code
+            ? `${strategy.successMessage}. Usuario: ${code} · Contraseña: DNI`
+            : strategy.successMessage
+        );
         this.isLoading.set(false);
+        if (code) {
+          const dni = usernameFromDni(d.dni);
+          alert(`Estudiante creado.\nUsuario de acceso: ${code}\nContraseña: ${dni}`);
+        }
         this.router.navigate([strategy.listPath]);
       },
       error: (err) => {
@@ -229,6 +291,17 @@ export class CrearUsuarioComponent implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  private extractCreatedStudentCode(created: unknown): string {
+    if (this.roleKind() !== 'student' || !created || typeof created !== 'object') return '';
+    const row = created as {
+      studentCode?: string;
+      code?: string;
+      username?: string;
+      user?: { username?: string };
+    };
+    return row.studentCode || row.code || row.user?.username || row.username || '';
   }
 
   private doUpdate(d: UserFormData) {

@@ -1,111 +1,98 @@
-<div class="profesores-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Gestión de Profesores</h1>
-      <p class="page-subtitle">Listado completo — administra el registro de profesores</p>
-    </div>
-    <div class="header-actions">
-      <a routerLink="/admin/profesores/nuevo" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nuevo Profesor
-      </a>
-    </div>
-  </div>
+<div class="adm-page">
 
-  @if (error()) {
-    <div class="alert-inline">{{ error() }}</div>
-  }
-
-  @if (loading()) {
-    <div class="loading-state">Cargando profesores…</div>
-  } @else {
-    <div class="admin-toolbar">
-      <div class="admin-toolbar__search">
-        <i class="fas fa-search admin-toolbar__search-icon"></i>
-        <input
-          type="text"
-          class="admin-toolbar__input"
-          placeholder="Buscar por nombre o correo..."
-          [(ngModel)]="searchQuery"
-          name="searchQuery" />
-        @if (searchQuery) {
-          <button type="button" class="admin-toolbar__clear" (click)="clearSearch()" title="Limpiar búsqueda">
-            <i class="fas fa-times"></i>
-          </button>
-        }
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Profesores</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
-      <div class="admin-toolbar__filters">
-        <div class="admin-toolbar__select-wrapper">
-          <select class="admin-toolbar__select" [(ngModel)]="filterStatus" name="filterStatus" (change)="load()">
-            <option value="">Todos los estados</option>
-            <option value="activo">Activos</option>
-            <option value="inactivo">Inactivos</option>
-          </select>
-        </div>
-        @if (hasActiveFilters()) {
-          <button type="button" class="admin-toolbar__reset" (click)="resetFilters()" title="Quitar filtros">
-            <i class="fas fa-rotate-left"></i> Limpiar
-          </button>
-        }
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/profesores/nuevo" class="adm-btn adm-btn--primary">Nuevo</a>
       </div>
     </div>
+  </header>
 
-    @if (hasActiveFilters()) {
-      <div class="admin-results-bar">
-        <span>
-          Mostrando <span class="admin-results-bar__count">{{ filteredProfesores().length }}</span>
-          de <span class="admin-results-bar__count">{{ profesores().length }}</span> profesores
-        </span>
-      </div>
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
     }
 
-    <div class="table-container">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Cursos</th>
-            <th>Estudiantes</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (filteredProfesores().length === 0) {
-            <tr>
-              <td colspan="6">
-                <admin-empty-state icon="fa-chalkboard-teacher" message="No hay profesores para mostrar"></admin-empty-state>
-              </td>
-            </tr>
-          } @else {
-            @for (profesor of filteredProfesores(); track profesor.id) {
-              <tr>
-                <td>{{ getFullName(profesor) }}</td>
-                <td>{{ profesor.email ?? profesor.user?.email }}</td>
-                <td>{{ profesor.courses ?? 0 }}</td>
-                <td>{{ profesor.students ?? 0 }}</td>
-                <td>
-                  <admin-status-badge [value]="profesor.status ?? profesor.user?.status"></admin-status-badge>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <a [routerLink]="['/admin/profesores', profesor.id]" class="btn btn-sm btn-primary" title="Ver Detalle">
-                      <i class="fas fa-eye"></i>
-                    </a>
-                    <a [routerLink]="['/admin/profesores', profesor.id, 'editar']" class="btn btn-sm btn-secondary" title="Editar">
-                      <i class="fas fa-edit"></i>
-                    </a>
-                    <button class="btn btn-sm btn-icon" (click)="toggleStatus(profesor)"
-                            [title]="(profesor.status ?? profesor.user?.status) === 'ACTIVE' || (profesor.status ?? profesor.user?.status) === 'activo' ? 'Desactivar' : 'Activar'">
-                      <i class="fas fa-power-off"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
+    <section class="metrics metrics--3" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ profesores().length }}</span>
+        <span class="metric__l">Docentes</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ filteredProfesores().length }}</span>
+        <span class="metric__l">Mostrados</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ totalCourses() }}</span>
+        <span class="metric__l">Cursos asignados</span>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Nombre o correo…"
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+        />
+      </label>
+      <select [(ngModel)]="filterStatus" name="filterStatus" (change)="load()" aria-label="Estado">
+        <option value="">Estado</option>
+        <option value="activo">Activos</option>
+        <option value="inactivo">Inactivos</option>
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="adm-link" (click)="resetFilters()">Limpiar</button>
+      }
     </div>
-  }
+
+    <section class="feed" aria-label="Claustro">
+      <div class="feed__head">
+        <h2>Claustro docente</h2>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando…</p>
+      } @else if (filteredProfesores().length === 0) {
+        <admin-empty-state title="Sin profesores" message="No hay resultados con esos filtros."></admin-empty-state>
+      } @else {
+        <ul class="feed__list">
+          @for (profesor of filteredProfesores(); track profesor.id) {
+            <li>
+              <div class="feed-row">
+                <a [routerLink]="['/admin/profesores', profesor.id]" class="feed-row" style="flex:1;padding:0;min-width:0">
+                  <span class="feed-row__body">
+                    <span class="feed-row__kicker">{{ profesor.specialty || profesor.department || 'Docente' }}</span>
+                    <span class="feed-row__title">{{ getFullName(profesor) }}</span>
+                    <span class="feed-row__meta">
+                      {{ profesor.email ?? profesor.user?.email }}
+                      · {{ profesor.courses ?? 0 }} cursos · {{ profesor.students ?? 0 }} est.
+                    </span>
+                  </span>
+                </a>
+                <admin-status-badge [value]="profesor.status ?? profesor.user?.status"></admin-status-badge>
+                <span class="feed-row__actions">
+                  <a [routerLink]="['/admin/profesores', profesor.id]" class="adm-link">Ver</a>
+                  <a [routerLink]="['/admin/profesores', profesor.id, 'editar']" class="adm-link">Editar</a>
+                  <button type="button" class="adm-link" (click)="toggleStatus(profesor)">
+                    {{ (profesor.status ?? profesor.user?.status) === 'ACTIVE' || (profesor.status ?? profesor.user?.status) === 'activo' ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
 </div>

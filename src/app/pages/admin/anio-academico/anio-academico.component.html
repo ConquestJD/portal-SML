@@ -1,37 +1,130 @@
-<div class="anio-academico-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Gestión de Año Académico</h1>
-      <p class="page-subtitle">Administra los años académicos y periodos</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" (click)="createNewYear()">
-        <i class="fas fa-plus"></i> Nuevo Año Académico
-      </button>
-    </div>
-  </div>
+<div class="adm-page">
 
-  <div class="years-list">
-    @for (year of academicYears(); track year.id) {
-      <div class="year-card">
-        <div class="year-header">
-          <h3>Año Académico {{ year.year }}</h3>
-          <span class="badge badge-success">{{ year.status }}</span>
-        </div>
-        <div class="year-info">
-          <p><strong>Inicio:</strong> {{ year.startDate }}</p>
-          <p><strong>Fin:</strong> {{ year.endDate }}</p>
-          <p><strong>Periodos:</strong> {{ year.periods }}</p>
-        </div>
-        <div class="year-actions">
-          <button class="btn btn-sm btn-primary">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button class="btn btn-sm btn-secondary">
-            <i class="fas fa-calendar"></i> Gestionar Periodos
-          </button>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Año académico</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="createNewYear()">Nuevo año</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
     }
+
+    <section class="metrics metrics--2" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ academicYears().length }}</span>
+        <span class="metric__l">Años registrados</span>
+      </div>
+      <div class="metric" [class.metric--alert]="activeYearsCount() === 0">
+        <span class="metric__n">{{ activeYearsCount() }}</span>
+        <span class="metric__l">Activos</span>
+      </div>
+    </section>
+
+    @if (showForm()) {
+      <section class="feed">
+        <form (ngSubmit)="save()">
+          <div class="feed__head">
+            <h2>{{ editId() ? 'Editar año' : 'Nuevo año académico' }}</h2>
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Nombre *</label>
+              <input class="form-input" type="text" required
+                     [ngModel]="formData().name" (ngModelChange)="update('name', $event)"
+                     name="name" placeholder="Ej: 2026">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Estado</label>
+              <select class="form-input"
+                      [ngModel]="formData().status" (ngModelChange)="update('status', $event)"
+                      name="status">
+                <option value="UPCOMING">Próximo</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="CLOSED">Cerrado</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Inicio *</label>
+              <input class="form-input" type="date" required
+                     [ngModel]="formData().startDate" (ngModelChange)="update('startDate', $event)"
+                     name="startDate">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Fin *</label>
+              <input class="form-input" type="date" required
+                     [ngModel]="formData().endDate" (ngModelChange)="update('endDate', $event)"
+                     name="endDate">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="adm-link" (click)="cancelForm()">Cancelar</button>
+            <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
+          </div>
+        </form>
+      </section>
+    }
+
+    <section class="feed" aria-label="Años académicos">
+      <div class="feed__head">
+        <h2>Calendario institucional</h2>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando…</p>
+      } @else if (academicYears().length === 0) {
+        <p class="feed__empty">Aún no hay años académicos registrados.</p>
+      } @else {
+        <ul class="feed__list">
+          @for (year of academicYears(); track year.id) {
+            <li>
+              <div class="feed-row feed-row--stack">
+                <span class="feed-row__body">
+                  <span class="feed-row__kicker">{{ statusLabel(year.status) }}</span>
+                  <span class="feed-row__title">{{ year.name || year.year }}</span>
+                  <span class="feed-row__meta">{{ year.startDate }} → {{ year.endDate }}</span>
+                </span>
+                <span class="feed-row__actions">
+                  <button type="button" class="adm-link" (click)="editYear(year)">Editar</button>
+                  <button type="button" class="adm-link" (click)="togglePeriods(year.id)">
+                    {{ expandedYearId() === year.id ? 'Ocultar periodos' : 'Ver periodos' }}
+                  </button>
+                </span>
+              </div>
+
+              @if (expandedYearId() === year.id) {
+                <div class="periods-panel">
+                  @if (periodsLoadingId() === year.id) {
+                    <p class="feed__empty">Cargando periodos…</p>
+                  } @else if (periodsFor(year.id).length === 0) {
+                    <p class="feed__empty">Sin periodos registrados para este año.</p>
+                  } @else {
+                    <ul class="periods-list">
+                      @for (period of periodsFor(year.id); track period.id) {
+                        <li class="periods-list__item">
+                          <span class="periods-list__name">{{ period.name }}</span>
+                          <span class="periods-list__range">{{ period.startDate }} — {{ period.endDate }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </div>
 </div>

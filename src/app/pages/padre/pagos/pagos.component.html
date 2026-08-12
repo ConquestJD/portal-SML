@@ -1,297 +1,161 @@
-<div class="pagos-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Pagos</span>
-  </div>
+<div class="padre-page">
 
-  <div class="page-header">
-    <h1 class="page-title">
-      <i class="fas fa-dollar-sign"></i>
-      Pagos y Facturación
-    </h1>
-    <p class="page-subtitle">Gestiona los pagos de tus hijos</p>
-  </div>
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
+      <div>
+        <h1 class="padre-page__title">Pagos</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
 
-  <!-- Selector de Hijos -->
-  @if (children().length > 1) {
-    <div class="child-selector-section">
-      <h2 class="selector-title">
-        <i class="fas fa-users"></i>
-        Seleccionar Hijo
-      </h2>
-      <div class="children-grid">
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (children().length > 1) {
+      <nav class="child-picker" aria-label="Seleccionar hijo">
         @for (child of children(); track child.id) {
-          <button 
-            class="child-card"
+          <button
+            type="button"
+            class="child-picker__btn"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            <div class="child-photo-wrapper">
-              @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
+            } @else {
+              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
+            }
+            <span>
+              <span class="child-picker__name">{{ getChildName(child) }}</span>
+              <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+            </span>
+          </button>
+        }
+      </nav>
+    }
+
+    @if (children().length === 0 && !isLoading()) {
+      <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
+    } @else if (children().length) {
+
+      @if (selectedChild(); as ch) {
+        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+      }
+
+      @if (isLoading()) {
+        <p class="feed__empty">Cargando pagos…</p>
+      } @else {
+
+        <section class="metrics metrics--3" aria-label="Resumen de pagos">
+          <div class="metric">
+            <span class="metric__n">S/ {{ summary().completado | number:'1.0-0' }}</span>
+            <span class="metric__l">Completados</span>
+          </div>
+          <div class="metric" [class.metric--alert]="summary().pendiente > 0">
+            <span class="metric__n">S/ {{ summary().pendiente | number:'1.0-0' }}</span>
+            <span class="metric__l">Pendientes</span>
+          </div>
+          <div class="metric metric--alert">
+            <span class="metric__n">S/ {{ summary().vencido | number:'1.0-0' }}</span>
+            <span class="metric__l">Vencidos</span>
+          </div>
+        </section>
+
+        <div class="toolbar">
+          <label class="search">
+            <span class="visually-hidden">Buscar pago</span>
+            <input
+              type="text"
+              placeholder="Buscar por concepto…"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+            />
+          </label>
+        </div>
+
+        <nav class="padre-tabs" aria-label="Filtrar por estado">
+          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'todos'" (click)="setFilterStatus('todos')">Todos</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'pendiente'" (click)="setFilterStatus('pendiente')">Pendientes</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'proximo'" (click)="setFilterStatus('proximo')">Próximos</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'completado'" (click)="setFilterStatus('completado')">Completados</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'vencido'" (click)="setFilterStatus('vencido')">Vencidos</button>
+        </nav>
+
+        <nav class="padre-tabs padre-tabs--secondary" aria-label="Filtrar por categoría">
+          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'todos'" (click)="setFilterCategory('todos')">Todas</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'matricula'" (click)="setFilterCategory('matricula')">Matrícula</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'mensualidad'" (click)="setFilterCategory('mensualidad')">Mensualidad</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'materiales'" (click)="setFilterCategory('materiales')">Materiales</button>
+          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'actividades'" (click)="setFilterCategory('actividades')">Actividades</button>
+        </nav>
+
+        @if (filteredPayments().length === 0) {
+          <section class="feed">
+            <p class="feed__empty">
+              @if (searchQuery() || filterStatus() !== 'todos' || filterCategory() !== 'todos') {
+                No se encontraron pagos con ese criterio.
               } @else {
-                <div class="child-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
+                Este hijo no tiene pagos registrados.
               }
-            </div>
-            <div class="child-info">
-              <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }}</p>
-            </div>
-            @if (selectedChildId() === child.id) {
-              <div class="child-check">
-                <i class="fas fa-check-circle"></i>
-              </div>
-            }
-          </button>
-        }
-      </div>
-    </div>
-  }
-
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando pagos...</p>
-    </div>
-  } @else {
-    @if (selectedChild()) {
-      <div class="child-header">
-        <h2 class="child-header-title">
-          Pagos de {{ selectedChild()!.name }}
-        </h2>
-        <p class="child-header-subtitle">
-          {{ selectedChild()!.grade }}
-        </p>
-      </div>
-    }
-
-    <!-- Resumen de Pagos -->
-    <div class="summary-cards">
-      <div class="summary-card total">
-        <div class="card-icon">
-          <i class="fas fa-dollar-sign"></i>
-        </div>
-        <div class="card-content">
-          <h3>Total</h3>
-          <p class="card-value">S/ {{ summary().total | number:'1.2-2' }}</p>
-        </div>
-      </div>
-      <div class="summary-card completado">
-        <div class="card-icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="card-content">
-          <h3>Completados</h3>
-          <p class="card-value">S/ {{ summary().completado | number:'1.2-2' }}</p>
-          <span class="card-count">{{ summary().completadosCount }} pagos</span>
-        </div>
-      </div>
-      <div class="summary-card pendiente">
-        <div class="card-icon">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="card-content">
-          <h3>Pendientes</h3>
-          <p class="card-value">S/ {{ summary().pendiente | number:'1.2-2' }}</p>
-          <span class="card-count">{{ summary().pendientesCount }} pagos</span>
-        </div>
-      </div>
-      <div class="summary-card proximo">
-        <div class="card-icon">
-          <i class="fas fa-calendar-alt"></i>
-        </div>
-        <div class="card-content">
-          <h3>Próximos</h3>
-          <p class="card-value">S/ {{ summary().proximo | number:'1.2-2' }}</p>
-          <span class="card-count">{{ summary().proximosCount }} pagos</span>
-        </div>
-      </div>
-      @if (summary().vencido > 0) {
-        <div class="summary-card vencido">
-          <div class="card-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <div class="card-content">
-            <h3>Vencidos</h3>
-            <p class="card-value">S/ {{ summary().vencido | number:'1.2-2' }}</p>
-            <span class="card-count">{{ summary().vencidosCount }} pagos</span>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Filtros -->
-    <div class="filters-section">
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input 
-          type="text" 
-          placeholder="Buscar por concepto o descripción..." 
-          [value]="searchQuery()"
-          (input)="searchQuery.set($any($event.target).value)">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Estado:</label>
-        <div class="filter-buttons">
-          <button 
-            class="filter-btn" 
-            [class.active]="filterStatus() === 'todos'"
-            (click)="filterStatus.set('todos')">
-            Todos
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterStatus() === 'pendiente'"
-            (click)="filterStatus.set('pendiente')">
-            Pendientes
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterStatus() === 'proximo'"
-            (click)="filterStatus.set('proximo')">
-            Próximos
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterStatus() === 'completado'"
-            (click)="filterStatus.set('completado')">
-            Completados
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterStatus() === 'vencido'"
-            (click)="filterStatus.set('vencido')">
-            Vencidos
-          </button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Categoría:</label>
-        <div class="filter-buttons">
-          <button 
-            class="filter-btn" 
-            [class.active]="filterCategory() === 'todos'"
-            (click)="filterCategory.set('todos')">
-            Todas
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterCategory() === 'matricula'"
-            (click)="filterCategory.set('matricula')">
-            Matrícula
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterCategory() === 'mensualidad'"
-            (click)="filterCategory.set('mensualidad')">
-            Mensualidad
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterCategory() === 'materiales'"
-            (click)="filterCategory.set('materiales')">
-            Materiales
-          </button>
-          <button 
-            class="filter-btn" 
-            [class.active]="filterCategory() === 'actividades'"
-            (click)="filterCategory.set('actividades')">
-            Actividades
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lista de Pagos -->
-    <div class="payments-list">
-      @for (payment of filteredPayments(); track payment.id) {
-        <div class="payment-card" [class.completado]="payment.status === 'completado'"
-                                  [class.pendiente]="payment.status === 'pendiente'"
-                                  [class.proximo]="payment.status === 'proximo'"
-                                  [class.vencido]="payment.status === 'vencido'">
-          <div class="payment-header">
-            <div class="payment-category">
-              <div class="category-icon" [class.matricula]="payment.category === 'matricula'"
-                                        [class.mensualidad]="payment.category === 'mensualidad'"
-                                        [class.materiales]="payment.category === 'materiales'"
-                                        [class.actividades]="payment.category === 'actividades'"
-                                        [class.otros]="payment.category === 'otros'">
-                <i class="fas" [ngClass]="getCategoryIcon(payment.category)"></i>
-              </div>
-              <div class="payment-info">
-                <h3 class="payment-concept">{{ payment.concept }}</h3>
-                <p class="payment-description">{{ payment.description }}</p>
-                <span class="payment-category-label">{{ getCategoryLabel(payment.category) }}</span>
-              </div>
-            </div>
-            <div class="payment-amount">
-              <span class="amount-value">S/ {{ payment.amount | number:'1.2-2' }}</span>
-              <span class="payment-status" [class.status-pendiente]="payment.status === 'pendiente'"
-                                          [class.status-proximo]="payment.status === 'proximo'"
-                                          [class.status-completado]="payment.status === 'completado'"
-                                          [class.status-vencido]="payment.status === 'vencido'">
-                @if (payment.status === 'completado') {
-                  <i class="fas fa-check-circle"></i> Completado
-                } @else if (payment.status === 'pendiente') {
-                  <i class="fas fa-clock"></i> Pendiente
-                } @else if (payment.status === 'proximo') {
-                  <i class="fas fa-calendar-alt"></i> Próximo
-                } @else {
-                  <i class="fas fa-exclamation-triangle"></i> Vencido
-                }
-              </span>
-            </div>
-          </div>
-          <div class="payment-details">
-            <div class="detail-item">
-              <i class="fas fa-calendar"></i>
-              <span><strong>Fecha límite:</strong> {{ payment.dueDate | date:'longDate' }}</span>
-            </div>
-            @if (payment.status === 'completado') {
-              <div class="detail-item">
-                <i class="fas fa-check"></i>
-                <span><strong>Fecha de pago:</strong> {{ payment.paymentDate | date:'longDate' }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-credit-card"></i>
-                <span><strong>Método:</strong> {{ payment.paymentMethod }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-file-invoice"></i>
-                <span><strong>Recibo:</strong> {{ payment.receiptNumber }}</span>
-              </div>
-            }
-          </div>
-          <div class="payment-actions">
-            @if (payment.status === 'completado' && payment.receiptNumber) {
-              <button class="btn btn-secondary" (click)="downloadReceipt(payment)">
-                <i class="fas fa-download"></i>
-                Descargar Recibo
-              </button>
-            } @else if (payment.status === 'pendiente' || payment.status === 'vencido' || payment.status === 'proximo') {
-              <div class="payment-reminder" [class]="getReminderClass(payment)">
-                <i class="fas" [ngClass]="getReminderIcon(payment)"></i>
-                <span>{{ getReminderMessage(payment) }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-    @if (filteredPayments().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-receipt"></i>
-        <p>No se encontraron pagos</p>
-        @if (searchQuery() || filterStatus() !== 'todos' || filterCategory() !== 'todos') {
-          <p class="empty-hint">Intenta con otros filtros o términos de búsqueda</p>
+            </p>
+          </section>
         } @else {
-          <p class="empty-hint">Este hijo no tiene pagos registrados</p>
+          <section class="feed">
+            <ul class="feed__list">
+              @for (payment of filteredPayments(); track payment.id) {
+                <li>
+                  <div class="feed-row feed-row--static" [class.feed-row--overdue]="payment.status === 'vencido'">
+                    <span class="feed-row__mark">S/</span>
+                    <span class="feed-row__body">
+                      <span class="feed-row__kicker">{{ getCategoryLabel(payment.category) }}</span>
+                      <span class="feed-row__title">{{ payment.concept }}</span>
+                      <span class="feed-row__meta">
+                        @if (payment.dueDate) {
+                          Límite: {{ payment.dueDate | date: 'longDate' }}
+                        }
+                        @if (payment.description) {
+                          · {{ payment.description }}
+                        }
+                        @if (payment.status === 'completado' && payment.paymentDate) {
+                          · Pagado {{ payment.paymentDate | date: 'shortDate' }}
+                        }
+                      </span>
+                      @if (payment.status !== 'completado') {
+                        <span class="payment-reminder" [class]="getReminderClass(payment)">
+                          {{ getReminderMessage(payment) }}
+                        </span>
+                      }
+                    </span>
+                    <span class="feed-row__side">
+                      <span class="payment-amount">S/ {{ payment.amount | number:'1.2-2' }}</span>
+                      <span class="payment-badge" [class.payment-badge--completado]="payment.status === 'completado'"
+                            [class.payment-badge--pendiente]="payment.status === 'pendiente'"
+                            [class.payment-badge--proximo]="payment.status === 'proximo'"
+                            [class.payment-badge--vencido]="payment.status === 'vencido'">
+                        {{ paymentStatusLabel(payment.status) }}
+                      </span>
+                      @if (payment.status === 'completado' && payment.receiptNumber) {
+                        <button type="button" class="padre-link" (click)="downloadReceipt(payment)">Recibo</button>
+                      }
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
         }
-      </div>
+      }
     }
-  }
+  </div>
 </div>

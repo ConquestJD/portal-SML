@@ -101,6 +101,25 @@ export class CursosPadreComponent implements OnInit {
     return `${c.user.firstName} ${c.user.lastName}`;
   }
 
+  getChildGrade(c: Child): string {
+    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(c: Child): string {
+    const fn = c.user?.firstName?.charAt(0) ?? '';
+    const ln = c.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
+  courseInitial(course: ParentListedCourse): string {
+    return (course.name?.charAt(0) ?? '?').toUpperCase();
+  }
+
+  onSearchInput(event: Event) {
+    const el = event.target as HTMLInputElement;
+    this.searchQuery.set(el.value);
+  }
+
   private mapAssignment(row: unknown): ParentListedCourse {
     const a = row as Record<string, unknown>;
     const course = (a['course'] as Record<string, unknown>) ?? {};

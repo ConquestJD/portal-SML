@@ -1,173 +1,163 @@
-<div class="mensajeria-container">
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando mensajería...</p>
-    </div>
-  } @else {
-    <!-- Header -->
-    <div class="mensajeria-header">
-      <div class="header-content">
-        <h1 class="page-title">
-          <i class="fas fa-envelope"></i>
-          Mensajería
-        </h1>
-        <p class="page-subtitle">
-          @if (course(); as c) {
-            <span>{{ c.name }}</span>
+<div class="prof-page prof-page--chat">
+
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">Mensajería</h1>
+        @if (course(); as c) {
+          <p class="prof-page__brand">
+            {{ c.name }}
             @if (c.grade || c.section) {
-              <span> — {{ c.grade }} {{ c.section }}</span>
+              — {{ c.grade }} {{ c.section }}
             }
-          } @else {
-            Todas tus conversaciones
-          }
-        </p>
+          </p>
+        } @else {
+          <p class="prof-page__brand">Santa María Laura</p>
+        }
       </div>
       @if (userRole() === 'profesor' && unreadTotal() > 0) {
-        <div class="unread-badge">
-          <i class="fas fa-bell"></i>
-          {{ unreadTotal() }} sin leer
+        <div class="prof-page__hero-actions">
+          <span class="msg-unread-pill">{{ unreadTotal() }} sin leer</span>
         </div>
       }
     </div>
+  </header>
 
-    <div class="mensajeria-layout" [class.student-view]="userRole() === 'estudiante'">
-      <!-- Lista de Conversaciones (Solo para profesores) -->
-      @if (userRole() === 'profesor') {
-        <div class="conversations-sidebar">
-          <div class="sidebar-header">
-            <h3>Conversaciones</h3>
-            <span class="conversations-count">{{ conversations().length }}</span>
-          </div>
-          <div class="conversations-list">
-            @for (conversation of sortedConversations(); track conversation.id) {
-              <div 
-                class="conversation-item"
-                [class.active]="selectedConversation()?.id === conversation.id"
-                [class.unread]="conversation.unreadCount > 0"
-                (click)="selectConversation(conversation)"
-              >
-                <div class="conversation-avatar">
-                  {{ getInitial(conversation.participantName) }}
-                </div>
-                <div class="conversation-content">
-                  <div class="conversation-header">
-                    <span class="conversation-name">{{ conversation.participantName }}</span>
-                    <span class="conversation-time">{{ formatTime(conversation.lastMessageTime) }}</span>
-                  </div>
-                  <div class="conversation-preview">
-                    <span class="preview-text">{{ conversation.lastMessage }}</span>
-                    @if (conversation.unreadCount > 0) {
-                      <span class="unread-count">{{ conversation.unreadCount }}</span>
-                    }
-                  </div>
-                </div>
-              </div>
-            }
-            @if (conversations().length === 0) {
-              <div class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <p>No hay conversaciones</p>
-                <p class="empty-hint">Los mensajes de los estudiantes aparecerán aquí</p>
-              </div>
-            }
-          </div>
-        </div>
+  <div class="prof-page__body prof-page__body--chat">
+
+    @if (isLoading()) {
+      <p class="feed__empty">Cargando mensajería…</p>
+    } @else {
+
+      @if (error()) {
+        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
       }
 
-      <!-- Área de Mensajes -->
-      <div class="messages-area">
-        @if (selectedConversation()) {
-          @let conv = selectedConversation()!;
-          <!-- Header de la conversación -->
-          <div class="messages-header">
-            <div class="conversation-info">
-              <div class="conversation-avatar-large">
-                {{ getInitial(conv.participantName) }}
-              </div>
-              <div class="conversation-details">
-                <h3>{{ conv.participantName }}</h3>
-                <p class="conversation-role">
+      <div class="msg-layout" [class.msg-layout--student]="userRole() === 'estudiante'">
+
+        @if (userRole() === 'profesor') {
+          <aside class="feed msg-sidebar">
+            <div class="feed__head">
+              <h2>Conversaciones</h2>
+              <span class="msg-count">{{ conversations().length }}</span>
+            </div>
+            <ul class="msg-convo-list">
+              @for (conversation of sortedConversations(); track conversation.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="msg-convo"
+                    [class.msg-convo--active]="selectedConversation()?.id === conversation.id"
+                    [class.msg-convo--unread]="conversation.unreadCount > 0"
+                    (click)="selectConversation(conversation)"
+                  >
+                    <span class="msg-convo__avatar">{{ getInitial(conversation.participantName) }}</span>
+                    <span class="msg-convo__body">
+                      <span class="msg-convo__top">
+                        <span class="msg-convo__name">{{ conversation.participantName }}</span>
+                        <span class="msg-convo__time">{{ formatTime(conversation.lastMessageTime) }}</span>
+                      </span>
+                      <span class="msg-convo__preview">
+                        <span class="msg-convo__text">{{ conversation.lastMessage }}</span>
+                        @if (conversation.unreadCount > 0) {
+                          <span class="msg-convo__badge">{{ conversation.unreadCount }}</span>
+                        }
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+            @if (conversations().length === 0) {
+              <p class="feed__empty">No hay conversaciones. Los mensajes de los estudiantes aparecerán aquí.</p>
+            }
+          </aside>
+        }
+
+        <section class="feed msg-panel">
+          @if (selectedConversation()) {
+            @let conv = selectedConversation()!;
+            <div class="msg-panel__head">
+              <span class="msg-panel__avatar">{{ getInitial(conv.participantName) }}</span>
+              <div>
+                <h2 class="msg-panel__name">{{ conv.participantName }}</h2>
+                <p class="msg-panel__role">
                   @if (conv.participantRole === 'profesor') {
-                    <i class="fas fa-chalkboard-teacher"></i> Profesor
+                    Profesor
                   } @else if (conv.participantRole === 'padre') {
-                    <i class="fas fa-user-friends"></i> Apoderado
+                    Apoderado
                   } @else {
-                    <i class="fas fa-user-graduate"></i> Estudiante
+                    Estudiante
                   }
                 </p>
               </div>
             </div>
-          </div>
 
-          <!-- Lista de Mensajes -->
-          <div class="messages-list" #messagesContainer>
-            @for (message of conv.messages; track message.id) {
-              <div 
-                class="message-item"
-                [class.message-sent]="message.senderRole === userRole()"
-                [class.message-received]="message.senderRole !== userRole()"
-                [class.message-unread]="!message.read && message.senderRole !== userRole()"
-              >
-                <div class="message-content">
-                  <div class="message-header">
-                    <span class="message-sender">{{ message.senderName }}</span>
-                    <span class="message-time">{{ formatMessageDate(message.timestamp) }}</span>
-                  </div>
-                  <div class="message-text">
-                    {{ message.content }}
-                  </div>
-                  @if (message.attachments && message.attachments.length > 0) {
-                    <div class="message-attachments">
-                      @for (attachment of message.attachments; track attachment.id) {
-                        <a [href]="attachment.url" class="attachment-item" target="_blank">
-                          <i class="fas fa-file"></i>
-                          <span>{{ attachment.name }}</span>
-                          <span class="attachment-size">({{ attachment.size }})</span>
-                        </a>
-                      }
+            <div class="msg-thread">
+              @for (message of conv.messages; track message.id) {
+                <div
+                  class="msg-bubble"
+                  [class.msg-bubble--sent]="message.senderRole === userRole()"
+                  [class.msg-bubble--received]="message.senderRole !== userRole()"
+                  [class.msg-bubble--unread]="!message.read && message.senderRole !== userRole()"
+                >
+                  <div class="msg-bubble__inner">
+                    <div class="msg-bubble__head">
+                      <span class="msg-bubble__sender">{{ message.senderName }}</span>
+                      <span class="msg-bubble__time">{{ formatMessageDate(message.timestamp) }}</span>
                     </div>
-                  }
+                    <p class="msg-bubble__text">{{ message.content }}</p>
+                    @if (message.attachments && message.attachments.length > 0) {
+                      <ul class="msg-attachments">
+                        @for (attachment of message.attachments; track attachment.id) {
+                          <li>
+                            <a [href]="attachment.url" class="msg-attachment" target="_blank" rel="noopener noreferrer">
+                              {{ attachment.name }}
+                              @if (attachment.size) {
+                                <span>({{ attachment.size }})</span>
+                              }
+                            </a>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
 
-          <!-- Área de Envío -->
-          <div class="message-input-area">
-            <form (ngSubmit)="sendMessage()" class="message-form">
-              <div class="input-wrapper">
+            <div class="msg-compose">
+              <form (ngSubmit)="sendMessage()" class="msg-form">
+                <label class="visually-hidden" for="msg-input">Mensaje</label>
                 <textarea
-                  class="message-input"
+                  id="msg-input"
+                  class="msg-input"
                   [ngModel]="newMessageText()"
                   (ngModelChange)="newMessageText.set($event)"
-                  placeholder="Escribe tu mensaje..."
+                  placeholder="Escribe tu mensaje…"
                   rows="2"
-                  (keydown.enter)="$event.preventDefault(); sendMessage()"
+                  name="newMessageText"
+                  (keydown.enter)="onMessageEnter($event)"
                 ></textarea>
                 <button
                   type="submit"
-                  class="send-button"
+                  class="prof-btn prof-btn--solid msg-send"
                   [disabled]="!newMessageText().trim() || isSending()"
-                  title="Enviar mensaje"
                 >
-                  @if (isSending()) {
-                  <i class="fas fa-spinner fa-spin"></i>
-                } @else {
-                  <i class="fas fa-paper-plane"></i>
-                }
+                  @if (isSending()) { Enviando… } @else { Enviar }
                 </button>
-              </div>
-            </form>
-          </div>
-        } @else {
-          <div class="no-conversation-selected">
-            <i class="fas fa-comments"></i>
-            <h3>Selecciona una conversación</h3>
-            <p>Elige una conversación de la lista para comenzar a chatear</p>
-          </div>
-        }
+              </form>
+            </div>
+          } @else {
+            <div class="msg-empty">
+              <p class="feed__empty">Selecciona una conversación de la lista para comenzar a chatear.</p>
+            </div>
+          }
+        </section>
       </div>
-    </div>
-  }
+    }
+  </div>
 </div>

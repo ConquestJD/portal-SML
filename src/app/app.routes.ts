@@ -303,6 +303,10 @@ export const routes: Routes = [
       {
         path: 'padre/pagos',
         loadComponent: () => import('./pages/padre/pagos/pagos.component').then(m => m.PagosComponent)
+      },
+      {
+        path: 'padre/configuracion',
+        loadComponent: () => import('./pages/padre/configuracion-padre/configuracion-padre.component').then(m => m.ConfiguracionPadreComponent)
       }
     ]
   }

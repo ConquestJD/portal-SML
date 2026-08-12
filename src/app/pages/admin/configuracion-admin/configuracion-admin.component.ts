@@ -20,6 +20,10 @@ export class ConfiguracionAdminComponent {
     email: 'contacto@colegio.edu'
   });
 
+  patchSchool(field: 'name' | 'address' | 'phone' | 'email', value: string) {
+    this.schoolData.update((d) => ({ ...d, [field]: value }));
+  }
+
   saveSettings() {
     console.log('Guardar configuración', this.schoolData());
   }

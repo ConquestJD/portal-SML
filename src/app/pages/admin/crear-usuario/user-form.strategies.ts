@@ -57,10 +57,16 @@ export function emptyFormData(): UserFormData {
 }
 
 /**
- * Normaliza el DNI a solo dígitos para usarlo como nombre de usuario de acceso.
+ * Normaliza el DNI a solo dígitos para usarlo como nombre de usuario de acceso
+ * (profesores, padres y administradores). Los alumnos usan un código generado en el backend.
  */
 export function usernameFromDni(dni: string): string {
   return (dni || '').replace(/\D/g, '');
+}
+
+/** Ejemplo de código de acceso de alumno: s + año + correlativo (s2026001). */
+export function studentAccessCodeExample(year = new Date().getFullYear()): string {
+  return `s${year}001`;
 }
 
 export interface UserFormStrategy {
@@ -90,18 +96,17 @@ export const STUDENT_STRATEGY: UserFormStrategy = {
   subtitle: 'Información académica y personal del estudiante',
   /** Campos médicos y código de estudiante se omiten del alta a pedido del colegio. */
   roleFields: ['level', 'grade', 'birthDate', 'gender', 'dni', 'emergencyPhone', 'address'],
-  requiresCredentials: (d, isEditMode) => isEditMode ? !!d.password : d.level !== 'inicial',
+  /** En alta la contraseña es el DNI (backend). En edición solo si se escribe una nueva. */
+  requiresCredentials: (d, isEditMode) => isEditMode ? !!d.password : false,
   buildCreateDto: (d) => ({
-    username: usernameFromDni(d.dni) || d.username,
     email: d.email || undefined,
-    password: d.password,
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
     birthDate: d.birthDate || undefined,
     gender: d.gender || undefined,
     address: d.address || undefined,
-    dni: d.dni || undefined,
+    dni: usernameFromDni(d.dni) || d.dni,
     grade: d.grade || undefined,
     level: d.level ? (d.level.charAt(0).toUpperCase() + d.level.slice(1)) : undefined,
   }),

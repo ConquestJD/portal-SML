@@ -175,6 +175,20 @@ export class PerfilHijoComponent implements OnInit {
     return `${child.user.firstName} ${child.user.lastName}`;
   }
 
+  getChildGrade(child: Child): string {
+    return child.grade ?? child.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildCode(child: Child): string {
+    return child.code ?? child.studentCode ?? '';
+  }
+
+  getChildInitial(child: Child): string {
+    const fn = child.user?.firstName?.charAt(0) ?? '';
+    const ln = child.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
   averageBarWidth(avg: number | null): number {
     if (avg == null || Number.isNaN(avg)) return 0;
     return Math.min(100, Math.max(0, (avg / 20) * 100));

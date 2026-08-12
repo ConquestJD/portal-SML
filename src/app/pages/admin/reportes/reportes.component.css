@@ -1,60 +1,105 @@
-.reportes-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
-}
+@import '../_shared/admin-editorial.css';
 
-.page-header {
-  margin-bottom: var(--spacing-xl);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--border-color);
-}
-
-.page-title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-  margin: 0;
-}
-
-.reports-grid {
+.rpt-mosaic {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(160px, auto);
+  gap: .75rem;
+  margin-bottom: 1rem;
 }
 
-.report-card {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
-  text-align: center;
-  transition: all 0.3s;
-  cursor: pointer;
+.rpt-tile {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-.report-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary);
+.rpt-tile--active {
+  box-shadow: inset 0 3px 0 var(--navy);
 }
 
-.report-icon {
-  font-size: 3rem;
-  color: var(--primary);
-  margin-bottom: var(--spacing-lg);
+.rpt-tile[data-type="students"] { grid-column: span 3; }
+.rpt-tile[data-type="attendance"] { grid-column: span 3; }
+.rpt-tile[data-type="grades"] { grid-column: span 2; }
+.rpt-tile[data-type="enrollments"] { grid-column: span 2; }
+.rpt-tile[data-type="teachers"] { grid-column: span 2; }
+.rpt-tile[data-type="payments"] { grid-column: span 4; }
+
+.rpt-tile__mark {
+  font-size: 1.45rem;
+  color: var(--navy);
+  margin-bottom: .65rem;
 }
 
-.report-card h3 {
-  font-size: var(--font-size-lg);
+.rpt-tile__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.rpt-tile__meta {
+  margin: .35rem 0 auto;
+  font-size: .78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 600;
+}
+
+.rpt-tile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: 1rem;
+  padding-top: .85rem;
+  border-top: 1px solid var(--line);
+}
+
+.rpt-btn--outline {
+  color: var(--navy);
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+.rpt-btn--outline:hover:not(:disabled) { border-color: var(--navy); }
+
+.rpt-preview { margin-top: .5rem; padding: 0; }
+
+.rpt-preview__badge {
+  font-size: .7rem;
   font-weight: 700;
-  color: var(--primary);
-  margin-bottom: var(--spacing-lg);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--navy);
+  border: 1px solid var(--navy);
+  padding: .2rem .5rem;
+}
+
+.rpt-preview__data {
+  margin: 0;
+  padding: 1rem 1.15rem;
+  font-size: .8rem;
+  line-height: 1.45;
+  color: var(--ink);
+  overflow: auto;
+  max-height: 320px;
+  background: #fafbfd;
+}
+
+@media (max-width: 800px) {
+  .rpt-mosaic { grid-template-columns: 1fr 1fr; }
+  .rpt-tile[data-type] { grid-column: span 1; }
+  .rpt-tile[data-type="students"],
+  .rpt-tile[data-type="payments"] { grid-column: span 2; }
+}
+
+@media (max-width: 520px) {
+  .rpt-mosaic { grid-template-columns: 1fr; }
+  .rpt-tile[data-type],
+  .rpt-tile[data-type="students"],
+  .rpt-tile[data-type="payments"] { grid-column: span 1; }
 }

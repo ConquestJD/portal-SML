@@ -1,201 +1,160 @@
-<div class="dashboard-padre-container">
+<div class="padre-page">
+
   @if (loading()) {
-    <p class="state-msg">Cargando…</p>
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Panel familiar</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+    <div class="padre-page__body">
+      <p class="feed__empty">Cargando…</p>
+    </div>
   } @else if (error()) {
-    <p class="state-msg error">{{ error() }}</p>
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Panel familiar</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+    <div class="padre-page__body">
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    </div>
   } @else if (!children().length) {
-    <p class="state-msg">No hay estudiantes vinculados a tu cuenta. Contacta a administración.</p>
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Panel familiar</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+    <div class="padre-page__body">
+      <p class="feed__empty">No hay estudiantes vinculados a tu cuenta. Contacta a administración.</p>
+    </div>
   } @else {
-  <!-- Selector de Hijos -->
-  @if (children().length > 1) {
-    <div class="child-selector-section">
-      <h2 class="selector-title">
-        <i class="fas fa-users"></i>
-        Seleccionar Hijo
-      </h2>
-      <div class="children-grid">
-        @for (child of children(); track child.id) {
-          <button
-            type="button"
-            class="child-card"
-            [class.active]="selectedChildId() === child.id"
-            (click)="selectChild(child.id)"
-          >
-            <div class="child-photo-wrapper">
+
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Panel familiar</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="padre-page__body">
+
+      @if (children().length > 1) {
+        <nav class="child-picker" aria-label="Seleccionar hijo">
+          @for (child of children(); track child.id) {
+            <button
+              type="button"
+              class="child-picker__btn"
+              [class.active]="selectedChildId() === child.id"
+              (click)="selectChild(child.id)"
+            >
               @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
+                <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
               } @else {
-                <div class="child-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
+                <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
               }
-            </div>
-            <div class="child-info">
-              <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }}</p>
-            </div>
-            @if (selectedChildId() === child.id) {
-              <div class="child-check">
-                <i class="fas fa-check-circle"></i>
-              </div>
-            }
-          </button>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Resumen del Hijo Seleccionado -->
-  <div class="welcome-section">
-    <h1>Bienvenido</h1>
-    <p class="subtitle">Resumen de {{ selectedChildData()?.name }}</p>
-  </div>
-
-  <!-- Alertas Urgentes -->
-  @if (urgentAlerts().length > 0) {
-    <div class="alerts-section">
-      <h2 class="section-title">
-        <i class="fas fa-exclamation-triangle"></i>
-        Avisos
-      </h2>
-      <div class="alerts-grid">
-        @for (alert of urgentAlerts(); track alert.id) {
-          <div class="alert-card urgent">
-            <div class="alert-icon">
-              @switch (alert.type) {
-                @case ('tarea') { <i class="fas fa-tasks"></i> }
-                @case ('falta') { <i class="fas fa-calendar-times"></i> }
-                @case ('nota') { <i class="fas fa-chart-line"></i> }
-                @case ('pago') { <i class="fas fa-dollar-sign"></i> }
-                @case ('justificacion') { <i class="fas fa-file-signature"></i> }
-                @default { <i class="fas fa-info-circle"></i> }
-              }
-            </div>
-            <div class="alert-content">
-              <h3>{{ alert.title }}</h3>
-              <p>{{ alert.message }}</p>
-              @if (alert.date) {
-                <span class="alert-date">{{ alert.date }}</span>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- KPIs -->
-  <div class="kpis-section">
-    <div class="kpi-card">
-      <div class="kpi-icon attendance">
-        <i class="fas fa-calendar-check"></i>
-      </div>
-      <div class="kpi-content">
-        <h3>Asistencia hoy</h3>
-        <p
-          class="kpi-value"
-          [class.present]="attendanceTodayClass() === 'present'"
-          [class.absent]="attendanceTodayClass() === 'absent'"
-          [class.neutral]="attendanceTodayClass() === 'neutral'"
-        >
-          {{ todayAttendance().label }}
-        </p>
-        @if (todayAttendance().sessionCount > 0) {
-          <span class="kpi-detail">{{ todayAttendance().sessionCount }} registro(s)</span>
-        }
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon week">
-        <i class="fas fa-calendar-week"></i>
-      </div>
-      <div class="kpi-content">
-        <h3>Asistencia semanal</h3>
-        <p class="kpi-value">{{ weekAttendance().present }}/{{ weekAttendance().total }}</p>
-        <span class="kpi-detail">{{ weekAttendance().percentage }}%</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon tasks">
-        <i class="fas fa-tasks"></i>
-      </div>
-      <div class="kpi-content">
-        <h3>Tareas pendientes</h3>
-        <p class="kpi-value">{{ pendingTasks() }}</p>
-        <a routerLink="/padre/tareas" class="kpi-link">Ver tareas</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Comunicados Recientes -->
-  <div class="comunicados-section">
-    <div class="section-header">
-      <h2 class="section-title">
-        <i class="fas fa-bullhorn"></i>
-        Comunicados recientes
-        @if (unreadComunicados() > 0) {
-          <span class="unread-badge">{{ unreadComunicados() }} sin leer</span>
-        }
-      </h2>
-      <a routerLink="/padre/comunicados" class="view-all">Ver todos</a>
-    </div>
-    <div class="comunicados-list">
-      @for (c of recentComunicadosList(); track c.id) {
-        <a
-          [routerLink]="['/padre/comunicados', c.id]"
-          class="comunicado-item"
-          [class.unread]="!c.isRead"
-        >
-          <i class="fas" [class.fa-envelope-open]="c.isRead" [class.fa-envelope]="!c.isRead"></i>
-          <div class="comunicado-content">
-            <h3>{{ c.title }}</h3>
-            <p>{{ formatComunicadoDate(c.publishedAt) || 'Sin fecha' }}</p>
-          </div>
-        </a>
-      } @empty {
-        <p class="empty-comunicados">No hay comunicados para mostrar.</p>
+              <span>
+                <span class="child-picker__name">{{ getChildName(child) }}</span>
+                <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+              </span>
+            </button>
+          }
+        </nav>
       }
-    </div>
-  </div>
 
-  <!-- Accesos Rápidos -->
-  <div class="quick-access-section">
-    <h2 class="section-title">
-      <i class="fas fa-bolt"></i>
-      Accesos Rápidos
-    </h2>
-    <div class="quick-access-grid">
-      <a routerLink="/padre/perfil-hijo" class="quick-access-card">
-        <i class="fas fa-user"></i>
-        <span>Perfil del Hijo</span>
-      </a>
-      <a routerLink="/padre/cursos" class="quick-access-card">
-        <i class="fas fa-book"></i>
-        <span>Cursos</span>
-      </a>
-      <a routerLink="/padre/tareas" class="quick-access-card">
-        <i class="fas fa-tasks"></i>
-        <span>Tareas</span>
-      </a>
-      <a routerLink="/padre/notas" class="quick-access-card">
-        <i class="fas fa-chart-line"></i>
-        <span>Notas</span>
-      </a>
-      <a routerLink="/padre/asistencia" class="quick-access-card">
-        <i class="fas fa-calendar-alt"></i>
-        <span>Asistencia</span>
-      </a>
-      <a routerLink="/padre/mensajeria" class="quick-access-card">
-        <i class="fas fa-envelope"></i>
-        <span>Mensajería</span>
-      </a>
-      <a routerLink="/padre/pagos" class="quick-access-card">
-        <i class="fas fa-dollar-sign"></i>
-        <span>Pagos</span>
-      </a>
+      @if (selectedChildData(); as child) {
+        <p class="dash-subtitle">Resumen de {{ getChildName(child) }}</p>
+      }
+
+      @if (urgentAlerts().length > 0) {
+        <section class="pulse" aria-label="Avisos urgentes">
+          @for (alert of urgentAlerts(); track alert.id) {
+            <div class="pulse__item">
+              <span class="pulse__n">!</span>
+              <span class="pulse__l">{{ alert.title }}</span>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="metrics metrics--3" aria-label="Resumen">
+        <div
+          class="metric"
+          [class.metric--present]="attendanceTodayClass() === 'present'"
+          [class.metric--absent]="attendanceTodayClass() === 'absent'"
+        >
+          <span class="metric__n">{{ todayAttendance().label }}</span>
+          <span class="metric__l">Asistencia hoy</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ weekAttendance().percentage }}%</span>
+          <span class="metric__l">Semana ({{ weekAttendance().present }}/{{ weekAttendance().total }})</span>
+        </div>
+        <a routerLink="/padre/tareas" class="metric" [class.metric--alert]="pendingTasks() > 0">
+          <span class="metric__n">{{ pendingTasks() }}</span>
+          <span class="metric__l">Tareas pendientes</span>
+        </a>
+      </section>
+
+      <div class="dash-split">
+        <section class="feed" aria-labelledby="comunicados-title">
+          <div class="feed__head">
+            <h2 id="comunicados-title">
+              Comunicados recientes
+              @if (unreadComunicados() > 0) {
+                <span class="dash-badge">{{ unreadComunicados() }} sin leer</span>
+              }
+            </h2>
+            <a routerLink="/padre/comunicados" class="padre-link">Ver todos</a>
+          </div>
+          @if (recentComunicadosList().length === 0) {
+            <p class="feed__empty">No hay comunicados para mostrar.</p>
+          } @else {
+            <ul class="feed__list">
+              @for (c of recentComunicadosList(); track c.id) {
+                <li>
+                  <a [routerLink]="['/padre/comunicados', c.id]" class="feed-row" [class.feed-row--unread]="!c.isRead">
+                    <span class="feed-row__mark">{{ c.isRead ? '✓' : '•' }}</span>
+                    <span class="feed-row__body">
+                      <span class="feed-row__kicker">Comunicado</span>
+                      <span class="feed-row__title">{{ c.title }}</span>
+                      <span class="feed-row__meta">{{ formatComunicadoDate(c.publishedAt) || 'Sin fecha' }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <nav class="shortcuts" aria-label="Accesos rápidos">
+          @for (s of shortcuts; track s.link) {
+            <a [routerLink]="s.link">{{ s.label }}</a>
+          }
+        </nav>
+      </div>
     </div>
-  </div>
   }
 </div>

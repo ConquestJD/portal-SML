@@ -166,6 +166,20 @@ export class MensajeriaPadreComponent implements OnInit {
       : d.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
   }
 
+  getChildName(c: Child): string {
+    return `${c.user.firstName} ${c.user.lastName}`;
+  }
+
+  getChildGrade(c: Child): string {
+    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(c: Child): string {
+    const fn = c.user?.firstName?.charAt(0) ?? '';
+    const ln = c.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
   private mapSummary(conv: Record<string, unknown>, _myUserId: string): PadreConvoSummary {
     const teacherUser = this.teacherUserFrom(conv);
     const ta = conv['teacherAssignment'] as Record<string, unknown> | undefined;

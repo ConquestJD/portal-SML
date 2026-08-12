@@ -1,150 +1,103 @@
-<div class="cursos-padre-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Cursos</span>
-  </div>
+<div class="padre-page">
 
-  <div class="page-header">
-    <h1 class="page-title">Cursos del Hijo</h1>
-    <p class="page-subtitle">Lista de cursos matriculados</p>
-  </div>
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
+      <div>
+        <h1 class="padre-page__title">Cursos</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
 
-  @if (error()) {
-    <p class="page-error">{{ error() }}</p>
-  }
+  <div class="padre-page__body">
 
-  <!-- Selector de Hijos -->
-  @if (children().length > 1) {
-    <div class="child-selector-section">
-      <h2 class="selector-title">
-        <i class="fas fa-users"></i>
-        Seleccionar Hijo
-      </h2>
-      <div class="children-grid">
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (children().length > 1) {
+      <nav class="child-picker" aria-label="Seleccionar hijo">
         @for (child of children(); track child.id) {
           <button
             type="button"
-            class="child-card"
+            class="child-picker__btn"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            <div class="child-photo-wrapper">
-              @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
-              } @else {
-                <div class="child-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
-              }
-            </div>
-            <div class="child-info">
-              <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }}</p>
-            </div>
-            @if (selectedChildId() === child.id) {
-              <div class="child-check">
-                <i class="fas fa-check-circle"></i>
-              </div>
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
+            } @else {
+              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
             }
+            <span>
+              <span class="child-picker__name">{{ getChildName(child) }}</span>
+              <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+            </span>
           </button>
         }
-      </div>
-    </div>
-  }
-
-  @if (children().length) {
-    @if (selectedChild()) {
-      <div class="child-header">
-        <h2 class="child-header-title">
-          Cursos de {{ selectedChild()!.name }}
-        </h2>
-        <p class="child-header-subtitle">
-          {{ selectedChild()!.grade }}
-        </p>
-      </div>
+      </nav>
     }
 
-    <!-- Búsqueda -->
-    <div class="search-section">
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          placeholder="Buscar curso, código o profesor..."
-          [value]="searchQuery()"
-          (input)="searchQuery.set($any($event.target).value)"
-        />
-      </div>
-    </div>
+    @if (children().length === 0 && !isLoading()) {
+      <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
+    } @else if (children().length) {
 
-    <!-- Lista de Cursos -->
-    @if (isLoading()) {
-      <div class="loading-state">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>Cargando cursos...</p>
+      @if (selectedChild(); as ch) {
+        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+      }
+
+      <div class="toolbar">
+        <label class="search">
+          <span class="visually-hidden">Buscar curso</span>
+          <input
+            type="text"
+            placeholder="Buscar curso, código o profesor…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+          />
+        </label>
       </div>
-    } @else if (filteredCourses().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-book-open"></i>
-        <p>No se encontraron cursos</p>
-        @if (searchQuery()) {
-          <p class="empty-hint">Intenta con otros términos de búsqueda</p>
-        } @else {
-          <p class="empty-hint">No hay asignaturas activas en el aula de este hijo</p>
-        }
-      </div>
-    } @else {
-      <div class="courses-grid">
-        @for (course of filteredCourses(); track course.id) {
-          <div class="course-card">
-            <div class="course-header">
-              <div class="course-icon">
-                <i class="fas fa-book"></i>
+
+      @if (isLoading()) {
+        <p class="feed__empty">Cargando cursos…</p>
+      } @else if (filteredCourses().length === 0) {
+        <section class="feed">
+          <p class="feed__empty">
+            @if (searchQuery()) {
+              No se encontraron cursos con ese criterio.
+            } @else {
+              No hay asignaturas activas para este hijo.
+            }
+          </p>
+        </section>
+      } @else {
+        <div class="course-grid">
+          @for (course of filteredCourses(); track course.id) {
+            <a
+              class="course-card"
+              [routerLink]="['/padre/cursos', course.id]"
+              [queryParams]="{ childId: selectedChildId() }"
+            >
+              <div class="course-card__cover course-card__cover--mark">{{ courseInitial(course) }}</div>
+              <div class="course-card__body">
+                <h3 class="course-card__title">{{ course.name }}</h3>
+                <p class="course-card__meta">{{ course.code }} · {{ course.teacher }}</p>
+                <p class="course-card__meta">{{ course.schedule }}</p>
+                @if (course.hours != null) {
+                  <p class="course-card__meta">{{ course.hours }} h. semanales</p>
+                }
               </div>
-              <div class="course-info">
-                <h3>{{ course.name }}</h3>
-                <p class="course-code">{{ course.code }}</p>
-              </div>
-            </div>
-            <div class="course-details">
-              <div class="detail-item">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <span>{{ course.teacher }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="fas fa-clock"></i>
-                <span>{{ course.schedule }}</span>
-              </div>
-              @if (course.hours != null) {
-                <div class="detail-item">
-                  <i class="fas fa-hourglass-half"></i>
-                  <span>{{ course.hours }} h. semanales</span>
-                </div>
-              }
-              <div class="detail-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Promedio: {{ course.average }}</span>
-              </div>
-            </div>
-            <div class="course-actions">
-              <a
-                [routerLink]="['/padre/cursos', course.id]"
-                [queryParams]="{ childId: selectedChildId() }"
-                class="btn-primary"
-              >
-                <i class="fas fa-eye"></i>
-                Ver Detalle
-              </a>
-            </div>
-          </div>
-        }
-      </div>
+            </a>
+          }
+        </div>
+      }
     }
-  } @else if (!isLoading()) {
-    <div class="empty-state">
-      <i class="fas fa-user-slash"></i>
-      <p>No hay estudiantes vinculados a tu cuenta.</p>
-    </div>
-  }
+  </div>
 </div>

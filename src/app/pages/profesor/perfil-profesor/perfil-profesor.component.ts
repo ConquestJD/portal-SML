@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -18,12 +18,63 @@ export class PerfilProfesorComponent implements OnInit {
   saving = signal(false);
   success = signal('');
   activeTab = signal('perfil');
+  editing = signal(false);
   readonly isLoading = this.loading;
+  readonly isSaving = this.saving;
 
   profile = signal<TeacherProfile | null>(null);
   formData = signal({ bio: '', specialty: '', phone: '' });
+  editDraft = signal({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    birthDate: '',
+    hireDate: '',
+    department: '',
+    specialization: '',
+    bio: '',
+  });
 
   changePasswordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+  profileData = computed(() => {
+    const p = this.profile();
+    const fallbackPhoto = '/images/default-avatar.png';
+    if (!p) {
+      return {
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        birthDate: '',
+        hireDate: '',
+        department: '',
+        specialization: '',
+        bio: '',
+        photo: fallbackPhoto,
+      };
+    }
+    if (this.editing()) {
+      return { ...this.editDraft(), photo: p.user.avatarUrl ?? fallbackPhoto };
+    }
+    const fd = this.formData();
+    return {
+      name: `${p.user.firstName} ${p.user.lastName}`.trim(),
+      email: p.user.email ?? '',
+      phone: fd.phone || p.user.phone || '',
+      address: '—',
+      birthDate: '',
+      hireDate: '',
+      department: '—',
+      specialization: fd.specialty || p.specialty || '—',
+      bio: fd.bio ?? p.bio ?? '',
+      photo: p.user.avatarUrl ?? fallbackPhoto,
+    };
+  });
+
+  isEditing = computed(() => this.editing());
+  passwordData = computed(() => this.changePasswordForm());
   passwordError = signal('');
   passwordSuccess = signal('');
 
@@ -44,12 +95,77 @@ export class PerfilProfesorComponent implements OnInit {
     });
   }
 
+  setTab(tab: string) {
+    this.activeTab.set(tab);
+  }
+
+  startEditing() {
+    const pd = this.profileData();
+    this.editDraft.set({
+      name: pd.name,
+      email: pd.email,
+      phone: pd.phone,
+      address: pd.address,
+      birthDate: pd.birthDate,
+      hireDate: pd.hireDate,
+      department: pd.department,
+      specialization: pd.specialization,
+      bio: pd.bio,
+    });
+    this.editing.set(true);
+  }
+
+  cancelEditing() {
+    const p = this.profile();
+    if (p) {
+      this.formData.set({
+        bio: p.bio ?? '',
+        specialty: p.specialty ?? '',
+        phone: p.user.phone ?? '',
+      });
+    }
+    this.editing.set(false);
+  }
+
+  private patchDraft(
+    field: 'name' | 'email' | 'phone' | 'address' | 'birthDate' | 'hireDate' | 'department' | 'specialization' | 'bio',
+    value: string,
+  ) {
+    this.editDraft.update((d) => ({ ...d, [field]: value }));
+    if (field === 'phone') this.formData.update((f) => ({ ...f, phone: value }));
+    if (field === 'bio') this.formData.update((f) => ({ ...f, bio: value }));
+    if (field === 'specialization') this.formData.update((f) => ({ ...f, specialty: value }));
+  }
+
+  updateName(value: string) { this.patchDraft('name', value); }
+  updateEmail(value: string) { this.patchDraft('email', value); }
+  updatePhone(value: string) { this.patchDraft('phone', value); }
+  updateAddress(value: string) { this.patchDraft('address', value); }
+  updateBirthDate(value: string) { this.patchDraft('birthDate', value); }
+  updateHireDate(value: string) { this.patchDraft('hireDate', value); }
+  updateDepartment(value: string) { this.patchDraft('department', value); }
+  updateSpecialization(value: string) { this.patchDraft('specialization', value); }
+  updateBio(value: string) { this.patchDraft('bio', value); }
+
+  updateCurrentPassword(value: string) {
+    this.changePasswordForm.update((f) => ({ ...f, currentPassword: value }));
+  }
+
+  updateNewPassword(value: string) {
+    this.changePasswordForm.update((f) => ({ ...f, newPassword: value }));
+  }
+
+  updateConfirmPassword(value: string) {
+    this.changePasswordForm.update((f) => ({ ...f, confirmPassword: value }));
+  }
+
   saveProfile() {
     this.saving.set(true);
     this.error.set('');
     this.teacherService.updateProfile(this.formData()).subscribe({
       next: (data) => {
         this.profile.set(data);
+        this.editing.set(false);
         this.success.set('Perfil actualizado correctamente');
         this.saving.set(false);
         setTimeout(() => this.success.set(''), 3000);

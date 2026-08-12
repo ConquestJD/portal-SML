@@ -1,161 +1,119 @@
-<div class="stu-page">
+<div class="adm-page">
 
-  <header class="stu-page__head">
-    <h1 class="stu-page__title">Estudiantes</h1>
-    <div class="stu-page__actions">
-      <button type="button" class="stu-btn stu-btn--ghost" (click)="importStudents()">
-        Importar
-      </button>
-      <a routerLink="/admin/estudiantes/nuevo" class="stu-btn stu-btn--primary">
-        Nuevo
-      </a>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Estudiantes</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="importStudents()">Importar</button>
+        <a routerLink="/admin/estudiantes/nuevo" class="adm-btn adm-btn--primary">Nuevo</a>
+      </div>
     </div>
   </header>
 
-  <div class="stu-page__body">
+  <div class="adm-page__body">
 
-    <section class="stu-metrics" aria-label="Resumen">
-      <div class="stu-metric">
-        <span class="stu-metric__n">{{ total() }}</span>
-        <span class="stu-metric__l">Registrados</span>
+    <section class="metrics metrics--3" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ total() }}</span>
+        <span class="metric__l">Registrados</span>
       </div>
-      <div class="stu-metric">
-        <span class="stu-metric__n">{{ totalActive() }}</span>
-        <span class="stu-metric__l">Activos</span>
+      <div class="metric">
+        <span class="metric__n">{{ totalActive() }}</span>
+        <span class="metric__l">Activos</span>
       </div>
-      <div class="stu-metric">
-        <span class="stu-metric__n">{{ totalEnrolled() }}</span>
-        <span class="stu-metric__l">Matriculados</span>
+      <div class="metric">
+        <span class="metric__n">{{ totalEnrolled() }}</span>
+        <span class="metric__l">Matriculados</span>
       </div>
     </section>
 
-    <div class="stu-toolbar">
-      <div class="stu-search">
-        <i class="fas fa-search" aria-hidden="true"></i>
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
         <input
-          type="text"
-          placeholder="Nombre, código, DNI o email"
+          type="search"
+          placeholder="Nombre, código, DNI o email…"
           [(ngModel)]="searchQuery"
           name="searchQuery"
         />
-        @if (searchQuery) {
-          <button type="button" class="stu-search__clear" (click)="clearSearch()" aria-label="Limpiar búsqueda">
-            <i class="fas fa-times"></i>
-          </button>
+      </label>
+      <select [(ngModel)]="filterLevel" name="filterLevel" aria-label="Nivel">
+        <option value="">Nivel</option>
+        @for (lvl of availableLevels(); track lvl) {
+          <option [value]="lvl">{{ lvl | levelLabel }}</option>
         }
-      </div>
-
-      <div class="stu-filters">
-        <select [(ngModel)]="filterLevel" name="filterLevel" aria-label="Nivel">
-          <option value="">Nivel</option>
-          @for (lvl of availableLevels(); track lvl) {
-            <option [value]="lvl">{{ lvl | levelLabel }}</option>
-          }
-        </select>
-        <select [(ngModel)]="filterGrade" name="filterGrade" aria-label="Grado">
-          <option value="">Grado</option>
-          @for (g of availableGrades(); track g) {
-            <option [value]="g">{{ g }}</option>
-          }
-        </select>
-        <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Estado">
-          <option value="">Estado</option>
-          <option value="activo">Activos</option>
-          <option value="retirado">Retirados</option>
-          <option value="suspendido">Suspendidos</option>
-        </select>
-        @if (hasActiveFilters()) {
-          <button type="button" class="stu-filters__reset" (click)="resetFilters()">
-            Limpiar
-          </button>
+      </select>
+      <select [(ngModel)]="filterGrade" name="filterGrade" aria-label="Grado">
+        <option value="">Grado</option>
+        @for (g of availableGrades(); track g) {
+          <option [value]="g">{{ g }}</option>
         }
-      </div>
+      </select>
+      <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Estado">
+        <option value="">Estado</option>
+        <option value="activo">Activos</option>
+        <option value="retirado">Retirados</option>
+        <option value="suspendido">Suspendidos</option>
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="adm-link" (click)="resetFilters()">Limpiar</button>
+      }
     </div>
 
     @if (hasActiveFilters()) {
-      <p class="stu-results">
-        {{ filteredStudents().length }} de {{ total() }}
-      </p>
+      <p class="feed-row__meta" style="margin:0 0 1rem">{{ filteredStudents().length }} de {{ total() }}</p>
     }
 
-    @if (error()) {
-      <div class="stu-error" role="alert">{{ error() }}</div>
-    }
+    <section class="feed" aria-label="Estudiantes">
+      <div class="feed__head">
+        <h2>Directorio</h2>
+      </div>
 
-    <div class="stu-table-wrap">
       @if (loading()) {
-        <div class="stu-loading" aria-busy="true">
-          <div class="stu-skel"></div>
-          <div class="stu-skel"></div>
-          <div class="stu-skel"></div>
-        </div>
+        <p class="feed__empty">Cargando…</p>
+      } @else if (filteredStudents().length === 0) {
+        <admin-empty-state message="No se encontraron estudiantes"></admin-empty-state>
       } @else {
-        <table class="stu-table">
-          <thead>
-            <tr>
-              <th>Estudiante</th>
-              <th>Código</th>
-              <th>DNI</th>
-              <th>Nivel / Grado</th>
-              <th>Estado</th>
-              <th class="stu-table__actions">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (student of filteredStudents(); track student.id) {
-              <tr>
-                <td>
-                  <div class="stu-person">
-                    <span class="stu-person__avatar">{{ getInitials(student) }}</span>
-                    <div class="stu-person__meta">
-                      <a [routerLink]="['/admin/estudiantes', student.id]" class="stu-person__name">
-                        {{ student.name || '—' }}
-                      </a>
-                      @if (student.email) {
-                        <span class="stu-person__email">{{ student.email }}</span>
-                      }
-                    </div>
-                  </div>
-                </td>
-                <td>{{ student.code || '—' }}</td>
-                <td>{{ student.dni || '—' }}</td>
-                <td>
-                  <div class="stu-grade">
-                    @if (student.level) {
-                      <span class="stu-grade__level">{{ student.level | levelLabel }}</span>
-                    }
-                    @if (student.grade) {
-                      <span class="stu-grade__name">{{ student.grade }}</span>
-                    } @else {
-                      <span class="stu-grade__empty">Sin matrícula</span>
-                    }
-                  </div>
-                </td>
-                <td>
-                  <admin-status-badge [value]="student.status"></admin-status-badge>
-                </td>
-                <td class="stu-table__actions">
-                  <div class="stu-row-actions">
-                    <a [routerLink]="['/admin/estudiantes', student.id]" title="Ver">Ver</a>
-                    <a [routerLink]="['/admin/estudiantes', student.id, 'editar']" title="Editar">Editar</a>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6">
-                  <div class="stu-empty">
-                    <admin-empty-state
-                      icon="fa-user-graduate"
-                      message="No se encontraron estudiantes">
-                    </admin-empty-state>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <ul class="feed__list">
+          @for (student of filteredStudents(); track student.id) {
+            <li>
+              <div class="feed-row">
+                <span class="feed-row__mark">{{ getInitials(student) }}</span>
+                <span class="feed-row__body">
+                  <a [routerLink]="['/admin/estudiantes', student.id]" class="feed-row__title" style="text-decoration:none;color:inherit">
+                    {{ student.name || '—' }}
+                  </a>
+                  <span class="feed-row__meta">
+                    {{ student.code || '—' }}
+                    @if (student.dni) { · DNI {{ student.dni }} }
+                    @if (student.email) { · {{ student.email }} }
+                  </span>
+                  <span class="feed-row__meta">
+                    @if (student.level) { {{ student.level | levelLabel }} }
+                    @if (student.grade) { · {{ student.grade }} }
+                    @if (!student.grade) { · Sin matrícula }
+                  </span>
+                </span>
+                <admin-status-badge [value]="student.status"></admin-status-badge>
+                <span class="feed-row__actions">
+                  <a [routerLink]="['/admin/estudiantes', student.id]" class="adm-link">Ver</a>
+                  <a [routerLink]="['/admin/estudiantes', student.id, 'editar']" class="adm-link">Editar</a>
+                </span>
+              </div>
+            </li>
+          }
+        </ul>
       }
-    </div>
+    </section>
   </div>
 </div>

@@ -1,0 +1,84 @@
+@import '../_shared/padre-editorial.css';
+
+.body-nav {
+  margin: 0 0 1rem;
+}
+
+.settings-form {
+  margin-bottom: 0;
+}
+
+.settings-intro {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-list > li {
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-list > li:last-child {
+  border-bottom: none;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .85rem 0;
+  cursor: pointer;
+}
+
+.setting-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+
+.setting-item__title {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.setting-item__desc {
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.setting-item input[type='checkbox'] {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  accent-color: var(--navy);
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--line);
+  margin: .5rem 0 1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  margin-top: .5rem;
+  border-top: 1px solid var(--line);
+}
+
+.form-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}

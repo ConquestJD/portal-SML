@@ -33,7 +33,8 @@ export class ReportesComponent {
 
   constructor(private adminService: AdminService) {}
 
-  generateReport() {
+  generateReport(type?: string) {
+    if (type) this.selectedType.set(type);
     this.loading.set(true);
     this.error.set('');
     const f = this.filters();
@@ -49,6 +50,10 @@ export class ReportesComponent {
       next: (data) => { this.reportData.set(data); this.loading.set(false); },
       error: () => { this.error.set('Error al generar el reporte'); this.loading.set(false); }
     });
+  }
+
+  reportLabel(id: string): string {
+    return this.reportTypes().find(r => r.id === id)?.label ?? id;
   }
 
   update(field: string, value: string) { this.filters.update(f => ({ ...f, [field]: value })); }

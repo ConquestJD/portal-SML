@@ -1,113 +1,174 @@
-<div class="asignacion-docente-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Asignación Docente</h1>
-      <p class="page-subtitle">Gestiona la carga académica de los profesores por curso y sección</p>
+<div class="adm-page">
+
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Asignación docente</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="assignTeacher()">
+          Nueva asignación
+        </button>
+      </div>
     </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-primary" (click)="assignTeacher()">
-        <i class="fas fa-plus"></i> Nueva Asignación
-      </button>
-    </div>
-  </div>
+  </header>
 
-  @if (showForm()) {
-    <div class="assign-panel card-panel">
-      <h2 class="assign-panel-title">Nueva asignación</h2>
-      <form class="assign-form-grid" (ngSubmit)="save()">
-        <admin-teacher-search-combobox
-          [teachers]="teachers()"
-          [selectedId]="formData().teacherId"
-          (selectedIdChange)="update('teacherId', $event)"
-          fieldLabel="Profesor"
-        />
+  <div class="adm-page__body">
 
-        <div class="form-group-panel">
-          <label class="form-label">Curso</label>
-          <select class="form-input" required
-                  [ngModel]="formData().courseId" (ngModelChange)="update('courseId', $event)"
-                  name="courseId">
-            <option value="">Seleccionar curso</option>
-            @for (c of courses(); track c.id) {
-              <option [value]="c.id">{{ c.name }} · {{ c.code }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="form-group-panel">
-          <label class="form-label">Sección</label>
-          <select class="form-input" required
-                  [ngModel]="formData().sectionId" (ngModelChange)="update('sectionId', $event)"
-                  name="sectionId">
-            <option value="">Seleccionar sección</option>
-            @for (s of sections(); track s.id) {
-              <option [value]="s.id">{{ s.name }} — {{ s.grade }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="form-group-panel">
-          <label class="form-label">Año académico</label>
-          <select class="form-input" required
-                  [ngModel]="formData().academicYearId" (ngModelChange)="update('academicYearId', $event)"
-                  name="yearId">
-            @for (y of academicYears(); track y.id) {
-              <option [value]="y.id">{{ y.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="assign-form-actions">
-          <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancelar</button>
-          <button type="submit" class="btn btn-primary"
-                  [disabled]="!formData().teacherId || !formData().courseId || !formData().sectionId || !formData().academicYearId">
-            <i class="fas fa-save"></i> Guardar asignación
-          </button>
-        </div>
-      </form>
-    </div>
-  }
-
-  @if (error()) {
-    <div class="assign-error-msg">{{ error() }}</div>
-  }
-
-  <div class="table-container">
-    @if (loading()) {
-      <div class="loading-msg">Cargando…</div>
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
     }
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Profesor</th>
-          <th>Curso</th>
-          <th>Grado</th>
-          <th>Sección</th>
-          <th>Estudiantes</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (assignment of assignments(); track assignment.id) {
-          <tr>
-            <td>{{ teacherDisplay(assignment) }}</td>
-            <td>{{ assignment.course?.name }}</td>
-            <td>{{ gradeDisplay(assignment) }}</td>
-            <td>{{ sectionDisplay(assignment) }}</td>
-            <td>{{ assignment.students ?? '—' }}</td>
-            <td>
-              <button type="button" class="btn btn-sm btn-secondary"
+
+    @if (showForm()) {
+      <aside class="wl-assign feed" aria-label="Panel de asignación">
+        <div class="wl-assign__rail" aria-hidden="true"></div>
+        <div class="wl-assign__content">
+          <h2 class="wl-assign__title">Asignar carga</h2>
+          <p class="wl-assign__hint">Profesor → curso → sección → año</p>
+
+          <form class="wl-assign__form" (ngSubmit)="save()">
+            <div class="wl-assign__field wl-assign__field--teacher">
+              <admin-teacher-search-combobox
+                [teachers]="teachers()"
+                [selectedId]="formData().teacherId"
+                (selectedIdChange)="update('teacherId', $event)"
+                fieldLabel="Profesor"
+              />
+            </div>
+
+            <div class="wl-assign__field">
+              <label class="wl-label">Curso</label>
+              <select
+                class="wl-input"
+                required
+                [ngModel]="formData().courseId"
+                (ngModelChange)="update('courseId', $event)"
+                name="courseId"
+              >
+                <option value="">Seleccionar curso</option>
+                @for (c of courses(); track c.id) {
+                  <option [value]="c.id">{{ c.name }} · {{ c.code }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="wl-assign__field">
+              <label class="wl-label">Sección</label>
+              <select
+                class="wl-input"
+                required
+                [ngModel]="formData().sectionId"
+                (ngModelChange)="update('sectionId', $event)"
+                name="sectionId"
+              >
+                <option value="">Seleccionar sección</option>
+                @for (s of sections(); track s.id) {
+                  <option [value]="s.id">{{ s.name }} — {{ s.grade }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="wl-assign__field">
+              <label class="wl-label">Año académico</label>
+              <select
+                class="wl-input"
+                required
+                [ngModel]="formData().academicYearId"
+                (ngModelChange)="update('academicYearId', $event)"
+                name="yearId"
+              >
+                @for (y of academicYears(); track y.id) {
+                  <option [value]="y.id">{{ y.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="wl-assign__actions">
+              <button type="button" class="adm-btn wl-btn--body" (click)="cancelForm()">Cancelar</button>
+              <button
+                type="submit"
+                class="adm-btn adm-btn--solid"
+                [disabled]="!formData().teacherId || !formData().courseId || !formData().sectionId || !formData().academicYearId"
+              >
+                Guardar asignación
+              </button>
+            </div>
+          </form>
+        </div>
+      </aside>
+    }
+
+    <section class="feed wl-matrix" aria-label="Carga académica">
+      <div class="feed__head">
+        <h2>Matriz de carga</h2>
+      </div>
+
+      <div class="wl-matrix__legend">
+        <span class="wl-matrix__key"><i></i> Profesor</span>
+        <span class="wl-matrix__key wl-matrix__key--course"><i></i> Curso · sección</span>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando asignaciones…</p>
+      } @else if (assignments().length === 0) {
+        <p class="feed__empty">Sin asignaciones registradas.</p>
+      } @else {
+        <div class="wl-matrix__table-wrap">
+          <table class="wl-matrix__table">
+            <thead>
+              <tr>
+                <th class="wl-col-teacher">Profesor</th>
+                <th>Curso</th>
+                <th>Grado</th>
+                <th>Sección</th>
+                <th class="wl-col-num">Estudiantes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (assignment of assignments(); track assignment.id) {
+                <tr [class.wl-row--inactive]="assignment.isActive === false">
+                  <td class="wl-col-teacher">
+                    <span class="wl-teacher">{{ teacherDisplay(assignment) }}</span>
+                  </td>
+                  <td>
+                    <span class="wl-course">{{ assignment.course?.name }}</span>
+                  </td>
+                  <td>{{ gradeDisplay(assignment) }}</td>
+                  <td>
+                    <span class="wl-section-chip">{{ sectionDisplay(assignment) }}</span>
+                  </td>
+                  <td class="wl-col-num">{{ assignment.students ?? '—' }}</td>
+                  <td class="wl-actions">
+                    <button
+                      type="button"
+                      class="wl-icon-btn"
                       (click)="deactivate(assignment.id)"
-                      title="Desactivar">
-                <i class="fas fa-pause"></i>
-              </button>
-              <button type="button" class="btn btn-sm btn-danger-outline" (click)="delete(assignment.id)">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+                      title="Desactivar"
+                      aria-label="Desactivar asignación"
+                    >
+                      <i class="fas fa-pause" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="wl-icon-btn wl-icon-btn--danger"
+                      (click)="delete(assignment.id)"
+                      title="Eliminar"
+                      aria-label="Eliminar asignación"
+                    >
+                      <i class="fas fa-trash" aria-hidden="true"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
   </div>
 </div>

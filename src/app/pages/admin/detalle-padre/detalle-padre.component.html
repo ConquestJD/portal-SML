@@ -1,286 +1,317 @@
-<div class="detalle-padre-container">
-  <admin-breadcrumb [items]="[
-    { label: 'Padres de familia', link: '/admin/padres' },
-    { label: padre()?.name ?? 'Apoderado' }
-  ]"></admin-breadcrumb>
+<div class="adm-page">
 
-  <admin-person-header
-    [name]="padre()?.name ?? ''"
-    [subtitle]="(padre()?.relationship | relationshipLabel) + ' · ' + (padre()?.email ?? '')"
-    [status]="padre()?.status ?? (padre()?.user?.status ?? '')"
-    [actions]="[
-      { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/padres', parentId, 'editar'] },
-      { label: 'Resetear contraseña', icon: 'fa-key', variant: 'secondary', onClick: resetPassword.bind(this) }
-    ]">
-  </admin-person-header>
-
-  <admin-tabs
-    [tabs]="[
-      { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
-      { id: 'hijos',  label: 'Hijos',  icon: 'fa-child', badge: children().length },
-      { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' }
-    ]"
-    [activeTab]="activeTab()"
-    (activeTabChange)="setTab($event)">
-  </admin-tabs>
-
-  <div class="tab-content">
-    @if (activeTab() === 'perfil') {
-      <div class="content-section">
-        <div class="info-grid">
-          <div class="info-card">
-            <h3>Información Personal</h3>
-            <div class="info-item">
-              <span class="label">Nombre Completo:</span>
-              <span class="value">{{ padre().name }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">DNI:</span>
-              <span class="value">{{ padre().dni }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Email:</span>
-              <span class="value">{{ padre().email }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Teléfono:</span>
-              <span class="value">{{ padre().phone }}</span>
-            </div>
-            @if (padre().address) {
-              <div class="info-item">
-                <span class="label">Dirección:</span>
-                <span class="value">{{ padre().address }}</span>
-              </div>
-            }
-          </div>
-          <div class="info-card">
-            <h3>Información de Cuenta</h3>
-            <div class="info-item">
-              <span class="label">Usuario:</span>
-              <span class="value">{{ padre().username }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Fecha de Registro:</span>
-              <span class="value">{{ (padre().createdAt ? (padre().createdAt | date:'longDate') : '—') }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Estado:</span>
-              <span class="value">
-                <admin-status-badge [value]="padre()?.status ?? padre()?.user?.status"></admin-status-badge>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="label">Hijos Vinculados:</span>
-              <span class="value">
-                <span class="badge badge-info">{{ children().length }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">{{ getFullName() || 'Apoderado' }}</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
-    }
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/padres" class="adm-btn adm-btn--ghost">Volver</a>
+        @if (parent()) {
+          <a [routerLink]="['/admin/padres', parentId, 'editar']" class="adm-btn adm-btn--primary">Editar</a>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="onResetPassword()">Resetear contraseña</button>
+        }
+      </div>
+    </div>
+  </header>
 
-    @if (activeTab() === 'hijos') {
-      <div class="content-section">
-        <div class="children-header">
-          <div class="children-header__title">
-            <h3>Hijos Vinculados</h3>
-            <span class="children-count">{{ children().length }} hijo(s)</span>
-          </div>
-          @if (!showLinkPanel()) {
-            <button type="button" class="btn btn-primary" (click)="openLinkPanel()">
-              <i class="fas fa-link"></i> Vincular hijos
-            </button>
-          }
-        </div>
+  <div class="adm-page__body">
+    <admin-breadcrumb [items]="[
+      { label: 'Padres de familia', link: '/admin/padres' },
+      { label: getFullName() || 'Apoderado' }
+    ]"></admin-breadcrumb>
 
-        @if (showLinkPanel()) {
-          <div class="link-panel">
-            <div class="link-panel__header">
-              <h4><i class="fas fa-user-plus"></i> Vincular estudiantes a este apoderado</h4>
-              <button type="button" class="link-panel__close" (click)="closeLinkPanel()" title="Cerrar" aria-label="Cerrar">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
+    @if (loading()) {
+      <p class="detail-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+    } @else if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    } @else if (parent()) {
+      <div class="detail-meta">
+        <p class="detail-meta__sub">{{ getHeroSubtitle() }}</p>
+        <admin-status-badge [value]="parent()?.status ?? parent()?.user?.status"></admin-status-badge>
+      </div>
 
-            @if (linkError()) {
-              <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i> {{ linkError() }}
-              </div>
-            }
+      <p class="detail-kicker">Núcleo familiar</p>
 
-            <div class="link-panel__search">
-              <i class="fas fa-search"></i>
-              <input type="text" class="form-input"
-                     placeholder="Buscar por nombre, DNI, código o grado..."
-                     [ngModel]="linkSearch()"
-                     (ngModelChange)="setLinkSearch($event)"
-                     name="linkSearch"
-                     autocomplete="off" />
-            </div>
+      <admin-tabs
+        [tabs]="[
+          { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
+          { id: 'hijos',  label: 'Hijos',  icon: 'fa-child', badge: children().length },
+          { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' }
+        ]"
+        [activeTab]="activeTab()"
+        (activeTabChange)="setTab($event)">
+      </admin-tabs>
 
-            <div class="link-panel__list">
-              @if (loadingStudents()) {
-                <div class="link-panel__empty">
-                  <i class="fas fa-spinner fa-spin"></i> Cargando estudiantes...
-                </div>
-              } @else {
-                @for (student of availableStudents(); track student.id) {
-                  <label class="link-row" [class.is-selected]="isStudentSelected(student.id)">
-                    <input type="checkbox"
-                           [checked]="isStudentSelected(student.id)"
-                           (change)="toggleStudent(student.id)" />
-                    <span class="link-row__avatar">{{ getStudentInitials(student) }}</span>
-                    <div class="link-row__info">
-                      <span class="link-row__name">{{ getStudentDisplayName(student) }}</span>
-                      <small class="link-row__meta">
-                        @if (student.grade) {
-                          <span><i class="fas fa-graduation-cap"></i> {{ student.grade }}</span>
-                        }
-                        @if (student.dni) {
-                          <span>DNI {{ student.dni }}</span>
-                        }
-                        @if (student.studentCode || student.code) {
-                          <span class="muted">Código {{ student.studentCode || student.code }}</span>
-                        }
-                      </small>
-                    </div>
-                  </label>
-                } @empty {
-                  <div class="link-panel__empty">
-                    @if (linkSearch()) {
-                      <i class="fas fa-search"></i> Sin resultados para "{{ linkSearch() }}"
-                    } @else {
-                      <i class="fas fa-info-circle"></i> No hay estudiantes disponibles para vincular
-                    }
+      <div class="tab-content">
+        @if (activeTab() === 'perfil') {
+          <div class="content-section">
+            <div class="info-grid">
+              <section class="panel">
+                <h3 class="panel__title">Información Personal</h3>
+                <div class="data-list">
+                  <div class="data-row">
+                    <span class="label">Nombre Completo</span>
+                    <span class="value">{{ parent().name }}</span>
                   </div>
-                }
-              }
-            </div>
-
-            <div class="link-panel__footer">
-              <label class="link-primary-toggle">
-                <input type="checkbox"
-                       [checked]="linkAsPrimary()"
-                       (change)="setLinkAsPrimary(!linkAsPrimary())" />
-                <span>Marcar como apoderado principal</span>
-              </label>
-              <div class="link-panel__actions">
-                <button type="button" class="btn btn-secondary" (click)="closeLinkPanel()" [disabled]="linkLoading()">
-                  Cancelar
-                </button>
-                <button type="button" class="btn btn-primary"
-                        (click)="linkSelected()"
-                        [disabled]="!selectedCount() || linkLoading()">
-                  @if (linkLoading()) {
-                    <i class="fas fa-spinner fa-spin"></i> Vinculando...
-                  } @else {
-                    <i class="fas fa-link"></i>
-                    Vincular {{ selectedCount() }} estudiante{{ selectedCount() === 1 ? '' : 's' }}
+                  <div class="data-row">
+                    <span class="label">DNI</span>
+                    <span class="value">{{ parent().dni }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Email</span>
+                    <span class="value">{{ parent().email }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Teléfono</span>
+                    <span class="value">{{ parent().phone }}</span>
+                  </div>
+                  @if (parent().address) {
+                    <div class="data-row">
+                      <span class="label">Dirección</span>
+                      <span class="value">{{ parent().address }}</span>
+                    </div>
                   }
-                </button>
-              </div>
+                </div>
+              </section>
+              <section class="panel">
+                <h3 class="panel__title">Información de Cuenta</h3>
+                <div class="data-list">
+                  <div class="data-row">
+                    <span class="label">Usuario</span>
+                    <span class="value">{{ parent().username }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Fecha de Registro</span>
+                    <span class="value">{{ (parent().createdAt ? (parent().createdAt | date:'longDate') : '—') }}</span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Estado</span>
+                    <span class="value">
+                      <admin-status-badge [value]="parent()?.status ?? parent()?.user?.status"></admin-status-badge>
+                    </span>
+                  </div>
+                  <div class="data-row">
+                    <span class="label">Hijos Vinculados</span>
+                    <span class="value">
+                      <span class="badge badge-info">{{ children().length }}</span>
+                    </span>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         }
 
-        <div class="children-list">
-          @if (children().length === 0) {
-            <admin-empty-state icon="fa-child" message="No hay hijos vinculados a este padre de familia"></admin-empty-state>
-          } @else {
-            @for (child of children(); track child.id) {
-              <div class="child-card">
-                <div class="child-header">
-                  <div class="child-info">
-                    <h4><a [routerLink]="['/admin/estudiantes', child.id]" class="child-link">{{ child.name }}</a></h4>
-                    <div class="child-meta">
-                      <span class="child-grade">{{ child.grade }}</span>
-                      <span class="child-level">{{ child.level | levelLabel }}</span>
-                      <span class="child-relationship">{{ child.relationship | relationshipLabel }}</span>
-                    </div>
-                  </div>
-                  <div class="child-status">
-                    <admin-status-badge [value]="child.status"></admin-status-badge>
-                  </div>
-                </div>
-                <div class="child-details">
-                  <div class="detail-section">
-                    <h5><i class="fas fa-calendar-alt"></i> Fecha de Matrícula</h5>
-                    <p>{{ child.enrollmentDate | date:'longDate' }}</p>
-                  </div>
-                </div>
-                <div class="child-actions">
-                  <a [routerLink]="['/admin/estudiantes', child.id]" class="btn btn-sm btn-primary">
-                    <i class="fas fa-eye"></i> Ver Detalles
-                  </a>
-                  <button type="button" class="btn btn-sm btn-danger-outline" (click)="unlinkChild(child)">
-                    <i class="fas fa-unlink"></i> Desvincular
+        @if (activeTab() === 'hijos') {
+          <div class="content-section content-section--family">
+            <div class="children-header">
+              <div class="children-header__title">
+                <h3>Hijos Vinculados</h3>
+                <span class="children-count">{{ children().length }} hijo(s)</span>
+              </div>
+              @if (!showLinkPanel()) {
+                <button type="button" class="btn btn-primary" (click)="openLinkPanel()">
+                  <i class="fas fa-link"></i> Vincular hijos
+                </button>
+              }
+            </div>
+
+            @if (showLinkPanel()) {
+              <div class="link-panel">
+                <div class="link-panel__header">
+                  <h4><i class="fas fa-user-plus"></i> Vincular estudiantes a este apoderado</h4>
+                  <button type="button" class="link-panel__close" (click)="closeLinkPanel()" title="Cerrar" aria-label="Cerrar">
+                    <i class="fas fa-times"></i>
                   </button>
                 </div>
-              </div>
-            }
-          }
-        </div>
-      </div>
-    }
 
-    @if (activeTab() === 'pagos') {
-      <div class="content-section">
-        <div class="payments-summary">
-          <div class="summary-card">
-            <div class="summary-icon success">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="summary-content">
-              <h4>Total Pagado</h4>
-              <p class="summary-amount">S/ {{ totalPaid().toFixed(2) }}</p>
-              <span class="summary-count">{{ paidPayments().length }} pago(s)</span>
-            </div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-icon warning">
-              <i class="fas fa-exclamation-circle"></i>
-            </div>
-            <div class="summary-content">
-              <h4>Total Pendiente</h4>
-              <p class="summary-amount">S/ {{ totalPending().toFixed(2) }}</p>
-              <span class="summary-count">{{ pendingPayments().length }} pago(s)</span>
-            </div>
-          </div>
-        </div>
+                @if (linkError()) {
+                  <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i> {{ linkError() }}
+                  </div>
+                }
 
-        <div class="payments-tabs">
-          <button class="payment-tab-btn" [class.active]="true">
-            <i class="fas fa-clock"></i> Pendientes ({{ pendingPayments().length }})
-          </button>
-          <button class="payment-tab-btn" [class.active]="false">
-            <i class="fas fa-check"></i> Pagados ({{ paidPayments().length }})
-          </button>
-        </div>
+                <div class="link-panel__search">
+                  <i class="fas fa-search"></i>
+                  <input type="text" class="form-input"
+                         placeholder="Buscar por nombre, DNI, código o grado..."
+                         [ngModel]="linkSearch()"
+                         (ngModelChange)="setLinkSearch($event)"
+                         name="linkSearch"
+                         autocomplete="off" />
+                </div>
 
-        <div class="payments-list">
-          @if (pendingPayments().length === 0) {
-            <admin-empty-state icon="fa-check-circle" message="No hay pagos pendientes"></admin-empty-state>
-          } @else {
-            @for (payment of pendingPayments(); track payment.id) {
-              <div class="payment-item">
-                <div class="payment-info">
-                  <h4>{{ payment.concept }}</h4>
-                  <div class="payment-details">
-                    <span class="payment-amount">S/ {{ payment.amount.toFixed(2) }}</span>
-                    <span class="payment-date">
-                      <i class="fas fa-calendar"></i>
-                      Vence: {{ payment.dueDate | date:'shortDate' }}
-                    </span>
+                <div class="link-panel__list">
+                  @if (loadingStudents()) {
+                    <div class="link-panel__empty">
+                      <i class="fas fa-spinner fa-spin"></i> Cargando estudiantes...
+                    </div>
+                  } @else {
+                    @for (student of availableStudents(); track student.id) {
+                      <label class="link-row" [class.is-selected]="isStudentSelected(student.id)">
+                        <input type="checkbox"
+                               [checked]="isStudentSelected(student.id)"
+                               (change)="toggleStudent(student.id)" />
+                        <span class="link-row__avatar">{{ getStudentInitials(student) }}</span>
+                        <div class="link-row__info">
+                          <span class="link-row__name">{{ getStudentDisplayName(student) }}</span>
+                          <small class="link-row__meta">
+                            @if (student.grade) {
+                              <span><i class="fas fa-graduation-cap"></i> {{ student.grade }}</span>
+                            }
+                            @if (student.dni) {
+                              <span>DNI {{ student.dni }}</span>
+                            }
+                            @if (student.studentCode || student.code) {
+                              <span class="muted">Código {{ student.studentCode || student.code }}</span>
+                            }
+                          </small>
+                        </div>
+                      </label>
+                    } @empty {
+                      <div class="link-panel__empty">
+                        @if (linkSearch()) {
+                          <i class="fas fa-search"></i> Sin resultados para "{{ linkSearch() }}"
+                        } @else {
+                          <i class="fas fa-info-circle"></i> No hay estudiantes disponibles para vincular
+                        }
+                      </div>
+                    }
+                  }
+                </div>
+
+                <div class="link-panel__footer">
+                  <label class="link-primary-toggle">
+                    <input type="checkbox"
+                           [checked]="linkAsPrimary()"
+                           (change)="setLinkAsPrimary(!linkAsPrimary())" />
+                    <span>Marcar como apoderado principal</span>
+                  </label>
+                  <div class="link-panel__actions">
+                    <button type="button" class="btn btn-secondary" (click)="closeLinkPanel()" [disabled]="linkLoading()">
+                      Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary"
+                            (click)="linkSelected()"
+                            [disabled]="!selectedCount() || linkLoading()">
+                      @if (linkLoading()) {
+                        <i class="fas fa-spinner fa-spin"></i> Vinculando...
+                      } @else {
+                        <i class="fas fa-link"></i>
+                        Vincular {{ selectedCount() }} estudiante{{ selectedCount() === 1 ? '' : 's' }}
+                      }
+                    </button>
                   </div>
                 </div>
-                <div class="payment-status">
-                  <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
-                </div>
               </div>
             }
-          }
-        </div>
+
+            <div class="children-list">
+              @if (children().length === 0) {
+                <admin-empty-state icon="fa-child" message="No hay hijos vinculados a este padre de familia"></admin-empty-state>
+              } @else {
+                @for (child of children(); track child.id) {
+                  <article class="child-nucleus">
+                    <div class="child-nucleus__mark" aria-hidden="true">
+                      <span>{{ child.name?.charAt(0) || '?' }}</span>
+                    </div>
+                    <div class="child-nucleus__body">
+                      <div class="child-header">
+                        <div class="child-info">
+                          <h4><a [routerLink]="['/admin/estudiantes', child.id]" class="child-link">{{ child.name }}</a></h4>
+                          <div class="child-meta">
+                            <span class="child-grade">{{ child.grade }}</span>
+                            <span class="child-level">{{ child.level | levelLabel }}</span>
+                            <span class="child-relationship">{{ child.relationship | relationshipLabel }}</span>
+                          </div>
+                        </div>
+                        <div class="child-status">
+                          <admin-status-badge [value]="child.status"></admin-status-badge>
+                        </div>
+                      </div>
+                      <div class="child-details">
+                        <div class="detail-section">
+                          <h5><i class="fas fa-calendar-alt"></i> Fecha de Matrícula</h5>
+                          <p>{{ child.enrollmentDate | date:'longDate' }}</p>
+                        </div>
+                      </div>
+                      <div class="child-actions">
+                        <a [routerLink]="['/admin/estudiantes', child.id]" class="btn btn-sm btn-primary">
+                          <i class="fas fa-eye"></i> Ver Detalles
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger-outline" (click)="unlinkChild(child)">
+                          <i class="fas fa-unlink"></i> Desvincular
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                }
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab() === 'pagos') {
+          <div class="content-section content-section--payments">
+            <div class="payments-panel">
+              <header class="payments-panel__head">
+                <h3>Pagos</h3>
+                <p>Resumen secundario de obligaciones vinculadas al núcleo familiar.</p>
+              </header>
+
+              <div class="payments-summary">
+                <div class="summary-cell">
+                  <h4>Total Pagado</h4>
+                  <p class="summary-amount">S/ {{ totalPaid().toFixed(2) }}</p>
+                  <span class="summary-count">{{ paidPayments().length }} pago(s)</span>
+                </div>
+                <div class="summary-cell">
+                  <h4>Total Pendiente</h4>
+                  <p class="summary-amount summary-amount--pending">S/ {{ totalPending().toFixed(2) }}</p>
+                  <span class="summary-count">{{ pendingPayments().length }} pago(s)</span>
+                </div>
+              </div>
+
+              <div class="payments-tabs">
+                <button class="payment-tab-btn" [class.active]="true">
+                  <i class="fas fa-clock"></i> Pendientes ({{ pendingPayments().length }})
+                </button>
+                <button class="payment-tab-btn" [class.active]="false">
+                  <i class="fas fa-check"></i> Pagados ({{ paidPayments().length }})
+                </button>
+              </div>
+
+              <div class="payments-list">
+                @if (pendingPayments().length === 0) {
+                  <admin-empty-state icon="fa-check-circle" message="No hay pagos pendientes"></admin-empty-state>
+                } @else {
+                  @for (payment of pendingPayments(); track payment.id) {
+                    <div class="payment-item">
+                      <div class="payment-info">
+                        <h4>{{ payment.concept }}</h4>
+                        <div class="payment-details">
+                          <span class="payment-amount">S/ {{ payment.amount.toFixed(2) }}</span>
+                          <span class="payment-date">
+                            <i class="fas fa-calendar"></i>
+                            Vence: {{ payment.dueDate | date:'shortDate' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="payment-status">
+                        <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        }
       </div>
     }
   </div>

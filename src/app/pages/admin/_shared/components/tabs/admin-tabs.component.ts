@@ -22,7 +22,6 @@ export interface AdminTab {
                 role="tab"
                 [attr.aria-selected]="activeTab === tab.id"
                 (click)="select(tab.id)">
-          @if (tab.icon) { <i class="fas" [ngClass]="tab.icon"></i> }
           <span>{{ tab.label }}</span>
           @if (tab.badge !== undefined && tab.badge !== null && tab.badge !== '') {
             <span class="tab-badge">{{ tab.badge }}</span>
@@ -32,47 +31,49 @@ export interface AdminTab {
     </div>
   `,
   styles: [`
+    :host {
+      --navy: #003366;
+      --muted: #5c6b7e;
+      --line: rgba(20 32 51 / .1);
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .admin-tabs {
       display: flex;
-      gap: var(--spacing-xs, 0.25rem);
-      border-bottom: 2px solid var(--border-color, #e5e7eb);
-      margin-bottom: var(--spacing-lg, 1.5rem);
+      gap: .2rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 1.15rem;
       overflow-x: auto;
     }
     .admin-tab-btn {
       background: transparent;
       border: none;
-      border-bottom: 3px solid transparent;
-      padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
-      color: var(--text-secondary, #6b7280);
+      border-bottom: 2px solid transparent;
+      padding: .75rem 1rem;
+      color: var(--muted);
       cursor: pointer;
-      font-size: var(--font-size-sm, 0.875rem);
-      font-weight: 500;
+      font: inherit;
+      font-size: .82rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: var(--spacing-xs, 0.25rem);
+      gap: .4rem;
       white-space: nowrap;
-      transition: all 0.2s;
-      margin-bottom: -2px;
+      margin-bottom: -1px;
     }
-    .admin-tab-btn:hover { color: var(--primary, #003366); }
+    .admin-tab-btn:hover { color: var(--navy); }
     .admin-tab-btn.active {
-      color: var(--primary, #003366);
-      border-bottom-color: var(--primary, #003366);
-      font-weight: 600;
+      color: var(--navy);
+      border-bottom-color: var(--navy);
     }
     .tab-badge {
-      background: var(--bg-secondary, #f3f4f6);
-      color: var(--text-secondary, #6b7280);
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--muted);
     }
-    .admin-tab-btn.active .tab-badge {
-      background: var(--primary, #003366);
-      color: white;
-    }
+    .admin-tab-btn.active .tab-badge { color: var(--navy); }
   `],
 })
 export class AdminTabsComponent {

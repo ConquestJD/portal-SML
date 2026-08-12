@@ -16,9 +16,7 @@ export interface BreadcrumbItem {
     <nav class="admin-breadcrumb" aria-label="Breadcrumb">
       @for (item of items; track item.label; let last = $last; let first = $first) {
         @if (first && item.link) {
-          <a [routerLink]="item.link" class="breadcrumb-link">
-            <i class="fas fa-arrow-left"></i> Volver a {{ item.label }}
-          </a>
+          <a [routerLink]="item.link" class="breadcrumb-link">← {{ item.label }}</a>
         } @else if (item.link && !last) {
           <a [routerLink]="item.link" class="breadcrumb-link">{{ item.label }}</a>
         } @else {
@@ -31,23 +29,30 @@ export interface BreadcrumbItem {
     </nav>
   `,
   styles: [`
+    :host {
+      --navy: #003366;
+      --muted: #5c6b7e;
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .admin-breadcrumb {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: var(--spacing-sm, 0.5rem);
-      margin-bottom: var(--spacing-xl, 1.5rem);
-      color: var(--text-secondary, #6b7280);
-      font-size: var(--font-size-sm, 0.875rem);
+      gap: .5rem;
+      margin-bottom: 1rem;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
     }
     .breadcrumb-link {
-      color: var(--primary, #003366);
+      color: var(--navy);
       text-decoration: none;
-      transition: color 0.2s;
     }
-    .breadcrumb-link:hover { color: var(--primary-dark, #001a33); }
-    .breadcrumb-separator { color: var(--text-tertiary, #9ca3af); }
-    .breadcrumb-current { color: var(--text-primary, #111827); font-weight: 500; }
+    .breadcrumb-link:hover { text-decoration: underline; }
+    .breadcrumb-separator { color: var(--muted); opacity: .6; }
+    .breadcrumb-current { color: var(--muted); font-weight: 500; }
   `],
 })
 export class AdminBreadcrumbComponent {

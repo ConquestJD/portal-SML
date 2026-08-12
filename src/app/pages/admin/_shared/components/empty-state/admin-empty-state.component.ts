@@ -8,31 +8,36 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="admin-empty-state">
-      <i class="fas" [ngClass]="icon"></i>
       @if (title) { <h3>{{ title }}</h3> }
       @if (message) { <p>{{ message }}</p> }
       <ng-content></ng-content>
     </div>
   `,
   styles: [`
+    :host {
+      --muted: #5c6b7e;
+      --navy: #003366;
+      --font-display: 'Newsreader', Georgia, serif;
+      --font-ui: 'Figtree', 'Segoe UI', sans-serif;
+      display: block;
+      font-family: var(--font-ui);
+    }
     .admin-empty-state {
       text-align: center;
-      padding: var(--spacing-2xl, 2rem);
-      color: var(--text-secondary, #6b7280);
-    }
-    .admin-empty-state i {
-      font-size: var(--font-size-3xl, 2rem);
-      color: var(--text-tertiary, #9ca3af);
-      margin-bottom: var(--spacing-md, 1rem);
+      padding: 2rem 1rem;
+      color: var(--muted);
     }
     .admin-empty-state h3 {
-      margin: 0 0 var(--spacing-xs, 0.25rem) 0;
-      font-size: var(--font-size-lg, 1.125rem);
-      color: var(--text-primary, #111827);
+      margin: 0 0 .35rem;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      font-style: italic;
+      color: var(--navy);
     }
     .admin-empty-state p {
       margin: 0;
-      font-size: var(--font-size-sm, 0.875rem);
+      font-size: .9rem;
     }
   `],
 })

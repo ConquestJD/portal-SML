@@ -1,305 +1,215 @@
-<div class="curso-detalle-padre-container">
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando información del curso...</p>
-    </div>
-  } @else if (error()) {
-    <div class="loading-state">
-      <p>{{ error() }}</p>
-      <a routerLink="/padre/cursos" class="tab-btn" style="margin-top: 1rem; display: inline-block;">Volver a cursos</a>
-    </div>
-  } @else if (courseVm(); as c) {
-    <div class="breadcrumb">
-      <a routerLink="/padre/dashboard">Inicio</a>
-      <span>/</span>
-      <a routerLink="/padre/cursos">Cursos</a>
-      <span>/</span>
-      <span>{{ c.name }}</span>
-    </div>
+<div class="padre-page">
 
-    <div class="course-header">
-      <div class="course-header-content">
-        <div class="course-title-wrapper">
-          <div class="course-code-badge">
-            <i class="fas fa-book"></i>
-            <span>{{ c.code }}</span>
-          </div>
-          <h1 class="course-title">{{ c.name }}</h1>
-          <p class="course-period">Año académico {{ c.academicYear }}</p>
-        </div>
-        <div class="course-stats">
-          <div class="stat-item">
-            <i class="fas fa-chart-line"></i>
-            <div class="stat-content">
-              <span class="stat-label">Promedio</span>
-              <span class="stat-value">{{ c.average }}</span>
-            </div>
-          </div>
+  @if (isLoading()) {
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Detalle del curso</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
         </div>
       </div>
+    </header>
+    <div class="padre-page__body">
+      <p class="feed__empty">Cargando información del curso…</p>
     </div>
-
-    <div class="tabs">
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'informacion'"
-        (click)="setTab('informacion')"
-      >
-        <i class="fas fa-info-circle"></i> Información
-      </button>
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'materiales'"
-        (click)="setTab('materiales')"
-      >
-        <i class="fas fa-book"></i> Materiales
-      </button>
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'tareas'"
-        (click)="setTab('tareas')"
-      >
-        <i class="fas fa-tasks"></i> Tareas
-      </button>
+  } @else if (error()) {
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">Detalle del curso</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+    <div class="padre-page__body">
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+      <p class="body-nav">
+        <a routerLink="/padre/cursos" class="padre-link">← Volver a cursos</a>
+      </p>
     </div>
+  } @else if (courseVm(); as c) {
 
-    <div class="tab-content">
+    <header class="padre-page__hero">
+      <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="padre-page__hero-veil"></div>
+      <div class="padre-page__hero-content">
+        <img src="/only-logo.png" alt="" class="padre-page__crest" />
+        <div>
+          <h1 class="padre-page__title">{{ c.name }}</h1>
+          <p class="padre-page__brand">Santa María Laura</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="padre-page__body">
+
+      <p class="body-nav">
+        <a routerLink="/padre/cursos" class="padre-link">← Cursos</a>
+        <span class="body-nav__sep">/</span>
+        <span class="body-nav__current">{{ c.code }}</span>
+      </p>
+
+      <p class="page-context">Año académico {{ c.academicYear }} · Prof. {{ c.teacher }}</p>
+
+      <section class="metrics metrics--2" aria-label="Resumen del curso">
+        <div class="metric">
+          <span class="metric__n">{{ c.average }}</span>
+          <span class="metric__l">Promedio</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ c.schedule.length }}</span>
+          <span class="metric__l">Franjas horarias</span>
+        </div>
+      </section>
+
+      <nav class="padre-tabs" aria-label="Secciones del curso">
+        <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'informacion'" (click)="setTab('informacion')">Información</button>
+        <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'materiales'" (click)="setTab('materiales')">Materiales</button>
+        <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
+      </nav>
+
       @if (activeTab() === 'informacion') {
-        <div class="content-section">
-          <div class="info-card">
-            <h2 class="card-title">
-              <i class="fas fa-chalkboard-teacher"></i>
-              Información del profesor
-            </h2>
-            <div class="teacher-card">
-              <div class="teacher-photo-wrapper">
-                @if (c.teacherAvatar) {
-                  <img [src]="c.teacherAvatar" [alt]="c.teacher" class="teacher-photo" />
-                } @else {
-                  <div class="teacher-photo-placeholder">
-                    <i class="fas fa-user"></i>
-                  </div>
-                }
-              </div>
-              <div class="teacher-details">
-                <h3 class="teacher-name">{{ c.teacher }}</h3>
-                <div class="teacher-contact-info">
-                  @if (c.teacherEmail) {
-                    <div class="contact-item">
-                      <i class="fas fa-envelope"></i>
-                      <a [href]="'mailto:' + c.teacherEmail">{{ c.teacherEmail }}</a>
-                    </div>
-                  }
-                  @if (c.teacherPhone) {
-                    <div class="contact-item">
-                      <i class="fas fa-phone"></i>
-                      <a [href]="'tel:' + c.teacherPhone">{{ c.teacherPhone }}</a>
-                    </div>
-                  }
-                </div>
-                <div class="teacher-actions">
-                  <button type="button" class="btn-send-message" (click)="sendMessageToTeacher()">
-                    <i class="fas fa-comment"></i>
-                    Enviar mensaje
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-card">
-            <h2 class="card-title">
-              <i class="fas fa-calendar-alt"></i>
-              Horarios
-            </h2>
-            <div class="schedule-info">
-              <div class="schedule-list">
-                @for (scheduleItem of c.schedule; track scheduleItem.day + scheduleItem.time) {
-                  <div class="schedule-item">
-                    <div class="schedule-day">
-                      <i class="fas fa-calendar-day"></i>
-                      <span>{{ scheduleItem.day }}</span>
-                    </div>
-                    <div class="schedule-time">
-                      <i class="fas fa-clock"></i>
-                      <span>{{ scheduleItem.time }}</span>
-                    </div>
-                  </div>
-                }
-              </div>
-              @if (c.schedule.length === 0) {
-                <p class="schedule-empty">No hay horario registrado para este curso.</p>
+        <div class="detail-panels">
+          <section class="feed">
+            <div class="feed__head"><h2>Profesor</h2></div>
+            <div class="teacher-row">
+              @if (c.teacherAvatar) {
+                <img [src]="c.teacherAvatar" [alt]="c.teacher" class="teacher-row__photo" />
+              } @else {
+                <span class="teacher-row__mark">{{ teacherInitial(c) }}</span>
               }
+              <div class="teacher-row__body">
+                <strong>{{ c.teacher }}</strong>
+                @if (c.teacherEmail) {
+                  <a [href]="'mailto:' + c.teacherEmail" class="contact-link">{{ c.teacherEmail }}</a>
+                }
+                @if (c.teacherPhone) {
+                  <a [href]="'tel:' + c.teacherPhone" class="contact-link">{{ c.teacherPhone }}</a>
+                }
+              </div>
+              <button type="button" class="padre-btn padre-btn--solid" (click)="sendMessageToTeacher()">Mensaje</button>
             </div>
-          </div>
+          </section>
+
+          <section class="feed">
+            <div class="feed__head"><h2>Horarios</h2></div>
+            @if (c.schedule.length === 0) {
+              <p class="feed__empty">No hay horario registrado para este curso.</p>
+            } @else {
+              <ul class="feed__list">
+                @for (scheduleItem of c.schedule; track scheduleItem.day + scheduleItem.time) {
+                  <li>
+                    <div class="feed-row feed-row--static">
+                      <span class="feed-row__mark">{{ scheduleDayMark(scheduleItem.day) }}</span>
+                      <span class="feed-row__body">
+                        <span class="feed-row__title">{{ scheduleItem.day }}</span>
+                        <span class="feed-row__meta">{{ scheduleItem.time }}</span>
+                      </span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
         </div>
       }
 
       @if (activeTab() === 'materiales') {
-        <div class="content-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-book"></i>
-              Materiales del curso
-            </h2>
-            <p class="section-description">
-              Materiales organizados por unidades del plan de estudios
-            </p>
+        <section class="feed">
+          <div class="feed__head">
+            <h2>Materiales del curso</h2>
           </div>
-
           <div class="units-list">
             @for (unit of units(); track unit['id']) {
-              <div class="unit-item" [class.expanded]="unit['isExpanded']">
-                <div class="unit-header" (click)="toggleUnit(String(unit['id']))">
+              <div class="unit" [class.unit--open]="unit['isExpanded']">
+                <button type="button" class="unit__head" (click)="toggleUnit(String(unit['id']))">
                   @if (unit['number'] !== null && unit['number'] !== undefined) {
-                    <div class="unit-number">{{ Number(unit['number']).toString().padStart(2, '0') }}</div>
+                    <span class="unit__num">{{ padUnitNumber(unit['number']) }}</span>
                   } @else {
-                    <div class="unit-number unit-number--folder" aria-hidden="true">
-                      <i class="fas fa-folder"></i>
-                    </div>
+                    <span class="unit__num unit__num--folder">§</span>
                   }
-                  <div class="unit-content">
-                    <h3>{{ unit['title'] }}</h3>
-                    <p>{{ unit['description'] }}</p>
-                  </div>
-                  <div class="unit-toggle">
-                    <i
-                      class="fas"
-                      [class.fa-chevron-down]="!unit['isExpanded']"
-                      [class.fa-chevron-up]="unit['isExpanded']"
-                    ></i>
-                  </div>
-                </div>
+                  <span class="unit__body">
+                    <span class="unit__title">{{ unit['title'] }}</span>
+                    <span class="unit__desc">{{ unit['description'] }}</span>
+                  </span>
+                  <span class="unit__toggle">{{ unit['isExpanded'] ? '−' : '+' }}</span>
+                </button>
                 @if (unit['isExpanded']) {
-                  <div class="unit-materials">
+                  <div class="unit__materials">
                     @if ($any(unit['materials'])?.length > 0) {
-                      <div class="materials-list">
+                      <ul class="feed__list">
                         @for (material of $any(unit['materials']); track material['id']) {
-                          <div class="material-item">
-                            <div
-                              class="material-icon-wrapper"
-                              [class.pdf]="material['type'] === 'PDF'"
-                              [class.video]="material['type'] === 'Video'"
-                              [class.documento]="material['type'] === 'Documento'"
-                              [class.imagen]="material['type'] === 'Imagen'"
-                              [class.link]="material['type'] === 'Link'"
-                            >
-                              <i class="fas" [ngClass]="getMaterialIcon(material['type'])"></i>
+                          <li>
+                            <div class="feed-row feed-row--static">
+                              <span class="feed-row__mark material-mark">{{ materialTypeMark(material['type']) }}</span>
+                              <span class="feed-row__body">
+                                <span class="feed-row__title">{{ material['name'] }}</span>
+                                <span class="feed-row__meta">
+                                  {{ material['type'] }}
+                                  @if (material['size']) { · {{ material['size'] }} }
+                                  @if (material['date']) { · {{ material['date'] | date: 'shortDate' }} }
+                                </span>
+                              </span>
+                              <span class="feed-row__actions">
+                                <button type="button" class="padre-btn padre-btn--solid" (click)="downloadMaterial(material)">
+                                  {{ material['type'] === 'Link' ? 'Abrir' : 'Descargar' }}
+                                </button>
+                              </span>
                             </div>
-                            <div class="material-info">
-                              <h4>{{ material['name'] }}</h4>
-                              <div class="material-meta">
-                                <span class="material-type">{{ material['type'] }}</span>
-                                @if (material['size']) {
-                                  <span class="material-size">{{ material['size'] }}</span>
-                                }
-                                <span class="material-date">{{ material['date'] | date: 'shortDate' }}</span>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              class="btn-download"
-                              (click)="downloadMaterial(material)"
-                              [title]="material['type'] === 'Link' ? 'Abrir enlace' : 'Descargar'"
-                            >
-                              @if (material['type'] === 'Link') {
-                                <i class="fas fa-external-link-alt"></i>
-                                Abrir
-                              } @else {
-                                <i class="fas fa-download"></i>
-                                Descargar
-                              }
-                            </button>
-                          </div>
+                          </li>
                         }
-                      </div>
+                      </ul>
                     } @else {
-                      <div class="empty-materials">
-                        <i class="fas fa-folder-open"></i>
-                        <p>No hay materiales disponibles para esta unidad</p>
-                      </div>
+                      <p class="feed__empty">No hay materiales en esta unidad.</p>
                     }
                   </div>
                 }
               </div>
             }
           </div>
-        </div>
+        </section>
       }
 
       @if (activeTab() === 'tareas') {
-        <div class="content-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-tasks"></i>
-              Tareas asignadas
-            </h2>
-            <p class="section-description">
-              Lista de tareas de este curso para tu hijo
-            </p>
-          </div>
-
-          <div class="tasks-list">
-            @for (task of tasks(); track task.id) {
-              <div class="task-item" [class.completed]="task.status === 'entregada'">
-                <div
-                  class="task-status"
-                  [class.status-entregada]="task.status === 'entregada'"
-                  [class.status-pendiente]="task.status === 'pendiente'"
-                  [class.status-vencida]="task.status === 'vencida'"
-                >
-                  @if (task.status === 'entregada') {
-                    <i class="fas fa-check-circle"></i>
-                  } @else if (task.status === 'vencida') {
-                    <i class="fas fa-exclamation-circle"></i>
-                  } @else {
-                    <i class="fas fa-clock"></i>
-                  }
-                </div>
-                <div class="task-info">
-                  <h3>{{ task.title }}</h3>
-                  <div class="task-meta">
-                    <span class="task-due-date">
-                      <i class="fas fa-calendar"></i>
-                      Fecha límite: {{ task.dueDate | date: 'longDate' }}
-                    </span>
-                    @if (task.submitted && task.submittedDate) {
-                      <span class="task-submitted">
-                        <i class="fas fa-check"></i>
-                        Entregada el {{ task.submittedDate | date: 'shortDate' }}
-                      </span>
-                    }
-                    @if (task.grade !== undefined && task.grade !== null) {
-                      <span class="task-grade">
-                        <i class="fas fa-star"></i>
-                        Calificación: {{ task.grade }}/20
-                      </span>
-                    }
-                  </div>
-                </div>
-                <div
-                  class="task-badge"
-                  [class.badge-pending]="task.status === 'pendiente'"
-                  [class.badge-completed]="task.status === 'entregada'"
-                  [class.badge-overdue]="task.status === 'vencida'"
-                >
-                  {{ task.status | titlecase }}
-                </div>
-              </div>
-            }
-          </div>
-
+        <section class="feed">
+          <div class="feed__head"><h2>Tareas asignadas</h2></div>
           @if (tasks().length === 0) {
-            <div class="empty-state">
-              <i class="fas fa-tasks"></i>
-              <p>No hay tareas asignadas para este curso</p>
-            </div>
+            <p class="feed__empty">No hay tareas asignadas para este curso.</p>
+          } @else {
+            <ul class="feed__list">
+              @for (task of tasks(); track task.id) {
+                <li>
+                  <div class="feed-row feed-row--static" [class.feed-row--overdue]="task.status === 'vencida'">
+                    <span class="feed-row__mark">{{ taskStatusMark(task.status) }}</span>
+                    <span class="feed-row__body">
+                      <span class="feed-row__title">{{ task.title }}</span>
+                      <span class="feed-row__meta">
+                        Límite: {{ task.dueDate | date: 'longDate' }}
+                        @if (task.submitted && task.submittedDate) {
+                          · Entregada {{ task.submittedDate | date: 'shortDate' }}
+                        }
+                        @if (task.grade !== undefined && task.grade !== null) {
+                          · Nota {{ task.grade }}/20
+                        }
+                      </span>
+                    </span>
+                    <span class="feed-row__side">
+                      <span class="task-badge" [class.task-badge--pendiente]="task.status === 'pendiente'" [class.task-badge--entregada]="task.status === 'entregada'" [class.task-badge--vencida]="task.status === 'vencida'">
+                        {{ taskStatusLabel(task.status) }}
+                      </span>
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
           }
-        </div>
+        </section>
       }
     </div>
   }

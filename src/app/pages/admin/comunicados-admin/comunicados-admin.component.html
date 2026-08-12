@@ -1,33 +1,216 @@
-<div class="comunicados-admin-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Comunicados Institucionales</h1>
-      <p class="page-subtitle">Gestiona los comunicados del colegio</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" (click)="createComunicado()">
-        <i class="fas fa-plus"></i> Nuevo Comunicado
-      </button>
-    </div>
-  </div>
+<div class="adm-page">
 
-  <div class="comunicados-list">
-    @for (comunicado of comunicados(); track comunicado.id) {
-      <div class="comunicado-card">
-        <div class="comunicado-header">
-          <h3>{{ comunicado.title }}</h3>
-          <span class="badge badge-success">{{ comunicado.status }}</span>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Comunicados</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="createComunicado()">
+          Nuevo comunicado
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (showForm()) {
+      <form class="bull-compose feed" (ngSubmit)="save()">
+        <div class="feed__head">
+          <h2>{{ editId() ? 'Editar comunicado' : 'Redactar comunicado' }}</h2>
+          <button type="button" class="adm-link" (click)="cancelForm()">Cerrar</button>
         </div>
-        <div class="comunicado-info">
-          <p><strong>Tipo:</strong> {{ comunicado.type }}</p>
-          <p><strong>Fecha:</strong> {{ comunicado.date }}</p>
+
+        <div class="bull-compose__grid">
+          <div class="bull-field bull-field--wide">
+            <label class="bull-label" for="ann-title">Título *</label>
+            <input
+              id="ann-title"
+              class="bull-input bull-input--title"
+              type="text"
+              name="title"
+              required
+              [ngModel]="formData().title"
+              (ngModelChange)="update('title', $event)"
+              placeholder="Asunto del comunicado"
+            />
+          </div>
+
+          <div class="bull-field">
+            <label class="bull-label" for="ann-type">Tipo</label>
+            <select
+              id="ann-type"
+              class="bull-input"
+              name="type"
+              [ngModel]="formData().type"
+              (ngModelChange)="update('type', $event)"
+            >
+              @for (t of types; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="bull-field">
+            <label class="bull-label" for="ann-priority">Prioridad</label>
+            <select
+              id="ann-priority"
+              class="bull-input"
+              name="priority"
+              [ngModel]="formData().priority"
+              (ngModelChange)="update('priority', $event)"
+            >
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ p }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="bull-field bull-field--wide">
+            <label class="bull-label" for="ann-content">Contenido *</label>
+            <textarea
+              id="ann-content"
+              class="bull-input bull-textarea"
+              name="content"
+              rows="5"
+              required
+              [ngModel]="formData().content"
+              (ngModelChange)="update('content', $event)"
+              placeholder="Texto del boletín…"
+            ></textarea>
+          </div>
+
+          <div class="bull-field bull-field--wide">
+            <span class="bull-label">Destinatarios</span>
+            <div class="bull-roles">
+              @for (role of allRoles; track role) {
+                <label class="bull-role">
+                  <input
+                    type="checkbox"
+                    [checked]="hasRole(role)"
+                    (change)="toggleRole(role)"
+                  />
+                  <span>{{ role }}</span>
+                </label>
+              }
+            </div>
+          </div>
         </div>
-        <div class="comunicado-actions">
-          <button class="btn btn-sm btn-primary">
-            <i class="fas fa-edit"></i> Editar
+
+        <div class="bull-compose__actions">
+          <button type="button" class="adm-btn bull-btn--body" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="adm-btn adm-btn--solid" [disabled]="saving()">
+            {{ saving() ? 'Guardando…' : (editId() ? 'Actualizar' : 'Publicar') }}
           </button>
         </div>
-      </div>
+      </form>
     }
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Buscar en el boletín…"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); currentPage.set(1); load()"
+          name="searchQuery"
+        />
+      </label>
+      <select
+        [ngModel]="filterType()"
+        (ngModelChange)="filterType.set($event); currentPage.set(1); load()"
+        name="filterType"
+        aria-label="Filtrar por tipo"
+      >
+        <option value="">Todos los tipos</option>
+        @for (t of types; track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select>
+      <select
+        [ngModel]="filterPriority()"
+        (ngModelChange)="filterPriority.set($event); currentPage.set(1); load()"
+        name="filterPriority"
+        aria-label="Filtrar por prioridad"
+      >
+        <option value="">Todas las prioridades</option>
+        @for (p of priorities; track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+    </div>
+
+    <section class="feed" aria-label="Boletín">
+      <div class="feed__head">
+        <h2>Boletín institucional</h2>
+      </div>
+
+      @if (loading()) {
+        <p class="feed__empty">Cargando comunicados…</p>
+      } @else if (comunicados().length === 0) {
+        <p class="feed__empty">No hay comunicados con estos filtros.</p>
+      } @else {
+        <ul class="feed__list">
+          @for (comunicado of comunicados(); track comunicado.id) {
+            <li>
+              <article
+                class="bull-item"
+                [class.bull-item--urgent]="comunicado.type === 'URGENT' || comunicado.urgent || comunicado.priority === 'HIGH'"
+              >
+                <div class="bull-item__accent" aria-hidden="true"></div>
+                <div class="bull-item__body">
+                  <div class="bull-item__meta">
+                    <span class="bull-type" [attr.data-type]="comunicado.type">{{ comunicado.type }}</span>
+                    @if (comunicado.type === 'URGENT' || comunicado.urgent || comunicado.priority === 'HIGH') {
+                      <span class="bull-urgent">Urgente</span>
+                    }
+                    <time class="bull-date">{{ comunicado.date || comunicado.publishedAt }}</time>
+                  </div>
+                  <h3 class="bull-item__title">{{ comunicado.title }}</h3>
+                  <p class="bull-item__excerpt">{{ comunicado.content }}</p>
+                  <div class="bull-item__foot">
+                    @if (comunicado.status) {
+                      <span class="bull-status-pill">{{ comunicado.status }}</span>
+                    }
+                    <div class="bull-item__actions">
+                      <button type="button" class="adm-link" (click)="edit(comunicado)">Editar</button>
+                      <button type="button" class="adm-link adm-link--danger" (click)="delete(comunicado.id)">Eliminar</button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </li>
+          }
+        </ul>
+
+        @if (totalPages() > 1) {
+          <div class="bull-pager">
+            <button
+              type="button"
+              class="adm-btn adm-btn--solid bull-btn--pager"
+              [disabled]="currentPage() <= 1"
+              (click)="currentPage.set(currentPage() - 1); load()"
+            >Anterior</button>
+            <span>{{ currentPage() }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              class="adm-btn adm-btn--solid bull-btn--pager"
+              [disabled]="currentPage() >= totalPages()"
+              (click)="currentPage.set(currentPage() + 1); load()"
+            >Siguiente</button>
+          </div>
+        }
+      }
+    </section>
   </div>
 </div>

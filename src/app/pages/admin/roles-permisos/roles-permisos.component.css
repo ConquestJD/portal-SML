@@ -1,64 +1,150 @@
-.roles-permisos-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
+@import '../_shared/admin-editorial.css';
+
+.cap-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: default;
+  pointer-events: none;
 }
 
-.page-header {
-  margin-bottom: var(--spacing-xl);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 2px solid var(--border-color);
+.cap-matrix-wrap {
+  overflow: auto;
+  max-height: min(70vh, 720px);
 }
 
-.page-title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0 0 var(--spacing-xs) 0;
+.cap-matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 640px;
 }
 
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
+.cap-matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--navy-deep);
+  color: #d7e2ee;
+  padding: .85rem .75rem;
+  text-align: center;
+  border-bottom: 2px solid var(--navy);
+  vertical-align: bottom;
+}
+
+.cap-matrix__perm-col {
+  text-align: left !important;
+  min-width: 200px;
+  position: sticky;
+  left: 0;
+  z-index: 3 !important;
+  background: var(--navy-deep) !important;
+}
+
+.cap-matrix__role-col { min-width: 110px; }
+
+.cap-role-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cap-role-count {
+  display: block;
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(215 226 238 / .65);
+  margin-top: .25rem;
+}
+
+.cap-saving {
+  display: block;
+  font-size: .65rem;
+  color: #f0c14b;
+  margin-top: .2rem;
+}
+
+.cap-matrix tbody th,
+.cap-matrix tbody td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+.cap-perm {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #f4f6f9;
+  text-align: left;
+  padding: .55rem .85rem;
+  font-weight: 500;
+}
+
+.cap-perm code {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: .78rem;
+  color: var(--navy);
+  background: none;
+}
+
+.cap-cell {
+  text-align: center;
+  padding: .4rem;
+  background: var(--surface);
+}
+
+.cap-matrix tbody tr:hover .cap-perm { background: #e8eef5; }
+.cap-matrix tbody tr:hover .cap-cell { background: #f7f9fb; }
+
+.cap-check {
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  width: 1.75rem;
+  height: 1.75rem;
+  position: relative;
+}
+
+.cap-check input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
   margin: 0;
 }
 
-.roles-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
+.cap-check__box {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--line);
+  background: #fafbfd;
+  transition: background .15s ease, border-color .15s ease;
 }
 
-.role-card {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-color);
+.cap-check input:checked + .cap-check__box {
+  background: var(--navy);
+  border-color: var(--navy);
+  box-shadow: inset 0 0 0 2px #fff;
 }
 
-.role-header {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
+.cap-check input:disabled + .cap-check__box { opacity: .45; }
+
+.cap-check input:focus-visible + .cap-check__box {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
 }
 
-.role-header h3 {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0;
-}
-
-.role-permissions {
-  margin-bottom: var(--spacing-lg);
-}
-
-.role-permissions p {
-  color: var(--text-secondary);
-}
-
-.role-actions {
-  display: flex;
-  gap: var(--spacing-sm);
+.cap-footnote {
+  margin: 1rem 0 0;
+  font-size: .82rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
 }

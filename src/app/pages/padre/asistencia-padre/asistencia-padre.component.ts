@@ -96,6 +96,23 @@ export class AsistenciaPadreComponent implements OnInit {
     return `${c.user.firstName} ${c.user.lastName}`;
   }
 
+  getChildGrade(c: Child): string {
+    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(c: Child): string {
+    const fn = c.user?.firstName?.charAt(0) ?? '';
+    const ln = c.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
+  attendanceMark(status: AttendanceRowVm['statusClass']): string {
+    if (status === 'presente') return '✓';
+    if (status === 'ausente') return '✕';
+    if (status === 'tardanza') return '◷';
+    return '·';
+  }
+
   private rawRecords(): Record<string, unknown>[] {
     const d = this.attendanceData();
     if (!d) return [];

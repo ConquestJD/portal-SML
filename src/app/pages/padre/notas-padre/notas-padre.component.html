@@ -1,165 +1,143 @@
-<div class="notas-padre-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Notas y boleta</span>
-  </div>
+<div class="padre-page">
 
-  <div class="page-header">
-    <div class="header-content">
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
       <div>
-        <h1 class="page-title">Notas y boleta</h1>
-        <p class="page-subtitle">
-          Calificaciones por período o examen y tareas calificadas, por curso.
-        </p>
+        <h1 class="padre-page__title">Notas y boleta</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
       </div>
-      <button type="button" class="btn-download" (click)="downloadBoleta()">
-        <i class="fas fa-download"></i>
-        Descargar boleta PDF
-      </button>
+      <div class="padre-page__hero-actions">
+        <button type="button" class="padre-btn padre-btn--primary" (click)="downloadBoleta()">
+          Descargar boleta PDF
+        </button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  @if (children().length > 1) {
-    <div class="child-selector-section">
-      <h2 class="selector-title">
-        <i class="fas fa-users"></i>
-        Seleccionar hijo
-      </h2>
-      <div class="children-grid">
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (children().length > 1) {
+      <nav class="child-picker" aria-label="Seleccionar hijo">
         @for (child of children(); track child.id) {
           <button
             type="button"
-            class="child-card"
+            class="child-picker__btn"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            <div class="child-photo-wrapper">
-              @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name ?? ''" class="child-photo" />
-              } @else {
-                <div class="child-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
-              }
-            </div>
-            <div class="child-info">
-              <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }}</p>
-            </div>
-            @if (selectedChildId() === child.id) {
-              <div class="child-check">
-                <i class="fas fa-check-circle"></i>
-              </div>
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
+            } @else {
+              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
             }
+            <span>
+              <span class="child-picker__name">{{ getChildName(child) }}</span>
+              <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+            </span>
           </button>
         }
-      </div>
-    </div>
-  }
-
-  @if (selectedChild(); as ch) {
-    <div class="child-header">
-      <h2 class="child-header-title">Notas de {{ ch.name }}</h2>
-      <p class="child-header-subtitle">{{ ch.grade }}</p>
-    </div>
-  }
-
-  @if (error()) {
-    <p class="page-error">{{ error() }}</p>
-  }
-
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando notas...</p>
-    </div>
-  } @else if (totalEvaluations() === 0) {
-    <div class="notas-padre-empty">
-      <i class="fas fa-chart-line"></i>
-      <h2>Aún no hay calificaciones registradas</h2>
-      <p>Cuando el docente registre notas de período o califique tareas, aparecerán aquí.</p>
-    </div>
-  } @else {
-    <div class="notas-padre-kpis">
-      <div class="notas-padre-kpi notas-padre-kpi--main">
-        <span class="notas-padre-kpi__label">Promedio general</span>
-        <strong class="notas-padre-kpi__value">
-          @if (overallAverage() != null) {
-            {{ overallAverage()! | number: '1.1-1' }}
-          } @else {
-            —
-          }
-        </strong>
-      </div>
-      <div class="notas-padre-kpi">
-        <span class="notas-padre-kpi__label">Registros</span>
-        <strong class="notas-padre-kpi__value">{{ totalEvaluations() }}</strong>
-      </div>
-      <div class="notas-padre-kpi">
-        <span class="notas-padre-kpi__label">Cursos</span>
-        <strong class="notas-padre-kpi__value">{{ courseBlocks().length }}</strong>
-      </div>
-    </div>
-
-    @for (block of courseBlocks(); track block.courseName) {
-      <article class="notas-padre-block">
-        <div class="notas-padre-block__head">
-          <h2 class="notas-padre-block__title">
-            <i class="fas fa-book" aria-hidden="true"></i>
-            {{ block.courseName }}
-          </h2>
-          @if (block.average) {
-            <span class="notas-padre-block__avg">Promedio: {{ block.average }}</span>
-          }
-        </div>
-        <div class="notas-padre-table-wrap">
-          <table class="notas-padre-table">
-            <thead>
-              <tr>
-                <th>Origen</th>
-                <th>Detalle</th>
-                <th>Fecha</th>
-                <th>Máx.</th>
-                <th>Nota</th>
-                <th>%</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of block.rows; track row.id) {
-                <tr [class.notas-padre-table__row-task]="row.kind === 'tarea'">
-                  <td>
-                    @if (row.kind === 'tarea') {
-                      <span class="notas-padre-pill notas-padre-pill--task">Tarea</span>
-                    } @else {
-                      <span class="notas-padre-pill notas-padre-pill--period">Período / examen</span>
-                    }
-                  </td>
-                  <td class="notas-padre-table__detail">{{ row.label }}</td>
-                  <td>{{ row.dateLabel }}</td>
-                  <td>{{ row.maxLabel }}</td>
-                  <td>
-                    <strong>{{ row.scoreLabel }}</strong>
-                  </td>
-                  <td>
-                    @if (row.pctLabel !== '—') {
-                      <span class="notas-padre-pct" [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
-                    } @else {
-                      <span class="notas-padre-muted">—</span>
-                    }
-                  </td>
-                  <td class="notas-padre-table__action">
-                    @if (isTaskRow(row) && row.taskId) {
-                      <a routerLink="/padre/tareas" class="notas-padre-link">Ver tareas</a>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </article>
+      </nav>
     }
-  }
+
+    @if (selectedChild(); as ch) {
+      <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+    }
+
+    @if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (isLoading()) {
+      <p class="feed__empty">Cargando notas…</p>
+    } @else if (totalEvaluations() === 0) {
+      <section class="feed">
+        <p class="feed__empty">
+          Aún no hay calificaciones registradas. Cuando el docente registre notas de período o califique tareas, aparecerán aquí.
+        </p>
+      </section>
+    } @else {
+      <section class="metrics metrics--3" aria-label="Resumen de notas">
+        <div class="metric">
+          <span class="metric__n">
+            @if (overallAverage() != null) {
+              {{ overallAverage()! | number: '1.1-1' }}
+            } @else {
+              —
+            }
+          </span>
+          <span class="metric__l">Promedio general</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ totalEvaluations() }}</span>
+          <span class="metric__l">Registros</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ courseBlocks().length }}</span>
+          <span class="metric__l">Cursos</span>
+        </div>
+      </section>
+
+      @for (block of courseBlocks(); track block.courseName) {
+        <section class="feed notas-block">
+          <div class="feed__head">
+            <h2>{{ block.courseName }}</h2>
+            @if (block.average) {
+              <span class="notas-block__avg">Promedio {{ block.average }}</span>
+            }
+          </div>
+          <div class="notas-table-wrap">
+            <table class="notas-table">
+              <thead>
+                <tr>
+                  <th>Origen</th>
+                  <th>Detalle</th>
+                  <th>Fecha</th>
+                  <th>Máx.</th>
+                  <th>Nota</th>
+                  <th>%</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of block.rows; track row.id) {
+                  <tr [class.notas-table__row-task]="row.kind === 'tarea'">
+                    <td>
+                      @if (row.kind === 'tarea') {
+                        <span class="notas-pill notas-pill--task">Tarea</span>
+                      } @else {
+                        <span class="notas-pill notas-pill--period">Período</span>
+                      }
+                    </td>
+                    <td>{{ row.label }}</td>
+                    <td>{{ row.dateLabel }}</td>
+                    <td>{{ row.maxLabel }}</td>
+                    <td><strong>{{ row.scoreLabel }}</strong></td>
+                    <td>
+                      @if (row.pctLabel !== '—') {
+                        <span class="notas-pct" [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
+                      } @else {
+                        <span class="notas-muted">—</span>
+                      }
+                    </td>
+                    <td>
+                      @if (isTaskRow(row) && row.taskId) {
+                        <a routerLink="/padre/tareas" class="padre-link">Ver tareas</a>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+  </div>
 </div>

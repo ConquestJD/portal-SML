@@ -192,6 +192,15 @@ export class DetalleEstudianteComponent implements OnInit {
     return s.name ?? `${s.user.firstName} ${s.user.lastName}`;
   }
 
+  getStudentSubtitle(): string {
+    const s = this.student();
+    if (!s) return '';
+    const code = s.code ?? s.studentCode ?? '—';
+    const grade = s.grade ?? '';
+    const section = s.section ?? '';
+    return `Código: ${code} · ${grade} ${section}`.trim();
+  }
+
   attendanceStats = computed(() => {
     const list = this.attendance() as any[];
     const present = list.filter(r => r.status === 'PRESENT').length;
@@ -202,11 +211,27 @@ export class DetalleEstudianteComponent implements OnInit {
   });
   getCurrentEnrollment() { return this.student()?.enrollments?.[0]; }
   getStatusBadgeClass(status: string): string {
-    const map: Record<string, string> = { ACTIVE: 'badge-success', INACTIVE: 'badge-secondary', SUSPENDED: 'badge-danger' };
+    const map: Record<string, string> = {
+      ACTIVE: 'badge-success',
+      INACTIVE: 'badge-secondary',
+      SUSPENDED: 'badge-error',
+      PRESENT: 'badge-success',
+      LATE: 'badge-warning',
+      ABSENT: 'badge-error',
+      EXCUSED: 'badge-info',
+    };
     return map[status] ?? 'badge-secondary';
   }
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = { ACTIVE: 'Activo', INACTIVE: 'Inactivo', SUSPENDED: 'Suspendido' };
+    const map: Record<string, string> = {
+      ACTIVE: 'Activo',
+      INACTIVE: 'Inactivo',
+      SUSPENDED: 'Suspendido',
+      PRESENT: 'Presente',
+      LATE: 'Tardanza',
+      ABSENT: 'Falta',
+      EXCUSED: 'Justificado',
+    };
     return map[status] ?? status;
   }
   getRelationshipLabel(rel: string): string { return rel ?? 'Apoderado'; }

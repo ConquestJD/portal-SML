@@ -55,4 +55,12 @@ export class NotasProfesorComponent implements OnInit {
   getSelectedCourseName(): string {
     return this.courses().find(c => c.id === this.selectedCourse())?.course.name ?? '';
   }
+
+  getCourseDisplayName(c: TeacherCourse): string {
+    return c.course?.name ?? c.name ?? 'Curso';
+  }
+
+  getCourseCode(c: TeacherCourse): string {
+    return c.course?.code ?? c.code ?? '';
+  }
 }

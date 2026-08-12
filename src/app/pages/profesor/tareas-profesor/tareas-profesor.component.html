@@ -1,17 +1,69 @@
-<div class="tareas-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Gestión de Tareas</h1>
-      <p class="page-subtitle">Gestiona todas las tareas de tus cursos</p>
-    </div>
-    <div class="header-actions">
+<div class="prof-page">
+
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">Gestión de tareas</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
+      </div>
       @if (courses().length > 0) {
-        <div class="course-toolbar">
-          <label class="sr-only" for="courseSelect">Curso</label>
+        <div class="prof-page__hero-actions">
+          <a
+            [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
+            [queryParams]="{ returnTo: 'tareas' }"
+            class="prof-btn prof-btn--primary"
+          >
+            Nueva tarea
+          </a>
+        </div>
+      }
+    </div>
+  </header>
+
+  <div class="prof-page__body">
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando cursos…</p>
+    } @else if (error()) {
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+      </div>
+    } @else if (courses().length === 0) {
+      <section class="feed">
+        <p class="feed__empty">Sin cursos asignados. No hay cursos para gestionar tareas.</p>
+      </section>
+    } @else {
+
+      <section class="metrics metrics--2" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n">{{ totalTasks() }}</span>
+          <span class="metric__l">Total tareas</span>
+        </div>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ pendingCount() }}</span>
+          <span class="metric__l">Por calificar</span>
+        </div>
+      </section>
+
+      <div class="toolbar">
+        <label class="search">
+          <span class="visually-hidden">Buscar tarea</span>
+          <input
+            type="search"
+            placeholder="Buscar tarea…"
+            name="searchQuery"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="setSearch($event)"
+          />
+        </label>
+        <label>
+          <span class="visually-hidden">Curso</span>
           <select
             id="courseSelect"
             name="courseSelect"
-            class="form-input course-select"
             [ngModel]="selectedCourse()"
             (ngModelChange)="onCourseChange($event)"
           >
@@ -19,140 +71,80 @@
               <option [value]="c.id">{{ courseOptionLabel(c) }}</option>
             }
           </select>
-          <a
-            [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
-            [queryParams]="{ returnTo: 'tareas' }"
-            class="btn btn-primary"
-          >
-            <i class="fas fa-plus"></i> Nueva tarea
-          </a>
-        </div>
-      }
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          class="form-input search-input"
-          placeholder="Buscar tarea..."
-          name="searchQuery"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="setSearch($event)"
-        />
+        </label>
       </div>
-    </div>
+
+      <nav class="prof-tabs" aria-label="Filtros">
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="filter() === 'todas'"
+          (click)="filter.set('todas')"
+        >
+          Todas
+        </button>
+        <button
+          type="button"
+          class="prof-tabs__btn"
+          [class.active]="filter() === 'cerrada'"
+          (click)="filter.set('cerrada')"
+        >
+          Vencidas o cerradas
+        </button>
+      </nav>
+
+      @if (loadingTasks()) {
+        <p class="feed__empty">Cargando tareas…</p>
+      } @else if (filteredTasks().length === 0) {
+        <section class="feed">
+          <p class="feed__empty">No se encontraron tareas con los filtros seleccionados.</p>
+          @if (selectedCourse()) {
+            <p style="margin-top: .75rem;">
+              <a
+                [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
+                [queryParams]="{ returnTo: 'tareas' }"
+                class="prof-btn prof-btn--solid"
+              >
+                Crear primera tarea
+              </a>
+            </p>
+          }
+        </section>
+      } @else {
+        <section class="feed" aria-label="Listado de tareas">
+          <ul class="feed__list">
+            @for (task of filteredTasks(); track task.id) {
+              <li>
+                <article class="task-item">
+                  <div class="task-item__main">
+                    <div class="task-item__head">
+                      <div>
+                        <span class="feed-row__kicker">{{ task.courseLabel }}</span>
+                        <h2 class="task-item__title">{{ task.title }}</h2>
+                      </div>
+                      <span class="task-item__badge" [class.task-item__badge--closed]="isClosedTask(task)">
+                        {{ statusLabel(task) }}
+                      </span>
+                    </div>
+                    <p class="task-item__meta">
+                      Fecha límite: {{ formatDueDate(task.dueDate) }}
+                      · Entregadas: {{ task.submitted }} / {{ task.totalStudents || '—' }}
+                      · Por calificar: {{ task.pendingToGrade }}
+                    </p>
+                  </div>
+                  <div class="feed-row__actions">
+                    <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id]" class="prof-link">Editar</a>
+                    <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id, 'revisar']" class="prof-link">
+                      Revisar ({{ task.submitted }})
+                    </a>
+                    <a [routerLink]="['/profesor/cursos', task.assignmentId]" class="prof-link">Ver curso</a>
+                  </div>
+                </article>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
   </div>
-
-  @if (loading()) {
-    <p class="loading-hint">Cargando cursos…</p>
-  } @else if (error()) {
-    <p class="error-hint">{{ error() }}</p>
-  } @else if (courses().length === 0) {
-    <div class="empty-state">
-      <i class="fas fa-chalkboard-teacher empty-icon"></i>
-      <h2>Sin cursos asignados</h2>
-      <p>No hay cursos para gestionar tareas.</p>
-    </div>
-  } @else {
-    <div class="filters">
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'todas'"
-        (click)="filter.set('todas')"
-      >
-        Todas
-      </button>
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="filter() === 'cerrada'"
-        (click)="filter.set('cerrada')"
-      >
-        Vencidas o cerradas
-      </button>
-    </div>
-
-    <div class="summary-panel">
-      <div class="summary-item">
-        <div class="summary-icon-wrapper">
-          <i class="fas fa-tasks"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Total tareas (este curso)</span>
-          <span class="summary-value">{{ totalTasks() }}</span>
-        </div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-icon-wrapper warning">
-          <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Entregas por calificar</span>
-          <span class="summary-value warning">{{ pendingCount() }}</span>
-        </div>
-      </div>
-    </div>
-
-    @if (loadingTasks()) {
-      <p class="loading-hint">Cargando tareas…</p>
-    }
-
-    <div class="tasks-list">
-      @for (task of filteredTasks(); track task.id) {
-        <div class="task-card">
-          <div class="task-header">
-            <div class="task-title-section">
-              <h3 class="task-title">{{ task.title }}</h3>
-              <span class="task-course">{{ task.courseLabel }}</span>
-            </div>
-            <span class="badge" [ngClass]="badgeClass(task)">
-              {{ statusLabel(task) }}
-            </span>
-          </div>
-          <div class="task-info">
-            <div class="info-item">
-              <i class="fas fa-calendar-alt"></i>
-              <span>Fecha límite: {{ formatDueDate(task.dueDate) }}</span>
-            </div>
-            <div class="info-item">
-              <i class="fas fa-check-circle"></i>
-              <span>Entregadas: {{ task.submitted }} / {{ task.totalStudents || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <i class="fas fa-clock"></i>
-              <span class="warning">Por calificar: {{ task.pendingToGrade }}</span>
-            </div>
-          </div>
-          <div class="task-actions">
-            <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id]" class="btn btn-primary btn-sm">
-              <i class="fas fa-edit"></i> Editar
-            </a>
-            <a [routerLink]="['/profesor/cursos', task.assignmentId, 'tareas', task.id, 'revisar']" class="btn btn-secondary btn-sm">
-              <i class="fas fa-check"></i> Revisar ({{ task.submitted }})
-            </a>
-            <a [routerLink]="['/profesor/cursos', task.assignmentId]" class="btn btn-sm btn-outline">
-              <i class="fas fa-arrow-right"></i> Ver curso
-            </a>
-          </div>
-        </div>
-      }
-    </div>
-
-    @if (!loadingTasks() && filteredTasks().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-tasks empty-icon"></i>
-        <h2>No hay tareas</h2>
-        <p>No se encontraron tareas con los filtros seleccionados.</p>
-        @if (selectedCourse()) {
-          <a
-            [routerLink]="['/profesor/cursos', selectedCourse(), 'tareas', 'nueva']"
-            [queryParams]="{ returnTo: 'tareas' }"
-            class="btn btn-primary empty-cta"
-          >
-            <i class="fas fa-plus"></i> Crear primera tarea
-          </a>
-        }
-      </div>
-    }
-  }
 </div>

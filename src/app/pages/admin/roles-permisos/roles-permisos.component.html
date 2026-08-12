@@ -1,24 +1,88 @@
-<div class="roles-permisos-container">
-  <div class="page-header">
-    <h1 class="page-title">Roles y Permisos</h1>
-    <p class="page-subtitle">Configura los permisos de cada rol del sistema</p>
-  </div>
+<div class="adm-page">
 
-  <div class="roles-list">
-    @for (role of roles(); track role.id) {
-      <div class="role-card">
-        <div class="role-header">
-          <h3>{{ role.name }}</h3>
-        </div>
-        <div class="role-permissions">
-          <p><strong>Permisos:</strong> {{ role.permissions.join(', ') }}</p>
-        </div>
-        <div class="role-actions">
-          <button class="btn btn-sm btn-primary" (click)="savePermissions()">
-            <i class="fas fa-edit"></i> Configurar
-          </button>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Roles y permisos</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
+      <div class="adm-page__hero-actions">
+        <span class="adm-btn adm-btn--ghost cap-secure">
+          <i class="fas fa-shield-alt" aria-hidden="true"></i>
+          Control de acceso
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando roles…</p>
+    } @else if (roles().length === 0) {
+      <p class="feed__empty">No hay roles configurados.</p>
+    } @else {
+      <section class="feed" aria-label="Matriz de permisos">
+        <div class="feed__head">
+          <h2>Matriz de capacidades</h2>
+          <span class="feed-row__meta">Rol × permiso</span>
+        </div>
+
+        <div class="cap-matrix-wrap">
+          <table class="cap-matrix" aria-label="Matriz de permisos por rol">
+            <thead>
+              <tr>
+                <th class="cap-matrix__perm-col">Permiso</th>
+                @for (role of roles(); track role.id) {
+                  <th class="cap-matrix__role-col">
+                    <span class="cap-role-name">{{ role.name }}</span>
+                    @if (role.userCount != null) {
+                      <span class="cap-role-count">{{ role.userCount }} usuarios</span>
+                    }
+                    @if (saving() === role.id) {
+                      <span class="cap-saving">Guardando…</span>
+                    }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (perm of allPermissions; track perm) {
+                <tr>
+                  <th scope="row" class="cap-perm">
+                    <code>{{ perm }}</code>
+                  </th>
+                  @for (role of roles(); track role.id) {
+                    <td class="cap-cell">
+                      <label class="cap-check">
+                        <input
+                          type="checkbox"
+                          [checked]="hasPermission(role, perm)"
+                          [disabled]="saving() === role.id"
+                          (change)="togglePermission(role, perm)"
+                          [attr.aria-label]="role.name + ' · ' + perm"
+                        />
+                        <span class="cap-check__box" aria-hidden="true"></span>
+                      </label>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="cap-footnote">
+          Los cambios se aplican al marcar o desmarcar cada celda. Use con cuidado en roles de administración.
+        </p>
+      </section>
     }
   </div>
 </div>

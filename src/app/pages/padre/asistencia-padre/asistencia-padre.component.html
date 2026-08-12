@@ -1,144 +1,119 @@
-<div class="asistencia-padre-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Asistencia</span>
-  </div>
+<div class="padre-page">
 
-  <div class="page-header">
-    <h1 class="page-title">Asistencia del Hijo</h1>
-    <p class="page-subtitle">Registro de asistencia y faltas</p>
-  </div>
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
+      <div>
+        <h1 class="padre-page__title">Asistencia</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
+      </div>
+      <div class="padre-page__hero-actions">
+        <a routerLink="/padre/justificaciones" class="padre-btn padre-btn--ghost">Justificar faltas</a>
+      </div>
+    </div>
+  </header>
 
-  <!-- Selector de Hijos -->
-  @if (children().length > 1) {
-    <div class="child-selector-section">
-      <h2 class="selector-title">
-        <i class="fas fa-users"></i>
-        Seleccionar Hijo
-      </h2>
-      <div class="children-grid">
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (children().length > 1) {
+      <nav class="child-picker" aria-label="Seleccionar hijo">
         @for (child of children(); track child.id) {
-          <button 
-            class="child-card"
+          <button
+            type="button"
+            class="child-picker__btn"
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            <div class="child-photo-wrapper">
-              @if (child.photo) {
-                <img [src]="child.photo" [alt]="child.name" class="child-photo">
-              } @else {
-                <div class="child-photo-placeholder">
-                  <i class="fas fa-user"></i>
-                </div>
-              }
-            </div>
-            <div class="child-info">
-              <h3 class="child-name">{{ child.name }}</h3>
-              <p class="child-grade">{{ child.grade }}</p>
-            </div>
-            @if (selectedChildId() === child.id) {
-              <div class="child-check">
-                <i class="fas fa-check-circle"></i>
-              </div>
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
+            } @else {
+              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
             }
+            <span>
+              <span class="child-picker__name">{{ getChildName(child) }}</span>
+              <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+            </span>
           </button>
         }
-      </div>
-    </div>
-  }
+      </nav>
+    }
 
-  @if (selectedChild(); as ch) {
-    <div class="child-header">
-      <h2 class="child-header-title">Asistencia de {{ ch.name }}</h2>
-      <p class="child-header-subtitle">{{ ch.grade }}</p>
-    </div>
-  }
+    @if (selectedChild(); as ch) {
+      <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+    }
 
-  @if (error()) {
-    <p class="page-error">{{ error() }}</p>
-  }
+    @if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    }
 
-  @if (isLoading()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando asistencia...</p>
-    </div>
-  } @else {
-    <!-- Resumen -->
-    <div class="summary-cards">
-    <div class="summary-card present">
-      <i class="fas fa-check-circle"></i>
-      <div>
-        <h3>Presente</h3>
-        <p>{{ attendanceSummary().present }}</p>
-      </div>
-    </div>
-    <div class="summary-card absent">
-      <i class="fas fa-times-circle"></i>
-      <div>
-        <h3>Ausente</h3>
-        <p>{{ attendanceSummary().absent }}</p>
-      </div>
-    </div>
-    <div class="summary-card late">
-      <i class="fas fa-clock"></i>
-      <div>
-        <h3>Tardanzas</h3>
-        <p>{{ attendanceSummary().late }}</p>
-      </div>
-    </div>
-    <div class="summary-card percentage">
-      <i class="fas fa-percentage"></i>
-      <div>
-        <h3>Asistencia</h3>
-        <p>{{ attendanceSummary().percentage }}%</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Acciones -->
-  <div class="actions-section">
-    <a routerLink="/padre/justificaciones" class="btn-primary">
-      <i class="fas fa-file-alt"></i>
-      Justificar Faltas/Tardanzas
-    </a>
-  </div>
-
-  <!-- Registro de Asistencia -->
-  <div class="attendance-table-section">
-    <h2 class="section-title">Registro de Asistencia</h2>
-    <div class="attendance-table">
-      <div class="table-header">
-        <div>Fecha</div>
-        <div>Estado</div>
-        <div>Hora</div>
-        <div>Observación</div>
-      </div>
-      @for (record of attendanceRecords(); track record.date + record.statusRaw + record.time) {
-        <div class="table-row">
-          <div>{{ record.date | date: 'shortDate' }}</div>
-          <div>
-            <span
-              class="status-badge"
-              [class.present]="record.statusClass === 'presente'"
-              [class.absent]="record.statusClass === 'ausente'"
-              [class.late]="record.statusClass === 'tardanza'"
-            >
-              {{ record.statusLabel }}
-            </span>
-          </div>
-          <div>{{ record.time || '—' }}</div>
-          <div>{{ record.observation || '—' }}</div>
+    @if (isLoading()) {
+      <p class="feed__empty">Cargando asistencia…</p>
+    } @else {
+      <section class="metrics" aria-label="Resumen de asistencia">
+        <div class="metric">
+          <span class="metric__n">{{ attendanceSummary().present }}</span>
+          <span class="metric__l">Presente</span>
         </div>
-      }
-      @if (attendanceRecords().length === 0) {
-        <div class="empty-state">
-          <i class="fas fa-calendar-check"></i>
-          <p>No hay registros de asistencia disponibles</p>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ attendanceSummary().absent }}</span>
+          <span class="metric__l">Ausente</span>
         </div>
-      }
-    </div>
+        <div class="metric">
+          <span class="metric__n">{{ attendanceSummary().late }}</span>
+          <span class="metric__l">Tardanzas</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ attendanceSummary().percentage }}%</span>
+          <span class="metric__l">Asistencia</span>
+        </div>
+      </section>
+
+      <section class="feed" aria-labelledby="attendance-log-title">
+        <div class="feed__head">
+          <h2 id="attendance-log-title">Registro de asistencia</h2>
+        </div>
+        @if (attendanceRecords().length === 0) {
+          <p class="feed__empty">No hay registros de asistencia disponibles.</p>
+        } @else {
+          <ul class="feed__list">
+            @for (record of attendanceRecords(); track record.date + record.statusRaw + record.time) {
+              <li>
+                <div class="feed-row feed-row--static">
+                  <span class="feed-row__mark">{{ attendanceMark(record.statusClass) }}</span>
+                  <span class="feed-row__body">
+                    <span class="feed-row__kicker">{{ record.date | date: 'fullDate' }}</span>
+                    <span class="feed-row__title">{{ record.statusLabel }}</span>
+                    <span class="feed-row__meta">
+                      @if (record.time) {
+                        {{ record.time }}
+                      }
+                      @if (record.observation) {
+                        · {{ record.observation }}
+                      }
+                    </span>
+                  </span>
+                  <span class="feed-row__side">
+                    <span
+                      class="att-badge"
+                      [class.att-badge--presente]="record.statusClass === 'presente'"
+                      [class.att-badge--ausente]="record.statusClass === 'ausente'"
+                      [class.att-badge--tardanza]="record.statusClass === 'tardanza'"
+                    >
+                      {{ record.statusLabel }}
+                    </span>
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
   </div>
-  }
 </div>

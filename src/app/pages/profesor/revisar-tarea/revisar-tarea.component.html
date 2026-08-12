@@ -1,220 +1,180 @@
-<div class="revisar-tarea-container">
-  @if (isLoading() && !task()) {
-    <div class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Cargando…</p>
-    </div>
-  } @else if (!task()) {
-    <div class="empty-state">
-      <p>{{ error() || 'Tarea no encontrada.' }}</p>
-      <button type="button" class="btn btn-outline" (click)="goBack()">Volver</button>
-    </div>
-  } @else {
-    <div class="breadcrumb">
-      <button type="button" (click)="goBack()" class="breadcrumb-link">
-        <i class="fas fa-arrow-left"></i> Volver al curso
-      </button>
-      <span class="breadcrumb-separator">/</span>
-      <span class="breadcrumb-current">Revisar tarea</span>
-    </div>
+<div class="prof-page">
 
-    @if (error()) {
-      <div class="alert-inline">{{ error() }}</div>
-    }
-    @if (downloadError()) {
-      <div class="alert-inline alert-error">{{ downloadError() }}</div>
-    }
-
-    <div class="task-header">
-      <div class="task-header-content">
-        <h1 class="task-title">{{ task()!.title }}</h1>
-        <div class="task-meta">
-          <span class="meta-item">
-            <i class="fas fa-calendar-alt"></i>
-            @if (task()!.dueDate) {
-              <span>Fecha límite: {{ task()!.dueDate | date:'short' }}</span>
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        @if (task(); as t) {
+          <h1 class="prof-page__title">{{ t.title }}</h1>
+          <p class="prof-page__brand">
+            @if (t.dueDate) {
+              Fecha límite: {{ t.dueDate | date:'short' }} · {{ t.maxScore }} pts · {{ deliveryTypeLabel(t.deliveryType) }}
             } @else {
-              <span>Sin fecha límite</span>
+              Sin fecha límite · {{ t.maxScore }} pts · {{ deliveryTypeLabel(t.deliveryType) }}
             }
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-star"></i>
-            {{ task()!.maxScore }} puntos
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-paper-plane"></i>
-            Tipo: {{ deliveryTypeLabel(task()!.deliveryType) }}
-          </span>
-        </div>
+          </p>
+        } @else {
+          <h1 class="prof-page__title">Revisar tarea</h1>
+          <p class="prof-page__brand">Santa María Laura</p>
+        }
+      </div>
+      <div class="prof-page__hero-actions">
+        <button type="button" class="prof-btn prof-btn--ghost" (click)="goBack()">Volver al curso</button>
       </div>
     </div>
+  </header>
 
-    <div class="summary-panel">
-      <div class="summary-item">
-        <div class="summary-icon-wrapper">
-          <i class="fas fa-users"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Estudiantes</span>
-          <span class="summary-value">{{ submissions().length }}</span>
-        </div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-icon-wrapper warning">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Por calificar</span>
-          <span class="summary-value warning">{{ pendingCount() }}</span>
-        </div>
-      </div>
-      <div class="summary-item">
-        <div class="summary-icon-wrapper success">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="summary-content">
-          <span class="summary-label">Calificadas</span>
-          <span class="summary-value success">{{ gradedCount() }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="prof-page__body">
 
-    <div class="filters-section">
-      <div class="filters">
-        <button type="button" class="filter-chip" [class.active]="filterChip() === 'todas'" (click)="filterChip.set('todas')">Todas</button>
-        <button type="button" class="filter-chip" [class.active]="filterChip() === 'pendiente'" (click)="filterChip.set('pendiente')">Sin entrega</button>
-        <button type="button" class="filter-chip" [class.active]="filterChip() === 'entregada'" (click)="filterChip.set('entregada')">Entregadas</button>
-        <button type="button" class="filter-chip" [class.active]="filterChip() === 'calificada'" (click)="filterChip.set('calificada')">Calificadas</button>
-      </div>
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          class="form-input search-input"
-          placeholder="Buscar estudiante..."
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-        />
-      </div>
-    </div>
+    @if (isLoading() && !task()) {
+      <p class="feed__empty">Cargando…</p>
+    } @else if (!task()) {
+      <section class="feed">
+        <div class="prof-alert" role="alert"><p>{{ error() || 'Tarea no encontrada.' }}</p></div>
+        <button type="button" class="prof-btn prof-btn--outline" (click)="goBack()">Volver</button>
+      </section>
+    } @else {
 
-    <div class="submissions-list">
-      @for (sub of filteredSubmissions(); track sub.student.id) {
-        <div class="submission-card">
-          <div class="submission-header">
-            <div class="student-info">
-              <div class="student-avatar">{{ getStudentName(sub).charAt(0) }}</div>
-              <div class="student-details">
-                <h3 class="student-name">{{ getStudentName(sub) }}</h3>
-                <p class="student-code">Código: {{ sub.student.studentCode }}</p>
-              </div>
-            </div>
-            <span class="badge" [ngClass]="statusBadgeClass(sub.status)">{{ statusLabel(sub.status) }}</span>
-          </div>
-
-          <div class="submission-content">
-            @if (task()!.deliveryType !== 'clase' && !sub.submittedAt && sub.status !== 'GRADED') {
-              <div class="empty-submission">
-                <i class="fas fa-info-circle"></i>
-                <p>El estudiante aún no ha entregado en el portal. No se puede calificar hasta que envíe la tarea.</p>
-              </div>
-            }
-            @if (task()!.deliveryType === 'clase' && !sub.submittedAt && sub.status !== 'GRADED') {
-              <div class="empty-submission hint-in-class">
-                <i class="fas fa-chalkboard-teacher"></i>
-                <p>Tarea <strong>en clase</strong>: puedes calificar sin entrega en línea.</p>
-              </div>
-            }
-            @if (sub.submittedAt) {
-              <p class="meta-line"><i class="fas fa-clock"></i> Entregado: {{ sub.submittedAt | date:'short' }}</p>
-            }
-            @if (sub.content && (task()!.deliveryType === 'texto' || task()!.deliveryType === 'ambos')) {
-              <div class="submission-text">
-                <h4>Respuesta</h4>
-                <p>{{ sub.content }}</p>
-              </div>
-            }
-            @if (sub.attachments?.length && (task()!.deliveryType === 'archivo' || task()!.deliveryType === 'ambos' || task()!.deliveryType === 'clase')) {
-              <div class="submission-files">
-                <h4>Archivos del estudiante</h4>
-                <ul class="attachment-list">
-                  @for (f of sub.attachments!; track f.id) {
-                    <li class="attachment-row">
-                      <span class="attachment-name">{{ f.name || 'Archivo' }}</span>
-                      <div class="attachment-actions">
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-primary"
-                          (click)="downloadSubmissionAttachment(sub, f)"
-                        >
-                          <i class="fas fa-download"></i> Descargar
-                        </button>
-                        @if (f.url && f.url.startsWith('http')) {
-                          <button
-                            type="button"
-                            class="btn btn-sm btn-outline"
-                            (click)="openAttachmentIfPublicUrl(f.url)"
-                          >
-                            <i class="fas fa-external-link-alt"></i> Abrir URL
-                          </button>
-                        }
-                      </div>
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-            @if (sub.status === 'GRADED' && sub.score != null) {
-              <div class="grading-info">
-                <span class="grade-label">Nota:</span>
-                <span class="grade-value">{{ sub.score }} / {{ task()!.maxScore }}</span>
-                @if (sub.feedback) {
-                  <p class="feedback-text"><strong>Comentarios:</strong> {{ sub.feedback }}</p>
-                }
-              </div>
-            }
-          </div>
-
-          <div class="submission-actions">
-            @if (canOpenGrading(sub)) {
-              <button type="button" class="btn btn-primary" (click)="openGradeModal(sub)">
-                <i class="fas" [class.fa-check]="sub.status !== 'GRADED'" [class.fa-edit]="sub.status === 'GRADED'"></i>
-                {{ sub.status === 'GRADED' ? 'Editar calificación' : 'Calificar' }}
-              </button>
-            }
-            <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', sub.student.id]" class="btn btn-outline">
-              <i class="fas fa-user"></i> Ver ficha
-            </a>
-          </div>
-        </div>
+      @if (error()) {
+        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
       }
-    </div>
+      @if (downloadError()) {
+        <div class="prof-alert" role="alert"><p>{{ downloadError() }}</p></div>
+      }
 
-    @if (!loading() && filteredSubmissions().length === 0) {
-      <div class="empty-state">
-        <i class="fas fa-inbox empty-icon"></i>
-        <h2>Sin resultados</h2>
-        <p>Prueba otro filtro o búsqueda.</p>
+      <section class="metrics metrics--3" aria-label="Resumen de entregas">
+        <div class="metric">
+          <span class="metric__n">{{ submissions().length }}</span>
+          <span class="metric__l">Estudiantes</span>
+        </div>
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ pendingCount() }}</span>
+          <span class="metric__l">Por calificar</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ gradedCount() }}</span>
+          <span class="metric__l">Calificadas</span>
+        </div>
+      </section>
+
+      <nav class="prof-tabs" aria-label="Filtros de entregas">
+        <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'todas'" (click)="setFilterChip('todas')">Todas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'pendiente'" (click)="setFilterChip('pendiente')">Sin entrega</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'entregada'" (click)="setFilterChip('entregada')">Entregadas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'calificada'" (click)="setFilterChip('calificada')">Calificadas</button>
+      </nav>
+
+      <div class="toolbar">
+        <label class="search">
+          <span class="visually-hidden">Buscar estudiante</span>
+          <input
+            type="search"
+            placeholder="Buscar estudiante…"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          />
+        </label>
       </div>
+
+      @if (!loading() && filteredSubmissions().length === 0) {
+        <section class="feed">
+          <p class="feed__empty">Sin resultados. Prueba otro filtro o búsqueda.</p>
+        </section>
+      } @else {
+        @for (sub of filteredSubmissions(); track sub.student.id) {
+          <section class="feed rev-card">
+            <div class="rev-card__head">
+              <div class="rev-student">
+                <span class="rev-student__avatar">{{ getStudentName(sub).charAt(0) }}</span>
+                <div>
+                  <h2 class="rev-student__name">{{ getStudentName(sub) }}</h2>
+                  <p class="rev-student__code">Código: {{ sub.student.studentCode }}</p>
+                </div>
+              </div>
+              <span class="rev-badge" [ngClass]="statusBadgeClass(sub.status)">{{ statusLabel(sub.status) }}</span>
+            </div>
+
+            <div class="rev-card__body">
+              @if (task()!.deliveryType !== 'clase' && !sub.submittedAt && sub.status !== 'GRADED') {
+                <div class="prof-alert prof-alert--warn">
+                  <p>El estudiante aún no ha entregado en el portal. No se puede calificar hasta que envíe la tarea.</p>
+                </div>
+              }
+              @if (task()!.deliveryType === 'clase' && !sub.submittedAt && sub.status !== 'GRADED') {
+                <div class="prof-alert prof-alert--ok">
+                  <p>Tarea en clase: puedes calificar sin entrega en línea.</p>
+                </div>
+              }
+              @if (sub.submittedAt) {
+                <p class="rev-meta">Entregado: {{ sub.submittedAt | date:'short' }}</p>
+              }
+              @if (sub.content && (task()!.deliveryType === 'texto' || task()!.deliveryType === 'ambos')) {
+                <div class="rev-text">
+                  <h3>Respuesta</h3>
+                  <p>{{ sub.content }}</p>
+                </div>
+              }
+              @if (sub.attachments?.length && (task()!.deliveryType === 'archivo' || task()!.deliveryType === 'ambos' || task()!.deliveryType === 'clase')) {
+                <div class="rev-files">
+                  <h3>Archivos del estudiante</h3>
+                  <ul class="rev-file-list">
+                    @for (f of sub.attachments!; track f.id) {
+                      <li class="rev-file-row">
+                        <span class="rev-file-name">{{ f.name || 'Archivo' }}</span>
+                        <span class="rev-file-actions">
+                          <button type="button" class="prof-link" (click)="downloadSubmissionAttachment(sub, f)">Descargar</button>
+                          @if (f.url && f.url.startsWith('http')) {
+                            <button type="button" class="prof-link" (click)="openAttachmentIfPublicUrl(f.url)">Abrir URL</button>
+                          }
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+              @if (sub.status === 'GRADED' && sub.score != null) {
+                <div class="rev-grade">
+                  <span class="rev-grade__label">Nota:</span>
+                  <span class="rev-grade__value">{{ sub.score }} / {{ task()!.maxScore }}</span>
+                  @if (sub.feedback) {
+                    <p class="rev-grade__feedback"><strong>Comentarios:</strong> {{ sub.feedback }}</p>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="rev-card__actions">
+              @if (canOpenGrading(sub)) {
+                <button type="button" class="prof-btn prof-btn--solid" (click)="openGradeModal(sub)">
+                  {{ sub.status === 'GRADED' ? 'Editar calificación' : 'Calificar' }}
+                </button>
+              }
+              <a [routerLink]="['/profesor/cursos', courseId(), 'estudiantes', sub.student.id]" class="prof-btn prof-btn--outline">Ver ficha</a>
+            </div>
+          </section>
+        }
+      }
     }
-  }
+  </div>
 
   @if (showGradingModal() && selectedSubmission() && task()) {
     @let sub = selectedSubmission()!;
     @let t = task()!;
-    <div class="modal-overlay" (click)="closeGradeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
+    <div class="rev-modal" (click)="closeGradeModal()">
+      <div class="rev-modal__panel" (click)="$event.stopPropagation()">
+        <div class="rev-modal__head">
           <h2>{{ sub.status === 'GRADED' ? 'Editar calificación' : 'Calificar' }}</h2>
-          <button type="button" class="modal-close" (click)="closeGradeModal()"><i class="fas fa-times"></i></button>
+          <button type="button" class="prof-link" (click)="closeGradeModal()">Cerrar</button>
         </div>
-        <div class="modal-body">
-          <p class="modal-student">{{ getStudentName(sub) }} — {{ sub.student.studentCode }}</p>
-          <div class="form-group">
-            <label class="form-label">Nota (máx. {{ t.maxScore }})</label>
+        <div class="rev-modal__body">
+          <p class="rev-modal__student">{{ getStudentName(sub) }} — {{ sub.student.studentCode }}</p>
+          <div class="rev-field">
+            <label class="rev-label">Nota (máx. {{ t.maxScore }})</label>
             <input
               type="number"
-              class="form-input"
+              class="rev-input"
               [ngModel]="gradeForm().score"
               (ngModelChange)="updateGradeScore(+$event)"
               min="0"
@@ -222,10 +182,10 @@
               step="0.5"
             />
           </div>
-          <div class="form-group">
-            <label class="form-label">Comentarios</label>
+          <div class="rev-field">
+            <label class="rev-label">Comentarios</label>
             <textarea
-              class="form-input"
+              class="rev-input"
               rows="4"
               [ngModel]="gradeForm().feedback"
               (ngModelChange)="updateGradeFeedback($event)"
@@ -233,9 +193,9 @@
             ></textarea>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" (click)="closeGradeModal()" [disabled]="saving()">Cancelar</button>
-          <button type="button" class="btn btn-primary" (click)="saveGrade()" [disabled]="saving()">
+        <div class="rev-modal__foot">
+          <button type="button" class="prof-btn prof-btn--outline" (click)="closeGradeModal()" [disabled]="saving()">Cancelar</button>
+          <button type="button" class="prof-btn prof-btn--solid" (click)="saveGrade()" [disabled]="saving()">
             @if (saving()) { Guardando… } @else { Guardar }
           </button>
         </div>

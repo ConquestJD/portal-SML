@@ -55,7 +55,9 @@ export class MatriculaComponent implements OnInit {
   }
 
   save() {
-    this.adminService.createEnrollment(this.formData()).subscribe({
+    const { studentId, sectionId, academicYearId } = this.formData();
+    if (!studentId || !sectionId || !academicYearId) return;
+    this.adminService.createEnrollment({ studentId, sectionId, academicYearId }).subscribe({
       next: () => { this.showForm.set(false); this.load(); }
     });
   }
@@ -68,5 +70,8 @@ export class MatriculaComponent implements OnInit {
 
   update(field: string, value: string) { this.formData.update(d => ({ ...d, [field]: value })); }
 
-  enrollStudent() { this.showForm.set(true); }
+  enrollStudent() {
+    this.formData.set({ studentId: '', sectionId: '', academicYearId: '', grade: '', section: '', academicYear: '' });
+    this.showForm.set(true);
+  }
 }

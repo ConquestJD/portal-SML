@@ -1,55 +1,87 @@
-<div class="asistencia-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Asistencia</h1>
-      <p class="page-subtitle">Registra y gestiona la asistencia de tus cursos</p>
-    </div>
-  </div>
+<div class="prof-page">
 
-  <div class="summary-cards">
-    <div class="summary-card">
-      <div class="summary-icon-wrapper">
-        <i class="fas fa-calendar-check"></i>
-      </div>
-      <div class="summary-content">
-        <span class="summary-label">Asistencias Pendientes</span>
-        <span class="summary-value warning">{{ totalPending() }}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="courses-grid">
-    @for (course of courses(); track course.id) {
-      <div class="course-card">
-        <div class="course-header">
-          <h3 class="course-name">{{ course.name }}</h3>
-          <span class="course-code">{{ course.code }}</span>
-        </div>
-        <div class="course-info">
-          <div class="info-item">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ course.pending }} días pendientes</span>
-          </div>
-        </div>
-        <div class="course-actions">
-          <a [routerLink]="['/profesor/cursos', course.id]" [queryParams]="{tab: 'asistencia'}" class="btn btn-primary">
-            <i class="fas fa-calendar-check"></i> Marcar Asistencia
-          </a>
-          <a [routerLink]="['/profesor/cursos', course.id]" [queryParams]="{tab: 'asistencia'}" class="btn btn-secondary">
-            <i class="fas fa-history"></i> Ver Historial
-          </a>
-        </div>
-      </div>
-    }
-  </div>
-
-  <div class="info-section">
-    <div class="info-card">
-      <i class="fas fa-info-circle"></i>
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
       <div>
-        <h4>Registro de Asistencia</h4>
-        <p>Accede al detalle de cada curso para marcar la asistencia diaria de los estudiantes, ver el historial y generar reportes.</p>
+        <h1 class="prof-page__title">Asistencia</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
       </div>
     </div>
+  </header>
+
+  <div class="prof-page__body">
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando cursos…</p>
+    } @else if (error()) {
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+      </div>
+    } @else if (courses().length === 0) {
+      <section class="feed">
+        <p class="feed__empty">Sin cursos asignados para registrar asistencia.</p>
+      </section>
+    } @else {
+
+      <section class="metrics metrics--2" aria-label="Resumen">
+        <div class="metric metric--alert">
+          <span class="metric__n">{{ totalPending() }}</span>
+          <span class="metric__l">Asistencias pendientes</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ courses().length }}</span>
+          <span class="metric__l">Cursos</span>
+        </div>
+      </section>
+
+      <div class="toolbar">
+        <label>
+          <span class="visually-hidden">Curso</span>
+          <select
+            [ngModel]="selectedCourse()"
+            (ngModelChange)="onCourseChange($event)"
+            name="selectedCourse"
+          >
+            @for (course of courses(); track course.id) {
+              <option [value]="course.id">{{ getCourseDisplayName(course) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (loadingHistory()) {
+        <p class="feed__empty">Cargando historial…</p>
+      }
+
+      <div class="ac-grid">
+        @for (course of courses(); track course.id) {
+          <article class="ac-card">
+            <div class="ac-card__head">
+              <h2 class="ac-card__title">{{ getCourseDisplayName(course) }}</h2>
+              @if (getCourseCode(course)) {
+                <span class="ac-card__code">{{ getCourseCode(course) }}</span>
+              }
+            </div>
+            <p class="ac-card__info">{{ getPendingLabel(course) }}</p>
+            <div class="ac-card__actions">
+              <a [routerLink]="['/profesor/cursos', course.id]" [queryParams]="{tab: 'asistencia'}" class="prof-btn prof-btn--solid">
+                Marcar asistencia
+              </a>
+              <a [routerLink]="['/profesor/cursos', course.id]" [queryParams]="{tab: 'asistencia'}" class="prof-link">
+                Ver historial
+              </a>
+            </div>
+          </article>
+        }
+      </div>
+
+      <aside class="prof-alert prof-alert--ok ac-info">
+        <strong>Registro de asistencia</strong>
+        <p>Accede al detalle de cada curso para marcar la asistencia diaria de los estudiantes, ver el historial y generar reportes.</p>
+      </aside>
+    }
   </div>
 </div>

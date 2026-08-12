@@ -1,628 +1,626 @@
-<div class="detalle-estudiante-container">
-  <admin-breadcrumb [items]="[
-    { label: 'Estudiantes', link: '/admin/estudiantes' },
-    { label: student()?.name ?? 'Estudiante' }
-  ]"></admin-breadcrumb>
+<div class="adm-page">
 
-  @if (student()) {
-    <admin-person-header
-      [name]="student()?.name || ''"
-      [subtitle]="'Código: ' + (student().code ?? student().studentCode ?? '—') + ' · ' + (student().grade ?? '') + ' ' + (student().section ?? '')"
-      [status]="student().status"
-      [actions]="[
-        { label: 'Editar', icon: 'fa-edit', variant: 'primary', link: ['/admin/estudiantes', student().id, 'editar'] }
-      ]">
-    </admin-person-header>
-  }
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">{{ getFullName() || 'Estudiante' }}</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/estudiantes" class="adm-btn adm-btn--ghost">Volver</a>
+        @if (student()) {
+          <a [routerLink]="['/admin/estudiantes', student().id, 'editar']" class="adm-btn adm-btn--primary">Editar</a>
+        }
+      </div>
+    </div>
+  </header>
 
-  <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
+  <div class="adm-page__body">
+    <admin-breadcrumb [items]="[
+      { label: 'Estudiantes', link: '/admin/estudiantes' },
+      { label: getFullName() || 'Estudiante' }
+    ]"></admin-breadcrumb>
 
-  <div class="tab-content">
-    @if (activeTab() === 'perfil') {
-      <div class="content-section">
-        <div class="info-grid">
-          <div class="info-card">
-            <h3>Información Personal</h3>
-            <div class="info-item">
-              <span class="label">DNI:</span>
-              <span class="value">{{ student().dni || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Email:</span>
-              <span class="value">{{ student().email || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Teléfono:</span>
-              <span class="value">{{ student().phone || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Dirección:</span>
-              <span class="value">{{ student().address || '—' }}</span>
-            </div>
-            @if (student().emergencyPhone) {
-              <div class="info-item">
-                <span class="label">Teléfono Emergencia:</span>
-                <span class="value">{{ student().emergencyPhone }}</span>
-              </div>
-            }
-          </div>
+    @if (loading()) {
+      <p class="detail-loading"><i class="fas fa-spinner fa-spin"></i> Cargando expediente...</p>
+    } @else if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    } @else if (student()) {
+      <div class="detail-meta">
+        <p class="detail-meta__sub">{{ getStudentSubtitle() }}</p>
+        <admin-status-badge [value]="student().status"></admin-status-badge>
+      </div>
 
-          <div class="info-card">
-            <h3>Información de Contacto</h3>
-            @if (parents().length === 0) {
-              <p class="muted-note">Sin padres o apoderados vinculados todavía. Vincula uno desde la pestaña <strong>Padres de familia</strong>.</p>
-            } @else {
-              <div class="contact-parents">
-                @for (p of parents(); track p.id) {
-                  <div class="contact-parent">
-                    <div class="contact-parent__head">
-                      <a [routerLink]="['/admin/padres', p.id]" class="contact-parent__name">{{ p.name }}</a>
-                      @if (p.isPrimary) {
-                        <span class="badge badge-info">Principal</span>
-                      }
-                    </div>
-                    <div class="contact-parent__rel">{{ p.relationship | relationshipLabel }}</div>
-                    <div class="contact-parent__meta">
-                      @if (p.phone) {
-                        <span><i class="fas fa-phone"></i> {{ p.phone }}</span>
-                      }
-                      @if (p.email) {
-                        <span><i class="fas fa-envelope"></i> {{ p.email }}</span>
-                      }
-                      @if (p.dni) {
-                        <span><i class="fas fa-id-card"></i> {{ p.dni }}</span>
-                      }
-                    </div>
+      <p class="detail-kicker">Expediente académico</p>
+
+    <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
+
+    <div class="tab-content">
+      @if (activeTab() === 'perfil') {
+        <div class="content-section">
+          <div class="info-grid">
+            <section class="panel">
+              <h3 class="panel__title">Información Personal</h3>
+              <div class="data-list">
+                <div class="data-row">
+                  <span class="label">DNI</span>
+                  <span class="value">{{ student().dni || '—' }}</span>
+                </div>
+                <div class="data-row">
+                  <span class="label">Email</span>
+                  <span class="value">{{ student().email || '—' }}</span>
+                </div>
+                <div class="data-row">
+                  <span class="label">Teléfono</span>
+                  <span class="value">{{ student().phone || '—' }}</span>
+                </div>
+                <div class="data-row">
+                  <span class="label">Dirección</span>
+                  <span class="value">{{ student().address || '—' }}</span>
+                </div>
+                @if (student().emergencyPhone) {
+                  <div class="data-row">
+                    <span class="label">Teléfono Emergencia</span>
+                    <span class="value">{{ student().emergencyPhone }}</span>
                   </div>
                 }
               </div>
-            }
-          </div>
+            </section>
 
-          <div class="info-card">
-            <h3>Credenciales de Acceso</h3>
-            <div class="info-item">
-              <span class="label">Usuario:</span>
-              <span class="value">{{ student().username || '—' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Estado:</span>
-              <span class="value">
-                <admin-status-badge [value]="student().status"></admin-status-badge>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="label">Fecha de Registro:</span>
-              <span class="value">{{ student().createdAt ? (student().createdAt | date:'longDate') : '—' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'academico') {
-      <div class="content-section">
-        <div class="info-card">
-          <h3>Historial Académico en el Colegio</h3>
-          <div class="history-table">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Año</th>
-                  <th>Nivel</th>
-                  <th>Grado</th>
-                  <th>Sección</th>
-                  <th>Estado</th>
-                  <th>Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (record of academicHistory(); track record.year) {
-                  <tr>
-                    <td><strong>{{ record.year }}</strong></td>
-                    <td>{{ record.level }}</td>
-                    <td>{{ record.grade }}</td>
-                    <td>{{ record.section }}</td>
-                    <td>
-                      <span class="badge" [class.badge-success]="record.status === 'Aprobado' || record.status === 'En curso'" [class.badge-warning]="record.status === 'En curso'">
-                        {{ record.status }}
-                      </span>
-                    </td>
-                    <td><strong>{{ record.average | number:'1.1-1' }}</strong></td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'notas') {
-      <div class="content-section">
-        <div class="grades-container">
-          @for (grade of grades(); track grade.course) {
-            <div class="grade-card">
-              <div class="grade-header">
-                <h3>{{ grade.course }}</h3>
-                <div class="grade-teacher">
-                  <i class="fas fa-chalkboard-teacher"></i>
-                  {{ grade.teacher }}
+            <section class="panel">
+              <h3 class="panel__title">Información de Contacto</h3>
+              @if (parents().length === 0) {
+                <p class="muted-note">Sin padres o apoderados vinculados todavía. Vincula uno desde la pestaña <strong>Padres de familia</strong>.</p>
+              } @else {
+                <div class="contact-parents">
+                  @for (p of parents(); track p.id) {
+                    <div class="contact-parent">
+                      <div class="contact-parent__head">
+                        <a [routerLink]="['/admin/padres', p.id]" class="contact-parent__name">{{ p.name }}</a>
+                        @if (p.isPrimary) {
+                          <span class="badge badge-info">Principal</span>
+                        }
+                      </div>
+                      <div class="contact-parent__rel">{{ p.relationship | relationshipLabel }}</div>
+                      <div class="contact-parent__meta">
+                        @if (p.phone) {
+                          <span><i class="fas fa-phone"></i> {{ p.phone }}</span>
+                        }
+                        @if (p.email) {
+                          <span><i class="fas fa-envelope"></i> {{ p.email }}</span>
+                        }
+                        @if (p.dni) {
+                          <span><i class="fas fa-id-card"></i> {{ p.dni }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
                 </div>
-                <div class="grade-average">
-                  <span class="average-label">Promedio:</span>
-                  <span class="average-value">{{ grade.average | number:'1.1-1' }}</span>
-                </div>
-              </div>
-              <div class="evaluations-list">
-                <table class="evaluations-table">
-                  <thead>
-                    <tr>
-                      <th>Evaluación</th>
-                      <th>Fecha</th>
-                      <th>Nota</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (eval of grade.evaluations; track eval.name) {
-                      <tr>
-                        <td>{{ eval.name }}</td>
-                        <td>{{ eval.date | date:'shortDate' }}</td>
-                        <td><strong>{{ eval.grade }}/{{ eval.maxGrade }}</strong></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'asistencia') {
-      <div class="content-section">
-        <div class="attendance-stats">
-          <div class="stat-card">
-            <div class="stat-icon present">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ attendanceStats().present }}</h3>
-              <p>Presentes</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon late">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ attendanceStats().late }}</h3>
-              <p>Tardanzas</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon absent">
-              <i class="fas fa-times-circle"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ attendanceStats().absent }}</h3>
-              <p>Faltas</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon percentage">
-              <i class="fas fa-percentage"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ attendanceStats().percentage }}%</h3>
-              <p>Asistencia</p>
-            </div>
-          </div>
-        </div>
-        <div class="attendance-table">
-          <h3>Registro Detallado</h3>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th>Observaciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (record of attendance(); track record.date) {
-                <tr>
-                  <td>{{ record.date | date:'longDate' }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="getStatusBadgeClass(record.status)">
-                      {{ getStatusLabel(record.status) }}
-                    </span>
-                  </td>
-                  <td>{{ record.observations || '-' }}</td>
-                </tr>
               }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    }
+            </section>
 
-    @if (activeTab() === 'padres') {
-      <div class="content-section">
-        <div class="parents-header">
-          <h3>Padres de Familia</h3>
-          <button class="btn btn-primary" (click)="openAssignParentModal()">
-            <i class="fas fa-user-plus"></i> Asignar Padre de Familia
-          </button>
-        </div>
-        <div class="parents-container">
-          @for (parent of parents(); track parent.id) {
-            <div class="parent-card">
-              <a [routerLink]="['/admin/padres', parent.id]" class="parent-header parent-link">
-                <div class="parent-avatar">
-                  <i class="fas fa-user"></i>
+            <section class="panel">
+              <h3 class="panel__title">Credenciales de Acceso</h3>
+              <div class="data-list">
+                <div class="data-row">
+                  <span class="label">Usuario</span>
+                  <span class="value">{{ student().username || '—' }}</span>
                 </div>
-                <div class="parent-info">
-                  <h3>{{ parent.name }}</h3>
-                  <span class="parent-relationship">
-                    <i class="fas fa-tag"></i>
-                    {{ parent.relationship | relationshipLabel }}
+                <div class="data-row">
+                  <span class="label">Estado</span>
+                  <span class="value">
+                    <admin-status-badge [value]="student().status"></admin-status-badge>
                   </span>
                 </div>
-                <div class="parent-status">
-                  <admin-status-badge [value]="parent.isActive ? 'ACTIVE' : 'INACTIVE'"></admin-status-badge>
+                <div class="data-row">
+                  <span class="label">Fecha de Registro</span>
+                  <span class="value">{{ student().createdAt ? (student().createdAt | date:'longDate') : '—' }}</span>
                 </div>
-              </a>
-              <div class="parent-details">
-                <div class="detail-row">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{ parent.email }}</span>
-                </div>
-                <div class="detail-row">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ parent.phone }}</span>
-                </div>
-                @if (parent.dni) {
-                  <div class="detail-row">
-                    <i class="fas fa-id-card"></i>
-                    <span>DNI: {{ parent.dni }}</span>
-                  </div>
-                }
-                @if (parent.address) {
-                  <div class="detail-row">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>{{ parent.address }}</span>
-                  </div>
-                }
               </div>
-              <div class="parent-actions">
-                <a [routerLink]="['/admin/padres', parent.id]" class="btn-icon" title="Ver Detalle">
-                  <i class="fas fa-eye"></i>
-                </a>
-                <button class="btn-icon btn-danger" (click)="removeParent(parent.id)" title="Desasignar">
-                  <i class="fas fa-user-minus"></i>
-                </button>
-              </div>
-            </div>
-          }
-          @if (parents().length === 0) {
-            <admin-empty-state icon="fa-users" title="No hay padres de familia vinculados"
-              message="Haz clic en &quot;Asignar Padre de Familia&quot; para vincular uno">
-            </admin-empty-state>
-          }
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'matricula') {
-      <div class="content-section">
-        <div class="enrollment-summary">
-          <div class="summary-card">
-            <h4>Estado de Matrícula</h4>
-            <p class="summary-primary">{{ getEnrollmentStatusLabel(getCurrentEnrollment()?.status) }}</p>
-            <p class="summary-secondary">Año: {{ getCurrentEnrollment()?.academicYear?.name || 'No asignado' }}</p>
-            <p class="summary-secondary">Sección: {{ getCurrentEnrollment()?.section?.grade || '—' }} {{ getCurrentEnrollment()?.section?.name || '' }}</p>
-          </div>
-          <div class="summary-card">
-            <h4>Total Pagado</h4>
-            <p class="summary-primary">S/ {{ totalPaidAmount | number:'1.2-2' }}</p>
-            <p class="summary-secondary">{{ paidCount }} pago(s)</p>
-          </div>
-          <div class="summary-card">
-            <h4>Total Pendiente</h4>
-            <p class="summary-primary">S/ {{ totalPendingAmount | number:'1.2-2' }}</p>
-            <p class="summary-secondary">{{ pendingCount }} pago(s)</p>
+            </section>
           </div>
         </div>
+      }
 
-        <div class="payment-register-card">
-          <h3>Registrar Pago</h3>
-          @if (paymentSuccess()) {
-            <div class="alert alert-success">{{ paymentSuccess() }}</div>
-          }
-          @if (paymentError()) {
-            <div class="alert alert-error">{{ paymentError() }}</div>
-          }
-          <div class="payment-form-grid">
-            <div class="form-group">
-              <label class="form-label">Concepto *</label>
-              <input class="form-input" type="text" [ngModel]="paymentForm().concept" (ngModelChange)="updatePaymentField('concept', $event)" name="paymentConcept">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Monto (S/) *</label>
-              <input class="form-input" type="number" min="0" step="0.01" [ngModel]="paymentForm().amount" (ngModelChange)="updatePaymentField('amount', $event)" name="paymentAmount">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-input" [ngModel]="paymentForm().status" (ngModelChange)="updatePaymentField('status', $event)" name="paymentStatus">
-                <option value="PAID">Pagado</option>
-                <option value="PENDING">Pendiente</option>
-                <option value="OVERDUE">Vencido</option>
-                <option value="CANCELLED">Cancelado</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Categoría</label>
-              <select class="form-input" [ngModel]="paymentForm().category" (ngModelChange)="updatePaymentField('category', $event)" name="paymentCategory">
-                <option value="matricula">Matrícula</option>
-                <option value="pension">Pensión</option>
-                <option value="materiales">Materiales</option>
-                <option value="actividades">Actividades</option>
-                <option value="otros">Otros</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha de Vencimiento</label>
-              <input class="form-input" type="date" [ngModel]="paymentForm().dueDate" (ngModelChange)="updatePaymentField('dueDate', $event)" name="paymentDueDate">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha de Pago</label>
-              <input class="form-input" type="date" [ngModel]="paymentForm().paidAt" (ngModelChange)="updatePaymentField('paidAt', $event)" name="paymentPaidAt">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Método de Pago</label>
-              <input class="form-input" type="text" [ngModel]="paymentForm().paymentMethod" (ngModelChange)="updatePaymentField('paymentMethod', $event)" name="paymentMethod" placeholder="Transferencia, Yape, Efectivo...">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Referencia</label>
-              <input class="form-input" type="text" [ngModel]="paymentForm().reference" (ngModelChange)="updatePaymentField('reference', $event)" name="paymentReference" placeholder="N° operación, recibo, voucher...">
-            </div>
-            <div class="form-group full-width">
-              <label class="form-label">Observaciones</label>
-              <textarea class="form-input" rows="2" [ngModel]="paymentForm().notes" (ngModelChange)="updatePaymentField('notes', $event)" name="paymentNotes"></textarea>
-            </div>
-          </div>
-          <div class="payment-actions">
-            <button class="btn btn-primary" (click)="registerPayment()" [disabled]="paymentsLoading()">
-              <i class="fas fa-save"></i> Registrar Pago
-            </button>
-          </div>
-        </div>
-
-        <div class="payment-history-card">
-          <h3>Historial de Pagos</h3>
-          @if (paymentsLoading()) {
-            <admin-empty-state icon="fa-spinner fa-spin" message="Cargando pagos..."></admin-empty-state>
-          } @else if (studentPayments().length === 0) {
-            <admin-empty-state icon="fa-receipt" message="No hay pagos registrados para este estudiante"></admin-empty-state>
-          } @else {
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Concepto</th>
-                  <th>Monto</th>
-                  <th>Estado</th>
-                  <th>Vence</th>
-                  <th>Pagado</th>
-                  <th>Método</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (payment of studentPayments(); track payment.id) {
+      @if (activeTab() === 'academico') {
+        <div class="content-section">
+          <section class="panel panel--wide">
+            <h3 class="panel__title">Historial Académico en el Colegio</h3>
+            <div class="history-table">
+              <table class="data-table">
+                <thead>
                   <tr>
-                    <td>{{ payment.concept }}</td>
-                    <td><strong>S/ {{ payment.amount | number:'1.2-2' }}</strong></td>
-                    <td>
-                      <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
-                    </td>
-                    <td>{{ payment.dueDate ? (payment.dueDate | date:'shortDate') : '—' }}</td>
-                    <td>{{ payment.paidAt ? (payment.paidAt | date:'shortDate') : '—' }}</td>
-                    <td>{{ payment.paymentMethod || '—' }}</td>
+                    <th>Año</th>
+                    <th>Nivel</th>
+                    <th>Grado</th>
+                    <th>Sección</th>
+                    <th>Estado</th>
+                    <th>Promedio</th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          }
-        </div>
-      </div>
-    }
-
-    @if (activeTab() === 'documentos') {
-      <div class="content-section">
-        <div class="documents-header">
-          <h3>Documentos del Estudiante</h3>
-          <button class="btn btn-primary" (click)="openUploadModal()">
-            <i class="fas fa-upload"></i> Subir Documento
-          </button>
-        </div>
-
-        <div class="documents-list">
-          @if (documents().length === 0) {
-            <admin-empty-state icon="fa-folder-open" title="No hay documentos registrados"
-              message="Haz clic en &quot;Subir Documento&quot; para agregar uno">
-            </admin-empty-state>
-          } @else {
-            @for (doc of documents(); track doc.id) {
-              <div class="document-card">
-                <div class="document-icon" [class.academico]="doc.category === 'academico'"
-                                      [class.personal]="doc.category === 'personal'"
-                                      [class.medico]="doc.category === 'medico'"
-                                      [class.legal]="doc.category === 'legal'"
-                                      [class.otro]="doc.category === 'otro'">
-                  <i class="fas" [ngClass]="getCategoryIcon(doc.category)"></i>
-                </div>
-                <div class="document-info">
-                  <h4>{{ doc.name }}</h4>
-                  <div class="document-meta">
-                    <span class="document-category">
-                      <i class="fas fa-tag"></i>
-                      {{ getCategoryLabel(doc.category) }}
-                    </span>
-                    <span class="document-size">
-                      <i class="fas fa-weight"></i>
-                      {{ doc.size }}
-                    </span>
-                    <span class="document-date">
-                      <i class="fas fa-calendar"></i>
-                      {{ doc.uploadDate | date:'shortDate' }}
-                    </span>
-                    <span class="document-uploader">
-                      <i class="fas fa-user"></i>
-                      {{ doc.uploadedBy }}
-                    </span>
-                  </div>
-                </div>
-                <div class="document-actions">
-                  <button class="btn-icon" (click)="downloadDocument(doc)" title="Descargar">
-                    <i class="fas fa-download"></i>
-                  </button>
-                  <button class="btn-icon btn-danger" (click)="deleteDocument(doc.id)" title="Eliminar">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </div>
-            }
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Modal de Subida de Documentos -->
-    @if (showUploadModal()) {
-      <div class="modal-overlay" (click)="closeUploadModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Subir Documento</h3>
-            <button class="modal-close" (click)="closeUploadModal()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Categoría *</label>
-              <select class="form-input" [(ngModel)]="documentCategory" name="category">
-                <option value="academico">Académico</option>
-                <option value="personal">Personal</option>
-                <option value="medico">Médico</option>
-                <option value="legal">Legal</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nombre del Documento</label>
-              <input type="text" class="form-input" [(ngModel)]="documentName" name="documentName" placeholder="Dejar vacío para usar el nombre del archivo">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Archivo *</label>
-              <div class="file-upload-area" [class.has-file]="selectedFile">
-                <input type="file" id="fileInput" (change)="onFileSelected($event)" class="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                <label for="fileInput" class="file-label">
-                  @if (selectedFile) {
-                    <i class="fas fa-file-check"></i>
-                    <span>{{ selectedFile.name }}</span>
-                    <small>({{ formatFileSize(selectedFile.size) }})</small>
-                  } @else {
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Haz clic para seleccionar un archivo</span>
-                    <small>PDF, DOC, DOCX, JPG, PNG (máx. 10MB)</small>
+                </thead>
+                <tbody>
+                  @for (record of academicHistory(); track record.year) {
+                    <tr>
+                      <td><strong>{{ record.year }}</strong></td>
+                      <td>{{ record.level }}</td>
+                      <td>{{ record.grade }}</td>
+                      <td>{{ record.section }}</td>
+                      <td>
+                        <span class="badge" [class.badge-success]="record.status === 'Aprobado' || record.status === 'En curso'" [class.badge-warning]="record.status === 'En curso'">
+                          {{ record.status }}
+                        </span>
+                      </td>
+                      <td><strong>{{ record.average | number:'1.1-1' }}</strong></td>
+                    </tr>
                   }
-                </label>
-              </div>
+                </tbody>
+              </table>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeUploadModal()" [disabled]="isUploading()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" (click)="uploadDocument()" [disabled]="!selectedFile || isUploading()">
-              @if (isUploading()) {
-                <i class="fas fa-spinner fa-spin"></i> Subiendo...
-              } @else {
-                <i class="fas fa-upload"></i> Subir Documento
-              }
-            </button>
+          </section>
+        </div>
+      }
+
+      @if (activeTab() === 'notas') {
+        <div class="content-section">
+          <div class="feed">
+            @for (grade of grades(); track grade.course) {
+              <article class="feed-item">
+                <header class="feed-item__head">
+                  <div>
+                    <h3 class="feed-item__title">{{ grade.course }}</h3>
+                    <div class="feed-item__meta">
+                      <i class="fas fa-chalkboard-teacher"></i>
+                      {{ grade.teacher }}
+                    </div>
+                  </div>
+                  <div class="feed-item__score">
+                    <span class="average-label">Promedio</span>
+                    <span class="average-value">{{ grade.average | number:'1.1-1' }}</span>
+                  </div>
+                </header>
+                <div class="evaluations-list">
+                  <table class="evaluations-table">
+                    <thead>
+                      <tr>
+                        <th>Evaluación</th>
+                        <th>Fecha</th>
+                        <th>Nota</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (eval of grade.evaluations; track eval.name) {
+                        <tr>
+                          <td>{{ eval.name }}</td>
+                          <td>{{ eval.date | date:'shortDate' }}</td>
+                          <td><strong>{{ eval.grade }}/{{ eval.maxGrade }}</strong></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            }
           </div>
         </div>
-      </div>
-    }
+      }
 
-    <!-- Modal de Asignar Padre de Familia -->
-    @if (showAssignParentModal()) {
-      <div class="modal-overlay" (click)="closeAssignParentModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3>Asignar Padre de Familia</h3>
-            <button class="modal-close" (click)="closeAssignParentModal()">
-              <i class="fas fa-times"></i>
-            </button>
+      @if (activeTab() === 'asistencia') {
+        <div class="content-section">
+          <div class="tally-strip">
+            <div class="tally">
+              <span class="tally__value present">{{ attendanceStats().present }}</span>
+              <span class="tally__label">Presentes</span>
+            </div>
+            <div class="tally">
+              <span class="tally__value late">{{ attendanceStats().late }}</span>
+              <span class="tally__label">Tardanzas</span>
+            </div>
+            <div class="tally">
+              <span class="tally__value absent">{{ attendanceStats().absent }}</span>
+              <span class="tally__label">Faltas</span>
+            </div>
+            <div class="tally">
+              <span class="tally__value pct">{{ attendanceStats().percentage }}%</span>
+              <span class="tally__label">Asistencia</span>
+            </div>
           </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Seleccionar Padre de Familia *</label>
-              <select class="form-input" [(ngModel)]="selectedParentId" name="parentId" required>
-                <option value="">Seleccionar padre de familia</option>
-                @for (parent of availableParentsForAssignment(); track parent.id) {
-                  <option [value]="parent.id">
-                    {{ parent.name }} - {{ getRelationshipLabel(parent.relationship) }} ({{ parent.email }})
-                  </option>
-                }
-              </select>
-              @if (availableParentsForAssignment().length === 0) {
-                <p class="form-hint">
-                  <i class="fas fa-info-circle"></i>
-                  No hay padres de familia disponibles para asignar
-                </p>
+          <section class="panel panel--wide">
+            <h3 class="panel__title">Registro Detallado</h3>
+            <div class="feed feed--compact">
+              @for (record of attendance(); track record.date) {
+                <div class="feed-row">
+                  <span class="feed-row__date">{{ record.date | date:'longDate' }}</span>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(record.status)">
+                    {{ getStatusLabel(record.status) }}
+                  </span>
+                  <span class="feed-row__note">{{ record.observations || '—' }}</span>
+                </div>
               }
             </div>
-            @if (selectedParent()) {
-              <div class="parent-preview">
-                <h4>Información del Padre de Familia</h4>
-                <div class="preview-info">
-                  <div class="preview-item">
-                    <strong>Nombre:</strong> {{ selectedParent()!.name }}
+          </section>
+        </div>
+      }
+
+      @if (activeTab() === 'padres') {
+        <div class="content-section">
+          <div class="section-toolbar">
+            <h3 class="panel__title panel__title--inline">Padres de Familia</h3>
+            <button class="btn btn-primary" (click)="openAssignParentModal()">
+              <i class="fas fa-user-plus"></i> Asignar Padre de Familia
+            </button>
+          </div>
+          <div class="parents-container">
+            @for (parent of parents(); track parent.id) {
+              <div class="parent-row">
+                <a [routerLink]="['/admin/padres', parent.id]" class="parent-header parent-link">
+                  <div class="parent-avatar">
+                    <i class="fas fa-user"></i>
                   </div>
-                  <div class="preview-item">
-                    <strong>Relación:</strong> {{ getRelationshipLabel(selectedParent()!.relationship) }}
+                  <div class="parent-info">
+                    <h3>{{ parent.name }}</h3>
+                    <span class="parent-relationship">
+                      <i class="fas fa-tag"></i>
+                      {{ parent.relationship | relationshipLabel }}
+                    </span>
                   </div>
-                  <div class="preview-item">
-                    <strong>Email:</strong> {{ selectedParent()!.email || '—' }}
+                  <div class="parent-status">
+                    <admin-status-badge [value]="parent.isActive ? 'ACTIVE' : 'INACTIVE'"></admin-status-badge>
                   </div>
-                  <div class="preview-item">
-                    <strong>Teléfono:</strong> {{ selectedParent()!.phone || '—' }}
+                </a>
+                <div class="parent-details">
+                  <div class="detail-row">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ parent.email }}</span>
                   </div>
-                  <div class="preview-item">
-                    <strong>DNI:</strong> {{ selectedParent()!.dni || '—' }}
+                  <div class="detail-row">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ parent.phone }}</span>
                   </div>
-                  @if (selectedParent()!.address) {
-                    <div class="preview-item">
-                      <strong>Dirección:</strong> {{ selectedParent()!.address }}
+                  @if (parent.dni) {
+                    <div class="detail-row">
+                      <i class="fas fa-id-card"></i>
+                      <span>DNI: {{ parent.dni }}</span>
+                    </div>
+                  }
+                  @if (parent.address) {
+                    <div class="detail-row">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>{{ parent.address }}</span>
                     </div>
                   }
                 </div>
+                <div class="parent-actions">
+                  <a [routerLink]="['/admin/padres', parent.id]" class="btn-icon" title="Ver Detalle">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <button class="btn-icon btn-danger" (click)="removeParent(parent.id)" title="Desasignar">
+                    <i class="fas fa-user-minus"></i>
+                  </button>
+                </div>
               </div>
             }
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeAssignParentModal()">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" (click)="assignParent()" [disabled]="!selectedParentId()">
-              <i class="fas fa-user-plus"></i> Asignar
-            </button>
+            @if (parents().length === 0) {
+              <admin-empty-state icon="fa-users" title="No hay padres de familia vinculados"
+                message="Haz clic en &quot;Asignar Padre de Familia&quot; para vincular uno">
+              </admin-empty-state>
+            }
           </div>
         </div>
-      </div>
+      }
+
+      @if (activeTab() === 'matricula') {
+        <div class="content-section">
+          <div class="enrollment-summary">
+            <div class="ledger-cell">
+              <h4>Estado de Matrícula</h4>
+              <p class="summary-primary">{{ getEnrollmentStatusLabel(getCurrentEnrollment()?.status) }}</p>
+              <p class="summary-secondary">Año: {{ getCurrentEnrollment()?.academicYear?.name || 'No asignado' }}</p>
+              <p class="summary-secondary">Sección: {{ getCurrentEnrollment()?.section?.grade || '—' }} {{ getCurrentEnrollment()?.section?.name || '' }}</p>
+            </div>
+            <div class="ledger-cell">
+              <h4>Total Pagado</h4>
+              <p class="summary-primary amount">S/ {{ totalPaidAmount | number:'1.2-2' }}</p>
+              <p class="summary-secondary">{{ paidCount }} pago(s)</p>
+            </div>
+            <div class="ledger-cell">
+              <h4>Total Pendiente</h4>
+              <p class="summary-primary amount amount--pending">S/ {{ totalPendingAmount | number:'1.2-2' }}</p>
+              <p class="summary-secondary">{{ pendingCount }} pago(s)</p>
+            </div>
+          </div>
+
+          <section class="panel panel--wide">
+            <h3 class="panel__title">Registrar Pago</h3>
+            @if (paymentSuccess()) {
+              <div class="alert alert-success">{{ paymentSuccess() }}</div>
+            }
+            @if (paymentError()) {
+              <div class="alert alert-error">{{ paymentError() }}</div>
+            }
+            <div class="payment-form-grid">
+              <div class="form-group">
+                <label class="form-label">Concepto *</label>
+                <input class="form-input" type="text" [ngModel]="paymentForm().concept" (ngModelChange)="updatePaymentField('concept', $event)" name="paymentConcept">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Monto (S/) *</label>
+                <input class="form-input" type="number" min="0" step="0.01" [ngModel]="paymentForm().amount" (ngModelChange)="updatePaymentField('amount', $event)" name="paymentAmount">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-input" [ngModel]="paymentForm().status" (ngModelChange)="updatePaymentField('status', $event)" name="paymentStatus">
+                  <option value="PAID">Pagado</option>
+                  <option value="PENDING">Pendiente</option>
+                  <option value="OVERDUE">Vencido</option>
+                  <option value="CANCELLED">Cancelado</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <select class="form-input" [ngModel]="paymentForm().category" (ngModelChange)="updatePaymentField('category', $event)" name="paymentCategory">
+                  <option value="matricula">Matrícula</option>
+                  <option value="pension">Pensión</option>
+                  <option value="materiales">Materiales</option>
+                  <option value="actividades">Actividades</option>
+                  <option value="otros">Otros</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha de Vencimiento</label>
+                <input class="form-input" type="date" [ngModel]="paymentForm().dueDate" (ngModelChange)="updatePaymentField('dueDate', $event)" name="paymentDueDate">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha de Pago</label>
+                <input class="form-input" type="date" [ngModel]="paymentForm().paidAt" (ngModelChange)="updatePaymentField('paidAt', $event)" name="paymentPaidAt">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Método de Pago</label>
+                <input class="form-input" type="text" [ngModel]="paymentForm().paymentMethod" (ngModelChange)="updatePaymentField('paymentMethod', $event)" name="paymentMethod" placeholder="Transferencia, Yape, Efectivo...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Referencia</label>
+                <input class="form-input" type="text" [ngModel]="paymentForm().reference" (ngModelChange)="updatePaymentField('reference', $event)" name="paymentReference" placeholder="N° operación, recibo, voucher...">
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">Observaciones</label>
+                <textarea class="form-input" rows="2" [ngModel]="paymentForm().notes" (ngModelChange)="updatePaymentField('notes', $event)" name="paymentNotes"></textarea>
+              </div>
+            </div>
+            <div class="payment-actions">
+              <button class="btn btn-primary" (click)="registerPayment()" [disabled]="paymentsLoading()">
+                <i class="fas fa-save"></i> Registrar Pago
+              </button>
+            </div>
+          </section>
+
+          <section class="panel panel--wide">
+            <h3 class="panel__title">Historial de Pagos</h3>
+            @if (paymentsLoading()) {
+              <admin-empty-state icon="fa-spinner fa-spin" message="Cargando pagos..."></admin-empty-state>
+            } @else if (studentPayments().length === 0) {
+              <admin-empty-state icon="fa-receipt" message="No hay pagos registrados para este estudiante"></admin-empty-state>
+            } @else {
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Vence</th>
+                    <th>Pagado</th>
+                    <th>Método</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (payment of studentPayments(); track payment.id) {
+                    <tr>
+                      <td>{{ payment.concept }}</td>
+                      <td><strong class="amount">S/ {{ payment.amount | number:'1.2-2' }}</strong></td>
+                      <td>
+                        <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
+                      </td>
+                      <td>{{ payment.dueDate ? (payment.dueDate | date:'shortDate') : '—' }}</td>
+                      <td>{{ payment.paidAt ? (payment.paidAt | date:'shortDate') : '—' }}</td>
+                      <td>{{ payment.paymentMethod || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        </div>
+      }
+
+      @if (activeTab() === 'documentos') {
+        <div class="content-section">
+          <div class="section-toolbar">
+            <h3 class="panel__title panel__title--inline">Documentos del Estudiante</h3>
+            <button class="btn btn-primary" (click)="openUploadModal()">
+              <i class="fas fa-upload"></i> Subir Documento
+            </button>
+          </div>
+
+          <div class="documents-list">
+            @if (documents().length === 0) {
+              <admin-empty-state icon="fa-folder-open" title="No hay documentos registrados"
+                message="Haz clic en &quot;Subir Documento&quot; para agregar uno">
+              </admin-empty-state>
+            } @else {
+              @for (doc of documents(); track doc.id) {
+                <div class="document-row">
+                  <div class="document-icon" [class.academico]="doc.category === 'academico'"
+                                        [class.personal]="doc.category === 'personal'"
+                                        [class.medico]="doc.category === 'medico'"
+                                        [class.legal]="doc.category === 'legal'"
+                                        [class.otro]="doc.category === 'otro'">
+                    <i class="fas" [ngClass]="getCategoryIcon(doc.category)"></i>
+                  </div>
+                  <div class="document-info">
+                    <h4>{{ doc.name }}</h4>
+                    <div class="document-meta">
+                      <span class="document-category">
+                        <i class="fas fa-tag"></i>
+                        {{ getCategoryLabel(doc.category) }}
+                      </span>
+                      <span class="document-size">
+                        <i class="fas fa-weight"></i>
+                        {{ doc.size }}
+                      </span>
+                      <span class="document-date">
+                        <i class="fas fa-calendar"></i>
+                        {{ doc.uploadDate | date:'shortDate' }}
+                      </span>
+                      <span class="document-uploader">
+                        <i class="fas fa-user"></i>
+                        {{ doc.uploadedBy }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="document-actions">
+                    <button class="btn-icon" (click)="downloadDocument(doc)" title="Descargar">
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn-icon btn-danger" (click)="deleteDocument(doc.id)" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Modal de Subida de Documentos -->
+      @if (showUploadModal()) {
+        <div class="modal-overlay" (click)="closeUploadModal()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Subir Documento</h3>
+              <button class="modal-close" (click)="closeUploadModal()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Categoría *</label>
+                <select class="form-input" [(ngModel)]="documentCategory" name="category">
+                  <option value="academico">Académico</option>
+                  <option value="personal">Personal</option>
+                  <option value="medico">Médico</option>
+                  <option value="legal">Legal</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombre del Documento</label>
+                <input type="text" class="form-input" [(ngModel)]="documentName" name="documentName" placeholder="Dejar vacío para usar el nombre del archivo">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Archivo *</label>
+                <div class="file-upload-area" [class.has-file]="selectedFile()">
+                  <input type="file" id="fileInput" (change)="onFileSelected($event)" class="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                  <label for="fileInput" class="file-label">
+                    @if (selectedFile(); as file) {
+                      <i class="fas fa-file-check"></i>
+                      <span>{{ file.name }}</span>
+                      <small>({{ formatFileSize(file.size) }})</small>
+                    } @else {
+                      <i class="fas fa-cloud-upload-alt"></i>
+                      <span>Haz clic para seleccionar un archivo</span>
+                      <small>PDF, DOC, DOCX, JPG, PNG (máx. 10MB)</small>
+                    }
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeUploadModal()" [disabled]="isUploading()">
+                Cancelar
+              </button>
+              <button class="btn btn-primary" (click)="uploadDocument()" [disabled]="!selectedFile() || isUploading()">
+                @if (isUploading()) {
+                  <i class="fas fa-spinner fa-spin"></i> Subiendo...
+                } @else {
+                  <i class="fas fa-upload"></i> Subir Documento
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Modal de Asignar Padre de Familia -->
+      @if (showAssignParentModal()) {
+        <div class="modal-overlay" (click)="closeAssignParentModal()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Asignar Padre de Familia</h3>
+              <button class="modal-close" (click)="closeAssignParentModal()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Seleccionar Padre de Familia *</label>
+                <select class="form-input" [(ngModel)]="selectedParentId" name="parentId" required>
+                  <option value="">Seleccionar padre de familia</option>
+                  @for (parent of availableParentsForAssignment(); track parent.id) {
+                    <option [value]="parent.id">
+                      {{ parent.name }} - {{ getRelationshipLabel(parent.relationship) }} ({{ parent.email }})
+                    </option>
+                  }
+                </select>
+                @if (availableParentsForAssignment().length === 0) {
+                  <p class="form-hint">
+                    <i class="fas fa-info-circle"></i>
+                    No hay padres de familia disponibles para asignar
+                  </p>
+                }
+              </div>
+              @if (selectedParent()) {
+                <div class="parent-preview">
+                  <h4>Información del Padre de Familia</h4>
+                  <div class="preview-info">
+                    <div class="preview-item">
+                      <strong>Nombre:</strong> {{ selectedParent()!.name }}
+                    </div>
+                    <div class="preview-item">
+                      <strong>Relación:</strong> {{ getRelationshipLabel(selectedParent()!.relationship) }}
+                    </div>
+                    <div class="preview-item">
+                      <strong>Email:</strong> {{ selectedParent()!.email || '—' }}
+                    </div>
+                    <div class="preview-item">
+                      <strong>Teléfono:</strong> {{ selectedParent()!.phone || '—' }}
+                    </div>
+                    <div class="preview-item">
+                      <strong>DNI:</strong> {{ selectedParent()!.dni || '—' }}
+                    </div>
+                    @if (selectedParent()!.address) {
+                      <div class="preview-item">
+                        <strong>Dirección:</strong> {{ selectedParent()!.address }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeAssignParentModal()">
+                Cancelar
+              </button>
+              <button class="btn btn-primary" (click)="assignParent()" [disabled]="!selectedParentId">
+                <i class="fas fa-user-plus"></i> Asignar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
     }
   </div>
 </div>

@@ -164,6 +164,12 @@ export class SubirMaterialComponent implements OnInit {
     }
   }
 
+  addLinkFromInputs(unitId: string, nameInput: HTMLInputElement, urlInput: HTMLInputElement) {
+    this.addLink(unitId, nameInput.value, urlInput.value);
+    nameInput.value = '';
+    urlInput.value = '';
+  }
+
   addLink(unitId: string, nameRaw: string, urlRaw: string) {
     const name = nameRaw.trim();
     const url = urlRaw.trim();

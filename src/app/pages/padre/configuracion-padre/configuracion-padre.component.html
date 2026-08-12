@@ -1,0 +1,148 @@
+<div class="padre-page">
+
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
+      <div>
+        <h1 class="padre-page__title">Configuración</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (isLoading()) {
+      <p class="feed__empty">Cargando configuración…</p>
+    } @else {
+      @if (saveMessage()) {
+        <p class="padre-alert padre-alert--ok" role="status">{{ saveMessage() }}</p>
+      }
+
+      <form class="settings-form feed" (ngSubmit)="saveSettings()">
+        <div class="feed__head">
+          <h2>Notificaciones</h2>
+        </div>
+        <p class="settings-intro">Elige cómo y cuándo recibir avisos sobre la vida escolar de tu hijo.</p>
+
+        <ul class="settings-list">
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Notificaciones por correo</span>
+                <span class="setting-item__desc">Recibe avisos importantes en tu email</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().emailNotifications"
+                (ngModelChange)="updateEmailNotifications($event)"
+                name="emailNotifications"
+              />
+            </label>
+          </li>
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Notificaciones por SMS</span>
+                <span class="setting-item__desc">Alertas urgentes por mensaje de texto</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().smsNotifications"
+                (ngModelChange)="updateSmsNotifications($event)"
+                name="smsNotifications"
+              />
+            </label>
+          </li>
+        </ul>
+
+        <div class="settings-divider" aria-hidden="true"></div>
+
+        <ul class="settings-list">
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Tareas del hijo</span>
+                <span class="setting-item__desc">Nuevas tareas, entregas y fechas límite</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().childTasks"
+                (ngModelChange)="updateChildTasks($event)"
+                name="childTasks"
+              />
+            </label>
+          </li>
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Comunicados</span>
+                <span class="setting-item__desc">Circulares y avisos del colegio</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().announcements"
+                (ngModelChange)="updateAnnouncements($event)"
+                name="announcements"
+              />
+            </label>
+          </li>
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Mensajes de docentes</span>
+                <span class="setting-item__desc">Respuestas y mensajes en la mensajería</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().teacherMessages"
+                (ngModelChange)="updateTeacherMessages($event)"
+                name="teacherMessages"
+              />
+            </label>
+          </li>
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Pagos y vencimientos</span>
+                <span class="setting-item__desc">Recordatorios de cuotas y pagos pendientes</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().payments"
+                (ngModelChange)="updatePayments($event)"
+                name="payments"
+              />
+            </label>
+          </li>
+          <li>
+            <label class="setting-item">
+              <span class="setting-item__content">
+                <span class="setting-item__title">Asistencia y faltas</span>
+                <span class="setting-item__desc">Ausencias, tardanzas y estado de justificaciones</span>
+              </span>
+              <input
+                type="checkbox"
+                [ngModel]="notifications().attendanceAlerts"
+                (ngModelChange)="updateAttendanceAlerts($event)"
+                name="attendanceAlerts"
+              />
+            </label>
+          </li>
+        </ul>
+
+        <div class="form-actions">
+          <button type="submit" class="padre-btn padre-btn--solid" [disabled]="isSaving()">
+            @if (isSaving()) { Guardando… } @else { Guardar configuración }
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

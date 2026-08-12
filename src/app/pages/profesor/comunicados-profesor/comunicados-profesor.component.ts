@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,8 +16,11 @@ export class ComunicadosProfesorComponent implements OnInit {
   error = signal('');
   searchQuery = signal('');
   filterType = signal('');
-  filter = signal('all');
+  filter = signal('todos');
   announcements = signal<Announcement[]>([]);
+
+  unreadCount = computed(() => this.announcements().filter(a => !a.isRead).length);
+  urgentCount = computed(() => this.announcements().filter(a => a.urgent).length);
 
   get comunicados() { return this.announcements; }
 

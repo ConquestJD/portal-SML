@@ -1,87 +1,145 @@
-<div class="justificaciones-container">
-  <div class="breadcrumb">
-    <a routerLink="/padre/dashboard">Inicio</a>
-    <span>/</span>
-    <span>Justificaciones</span>
-  </div>
+<div class="padre-page">
 
-  <div class="page-header">
-    <div class="header-content">
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
       <div>
-        <h1 class="page-title">Justificaciones y Permisos</h1>
-        <p class="page-subtitle">Justificar faltas y tardanzas del hijo</p>
+        <h1 class="padre-page__title">Justificaciones</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
       </div>
-      <button class="btn-primary" (click)="showForm.set(true)">
-        <i class="fas fa-plus"></i>
-        Nueva Justificación
-      </button>
+      <div class="padre-page__hero-actions">
+        <button type="button" class="padre-btn padre-btn--ghost" (click)="openForm()">Nueva justificación</button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Selector de Hijo -->
-  @if (children().length > 1) {
-    <div class="child-selector">
-      <label>Seleccionar Hijo:</label>
-      <select [value]="selectedChild()" (change)="selectedChild.set($any($event.target).value)">
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/asistencia" class="padre-link">← Asistencia</a>
+    </p>
+
+    @if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    }
+
+    @if (success()) {
+      <p class="padre-alert padre-alert--ok" role="status">{{ success() }}</p>
+    }
+
+    @if (children().length > 1) {
+      <nav class="child-picker" aria-label="Seleccionar hijo">
         @for (child of children(); track child.id) {
-          <option [value]="child.id">{{ child.name }} - {{ child.grade }} {{ child.section }}</option>
+          <button
+            type="button"
+            class="child-picker__btn"
+            [class.active]="selectedChildId() === child.id"
+            (click)="selectChild(child.id)"
+          >
+            @if (child.photo) {
+              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
+            } @else {
+              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
+            }
+            <span>
+              <span class="child-picker__name">{{ getChildName(child) }}</span>
+              <span class="child-picker__meta">{{ getChildGrade(child) }}</span>
+            </span>
+          </button>
         }
-      </select>
-    </div>
-  }
+      </nav>
+    }
 
-  <!-- Formulario -->
-  @if (showForm()) {
-    <div class="form-card">
-      <h2>Nueva Justificación</h2>
-      <form (ngSubmit)="submitJustification()">
-        <div class="form-group">
-          <label>Fecha</label>
-          <input type="date" [value]="formData().date" (input)="updateDate($event)" required>
-        </div>
-        <div class="form-group">
-          <label>Tipo</label>
-          <select [value]="formData().type" (change)="updateType($event)" required>
-            <option value="falta">Falta</option>
-            <option value="tardanza">Tardanza</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Motivo</label>
-          <textarea [value]="formData().reason" (input)="updateReason($event)" rows="4" required></textarea>
-        </div>
-        <div class="form-group">
-          <label>Documento (Opcional)</label>
-          <input type="file" (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png">
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="showForm.set(false)">Cancelar</button>
-          <button type="submit" class="btn-primary">Enviar</button>
-        </div>
-      </form>
-    </div>
-  }
+    @if (children().length === 0 && !isLoading()) {
+      <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
+    } @else if (children().length) {
 
-  <!-- Lista de Justificaciones -->
-  <div class="justifications-list">
-    @for (justification of justifications(); track justification.id) {
-      <div class="justification-card">
-        <div class="justification-header">
-          <div>
-            <h3>{{ justification.date }}</h3>
-            <p>{{ justification.type | titlecase }}</p>
+      @if (selectedChild(); as ch) {
+        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+      }
+
+      @if (showForm()) {
+        <section class="feed form-panel" aria-labelledby="new-justification-title">
+          <div class="feed__head">
+            <h2 id="new-justification-title">Nueva justificación</h2>
+            <button type="button" class="padre-link" (click)="closeForm()">Cancelar</button>
           </div>
-          <span class="status-badge" [class.approved]="justification.status === 'aprobada'"
-                                    [class.pending]="justification.status === 'pendiente'"
-                                    [class.rejected]="justification.status === 'rechazada'">
-            {{ justification.status | titlecase }}
-          </span>
-        </div>
-        <div class="justification-content">
-          <p><strong>Motivo:</strong> {{ justification.reason }}</p>
-          <p><strong>Enviada:</strong> {{ justification.submittedDate }}</p>
-        </div>
-      </div>
+          <form class="justification-form" (ngSubmit)="submit()">
+            <div class="form-field">
+              <label for="just-date">Fecha</label>
+              <input
+                id="just-date"
+                type="date"
+                [value]="formData().date"
+                (input)="updateDate($event)"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="just-reason">Motivo</label>
+              <textarea
+                id="just-reason"
+                rows="4"
+                [value]="formData().reason"
+                (input)="updateReason($event)"
+                required
+              ></textarea>
+            </div>
+            <div class="form-field">
+              <label for="just-file">Documento (opcional)</label>
+              <input id="just-file" type="file" (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png" />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="padre-btn padre-btn--solid form-actions__ghost" (click)="closeForm()">Cancelar</button>
+              <button type="submit" class="padre-btn padre-btn--solid" [disabled]="saving()">
+                @if (saving()) { Enviando… } @else { Enviar justificación }
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (isLoading()) {
+        <p class="feed__empty">Cargando justificaciones…</p>
+      } @else if (justifications().length === 0) {
+        <section class="feed">
+          <p class="feed__empty">No hay justificaciones registradas para este hijo.</p>
+        </section>
+      } @else {
+        <section class="feed" aria-labelledby="justifications-list-title">
+          <div class="feed__head">
+            <h2 id="justifications-list-title">Historial</h2>
+          </div>
+          <ul class="feed__list">
+            @for (justification of justifications(); track justification.id) {
+              <li>
+                <div class="feed-row feed-row--static">
+                  <span class="feed-row__mark">J</span>
+                  <span class="feed-row__body">
+                    <span class="feed-row__kicker">{{ justification.date | date: 'longDate' }}</span>
+                    <span class="feed-row__title">{{ justification.reason }}</span>
+                    <span class="feed-row__meta">
+                      @if (justification.submittedAt) {
+                        Enviada {{ justification.submittedAt | date: 'shortDate' }}
+                      }
+                      @if (justification.notes) {
+                        · {{ justification.notes }}
+                      }
+                    </span>
+                  </span>
+                  <span class="feed-row__side">
+                    <span class="status-badge" [class]="statusClass(justification.status)">
+                      {{ statusLabel(justification.status) }}
+                    </span>
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
     }
   </div>
 </div>

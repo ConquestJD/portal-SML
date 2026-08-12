@@ -195,6 +195,16 @@ export class NotasPadreComponent implements OnInit {
     return `${c.user.firstName} ${c.user.lastName}`;
   }
 
+  getChildGrade(c: Child): string {
+    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+  }
+
+  getChildInitial(c: Child): string {
+    const fn = c.user?.firstName?.charAt(0) ?? '';
+    const ln = c.user?.lastName?.charAt(0) ?? '';
+    return (fn + ln).toUpperCase() || '?';
+  }
+
   isTaskRow(row: PadreNotaRow): boolean {
     return row.kind === 'tarea' && !!row.taskId;
   }

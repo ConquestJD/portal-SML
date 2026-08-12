@@ -1,33 +1,145 @@
-<div class="grados-secciones-container">
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">Niveles, Grados y Secciones</h1>
-      <p class="page-subtitle">Gestiona la estructura académica del colegio</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" (click)="createSection()">
-        <i class="fas fa-plus"></i> Nueva Sección
-      </button>
-    </div>
-  </div>
+<div class="adm-page">
 
-  <div class="sections-list">
-    @for (section of sections(); track section.id) {
-      <div class="section-card">
-        <div class="section-header">
-          <h3>{{ section.grade }} {{ section.section }}</h3>
-          <span class="badge">{{ section.enrolled }}/{{ section.capacity }}</span>
-        </div>
-        <div class="section-info">
-          <p>Capacidad: {{ section.capacity }} estudiantes</p>
-          <p>Matriculados: {{ section.enrolled }} estudiantes</p>
-        </div>
-        <div class="section-actions">
-          <button class="btn btn-sm btn-primary">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-        </div>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Grados y secciones</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
+      <div class="adm-page__hero-actions">
+        <button type="button" class="adm-btn adm-btn--primary" (click)="createSection()">Nueva sección</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <section class="metrics metrics--2" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ sections().length }}</span>
+        <span class="metric__l">Secciones</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ sectionsByLevel().length }}</span>
+        <span class="metric__l">Niveles</span>
+      </div>
+    </section>
+
+    @if (showForm()) {
+      <section class="feed">
+        <form (ngSubmit)="save()">
+          <div class="feed__head">
+            <h2>{{ editId() ? 'Editar sección' : 'Nueva sección' }}</h2>
+          </div>
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Nombre *</label>
+              <input class="form-input" type="text" required
+                     [ngModel]="formData().name" (ngModelChange)="update('name', $event)"
+                     name="name" placeholder="Ej: A">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Nivel *</label>
+              <select class="form-input" required
+                      [ngModel]="formData().level"
+                      (ngModelChange)="update('level', $event); update('grade', '')"
+                      name="level">
+                <option value="">Seleccionar</option>
+                @for (level of levels; track level) {
+                  <option [value]="level">{{ level }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Grado *</label>
+              <select class="form-input" required
+                      [ngModel]="formData().grade" (ngModelChange)="update('grade', $event)"
+                      name="grade">
+                <option value="">Seleccionar</option>
+                @for (g of getGradesForLevel(); track g) {
+                  <option [value]="g">{{ g }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Año académico *</label>
+              <select class="form-input" required
+                      [ngModel]="formData().academicYearId"
+                      (ngModelChange)="update('academicYearId', $event)"
+                      name="academicYearId">
+                <option value="">Seleccionar</option>
+                @for (y of academicYears(); track y.id) {
+                  <option [value]="y.id">{{ y.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Capacidad *</label>
+              <input class="form-input" type="number" min="1" required
+                     [ngModel]="formData().capacity" (ngModelChange)="update('capacity', +$event)"
+                     name="capacity">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="adm-link" (click)="cancelForm()">Cancelar</button>
+            <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando secciones…</p>
+    } @else if (sections().length === 0) {
+      <section class="feed">
+        <p class="feed__empty">No hay secciones registradas.</p>
+      </section>
+    } @else {
+      @for (group of sectionsByLevel(); track group.level) {
+        <section class="feed" [attr.aria-label]="group.level">
+          <div class="feed__head">
+            <h2>{{ group.level }}</h2>
+            <span class="feed-row__meta">{{ group.sections.length }} sección(es)</span>
+          </div>
+
+          <ul class="feed__list">
+            @for (section of group.sections; track section.id) {
+              <li>
+                <div class="feed-row feed-row--stack">
+                  <span class="feed-row__body">
+                    <span class="feed-row__kicker">{{ section.grade }}</span>
+                    <span class="feed-row__title">Sección {{ section.name }}</span>
+                    <span class="feed-row__meta">
+                      {{ enrolledOf(section) }} / {{ section.capacity }} matriculados
+                      · {{ occupancyPct(section) }}% ocupado
+                    </span>
+                  </span>
+                  <span class="feed-row__actions">
+                    <button type="button" class="adm-link" (click)="editSection(section)">Editar</button>
+                  </span>
+                  <div class="occupancy-bar" role="meter"
+                       [attr.aria-valuenow]="enrolledOf(section)"
+                       [attr.aria-valuemin]="0"
+                       [attr.aria-valuemax]="section.capacity"
+                       [attr.aria-label]="'Ocupación de ' + section.grade">
+                    <div class="occupancy-bar__fill"
+                         [class.is-full]="occupancyPct(section) >= 90"
+                         [class.is-mid]="occupancyPct(section) >= 70 && occupancyPct(section) < 90"
+                         [style.width.%]="occupancyPct(section)"></div>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
     }
   </div>
 </div>

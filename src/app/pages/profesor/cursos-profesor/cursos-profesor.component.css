@@ -1,305 +1,195 @@
-/* ============================================
-   Mis cursos - layout principal
-   ============================================ */
-.cursos-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
-}
+@import '../_shared/profesor-editorial.css';
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--spacing-lg);
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
-.header-content { flex: 1; min-width: 240px; }
-
-.page-title {
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0 0 var(--spacing-xs) 0;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-  margin: 0;
-}
-
-.header-actions { display: flex; gap: var(--spacing-md); align-items: center; }
-
-.view-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-card, #fff);
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all .2s ease;
-}
-.view-toggle:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  transform: translateY(-1px);
-}
-.view-toggle__label { line-height: 1; }
-
-/* ============================================
-   Estados (loading / vacío / error)
-   ============================================ */
-.state-card {
-  background: var(--bg-card, #fff);
-  border: 1.5px dashed var(--border-color);
-  border-radius: 16px;
-  padding: 64px 24px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-.state-card i { font-size: 42px; color: var(--primary); margin-bottom: 16px; }
-.state-card h2 { margin: 0 0 8px 0; color: var(--text-primary); font-size: 20px; }
-.state-card p { margin: 0; font-size: 14px; }
-.state-card--error i { color: #dc2626; }
-
-/* ============================================
-   Vista cuadrícula - cards profesionales
-   ============================================ */
-.courses-grid {
+/* ── Course grid cards ─────────────────────────────── */
+.tc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  margin-top: var(--spacing-md);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
 }
 
-.course-card {
+.tc-card {
   --course-accent: #003366;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 22px 22px 18px 22px;
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
+  gap: .85rem;
+  padding: 1.25rem 1.25rem 1.1rem;
+  background: var(--surface);
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+  transition: transform .2s var(--ease);
 }
 
-.course-card::after {
-  content: '';
-  position: absolute;
-  inset: -40% -40% auto auto;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--course-accent) 18%, transparent) 0%, transparent 70%);
-  pointer-events: none;
+.tc-card:hover {
+  transform: translateY(-2px);
 }
 
-.course-card:hover {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--course-accent) 35%, var(--border-color));
-  box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--course-accent) 45%, transparent);
-}
+.tc-card:hover .tc-card__title { color: var(--crimson); }
 
-.course-card__accent {
+.tc-card__accent {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, var(--course-accent), color-mix(in srgb, var(--course-accent) 55%, #fff));
+  height: 3px;
+  background: var(--course-accent);
 }
 
-.course-card__head {
+.tc-card__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: .75rem;
 }
 
-.course-card__logo {
-  width: 48px; height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--course-accent), color-mix(in srgb, var(--course-accent) 70%, #1d4ed8));
+.tc-card__logo {
+  width: 2.75rem; height: 2.75rem;
+  display: grid; place-items: center;
+  background: var(--course-accent);
   color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.15rem; font-weight: 600;
   flex-shrink: 0;
-  box-shadow: 0 8px 18px -8px var(--course-accent);
 }
 
-.course-card__head-right {
+.tc-card__head-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: .35rem;
 }
 
-.course-code {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-secondary, #f3f4f6);
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: .02em;
+.tc-code {
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted);
 }
 
-.course-card__title {
+.tc-badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+
+.tc-badge.badge-success,
+.tc-badge--ok { background: #f0faf4; color: #1a6b4a; }
+
+.tc-badge.badge-warning,
+.tc-badge--warn { background: #fff8e8; color: #9a6b12; }
+
+.tc-badge.badge-secondary { background: #eef1f5; color: var(--muted); }
+
+.tc-badge.badge-info { background: #eef4fa; color: var(--navy); }
+
+.tc-card__title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 1.15rem; font-weight: 600;
+  color: var(--navy);
+  transition: color .15s var(--ease);
 }
 
-.course-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.tc-card__chips {
+  display: flex; flex-wrap: wrap; gap: .35rem;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+.tc-chip {
+  padding: .25rem .55rem;
+  font-size: .68rem; font-weight: 600;
+  background: #eef1f5; color: var(--muted);
 }
-.chip i { font-size: 11px; opacity: .8; }
-.chip--grade { background: color-mix(in srgb, var(--course-accent) 12%, #fff); color: var(--course-accent); border-color: color-mix(in srgb, var(--course-accent) 30%, transparent); }
-.chip--level { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-.chip--hours { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
 
-.course-card__schedule {
+.tc-chip--grade { background: color-mix(in srgb, var(--course-accent) 12%, #fff); color: var(--course-accent); }
+
+.tc-chip--level { background: #ecfdf5; color: #047857; }
+
+.tc-chip--hours { background: #fff7ed; color: #c2410c; }
+
+.tc-card__schedule {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--bg-secondary, #f9fafb);
-  color: var(--text-secondary);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: .55rem .65rem;
+  background: #eef1f5;
+  font-size: .78rem; color: var(--muted);
+  font-family: var(--font-display); font-style: italic;
 }
-.course-card__schedule i { color: var(--course-accent); }
 
-.course-card__metrics {
+.tc-card__metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--border-color);
+  gap: .5rem;
+  padding-top: .65rem;
+  border-top: 1px solid var(--line);
 }
 
-.metric {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.metric > i {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  display: grid; place-items: center;
-  background: color-mix(in srgb, var(--course-accent) 12%, transparent);
-  color: var(--course-accent);
-  font-size: 13px;
-  flex-shrink: 0;
-}
-.metric__text { display: flex; flex-direction: column; line-height: 1.1; }
-.metric__value { font-weight: 700; font-size: 16px; color: var(--text-primary); }
-.metric__label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; }
+.tc-stat { display: flex; flex-direction: column; gap: .1rem; }
 
-.course-card__cta {
-  margin-top: 4px;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--course-accent);
-  transition: gap .2s ease;
+.tc-stat__value {
+  font-family: var(--font-display);
+  font-size: 1.25rem; font-weight: 600;
+  color: var(--navy); line-height: 1;
 }
-.course-card:hover .course-card__cta { gap: 10px; }
 
-/* ============================================
-   Vista lista - tabla
-   ============================================ */
-.courses-table-container {
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+.tc-stat__label {
+  font-size: .62rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted);
 }
-.courses-table {
+
+.tc-card__cta {
+  margin-top: .25rem;
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--navy);
+}
+
+/* ── List table ────────────────────────────────────── */
+.tc-table-wrap { overflow-x: auto; }
+
+.tc-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: .85rem;
 }
-.courses-table th,
-.courses-table td {
-  padding: 14px 18px;
+
+.tc-table th,
+.tc-table td {
+  padding: .75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 14px;
+  border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
-.courses-table thead {
-  background: var(--bg-secondary, #f9fafb);
-}
-.courses-table th {
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: var(--text-secondary);
-}
-.courses-table tbody tr:last-child td { border-bottom: none; }
-.courses-table tbody tr:hover { background: var(--bg-secondary, #f9fafb); }
 
-.text-center { text-align: center; }
-.text-end { text-align: right; }
-.text-muted { color: var(--text-secondary); }
+.tc-table th {
+  font-size: .68rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted);
+}
 
-.table-course { display: flex; align-items: center; gap: 10px; }
-.table-course__logo {
-  width: 36px; height: 36px;
-  border-radius: 9px;
+.tc-table tbody tr:last-child td { border-bottom: none; }
+
+.tc-table tbody tr:hover { background: #f8f9fb; }
+
+.tc-table__center { text-align: center; }
+
+.tc-table__end { text-align: right; }
+
+.tc-table__muted { color: var(--muted); font-family: var(--font-display); font-style: italic; }
+
+.tc-table-course { display: flex; align-items: center; gap: .65rem; }
+
+.tc-table-course__logo {
+  width: 2rem; height: 2rem;
   display: grid; place-items: center;
   color: #fff;
-  font-weight: 700;
+  font-family: var(--font-display); font-weight: 600;
   flex-shrink: 0;
 }
-.table-course strong { display: block; color: var(--text-primary); }
-.table-course .course-code { display: inline-block; margin-top: 2px; }
 
-.btn.btn-sm { padding: 6px 12px; font-size: 13px; }
+.tc-table-course strong { display: block; color: var(--ink); }
 
-/* ============================================
-   Responsive
-   ============================================ */
+.tc-table-course .tc-code { display: block; margin-top: .15rem; }
+
 @media (max-width: 768px) {
-  .courses-grid { grid-template-columns: 1fr; }
-  .courses-table-container { overflow-x: auto; }
-  .courses-table { min-width: 720px; }
-  .view-toggle__label { display: none; }
+  .tc-grid { grid-template-columns: 1fr; }
+  .tc-table { min-width: 42rem; }
 }

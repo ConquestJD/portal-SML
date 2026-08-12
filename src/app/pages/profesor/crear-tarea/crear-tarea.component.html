@@ -1,260 +1,213 @@
-<div class="crear-tarea-container">
-  <div class="breadcrumb">
-    <button type="button" class="btn-back" (click)="cancel()">
-      <i class="fas fa-arrow-left"></i> {{ backLabel() }}
-    </button>
-  </div>
+<div class="prof-page">
 
-  <div class="page-header">
-    <h1 class="page-title">
-      <i class="fas fa-plus-circle"></i>
-      {{ isEditMode() ? 'Editar Tarea' : 'Crear Nueva Tarea' }}
-    </h1>
-    <p class="page-subtitle">
-      Completa los datos de la tarea. Puedes adjuntar archivos de referencia (opcional). Máximo 5 archivos según política del servidor.
-    </p>
-  </div>
-
-  @if (error()) {
-    <div class="alert alert-error" role="alert">{{ error() }}</div>
-  }
-  @if (success()) {
-    <div class="alert alert-success" role="status">{{ success() }}</div>
-  }
-
-  <form (ngSubmit)="saveTask()" class="task-form">
-    <div class="form-section essential">
-      <div class="section-header">
-        <h2 class="section-title">
-          <i class="fas fa-info-circle"></i>
-          Información esencial
-        </h2>
-        <span class="section-badge">Requerido</span>
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">{{ isEditMode() ? 'Editar tarea' : 'Crear nueva tarea' }}</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
       </div>
-
-      <div class="form-group">
-        <label for="title" class="form-label">
-          Título de la tarea
-          <span class="required">*</span>
-        </label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          class="form-input"
-          [ngModel]="title()"
-          (ngModelChange)="title.set($event)"
-          placeholder="Ej: Tarea 1 — Ecuaciones"
-          required
-        />
+      <div class="prof-page__hero-actions">
+        <button type="button" class="prof-btn prof-btn--ghost" (click)="cancel()">{{ backLabel() }}</button>
       </div>
+    </div>
+  </header>
 
-      <div class="form-group">
-        <label for="instructions" class="form-label">
-          Instrucciones para los estudiantes
-          <span class="required">*</span>
-        </label>
-        <textarea
-          id="instructions"
-          name="instructions"
-          class="form-input"
-          rows="8"
-          [ngModel]="instructions()"
-          (ngModelChange)="instructions.set($event)"
-          placeholder="Describe qué deben entregar y cómo se evaluará..."
-          required
-        ></textarea>
-      </div>
+  <div class="prof-page__body">
 
-      <div class="form-row">
+    @if (error()) {
+      <div class="prof-alert" role="alert">{{ error() }}</div>
+    }
+    @if (success()) {
+      <div class="prof-alert prof-alert--ok" role="status">{{ success() }}</div>
+    }
+
+    <form (ngSubmit)="saveTask()" class="task-form">
+      <section class="feed form-section essential">
+        <div class="feed__head">
+          <h2>Información esencial</h2>
+          <span class="section-badge">Requerido</span>
+        </div>
+
         <div class="form-group">
-          <label for="dueDate" class="form-label">
-            Fecha y hora límite
+          <label for="title" class="form-label">
+            Título de la tarea
             <span class="required">*</span>
           </label>
           <input
-            type="datetime-local"
-            id="dueDate"
-            name="dueDate"
+            type="text"
+            id="title"
+            name="title"
             class="form-input"
-            [ngModel]="dueDate()"
-            (ngModelChange)="dueDate.set($event)"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            placeholder="Ej: Tarea 1 — Ecuaciones"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="points" class="form-label">Nota máxima</label>
-          <input
-            type="number"
-            id="points"
-            name="points"
-            class="form-input readonly-input"
-            [ngModel]="points()"
-            readonly
-            min="1"
-            max="20"
-          />
-          <p class="form-hint">
-            <i class="fas fa-info-circle"></i>
-            Nota máxima fija en 20 puntos (sistema peruano).
-          </p>
+          <label for="instructions" class="form-label">
+            Instrucciones para los estudiantes
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="instructions"
+            name="instructions"
+            class="form-input"
+            rows="8"
+            [ngModel]="instructions()"
+            (ngModelChange)="instructions.set($event)"
+            placeholder="Describe qué deben entregar y cómo se evaluará..."
+            required
+          ></textarea>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Tipo de entrega (referencia para el estudiante)</label>
-        <div class="delivery-type-options">
-          <label class="delivery-option" [class.active]="deliveryType() === 'archivo'">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dueDate" class="form-label">
+              Fecha y hora límite
+              <span class="required">*</span>
+            </label>
             <input
-              type="radio"
-              name="deliveryType"
-              value="archivo"
-              [ngModel]="deliveryType()"
-              (ngModelChange)="deliveryType.set($event)"
+              type="datetime-local"
+              id="dueDate"
+              name="dueDate"
+              class="form-input"
+              [ngModel]="dueDate()"
+              (ngModelChange)="dueDate.set($event)"
+              required
             />
-            <div class="option-content">
-              <i class="fas fa-file"></i>
-              <span>Archivo</span>
-              <small>PDF, Word, imágenes…</small>
-            </div>
-          </label>
-          <label class="delivery-option" [class.active]="deliveryType() === 'texto'">
-            <input
-              type="radio"
-              name="deliveryType"
-              value="texto"
-              [ngModel]="deliveryType()"
-              (ngModelChange)="deliveryType.set($event)"
-            />
-            <div class="option-content">
-              <i class="fas fa-keyboard"></i>
-              <span>Texto en línea</span>
-            </div>
-          </label>
-          <label class="delivery-option" [class.active]="deliveryType() === 'ambos'">
-            <input
-              type="radio"
-              name="deliveryType"
-              value="ambos"
-              [ngModel]="deliveryType()"
-              (ngModelChange)="deliveryType.set($event)"
-            />
-            <div class="option-content">
-              <i class="fas fa-check-double"></i>
-              <span>Ambos</span>
-            </div>
-          </label>
-          <label class="delivery-option" [class.active]="deliveryType() === 'clase'">
-            <input
-              type="radio"
-              name="deliveryType"
-              value="clase"
-              [ngModel]="deliveryType()"
-              (ngModelChange)="deliveryType.set($event)"
-            />
-            <div class="option-content">
-              <i class="fas fa-chalkboard-teacher"></i>
-              <span>En clase</span>
-            </div>
-          </label>
-        </div>
-      </div>
+          </div>
 
-      <div class="form-group">
-        <label for="maxSubmissions" class="form-label">Entregas permitidas en el portal</label>
-        <input
-          type="number"
-          id="maxSubmissions"
-          name="maxSubmissions"
-          class="form-input"
-          min="1"
-          max="20"
-          step="1"
-          [ngModel]="maxSubmissions()"
-          (ngModelChange)="onMaxSubmissionsInput($event)"
-        />
-        <p class="form-hint">
-          <i class="fas fa-info-circle"></i>
-          Veces que el estudiante puede enviar o actualizar su entrega (1–20). Por defecto 1: una sola entrega sin cambios.
-        </p>
-      </div>
-    </div>
-
-    @if (!isEditMode()) {
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-paperclip"></i>
-            Materiales de referencia
-          </h2>
-          <span class="section-badge optional">Opcional</span>
+          <div class="form-group">
+            <label for="points" class="form-label">Nota máxima</label>
+            <input
+              type="number"
+              id="points"
+              name="points"
+              class="form-input readonly-input"
+              [ngModel]="points()"
+              readonly
+              min="1"
+              max="20"
+            />
+            <p class="form-hint">Nota máxima fija en 20 puntos (sistema peruano).</p>
+          </div>
         </div>
 
         <div class="form-group">
-          <div class="file-upload-area">
-            <input
-              type="file"
-              id="file-upload"
-              class="file-input"
-              multiple
-              (change)="onFilesSelected($event)"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
-            />
-            <label for="file-upload" class="file-upload-label">
-              <i class="fas fa-cloud-upload-alt"></i>
-              <span>Haz clic para seleccionar archivos</span>
-              <small>PDF, Word, PowerPoint, imágenes. Hasta 5 archivos (consulta límites de tamaño en la documentación).</small>
+          <label class="form-label">Tipo de entrega (referencia para el estudiante)</label>
+          <div class="delivery-type-options">
+            <label class="delivery-option" [class.active]="deliveryType() === 'archivo'">
+              <input type="radio" name="deliveryType" value="archivo" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
+              <div class="option-content">
+                <span>Archivo</span>
+                <small>PDF, Word, imágenes…</small>
+              </div>
+            </label>
+            <label class="delivery-option" [class.active]="deliveryType() === 'texto'">
+              <input type="radio" name="deliveryType" value="texto" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
+              <div class="option-content">
+                <span>Texto en línea</span>
+              </div>
+            </label>
+            <label class="delivery-option" [class.active]="deliveryType() === 'ambos'">
+              <input type="radio" name="deliveryType" value="ambos" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
+              <div class="option-content">
+                <span>Ambos</span>
+              </div>
+            </label>
+            <label class="delivery-option" [class.active]="deliveryType() === 'clase'">
+              <input type="radio" name="deliveryType" value="clase" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
+              <div class="option-content">
+                <span>En clase</span>
+              </div>
             </label>
           </div>
-
-          @if (selectedFiles().length > 0) {
-            <div class="attachments-list">
-              @for (f of selectedFiles(); track fileKey(f)) {
-                <div class="attachment-item">
-                  <div class="attachment-icon">
-                    <i class="fas fa-file"></i>
-                  </div>
-                  <div class="attachment-info">
-                    <span class="attachment-name">{{ f.name }}</span>
-                    <span class="attachment-size">{{ formatFileSize(f.size) }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn-remove-attachment"
-                    (click)="removeFile(f)"
-                    title="Quitar archivo"
-                  >
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-              }
-            </div>
-          }
         </div>
-      </div>
-    }
 
-    <div class="form-actions">
-      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving()">
-        <i class="fas fa-times"></i> Cancelar
-      </button>
-      <button type="submit" class="btn btn-primary" [disabled]="!canSave() || isSaving()">
-        @if (isSaving()) {
-          <span class="spinner"></span>
-          <span>Guardando…</span>
-        } @else {
-          <i class="fas fa-save"></i>
-          <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} tarea</span>
-        }
-      </button>
-    </div>
+        <div class="form-group">
+          <label for="maxSubmissions" class="form-label">Entregas permitidas en el portal</label>
+          <input
+            type="number"
+            id="maxSubmissions"
+            name="maxSubmissions"
+            class="form-input"
+            min="1"
+            max="20"
+            step="1"
+            [ngModel]="maxSubmissions()"
+            (ngModelChange)="onMaxSubmissionsInput($event)"
+          />
+          <p class="form-hint">
+            Veces que el estudiante puede enviar o actualizar su entrega (1–20). Por defecto 1: una sola entrega sin cambios.
+          </p>
+        </div>
+      </section>
 
-    @if (!canSave()) {
-      <div class="form-validation-hint">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>Completa título, instrucciones y fecha límite para guardar.</span>
+      @if (!isEditMode()) {
+        <section class="feed form-section">
+          <div class="feed__head">
+            <h2>Materiales de referencia</h2>
+            <span class="section-badge optional">Opcional</span>
+          </div>
+
+          <div class="form-group">
+            <div class="file-upload-area">
+              <input
+                type="file"
+                id="file-upload"
+                class="file-input"
+                multiple
+                (change)="onFilesSelected($event)"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+              />
+              <label for="file-upload" class="file-upload-label">
+                <span>Haz clic para seleccionar archivos</span>
+                <small>PDF, Word, PowerPoint, imágenes. Hasta 5 archivos.</small>
+              </label>
+            </div>
+
+            @if (selectedFiles().length > 0) {
+              <div class="attachments-list">
+                @for (f of selectedFiles(); track fileKey(f)) {
+                  <div class="attachment-item">
+                    <div class="attachment-info">
+                      <span class="attachment-name">{{ f.name }}</span>
+                      <span class="attachment-size">{{ formatFileSize(f.size) }}</span>
+                    </div>
+                    <button type="button" class="btn-remove-attachment" (click)="removeFile(f)" title="Quitar archivo">
+                      Quitar
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || isSaving()">
+          @if (isSaving()) {
+            <span>Guardando…</span>
+          } @else {
+            <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} tarea</span>
+          }
+        </button>
       </div>
-    }
-  </form>
+
+      @if (!canSave()) {
+        <div class="form-validation-hint">
+          <span>Completa título, instrucciones y fecha límite para guardar.</span>
+        </div>
+      }
+    </form>
+  </div>
 </div>

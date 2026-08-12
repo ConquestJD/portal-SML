@@ -19,6 +19,10 @@ export class PerfilAdminComponent {
     phone: '+51 987654321'
   });
 
+  patchAdmin(field: 'name' | 'email' | 'phone', value: string) {
+    this.adminData.update((d) => ({ ...d, [field]: value }));
+  }
+
   saveProfile() {
     console.log('Guardar perfil', this.adminData());
   }

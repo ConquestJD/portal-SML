@@ -1,20 +1,78 @@
-<div class="reportes-container">
-  <div class="page-header">
-    <h1 class="page-title">Reportes</h1>
-    <p class="page-subtitle">Genera y exporta reportes del sistema</p>
-  </div>
+<div class="adm-page">
 
-  <div class="reports-grid">
-    @for (report of reportTypes(); track report.id) {
-      <div class="report-card" (click)="generateReport(report.id)">
-        <div class="report-icon">
-          <i [class]="report.icon"></i>
-        </div>
-        <h3>{{ report.name }}</h3>
-        <button class="btn btn-primary">
-          <i class="fas fa-download"></i> Generar
-        </button>
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Reportes</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
       </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="rpt-mosaic" role="list">
+      @for (report of reportTypes(); track report.id) {
+        <article
+          class="rpt-tile feed"
+          role="listitem"
+          [attr.data-type]="report.id"
+          [class.rpt-tile--active]="selectedType() === report.id"
+        >
+          <div class="rpt-tile__mark" aria-hidden="true">
+            @switch (report.id) {
+              @case ('students') { <i class="fas fa-user-graduate"></i> }
+              @case ('attendance') { <i class="fas fa-calendar-check"></i> }
+              @case ('grades') { <i class="fas fa-chart-bar"></i> }
+              @case ('enrollments') { <i class="fas fa-clipboard-list"></i> }
+              @case ('teachers') { <i class="fas fa-chalkboard-teacher"></i> }
+              @case ('payments') { <i class="fas fa-file-invoice-dollar"></i> }
+              @default { <i class="fas fa-file-alt"></i> }
+            }
+          </div>
+          <h2 class="rpt-tile__title">{{ report.label }}</h2>
+          <p class="rpt-tile__meta">Tipo · {{ report.value }}</p>
+          <div class="rpt-tile__actions">
+            <button
+              type="button"
+              class="adm-btn adm-btn--solid"
+              [disabled]="loading() && selectedType() === report.id"
+              (click)="generateReport(report.id)"
+            >
+              @if (loading() && selectedType() === report.id) {
+                Generando…
+              } @else {
+                Generar
+              }
+            </button>
+            <button
+              type="button"
+              class="adm-btn rpt-btn--outline"
+              [disabled]="loading()"
+              (click)="generateReport(report.id)"
+            >
+              Exportar
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (reportData()) {
+      <section class="feed rpt-preview" aria-label="Resultado del reporte">
+        <div class="feed__head">
+          <h2>Resultado · {{ reportLabel(selectedType()) }}</h2>
+          <span class="rpt-preview__badge">Generado</span>
+        </div>
+        <pre class="rpt-preview__data">{{ reportData() | json }}</pre>
+      </section>
     }
   </div>
 </div>

@@ -1,13 +1,17 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { AdminService, AcademicYearItem, CreateAcademicYearDto } from '../../../services/admin.service';
+import {
+  AdminService,
+  AcademicYearItem,
+  AcademicPeriod,
+  CreateAcademicYearDto,
+} from '../../../services/admin.service';
 
 @Component({
   selector: 'app-anio-academico',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './anio-academico.component.html',
   styleUrl: './anio-academico.component.css'
 })
@@ -18,11 +22,17 @@ export class AnioAcademicoComponent implements OnInit {
   editId = signal('');
 
   academicYears = signal<AcademicYearItem[]>([]);
-  selectedYearPeriods = signal<unknown[]>([]);
+  expandedYearId = signal('');
+  periodsLoadingId = signal('');
+  periodsByYearId = signal<Record<string, AcademicPeriod[]>>({});
 
   formData = signal<CreateAcademicYearDto>({
     name: '', startDate: '', endDate: '', status: 'UPCOMING'
   });
+
+  activeYearsCount = computed(() =>
+    this.academicYears().filter(y => this.statusKey(y.status) === 'active').length
+  );
 
   constructor(private adminService: AdminService) {}
 
@@ -50,12 +60,57 @@ export class AnioAcademicoComponent implements OnInit {
   }
 
   loadPeriods(yearId: string) {
+    this.periodsLoadingId.set(yearId);
     this.adminService.getAcademicYearPeriods(yearId).subscribe({
-      next: (data) => this.selectedYearPeriods.set(data)
+      next: (data) => {
+        this.periodsByYearId.update(m => ({ ...m, [yearId]: data }));
+        this.periodsLoadingId.set('');
+      },
+      error: () => {
+        this.periodsByYearId.update(m => ({ ...m, [yearId]: [] }));
+        this.periodsLoadingId.set('');
+      }
     });
   }
 
-  createNewYear() { this.formData.set({ name: '', startDate: '', endDate: '', status: 'UPCOMING' }); this.showForm.set(true); this.editId.set(''); }
+  togglePeriods(yearId: string) {
+    if (this.expandedYearId() === yearId) {
+      this.expandedYearId.set('');
+      return;
+    }
+    this.expandedYearId.set(yearId);
+    if (!(yearId in this.periodsByYearId())) {
+      this.loadPeriods(yearId);
+    }
+  }
+
+  periodsFor(yearId: string): AcademicPeriod[] {
+    return this.periodsByYearId()[yearId] ?? [];
+  }
+
+  statusKey(status: string): string {
+    const s = (status || '').toUpperCase();
+    if (s === 'ACTIVE' || s === 'ACTIVO') return 'active';
+    if (s === 'UPCOMING' || s === 'PROXIMO' || s === 'PRÓXIMO') return 'upcoming';
+    return 'closed';
+  }
+
+  statusLabel(status: string): string {
+    const key = this.statusKey(status);
+    if (key === 'active') return 'Activo';
+    if (key === 'upcoming') return 'Próximo';
+    return 'Cerrado';
+  }
+
+  createNewYear() {
+    this.formData.set({ name: '', startDate: '', endDate: '', status: 'UPCOMING' });
+    this.showForm.set(true);
+    this.editId.set('');
+  }
+
   cancelForm() { this.showForm.set(false); this.editId.set(''); }
-  update(field: string, value: string) { this.formData.update(d => ({ ...d, [field]: value })); }
+
+  update(field: string, value: string) {
+    this.formData.update(d => ({ ...d, [field]: value }));
+  }
 }

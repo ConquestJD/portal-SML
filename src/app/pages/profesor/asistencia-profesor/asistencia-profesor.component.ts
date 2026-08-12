@@ -52,5 +52,21 @@ export class AsistenciaProfesorComponent implements OnInit {
     return this.courses().find(c => c.id === this.selectedCourse())?.course.name ?? '';
   }
 
+  getCourseDisplayName(c: TeacherCourse): string {
+    return c.course?.name ?? c.name ?? 'Curso';
+  }
+
+  getCourseCode(c: TeacherCourse): string {
+    return c.course?.code ?? c.code ?? '';
+  }
+
+  getPendingLabel(c: TeacherCourse): string {
+    const pending = (c as TeacherCourse & { pending?: number }).pending;
+    if (pending != null && pending > 0) {
+      return `${pending} día${pending === 1 ? '' : 's'} pendiente${pending === 1 ? '' : 's'}`;
+    }
+    return 'Sin días pendientes registrados';
+  }
+
   totalPending = computed(() => (this.history() as any[]).filter((r: any) => r.status === 'ABSENT').length);
 }

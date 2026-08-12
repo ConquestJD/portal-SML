@@ -1,50 +1,106 @@
-<div class="perfil-admin-container">
-  <div class="page-header">
-    <h1 class="page-title">Mi Perfil</h1>
-    <p class="page-subtitle">Gestiona tu información personal</p>
+<div class="adm-page">
+
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Mi perfil</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+    <form class="me-form" (ngSubmit)="saveProfile()">
+
+      <section class="feed me-panel">
+        <div class="feed__head">
+          <h2>Perfil</h2>
+        </div>
+        <p class="me-panel__hint">Datos con los que te identificas en el portal</p>
+        <div class="me-grid">
+          <div class="me-field">
+            <label class="me-label" for="admin-name">Nombre</label>
+            <input
+              id="admin-name"
+              type="text"
+              class="me-input"
+              name="name"
+              [ngModel]="adminData().name"
+              (ngModelChange)="patchAdmin('name', $event)"
+            />
+          </div>
+          <div class="me-field">
+            <label class="me-label" for="admin-email">Email</label>
+            <input
+              id="admin-email"
+              type="email"
+              class="me-input"
+              name="email"
+              [ngModel]="adminData().email"
+              (ngModelChange)="patchAdmin('email', $event)"
+            />
+          </div>
+          <div class="me-field">
+            <label class="me-label" for="admin-phone">Teléfono</label>
+            <input
+              id="admin-phone"
+              type="tel"
+              class="me-input"
+              name="phone"
+              [ngModel]="adminData().phone"
+              (ngModelChange)="patchAdmin('phone', $event)"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="feed me-panel me-panel--password">
+        <div class="feed__head">
+          <h2>Contraseña</h2>
+        </div>
+        <p class="me-panel__hint">Actualiza tu acceso personal</p>
+        <div class="me-grid">
+          <div class="me-field">
+            <label class="me-label" for="currentPassword">Contraseña actual</label>
+            <input
+              id="currentPassword"
+              type="password"
+              class="me-input"
+              name="currentPassword"
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="me-field">
+            <label class="me-label" for="newPassword">Nueva contraseña</label>
+            <input
+              id="newPassword"
+              type="password"
+              class="me-input"
+              name="newPassword"
+              autocomplete="new-password"
+            />
+          </div>
+          <div class="me-field">
+            <label class="me-label" for="confirmPassword">Confirmar nueva contraseña</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              class="me-input"
+              name="confirmPassword"
+              autocomplete="new-password"
+            />
+          </div>
+        </div>
+      </section>
+
+      <div class="me-actions">
+        <button type="submit" class="adm-btn adm-btn--solid">
+          Guardar cambios
+        </button>
+      </div>
+    </form>
   </div>
-
-  <form (ngSubmit)="saveProfile()" class="profile-form">
-    <div class="form-section">
-      <h2 class="section-title">Información Personal</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Nombre</label>
-          <input type="text" class="form-input" [(ngModel)]="adminData().name" name="name">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" [(ngModel)]="adminData().email" name="email">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Teléfono</label>
-          <input type="tel" class="form-input" [(ngModel)]="adminData().phone" name="phone">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <h2 class="section-title">Cambiar Contraseña</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">Contraseña Actual</label>
-          <input type="password" class="form-input" name="currentPassword">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nueva Contraseña</label>
-          <input type="password" class="form-input" name="newPassword">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Confirmar Nueva Contraseña</label>
-          <input type="password" class="form-input" name="confirmPassword">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> Guardar Cambios
-      </button>
-    </div>
-  </form>
 </div>

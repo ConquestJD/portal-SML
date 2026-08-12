@@ -37,6 +37,8 @@ export class DetalleProfesorComponent implements OnInit {
     });
   }
 
+  onResetPassword() { this.resetPassword(); }
+
   readonly finishedCourses = computed(() => this.courseHistory() as any[]);
   removeCourse(courseId: string) { this.unassignCourse(courseId); }
 
@@ -85,6 +87,7 @@ export class DetalleProfesorComponent implements OnInit {
         level: course?.level ?? '',
         grade: course?.grade ?? c?.section?.grade ?? '',
         section: c?.section?.name ?? '',
+        color: course?.color ?? c?.color ?? '',
         academicYear: c?.academicYear?.name ?? course?.academicYear ?? '',
         students: c?.students ?? course?.students ?? 0,
         classroom: course?.classroom ?? c?.classroom ?? '',
@@ -109,6 +112,11 @@ export class DetalleProfesorComponent implements OnInit {
     const t = this.teacher();
     if (!t) return '';
     return t.name ?? `${t.user.firstName} ${t.user.lastName}`;
+  }
+
+  getHeroSubtitle(): string {
+    const t = this.profesor();
+    return t.department || t.specialty || 'Docente';
   }
   readonly profesor = computed(() => this.teacher() ?? {
     name: '', department: '', specialty: '', email: '', phone: '', status: '',
