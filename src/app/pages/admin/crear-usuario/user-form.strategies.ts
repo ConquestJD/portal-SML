@@ -57,8 +57,8 @@ export function emptyFormData(): UserFormData {
 }
 
 /**
- * Normaliza el DNI a solo dígitos para usarlo como nombre de usuario de acceso
- * (profesores, padres y administradores). Los alumnos usan un código generado en el backend.
+ * Normaliza el DNI a solo dígitos.
+ * En alumnos y profesores es la contraseña inicial; en padres y administradores también se usa como username.
  */
 export function usernameFromDni(dni: string): string {
   return (dni || '').replace(/\D/g, '');
@@ -121,19 +121,17 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
   singular: roleSingularLabel('teacher'),
   subtitle: 'Identidad, acceso y datos profesionales del docente',
   /**
-   * Solo DNI: el backend de `/teachers` rechaza el campo `address`, así que no lo pedimos
-   * para no almacenar datos que luego no se persisten. El DNI se usa para generar el username.
+   * El correo es el usuario de acceso. El DNI (solo dígitos) es la contraseña inicial.
+   * `username`/`password` los ignora el backend.
    */
   roleFields: ['dni'],
-  requiresCredentials: () => true,
-  /** El API de `POST /teachers` solo acepta el DTO base de usuario (sin `dni` ni `address` en body). El DNI solo se usa en el cliente para el `username`. */
+  requiresCredentials: (_d, isEditMode) => isEditMode ? !!_d.password : false,
   buildCreateDto: (d) => ({
-    username: usernameFromDni(d.dni) || d.username,
-    email: d.email || undefined,
-    password: d.password,
+    email: d.email.trim(),
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
+    dni: usernameFromDni(d.dni) || d.dni,
     specialty: d.specialty || d.specialization || undefined,
     teacherCode: d.teacherCode || undefined,
     bio: d.bio || undefined,

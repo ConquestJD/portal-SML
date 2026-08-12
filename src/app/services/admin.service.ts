@@ -69,10 +69,14 @@ export interface TeacherItem {
   username?: string; dni?: string; address?: string;
   department?: string; courses?: number; students?: number; grades?: string[];
 }
-/** Cuerpo esperado por `POST /teachers` (validación forbidNonWhitelisted en backend). */
+/** Cuerpo esperado por `POST /teachers`. Usuario = correo; contraseña = DNI. */
 export interface CreateTeacherDto {
-  username: string;
-  email?: string; password: string; firstName: string; lastName: string;
+  username?: string;
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
+  dni: string;
   phone?: string;
   teacherCode?: string; specialty?: string; bio?: string;
 }
@@ -277,9 +281,8 @@ export class AdminService {
       phone:     t.phone     ?? u.phone     ?? '',
       status:    t.status    ?? u.status    ?? '',
       username,
-      // El backend de `/teachers` no persiste el DNI: solo se usa para generar el username,
-      // por eso el username vale como DNI cuando no viene un campo dedicado.
-      dni:       t.dni       ?? u.dni       ?? username,
+      // El DNI no se persiste en `/teachers`; solo se infiere si el username es numérico (altas antiguas).
+      dni:       t.dni ?? u.dni ?? (/^\d{8,}$/.test(username) ? username : ''),
       address:   t.address   ?? u.address   ?? '',
       createdAt: t.createdAt ?? u.createdAt ?? '',
       department: t.department ?? t.specialty ?? '',

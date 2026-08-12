@@ -93,7 +93,7 @@ export class CrearUsuarioComponent implements OnInit {
   optionalFilledCount = computed(() => {
     const d = this.formData();
     if (this.roleKind() === 'teacher') {
-      return [d.email, d.phone, d.specialty, d.teacherCode, d.bio]
+      return [d.phone, d.specialty, d.teacherCode, d.bio]
         .filter(v => !!String(v ?? '').trim()).length;
     }
     return [d.email, d.phone, d.emergencyPhone, d.address, d.birthDate, d.gender]
@@ -117,11 +117,13 @@ export class CrearUsuarioComponent implements OnInit {
     if (usernameFromDni(d.dni).length >= this.MIN_DNI_DIGITS) n++;
     if (d.firstName.trim()) n++;
     if (d.lastName.trim()) n++;
-    if (this.isEditMode() || d.password.length >= this.MIN_PASSWORD_LENGTH) n++;
+    if (this.emailReady()) n++;
     return n;
   });
 
   dniReady = computed(() => usernameFromDni(this.formData().dni).length >= this.MIN_DNI_DIGITS);
+
+  emailReady = computed(() => this.isValidEmail(this.formData().email));
 
   toggleOptional() {
     this.showOptional.update(v => !v);
@@ -197,7 +199,7 @@ export class CrearUsuarioComponent implements OnInit {
             username:    teacher.username ?? teacher.user?.username ?? d.username,
             email:       teacher.email ?? teacher.user?.email ?? d.email,
             phone:       teacher.phone ?? teacher.user?.phone ?? d.phone,
-            dni:         teacher.dni ?? teacher.username ?? d.dni,
+            dni:         /^\d{8,}$/.test(teacher.dni ?? '') ? teacher.dni! : d.dni,
             status:      ((teacher.status ?? teacher.user?.status) as UserFormData['status']) || d.status,
             specialty:   teacher.specialty ?? teacher.department ?? '',
             teacherCode: teacher.teacherCode ?? '',
@@ -237,10 +239,10 @@ export class CrearUsuarioComponent implements OnInit {
     this.formData.update(d => ({ ...d, level, grade: '' }));
   }
 
-  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta, excepto alumnos. */
+  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta, excepto alumnos y profesores. */
   onDniInput(value: string) {
     this.formData.update(d => ({ ...d, dni: value }));
-    if (!this.isEditMode() && this.roleKind() !== 'student') {
+    if (!this.isEditMode() && this.roleKind() !== 'student' && this.roleKind() !== 'teacher') {
       const u = usernameFromDni(value);
       this.formData.update(d => ({ ...d, username: u }));
     }
@@ -254,6 +256,18 @@ export class CrearUsuarioComponent implements OnInit {
       return `El DNI debe tener al menos ${this.MIN_DNI_DIGITS} dígitos`;
     }
     return '';
+  }
+
+  emailError(): string {
+    if (this.isEditMode() || this.roleKind() !== 'teacher') return '';
+    const email = this.formData().email.trim();
+    if (!email) return 'El correo es obligatorio';
+    if (!this.isValidEmail(email)) return 'Ingresa un correo válido';
+    return '';
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   }
 
   resetPassword() {
@@ -299,12 +313,18 @@ export class CrearUsuarioComponent implements OnInit {
         this.isLoading.set(false);
         return;
       }
+      const mailErr = this.emailError();
+      if (mailErr) {
+        this.error.set(mailErr);
+        this.isLoading.set(false);
+        return;
+      }
     }
 
     const mustValidatePassword =
       this.isEditMode()
         ? !!d.password
-        : this.roleKind() !== 'student' && this.credentialsRequired();
+        : this.roleKind() !== 'student' && this.roleKind() !== 'teacher' && this.credentialsRequired();
     if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {
       this.error.set(`La contraseña debe tener al menos ${this.MIN_PASSWORD_LENGTH} caracteres`);
       this.isLoading.set(false);
@@ -333,6 +353,9 @@ export class CrearUsuarioComponent implements OnInit {
         if (code) {
           const dni = usernameFromDni(d.dni);
           alert(`Estudiante creado.\nUsuario de acceso: ${code}\nContraseña: ${dni}`);
+        } else if (this.roleKind() === 'teacher') {
+          const dni = usernameFromDni(d.dni);
+          alert(`Profesor creado.\nUsuario de acceso: ${d.email.trim()}\nContraseña: ${dni}`);
         }
         this.router.navigate([strategy.listPath]);
       },
@@ -360,6 +383,7 @@ export class CrearUsuarioComponent implements OnInit {
         firstName: d.firstName,
         lastName: d.lastName,
         phone: d.phone || undefined,
+        email: d.email || undefined,
         specialty: d.specialty || undefined,
         bio: d.bio || undefined,
       }).subscribe({
