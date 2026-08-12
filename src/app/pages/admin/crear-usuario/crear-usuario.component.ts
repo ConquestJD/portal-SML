@@ -37,6 +37,8 @@ export class CrearUsuarioComponent implements OnInit {
 
   isEditMode = signal(false);
   userId = signal('');
+  /** Id de `User` ligado al profesor (para reset/cambio de contraseña en edición). */
+  linkedUserId = signal('');
   isLoading = signal(false);
   error = signal('');
   success = signal('');
@@ -84,11 +86,16 @@ export class CrearUsuarioComponent implements OnInit {
   studentPasswordPreview = computed(() => usernameFromDni(this.formData().dni));
 
   isStudentForm = computed(() => this.roleKind() === 'student');
+  isTeacherForm = computed(() => this.roleKind() === 'teacher');
 
   showOptional = signal(false);
 
   optionalFilledCount = computed(() => {
     const d = this.formData();
+    if (this.roleKind() === 'teacher') {
+      return [d.email, d.phone, d.specialty, d.teacherCode, d.bio]
+        .filter(v => !!String(v ?? '').trim()).length;
+    }
     return [d.email, d.phone, d.emergencyPhone, d.address, d.birthDate, d.gender]
       .filter(v => !!String(v ?? '').trim()).length;
   });
@@ -101,6 +108,16 @@ export class CrearUsuarioComponent implements OnInit {
     if (d.lastName.trim()) n++;
     if (d.level) n++;
     if (d.grade) n++;
+    return n;
+  });
+
+  teacherReadyCount = computed(() => {
+    const d = this.formData();
+    let n = 0;
+    if (usernameFromDni(d.dni).length >= this.MIN_DNI_DIGITS) n++;
+    if (d.firstName.trim()) n++;
+    if (d.lastName.trim()) n++;
+    if (this.isEditMode() || d.password.length >= this.MIN_PASSWORD_LENGTH) n++;
     return n;
   });
 
@@ -140,6 +157,9 @@ export class CrearUsuarioComponent implements OnInit {
   }
 
   private loadUserData(id: string) {
+    const kindFromRoute = this.route.snapshot.data['roleKind'] as RoleKind | undefined;
+    if (kindFromRoute) this.roleKind.set(kindFromRoute);
+
     const stateUser: UserItem | undefined = history.state?.user;
     if (stateUser && stateUser.id === id) {
       this.populateFormFromUser(stateUser);
@@ -164,6 +184,27 @@ export class CrearUsuarioComponent implements OnInit {
           },
         });
       }
+    }
+
+    if (this.roleKind() === 'teacher') {
+      this.adminService.getTeacher(id).subscribe({
+        next: (teacher) => {
+          this.linkedUserId.set(teacher.user?.id ?? '');
+          this.formData.update(d => ({
+            ...d,
+            firstName:   teacher.user?.firstName ?? d.firstName,
+            lastName:    teacher.user?.lastName ?? d.lastName,
+            username:    teacher.username ?? teacher.user?.username ?? d.username,
+            email:       teacher.email ?? teacher.user?.email ?? d.email,
+            phone:       teacher.phone ?? teacher.user?.phone ?? d.phone,
+            dni:         teacher.dni ?? teacher.username ?? d.dni,
+            status:      ((teacher.status ?? teacher.user?.status) as UserFormData['status']) || d.status,
+            specialty:   teacher.specialty ?? teacher.department ?? '',
+            teacherCode: teacher.teacherCode ?? '',
+            bio:         teacher.bio ?? '',
+          }));
+        },
+      });
     }
   }
 
@@ -216,8 +257,9 @@ export class CrearUsuarioComponent implements OnInit {
   }
 
   resetPassword() {
-    if (!this.userId()) return;
-    this.adminService.resetUserPassword(this.userId()).subscribe({
+    const id = this.linkedUserId() || this.userId();
+    if (!id) return;
+    this.adminService.resetUserPassword(id).subscribe({
       next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
       error: () => alert('No se pudo resetear la contraseña'),
     });
@@ -246,6 +288,14 @@ export class CrearUsuarioComponent implements OnInit {
       }
       if (!d.level || !d.grade) {
         this.error.set('Nivel y grado son obligatorios');
+        this.isLoading.set(false);
+        return;
+      }
+    }
+
+    if (this.roleKind() === 'teacher' && !this.isEditMode()) {
+      if (!d.firstName.trim() || !d.lastName.trim()) {
+        this.error.set('Nombre y apellido son obligatorios');
         this.isLoading.set(false);
         return;
       }
@@ -305,6 +355,35 @@ export class CrearUsuarioComponent implements OnInit {
   }
 
   private doUpdate(d: UserFormData) {
+    if (this.roleKind() === 'teacher') {
+      this.adminService.updateTeacher(this.userId(), {
+        firstName: d.firstName,
+        lastName: d.lastName,
+        phone: d.phone || undefined,
+        specialty: d.specialty || undefined,
+        bio: d.bio || undefined,
+      }).subscribe({
+        next: () => {
+          if (d.password && this.linkedUserId()) {
+            this.adminService.updateUser(this.linkedUserId(), { password: d.password } as never).subscribe({
+              next: () => this.finishUpdate(),
+              error: (err) => {
+                this.error.set(this.parseError(err) ?? 'Datos guardados, pero no se pudo cambiar la contraseña');
+                this.isLoading.set(false);
+              },
+            });
+            return;
+          }
+          this.finishUpdate();
+        },
+        error: (err) => {
+          this.error.set(this.parseError(err) ?? 'Error al actualizar profesor');
+          this.isLoading.set(false);
+        },
+      });
+      return;
+    }
+
     const dto: Record<string, unknown> = {
       firstName: d.firstName,
       lastName:  d.lastName,
@@ -317,16 +396,18 @@ export class CrearUsuarioComponent implements OnInit {
     }
 
     this.adminService.updateUser(this.userId(), dto as never).subscribe({
-      next: () => {
-        this.success.set('Usuario actualizado correctamente');
-        this.isLoading.set(false);
-        this.router.navigate([this.strategy().listPath]);
-      },
+      next: () => this.finishUpdate(),
       error: (err) => {
         this.error.set(this.parseError(err) ?? 'Error al actualizar usuario');
         this.isLoading.set(false);
       },
     });
+  }
+
+  private finishUpdate() {
+    this.success.set('Usuario actualizado correctamente');
+    this.isLoading.set(false);
+    this.router.navigate([this.strategy().listPath]);
   }
 
   private parseError(err: unknown): string | null {

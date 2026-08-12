@@ -5,7 +5,7 @@
   font-family: var(--font-ui);
 }
 
-/* ── Student create form ───────────────────────────────── */
+/* ── Student / teacher create form ──────────────────────── */
 .stu-form { max-width: 1120px; }
 
 .stu-form__layout {

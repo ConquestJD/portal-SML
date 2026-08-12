@@ -119,7 +119,7 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
   listPath: roleListPath('teacher'),
   listLabel: roleListLabel('teacher'),
   singular: roleSingularLabel('teacher'),
-  subtitle: 'Datos personales y credenciales de acceso al portal',
+  subtitle: 'Identidad, acceso y datos profesionales del docente',
   /**
    * Solo DNI: el backend de `/teachers` rechaza el campo `address`, así que no lo pedimos
    * para no almacenar datos que luego no se persisten. El DNI se usa para generar el username.
@@ -134,6 +134,9 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
+    specialty: d.specialty || d.specialization || undefined,
+    teacherCode: d.teacherCode || undefined,
+    bio: d.bio || undefined,
   }),
   create: (svc, dto) => svc.createTeacher(dto as never),
   successMessage: 'Profesor creado correctamente',

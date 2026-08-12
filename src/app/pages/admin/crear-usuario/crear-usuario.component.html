@@ -307,6 +307,258 @@
           </aside>
         </div>
       </form>
+    } @else if (isTeacherForm()) {
+      <form (ngSubmit)="onSubmit()" class="stu-form" #userForm="ngForm">
+        <div class="stu-form__layout">
+          <div class="stu-form__main">
+
+            <section class="stu-block" aria-labelledby="tea-id-title">
+              <header class="stu-block__head">
+                <span class="stu-step" aria-hidden="true">1</span>
+                <div>
+                  <h2 id="tea-id-title" class="stu-block__title">Identidad</h2>
+                  <p class="stu-block__lead">Datos obligatorios del docente</p>
+                </div>
+                <span class="stu-badge stu-badge--req">Obligatorio</span>
+              </header>
+              <div class="stu-grid">
+                <div class="stu-field stu-field--wide" [class.stu-field--error]="dniError()">
+                  <label class="stu-label" for="tea-dni">
+                    DNI
+                    <span class="stu-req">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="tea-dni"
+                    name="dni"
+                    class="stu-input"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    maxlength="16"
+                    [ngModel]="formData().dni"
+                    (ngModelChange)="onDniInput($event)"
+                    [disabled]="isEditMode()"
+                    placeholder="45678901"
+                    required
+                  />
+                  <span class="stu-hint">8 dígitos · será el usuario de acceso al portal</span>
+                  @if (dniError()) {
+                    <span class="stu-error">{{ dniError() }}</span>
+                  }
+                </div>
+                <div class="stu-field">
+                  <label class="stu-label" for="tea-firstName">
+                    Nombre
+                    <span class="stu-req">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="tea-firstName"
+                    name="firstName"
+                    class="stu-input"
+                    [ngModel]="formData().firstName"
+                    (ngModelChange)="update('firstName', $event)"
+                    required
+                    placeholder="Carlos"
+                  />
+                </div>
+                <div class="stu-field">
+                  <label class="stu-label" for="tea-lastName">
+                    Apellido
+                    <span class="stu-req">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="tea-lastName"
+                    name="lastName"
+                    class="stu-input"
+                    [ngModel]="formData().lastName"
+                    (ngModelChange)="update('lastName', $event)"
+                    required
+                    placeholder="Mendoza"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section class="stu-block" aria-labelledby="tea-access-title">
+              <header class="stu-block__head">
+                <span class="stu-step" aria-hidden="true">2</span>
+                <div>
+                  <h2 id="tea-access-title" class="stu-block__title">Acceso</h2>
+                  <p class="stu-block__lead">
+                    @if (isEditMode()) { Deja la contraseña vacía si no quieres cambiarla }
+                    @else { El usuario es el DNI; define una contraseña }
+                  </p>
+                </div>
+                <span class="stu-badge stu-badge--req">Obligatorio</span>
+              </header>
+              <div class="stu-grid">
+                <div class="stu-field">
+                  <label class="stu-label">Usuario</label>
+                  <input
+                    type="text"
+                    class="stu-input"
+                    readonly
+                    tabindex="-1"
+                    [value]="isEditMode() ? (formData().username || '—') : (formData().username || 'Se genera con el DNI')"
+                  />
+                  <span class="stu-hint">Igual al DNI, en dígitos</span>
+                </div>
+                <div class="stu-field">
+                  <label class="stu-label" for="tea-password">
+                    {{ isEditMode() ? 'Nueva contraseña' : 'Contraseña' }}
+                    @if (!isEditMode()) {
+                      <span class="stu-req">*</span>
+                    }
+                  </label>
+                  <input
+                    type="password"
+                    id="tea-password"
+                    class="stu-input"
+                    [ngModel]="formData().password"
+                    (ngModelChange)="update('password', $event)"
+                    [name]="isEditMode() ? 'newPassword' : 'password'"
+                    [required]="!isEditMode()"
+                    [attr.minlength]="MIN_PASSWORD_LENGTH"
+                    autocomplete="new-password"
+                  />
+                  <span class="stu-hint">Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="stu-optional" [class.is-open]="showOptional()">
+              <button
+                type="button"
+                class="stu-optional__toggle"
+                (click)="toggleOptional()"
+                [attr.aria-expanded]="showOptional()"
+              >
+                <span class="stu-optional__mark" aria-hidden="true">{{ showOptional() ? '–' : '+' }}</span>
+                <span class="stu-optional__copy">
+                  <strong>Datos opcionales</strong>
+                  <span>
+                    @if (optionalFilledCount()) {
+                      {{ optionalFilledCount() }} completado{{ optionalFilledCount() === 1 ? '' : 's' }}
+                    } @else {
+                      Email, teléfono y especialidad
+                    }
+                  </span>
+                </span>
+                <span class="stu-badge stu-badge--opt">Opcional</span>
+              </button>
+              @if (showOptional()) {
+                <div class="stu-optional__body">
+                  <div class="stu-grid">
+                    <div class="stu-field">
+                      <label class="stu-label" for="tea-email">Email</label>
+                      <input
+                        type="email"
+                        id="tea-email"
+                        name="email"
+                        class="stu-input"
+                        [ngModel]="formData().email"
+                        (ngModelChange)="update('email', $event)"
+                        placeholder="correo@ejemplo.com"
+                      />
+                    </div>
+                    <div class="stu-field">
+                      <label class="stu-label" for="tea-phone">Teléfono</label>
+                      <input
+                        type="tel"
+                        id="tea-phone"
+                        name="phone"
+                        class="stu-input"
+                        [ngModel]="formData().phone"
+                        (ngModelChange)="update('phone', $event)"
+                      />
+                    </div>
+                    <div class="stu-field">
+                      <label class="stu-label" for="tea-specialty">Especialidad</label>
+                      <input
+                        type="text"
+                        id="tea-specialty"
+                        name="specialty"
+                        class="stu-input"
+                        [ngModel]="formData().specialty"
+                        (ngModelChange)="update('specialty', $event)"
+                        placeholder="Matemática, Comunicación…"
+                      />
+                    </div>
+                    <div class="stu-field">
+                      <label class="stu-label" for="tea-code">Código docente</label>
+                      <input
+                        type="text"
+                        id="tea-code"
+                        name="teacherCode"
+                        class="stu-input"
+                        [ngModel]="formData().teacherCode"
+                        (ngModelChange)="update('teacherCode', $event)"
+                        [disabled]="isEditMode()"
+                        placeholder="Opcional"
+                      />
+                    </div>
+                    <div class="stu-field stu-field--wide">
+                      <label class="stu-label" for="tea-bio">Nota breve</label>
+                      <input
+                        type="text"
+                        id="tea-bio"
+                        name="bio"
+                        class="stu-input"
+                        [ngModel]="formData().bio"
+                        (ngModelChange)="update('bio', $event)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            </section>
+
+            <div class="stu-actions">
+              <a [routerLink]="strategy().listPath" class="adm-btn cu-btn--body">Cancelar</a>
+              <button type="submit" class="adm-btn adm-btn--solid stu-submit" [disabled]="isLoading()">
+                @if (isLoading()) { Guardando… }
+                @else if (isEditMode()) { Guardar cambios }
+                @else { Crear profesor }
+              </button>
+            </div>
+          </div>
+
+          <aside class="stu-aside" aria-label="Resumen de acceso">
+            <div class="stu-cred">
+              <p class="stu-cred__kicker">Acceso al portal</p>
+              <h3 class="stu-cred__title">Usuario = DNI</h3>
+              <p class="stu-cred__text">El docente entra con su DNI y la contraseña que definas aquí.</p>
+              <dl class="stu-cred__list">
+                <div>
+                  <dt>Usuario</dt>
+                  <dd>{{ formData().username || 'Se completa con el DNI' }}</dd>
+                </div>
+                <div>
+                  <dt>Contraseña</dt>
+                  <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (formData().password ? 'Definida' : 'Pendiente') }}</dd>
+                </div>
+              </dl>
+            </div>
+            @if (!isEditMode()) {
+              <div class="stu-check">
+                <p class="stu-check__label">Listo para crear</p>
+                <p class="stu-check__count">{{ teacherReadyCount() }} / 4 obligatorios</p>
+                <div class="stu-check__bar" aria-hidden="true">
+                  <span [style.width.%]="teacherReadyCount() * 25"></span>
+                </div>
+                <ul class="stu-check__items">
+                  <li [class.is-done]="dniReady()">DNI</li>
+                  <li [class.is-done]="!!formData().firstName.trim()">Nombre</li>
+                  <li [class.is-done]="!!formData().lastName.trim()">Apellido</li>
+                  <li [class.is-done]="formData().password.length >= MIN_PASSWORD_LENGTH">Contraseña</li>
+                </ul>
+              </div>
+            }
+          </aside>
+        </div>
+      </form>
     } @else {
       <form (ngSubmit)="onSubmit()" class="cu-form" #userForm="ngForm">
 
