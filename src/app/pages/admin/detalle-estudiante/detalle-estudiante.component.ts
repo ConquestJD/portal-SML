@@ -6,6 +6,30 @@ import { AdminService, StudentPaymentItem, RegisterStudentPaymentDto } from '../
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
+interface AcademicYearView {
+  id: string;
+  year: string;
+  level: string;
+  grade: string;
+  section: string;
+  status: string;
+}
+
+interface CourseGradeView {
+  course: string;
+  teacher: string;
+  average: number;
+  evaluations: { name: string; score: number }[];
+}
+
+interface AttendanceView {
+  id: string;
+  date: string;
+  status: string;
+  course: string;
+  notes: string;
+}
+
 @Component({
   selector: 'app-detalle-estudiante',
   standalone: true,
@@ -16,29 +40,29 @@ import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 export class DetalleEstudianteComponent implements OnInit {
   loading = signal(true);
   error = signal('');
-  activeTab = signal('perfil');
+  activeTab = signal('ficha');
   studentId = '';
 
   readonly tabs: AdminTab[] = [
-    { id: 'perfil',     label: 'Perfil',             icon: 'fa-user' },
-    { id: 'academico',  label: 'Académico',          icon: 'fa-graduation-cap' },
-    { id: 'notas',      label: 'Notas',              icon: 'fa-chart-line' },
-    { id: 'asistencia', label: 'Asistencia',         icon: 'fa-calendar-check' },
-    { id: 'padres',     label: 'Padres de familia',  icon: 'fa-users' },
-    { id: 'matricula',  label: 'Matrícula y pagos',  icon: 'fa-file-invoice-dollar' },
-    { id: 'documentos', label: 'Documentos',         icon: 'fa-file' },
+    { id: 'ficha',      label: 'Ficha' },
+    { id: 'estudios',   label: 'Estudios' },
+    { id: 'asistencia', label: 'Asistencia' },
+    { id: 'pagos',      label: 'Pagos' },
+    { id: 'documentos', label: 'Archivo' },
   ];
 
   student = signal<any>(null);
-  academicHistory = signal<unknown[]>([]);
-  grades = signal<unknown[]>([]);
-  attendance = signal<unknown[]>([]);
-  parents = signal<unknown[]>([]);
-  documents = signal<unknown[]>([]);
+  academicHistory = signal<AcademicYearView[]>([]);
+  grades = signal<CourseGradeView[]>([]);
+  attendance = signal<AttendanceView[]>([]);
+  parents = signal<any[]>([]);
+  documents = signal<any[]>([]);
   studentPayments = signal<StudentPaymentItem[]>([]);
   paymentsLoading = signal(false);
   paymentError = signal('');
   paymentSuccess = signal('');
+  showPaymentForm = signal(false);
+  expandedCourse = signal('');
   paymentForm = signal({
     concept: '',
     amount: '',
@@ -70,30 +94,32 @@ export class DetalleEstudianteComponent implements OnInit {
   selectTab(tab: string) {
     this.activeTab.set(tab);
     switch (tab) {
-      case 'academico': this.loadAcademicHistory(); break;
-      case 'notas': this.loadGrades(); break;
+      case 'ficha': this.loadParents(); break;
+      case 'estudios':
+        this.loadAcademicHistory();
+        this.loadGrades();
+        break;
       case 'asistencia': this.loadAttendance(); break;
-      case 'padres': this.loadParents(); break;
+      case 'pagos': this.loadStudentPayments(); break;
       case 'documentos': this.loadDocuments(); break;
-      case 'matricula': this.loadStudentPayments(); break;
     }
   }
 
   loadAcademicHistory() {
     this.adminService.getStudentAcademicHistory(this.studentId).subscribe({
-      next: (data) => this.academicHistory.set(data)
+      next: (data) => this.academicHistory.set(this.normalizeHistory(data as any[])),
     });
   }
 
   loadGrades() {
     this.adminService.getStudentGrades(this.studentId).subscribe({
-      next: (data) => this.grades.set(data)
+      next: (data) => this.grades.set(this.normalizeGrades(data as any[])),
     });
   }
 
   loadAttendance() {
     this.adminService.getStudentAttendance(this.studentId).subscribe({
-      next: (data) => this.attendance.set(data)
+      next: (data) => this.attendance.set(this.normalizeAttendance(data as any[])),
     });
   }
 
@@ -128,7 +154,7 @@ export class DetalleEstudianteComponent implements OnInit {
 
   loadDocuments() {
     this.adminService.getStudentDocuments(this.studentId).subscribe({
-      next: (data) => this.documents.set(data)
+      next: (data) => this.documents.set(this.normalizeDocuments(data as any[])),
     });
   }
 
@@ -189,16 +215,85 @@ export class DetalleEstudianteComponent implements OnInit {
   getFullName(): string {
     const s = this.student();
     if (!s) return '';
-    return s.name ?? `${s.user.firstName} ${s.user.lastName}`;
+    return s.name ?? `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim();
   }
 
   getStudentSubtitle(): string {
     const s = this.student();
     if (!s) return '';
-    const code = s.code ?? s.studentCode ?? '—';
     const grade = s.grade ?? '';
-    const section = s.section ?? '';
-    return `Código: ${code} · ${grade} ${section}`.trim();
+    const section = s.section ?? this.getCurrentEnrollment()?.section?.name ?? '';
+    return [grade, section].filter(Boolean).join(' · ') || 'Sin matrícula';
+  }
+
+  studentCode(): string {
+    const s = this.student();
+    return s?.code || s?.studentCode || s?.username || s?.user?.username || '—';
+  }
+
+  accessUsername(): string {
+    const s = this.student();
+    return s?.username || s?.user?.username || this.studentCode();
+  }
+
+  toggleCourse(course: string) {
+    this.expandedCourse.update(cur => cur === course ? '' : course);
+  }
+
+  togglePaymentForm() {
+    this.showPaymentForm.update(v => !v);
+  }
+
+  private normalizeHistory(raw: any[]): AcademicYearView[] {
+    return (raw ?? []).map((e, i) => ({
+      id: e.id ?? String(i),
+      year: e.academicYear?.name ?? e.year ?? '—',
+      level: e.section?.level ?? e.level ?? '',
+      grade: e.section?.grade ?? e.grade ?? '',
+      section: e.section?.name ?? (typeof e.section === 'string' ? e.section : ''),
+      status: e.status ?? '',
+    }));
+  }
+
+  private normalizeGrades(raw: any[]): CourseGradeView[] {
+    const map = new Map<string, CourseGradeView>();
+    for (const g of raw ?? []) {
+      const course = g.teacherAssignment?.course?.name ?? g.course ?? 'Curso';
+      const teacherName = g.teacherAssignment?.teacher?.user
+        ? `${g.teacherAssignment.teacher.user.firstName ?? ''} ${g.teacherAssignment.teacher.user.lastName ?? ''}`.trim()
+        : (g.teacher ?? '');
+      const row = map.get(course) ?? { course, teacher: teacherName, average: 0, evaluations: [] as CourseGradeView['evaluations'] };
+      row.evaluations.push({
+        name: g.period?.name ?? g.name ?? 'Periodo',
+        score: Number(g.score ?? g.grade ?? 0),
+      });
+      map.set(course, row);
+    }
+    return Array.from(map.values()).map(c => ({
+      ...c,
+      average: c.evaluations.length
+        ? c.evaluations.reduce((sum, e) => sum + e.score, 0) / c.evaluations.length
+        : 0,
+    }));
+  }
+
+  private normalizeAttendance(raw: any[]): AttendanceView[] {
+    return (raw ?? []).map((a, i) => ({
+      id: a.id ?? String(i),
+      date: a.date,
+      status: a.status ?? '',
+      course: a.teacherAssignment?.course?.name ?? a.course ?? '',
+      notes: a.notes ?? a.observations ?? '',
+    }));
+  }
+
+  private normalizeDocuments(raw: any[]): any[] {
+    return (raw ?? []).map(d => ({
+      ...d,
+      name: d.filename ?? d.name ?? 'Documento',
+      size: d.size ?? 0,
+      uploadDate: d.createdAt ?? d.uploadDate,
+    }));
   }
 
   attendanceStats = computed(() => {
