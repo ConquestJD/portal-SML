@@ -19,7 +19,7 @@
 
     <section class="metrics metrics--2" aria-label="Resumen">
       <div class="metric">
-        <span class="metric__n">{{ total() }}</span>
+        <span class="metric__n">{{ total() || users().length }}</span>
         <span class="metric__l">Registrados</span>
       </div>
       <div class="metric">
@@ -29,13 +29,10 @@
     </section>
 
     @if (resetPasswordResult(); as r) {
-      <div class="pulse" role="status">
-        <div class="pulse__item" style="background:#fff8e8;border-left-color:#9a6b12;flex:1">
-          <span class="pulse__n" style="color:#9a6b12">!</span>
-          <span class="pulse__l">Contraseña temporal: <strong>{{ r.tempPassword }}</strong></span>
-          <button type="button" class="adm-link" (click)="dismissResetResult()">Cerrar</button>
-        </div>
-      </div>
+      <p class="adm-alert adm-alert--ok" role="status">
+        Contraseña temporal: <strong>{{ r.tempPassword }}</strong>
+        <button type="button" class="adm-link" (click)="dismissResetResult()">Cerrar</button>
+      </p>
     }
 
     @if (error()) {
@@ -52,7 +49,7 @@
           name="searchQuery"
         />
       </label>
-      <select [(ngModel)]="filterStatus" (change)="onFilterChange()" name="filterStatus" aria-label="Estado">
+      <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Estado">
         <option value="">Estado</option>
         <option value="activo">Activos</option>
         <option value="inactivo">Inactivos</option>
@@ -63,43 +60,67 @@
       }
     </div>
 
-    <section class="feed" aria-label="Administradores">
-      <div class="feed__head">
-        <h2>Accesos</h2>
-        <span class="feed-row__meta">{{ filteredUsers().length }} de {{ total() }}</span>
-      </div>
+    @if (hasActiveFilters()) {
+      <p class="roster-count">{{ filteredUsers().length }} de {{ users().length }}</p>
+    }
 
-      @if (loading()) {
-        <p class="feed__empty">Cargando…</p>
-      } @else if (filteredUsers().length === 0) {
-        <admin-empty-state title="Sin administradores" message="Crea el primero con el botón Nuevo."></admin-empty-state>
-      } @else {
-        <ul class="feed__list">
-          @for (user of filteredUsers(); track user.id) {
-            <li>
-              <div class="feed-row">
-                <span class="feed-row__mark">{{ getInitials(user) }}</span>
-                <span class="feed-row__body">
-                  <span class="feed-row__title">{{ user.name || (user.firstName + ' ' + user.lastName) }}</span>
-                  <span class="feed-row__meta">{{ user.username || '—' }} · {{ user.email || '—' }}</span>
-                </span>
-                <span class="feed-row__side">
-                  <span class="feed-row__kicker">Último acceso</span>
-                  <span class="feed-row__title" style="font-family:var(--font-display)">{{ user.lastLogin || 'Nunca' }}</span>
-                  <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
-                </span>
-                <span class="feed-row__actions">
-                  <button type="button" class="adm-link" (click)="navigateToEdit(user)">Editar</button>
-                  <button type="button" class="adm-link" (click)="resetPassword(user.id)">Reset clave</button>
-                  <button type="button" class="adm-link adm-link--danger" (click)="toggleStatus(user)">
-                    {{ user.displayStatus === 'activo' ? 'Desactivar' : 'Activar' }}
-                  </button>
-                </span>
-              </div>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+    @if (loading()) {
+      <p class="feed__empty">Cargando equipo…</p>
+    } @else if (filteredUsers().length === 0) {
+      <admin-empty-state title="Sin administradores" message="Crea el primero con el botón Nuevo."></admin-empty-state>
+    } @else {
+      <div class="roster" aria-label="Administradores">
+        <section class="roster-group">
+          <header class="roster-group__head">
+            <div>
+              <p class="roster-group__kicker">Accesos</p>
+              <h2 class="roster-group__title">Equipo</h2>
+            </div>
+            <span class="roster-group__n">{{ filteredUsers().length }}</span>
+          </header>
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Administrador</th>
+                  <th>Usuario</th>
+                  <th>Último acceso</th>
+                  <th>Estado</th>
+                  <th><span class="visually-hidden">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of filteredUsers(); track user.id) {
+                  <tr>
+                    <td>
+                      <span class="roster-person">
+                        <span class="roster-person__mark">{{ getInitials(user) }}</span>
+                        <span class="roster-person__text">
+                          <span class="roster-person__name">{{ getFullName(user) }}</span>
+                          @if (user.email) {
+                            <span class="roster-person__meta">{{ user.email }}</span>
+                          }
+                        </span>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="roster-code">{{ user.username || '—' }}</span>
+                    </td>
+                    <td class="roster-dni">{{ user.lastLogin || 'Nunca' }}</td>
+                    <td>
+                      <admin-status-badge [value]="user.displayStatus ?? user.status"></admin-status-badge>
+                    </td>
+                    <td class="roster-actions">
+                      <button type="button" class="adm-link" (click)="navigateToEdit(user)">Editar</button>
+                      <button type="button" class="adm-link" (click)="resetPassword(user.id)">Reset</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    }
   </div>
 </div>

@@ -13,7 +13,6 @@
         <a routerLink="/admin/padres" class="adm-btn adm-btn--ghost">Volver</a>
         @if (parent()) {
           <a [routerLink]="['/admin/padres', parentId, 'editar']" class="adm-btn adm-btn--primary">Editar</a>
-          <button type="button" class="adm-btn adm-btn--ghost" (click)="onResetPassword()">Resetear contraseña</button>
         }
       </div>
     </div>
@@ -26,293 +25,209 @@
     ]"></admin-breadcrumb>
 
     @if (loading()) {
-      <p class="detail-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+      <p class="feed__empty">Cargando ficha…</p>
     } @else if (error()) {
       <p class="adm-alert" role="alert">{{ error() }}</p>
-    } @else if (parent()) {
-      <div class="detail-meta">
-        <p class="detail-meta__sub">{{ getHeroSubtitle() }}</p>
-        <admin-status-badge [value]="parent()?.status ?? parent()?.user?.status"></admin-status-badge>
+    } @else if (parent(); as p) {
+
+      <div class="id-strip">
+        <div class="id-strip__code">
+          <span class="id-strip__kicker">Usuario</span>
+          <strong>{{ parentUsername() }}</strong>
+        </div>
+        <div class="id-strip__meta">
+          <p class="id-strip__grade">{{ relationship() | relationshipLabel }}</p>
+          <admin-status-badge [value]="p.status ?? p.user?.status"></admin-status-badge>
+        </div>
       </div>
 
-      <p class="detail-kicker">Núcleo familiar</p>
+      <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
 
-      <admin-tabs
-        [tabs]="[
-          { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
-          { id: 'hijos',  label: 'Hijos',  icon: 'fa-child', badge: children().length },
-          { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' }
-        ]"
-        [activeTab]="activeTab()"
-        (activeTabChange)="setTab($event)">
-      </admin-tabs>
-
-      <div class="tab-content">
-        @if (activeTab() === 'perfil') {
-          <div class="content-section">
-            <div class="info-grid">
-              <section class="panel">
-                <h3 class="panel__title">Información Personal</h3>
-                <div class="data-list">
-                  <div class="data-row">
-                    <span class="label">Nombre Completo</span>
-                    <span class="value">{{ parent().name }}</span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">DNI</span>
-                    <span class="value">{{ parent().dni }}</span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">Email</span>
-                    <span class="value">{{ parent().email }}</span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">Teléfono</span>
-                    <span class="value">{{ parent().phone }}</span>
-                  </div>
-                  @if (parent().address) {
-                    <div class="data-row">
-                      <span class="label">Dirección</span>
-                      <span class="value">{{ parent().address }}</span>
-                    </div>
-                  }
-                </div>
-              </section>
-              <section class="panel">
-                <h3 class="panel__title">Información de Cuenta</h3>
-                <div class="data-list">
-                  <div class="data-row">
-                    <span class="label">Usuario</span>
-                    <span class="value">{{ parent().username }}</span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">Fecha de Registro</span>
-                    <span class="value">{{ (parent().createdAt ? (parent().createdAt | date:'longDate') : '—') }}</span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">Estado</span>
-                    <span class="value">
-                      <admin-status-badge [value]="parent()?.status ?? parent()?.user?.status"></admin-status-badge>
-                    </span>
-                  </div>
-                  <div class="data-row">
-                    <span class="label">Hijos Vinculados</span>
-                    <span class="value">
-                      <span class="badge badge-info">{{ children().length }}</span>
-                    </span>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-        }
-
-        @if (activeTab() === 'hijos') {
-          <div class="content-section content-section--family">
-            <div class="children-header">
-              <div class="children-header__title">
-                <h3>Hijos Vinculados</h3>
-                <span class="children-count">{{ children().length }} hijo(s)</span>
+      @if (activeTab() === 'ficha') {
+        <div class="mod-grid">
+          <section class="mod">
+            <header class="mod__head">
+              <h2>Identidad</h2>
+            </header>
+            <dl class="facts">
+              <div>
+                <dt>Nombre</dt>
+                <dd>{{ getFullName() || '—' }}</dd>
               </div>
-              @if (!showLinkPanel()) {
-                <button type="button" class="btn btn-primary" (click)="openLinkPanel()">
-                  <i class="fas fa-link"></i> Vincular hijos
-                </button>
+              <div>
+                <dt>Relación</dt>
+                <dd>{{ relationship() | relationshipLabel }}</dd>
+              </div>
+              <div>
+                <dt>Teléfono</dt>
+                <dd>{{ p.phone || p.user?.phone || '—' }}</dd>
+              </div>
+              <div>
+                <dt>Ocupación</dt>
+                <dd>{{ p.occupation || '—' }}</dd>
+              </div>
+              @if (p.address) {
+                <div class="facts--wide">
+                  <dt>Dirección</dt>
+                  <dd>{{ p.address }}</dd>
+                </div>
               }
-            </div>
+            </dl>
+          </section>
 
-            @if (showLinkPanel()) {
-              <div class="link-panel">
-                <div class="link-panel__header">
-                  <h4><i class="fas fa-user-plus"></i> Vincular estudiantes a este apoderado</h4>
-                  <button type="button" class="link-panel__close" (click)="closeLinkPanel()" title="Cerrar" aria-label="Cerrar">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-
-                @if (linkError()) {
-                  <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i> {{ linkError() }}
-                  </div>
-                }
-
-                <div class="link-panel__search">
-                  <i class="fas fa-search"></i>
-                  <input type="text" class="form-input"
-                         placeholder="Buscar por nombre, DNI, código o grado..."
-                         [ngModel]="linkSearch()"
-                         (ngModelChange)="setLinkSearch($event)"
-                         name="linkSearch"
-                         autocomplete="off" />
-                </div>
-
-                <div class="link-panel__list">
-                  @if (loadingStudents()) {
-                    <div class="link-panel__empty">
-                      <i class="fas fa-spinner fa-spin"></i> Cargando estudiantes...
-                    </div>
-                  } @else {
-                    @for (student of availableStudents(); track student.id) {
-                      <label class="link-row" [class.is-selected]="isStudentSelected(student.id)">
-                        <input type="checkbox"
-                               [checked]="isStudentSelected(student.id)"
-                               (change)="toggleStudent(student.id)" />
-                        <span class="link-row__avatar">{{ getStudentInitials(student) }}</span>
-                        <div class="link-row__info">
-                          <span class="link-row__name">{{ getStudentDisplayName(student) }}</span>
-                          <small class="link-row__meta">
-                            @if (student.grade) {
-                              <span><i class="fas fa-graduation-cap"></i> {{ student.grade }}</span>
-                            }
-                            @if (student.dni) {
-                              <span>DNI {{ student.dni }}</span>
-                            }
-                            @if (student.studentCode || student.code) {
-                              <span class="muted">Código {{ student.studentCode || student.code }}</span>
-                            }
-                          </small>
-                        </div>
-                      </label>
-                    } @empty {
-                      <div class="link-panel__empty">
-                        @if (linkSearch()) {
-                          <i class="fas fa-search"></i> Sin resultados para "{{ linkSearch() }}"
-                        } @else {
-                          <i class="fas fa-info-circle"></i> No hay estudiantes disponibles para vincular
-                        }
-                      </div>
-                    }
-                  }
-                </div>
-
-                <div class="link-panel__footer">
-                  <label class="link-primary-toggle">
-                    <input type="checkbox"
-                           [checked]="linkAsPrimary()"
-                           (change)="setLinkAsPrimary(!linkAsPrimary())" />
-                    <span>Marcar como apoderado principal</span>
-                  </label>
-                  <div class="link-panel__actions">
-                    <button type="button" class="btn btn-secondary" (click)="closeLinkPanel()" [disabled]="linkLoading()">
-                      Cancelar
-                    </button>
-                    <button type="button" class="btn btn-primary"
-                            (click)="linkSelected()"
-                            [disabled]="!selectedCount() || linkLoading()">
-                      @if (linkLoading()) {
-                        <i class="fas fa-spinner fa-spin"></i> Vinculando...
-                      } @else {
-                        <i class="fas fa-link"></i>
-                        Vincular {{ selectedCount() }} estudiante{{ selectedCount() === 1 ? '' : 's' }}
-                      }
-                    </button>
-                  </div>
-                </div>
+          <section class="mod">
+            <header class="mod__head">
+              <h2>Acceso</h2>
+              <button type="button" class="adm-link" (click)="onResetPassword()">Resetear</button>
+            </header>
+            <dl class="facts">
+              <div>
+                <dt>Usuario</dt>
+                <dd>{{ parentUsername() }}</dd>
               </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{{ p.email || p.user?.email || '—' }}</dd>
+              </div>
+              <div>
+                <dt>Hijos</dt>
+                <dd>{{ children().length }}</dd>
+              </div>
+              <div>
+                <dt>Registro</dt>
+                <dd>{{ p.createdAt ? (p.createdAt | date:'longDate') : '—' }}</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      }
+
+      @if (activeTab() === 'hijos') {
+        <section class="mod">
+          <header class="mod__head">
+            <h2>Hijos vinculados</h2>
+            <button type="button" class="adm-link" (click)="openLinkPanel()">Vincular</button>
+          </header>
+          @if (children().length === 0) {
+            <p class="mod__empty">Sin hijos vinculados.</p>
+          } @else {
+            <ul class="family">
+              @for (child of children(); track child.id) {
+                <li class="family__row">
+                  <a [routerLink]="['/admin/estudiantes', child.id]" class="family__name">{{ child.name }}</a>
+                  <button type="button" class="adm-link adm-link--danger" (click)="unlinkChild(child)">Quitar</button>
+                  <span class="family__rel">
+                    {{ child.grade || 'Sin grado' }}
+                    @if (child.isPrimary) { · Principal }
+                  </span>
+                  <span class="family__meta">{{ child.studentCode || child.level || '—' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      @if (activeTab() === 'pagos') {
+        <div class="mod-stack">
+          <section class="metrics metrics--2" aria-label="Resumen de pagos">
+            <div class="metric">
+              <span class="metric__n">S/ {{ totalPaid() | number:'1.0-0' }}</span>
+              <span class="metric__l">Pagado · {{ paidPayments().length }}</span>
+            </div>
+            <div class="metric metric--alert">
+              <span class="metric__n">S/ {{ totalPending() | number:'1.0-0' }}</span>
+              <span class="metric__l">Pendiente · {{ pendingPayments().length }}</span>
+            </div>
+          </section>
+
+          <section class="mod">
+            <header class="mod__head">
+              <h2>Movimientos</h2>
+            </header>
+            @if (payments().length === 0) {
+              <p class="mod__empty">No hay pagos registrados.</p>
+            } @else {
+              <ul class="log">
+                @for (payment of payments(); track payment.id) {
+                  <li>
+                    <span class="log__date">{{ payment.concept }}</span>
+                    <span class="log__course">S/ {{ payment.amount | number:'1.2-2' }}</span>
+                    <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
+                  </li>
+                }
+              </ul>
             }
+          </section>
+        </div>
+      }
 
-            <div class="children-list">
-              @if (children().length === 0) {
-                <admin-empty-state icon="fa-child" message="No hay hijos vinculados a este padre de familia"></admin-empty-state>
+      @if (showLinkPanel()) {
+        <div class="modal-overlay" (click)="closeLinkPanel()">
+          <div class="modal-card modal-card--wide" (click)="$event.stopPropagation()">
+            <header class="modal-card__head">
+              <h3>Vincular hijos</h3>
+              <button type="button" class="adm-link" (click)="closeLinkPanel()">Cerrar</button>
+            </header>
+            @if (linkError()) {
+              <p class="adm-alert" role="alert">{{ linkError() }}</p>
+            }
+            <label class="search search--block">
+              <span class="visually-hidden">Buscar estudiante</span>
+              <input
+                type="search"
+                placeholder="Nombre, DNI, código o grado…"
+                [ngModel]="linkSearch()"
+                (ngModelChange)="setLinkSearch($event)"
+                name="linkSearch"
+              />
+            </label>
+            <div class="link-list">
+              @if (loadingStudents()) {
+                <p class="mod__empty">Cargando estudiantes…</p>
               } @else {
-                @for (child of children(); track child.id) {
-                  <article class="child-nucleus">
-                    <div class="child-nucleus__mark" aria-hidden="true">
-                      <span>{{ child.name?.charAt(0) || '?' }}</span>
-                    </div>
-                    <div class="child-nucleus__body">
-                      <div class="child-header">
-                        <div class="child-info">
-                          <h4><a [routerLink]="['/admin/estudiantes', child.id]" class="child-link">{{ child.name }}</a></h4>
-                          <div class="child-meta">
-                            <span class="child-grade">{{ child.grade }}</span>
-                            <span class="child-level">{{ child.level | levelLabel }}</span>
-                            <span class="child-relationship">{{ child.relationship | relationshipLabel }}</span>
-                          </div>
-                        </div>
-                        <div class="child-status">
-                          <admin-status-badge [value]="child.status"></admin-status-badge>
-                        </div>
-                      </div>
-                      <div class="child-details">
-                        <div class="detail-section">
-                          <h5><i class="fas fa-calendar-alt"></i> Fecha de Matrícula</h5>
-                          <p>{{ child.enrollmentDate | date:'longDate' }}</p>
-                        </div>
-                      </div>
-                      <div class="child-actions">
-                        <a [routerLink]="['/admin/estudiantes', child.id]" class="btn btn-sm btn-primary">
-                          <i class="fas fa-eye"></i> Ver Detalles
-                        </a>
-                        <button type="button" class="btn btn-sm btn-danger-outline" (click)="unlinkChild(child)">
-                          <i class="fas fa-unlink"></i> Desvincular
-                        </button>
-                      </div>
-                    </div>
-                  </article>
+                @for (student of availableStudents(); track student.id) {
+                  <label class="link-row" [class.is-selected]="isStudentSelected(student.id)">
+                    <input
+                      type="checkbox"
+                      [checked]="isStudentSelected(student.id)"
+                      (change)="toggleStudent(student.id)"
+                    />
+                    <span class="roster-person__mark">{{ getStudentInitials(student) }}</span>
+                    <span class="roster-person__text">
+                      <span class="roster-person__name">{{ getStudentDisplayName(student) }}</span>
+                      <span class="roster-person__meta">
+                        {{ student.grade || 'Sin grado' }}
+                        @if (student.dni) { · DNI {{ student.dni }} }
+                      </span>
+                    </span>
+                  </label>
+                } @empty {
+                  <p class="mod__empty">
+                    @if (linkSearch()) { Sin resultados. }
+                    @else { No hay estudiantes disponibles. }
+                  </p>
                 }
               }
             </div>
-          </div>
-        }
-
-        @if (activeTab() === 'pagos') {
-          <div class="content-section content-section--payments">
-            <div class="payments-panel">
-              <header class="payments-panel__head">
-                <h3>Pagos</h3>
-                <p>Resumen secundario de obligaciones vinculadas al núcleo familiar.</p>
-              </header>
-
-              <div class="payments-summary">
-                <div class="summary-cell">
-                  <h4>Total Pagado</h4>
-                  <p class="summary-amount">S/ {{ totalPaid().toFixed(2) }}</p>
-                  <span class="summary-count">{{ paidPayments().length }} pago(s)</span>
-                </div>
-                <div class="summary-cell">
-                  <h4>Total Pendiente</h4>
-                  <p class="summary-amount summary-amount--pending">S/ {{ totalPending().toFixed(2) }}</p>
-                  <span class="summary-count">{{ pendingPayments().length }} pago(s)</span>
-                </div>
-              </div>
-
-              <div class="payments-tabs">
-                <button class="payment-tab-btn" [class.active]="true">
-                  <i class="fas fa-clock"></i> Pendientes ({{ pendingPayments().length }})
-                </button>
-                <button class="payment-tab-btn" [class.active]="false">
-                  <i class="fas fa-check"></i> Pagados ({{ paidPayments().length }})
-                </button>
-              </div>
-
-              <div class="payments-list">
-                @if (pendingPayments().length === 0) {
-                  <admin-empty-state icon="fa-check-circle" message="No hay pagos pendientes"></admin-empty-state>
-                } @else {
-                  @for (payment of pendingPayments(); track payment.id) {
-                    <div class="payment-item">
-                      <div class="payment-info">
-                        <h4>{{ payment.concept }}</h4>
-                        <div class="payment-details">
-                          <span class="payment-amount">S/ {{ payment.amount.toFixed(2) }}</span>
-                          <span class="payment-date">
-                            <i class="fas fa-calendar"></i>
-                            Vence: {{ payment.dueDate | date:'shortDate' }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="payment-status">
-                        <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
-                      </div>
-                    </div>
-                  }
-                }
-              </div>
+            <label class="link-primary">
+              <input type="checkbox" [checked]="linkAsPrimary()" (change)="setLinkAsPrimary(!linkAsPrimary())" />
+              Marcar como apoderado principal
+            </label>
+            <div class="modal-card__foot">
+              <button
+                type="button"
+                class="adm-btn adm-btn--solid"
+                (click)="linkSelected()"
+                [disabled]="!selectedCount() || linkLoading()"
+              >
+                @if (linkLoading()) { Vinculando… }
+                @else { Vincular {{ selectedCount() || '' }} }
+              </button>
             </div>
           </div>
-        }
-      </div>
+        </div>
+      }
     }
   </div>
 </div>

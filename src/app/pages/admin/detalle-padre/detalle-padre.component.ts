@@ -8,6 +8,26 @@ import { AdminService, ParentItem, StudentItem } from '../../../services/admin.s
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
+interface ChildView {
+  id: string;
+  name: string;
+  grade: string;
+  level: string;
+  relationship: string;
+  status: string;
+  enrollmentDate: string | null;
+  isPrimary: boolean;
+  studentCode: string;
+}
+
+interface PaymentView {
+  id: string;
+  concept: string;
+  amount: number;
+  dueDate?: string;
+  status: string;
+}
+
 @Component({
   selector: 'app-detalle-padre',
   standalone: true,
@@ -18,20 +38,19 @@ import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 export class DetallePadreComponent implements OnInit {
   loading = signal(true);
   error = signal('');
-  activeTab = signal('perfil');
+  activeTab = signal('ficha');
   parentId = '';
 
   readonly tabs: AdminTab[] = [
-    { id: 'perfil', label: 'Perfil', icon: 'fa-user' },
-    { id: 'hijos',  label: 'Hijos',  icon: 'fa-child' },
-    { id: 'pagos',  label: 'Pagos',  icon: 'fa-file-invoice-dollar' },
+    { id: 'ficha', label: 'Ficha' },
+    { id: 'hijos', label: 'Hijos' },
+    { id: 'pagos', label: 'Pagos' },
   ];
 
-  parent = signal<any>(null);
-  children = signal<any[]>([]);
-  payments = signal<unknown[]>([]);
+  parent = signal<ParentItem | null>(null);
+  children = signal<ChildView[]>([]);
+  payments = signal<PaymentView[]>([]);
 
-  // ─── Vincular hijos ────────────────────────────────────────────────────
   showLinkPanel = signal(false);
   allStudents = signal<StudentItem[]>([]);
   loadingStudents = signal(false);
@@ -42,11 +61,7 @@ export class DetallePadreComponent implements OnInit {
   linkError = signal('');
 
   availableStudents = computed(() => {
-    const linkedIds = new Set(
-      this.children()
-        .map(c => c?.id ?? c?.studentId ?? c?.student?.id)
-        .filter((id: unknown): id is string => !!id)
-    );
+    const linkedIds = new Set(this.children().map(c => c.id).filter(Boolean));
     const q = this.linkSearch().trim().toLowerCase();
     return this.allStudents()
       .filter(s => !linkedIds.has(s.id))
@@ -61,6 +76,11 @@ export class DetallePadreComponent implements OnInit {
   });
 
   selectedCount = computed(() => this.selectedStudentIds().size);
+
+  paidPayments = computed(() => this.payments().filter(p => p.status === 'PAID'));
+  pendingPayments = computed(() => this.payments().filter(p => p.status !== 'PAID'));
+  totalPaid = computed(() => this.paidPayments().reduce((a, p) => a + (p.amount ?? 0), 0));
+  totalPending = computed(() => this.pendingPayments().reduce((a, p) => a + (p.amount ?? 0), 0));
 
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
@@ -78,7 +98,7 @@ export class DetallePadreComponent implements OnInit {
     });
   }
 
-  selectTab(tab: string) {
+  setTab(tab: string) {
     this.activeTab.set(tab);
     if (tab === 'hijos') this.loadChildren();
     if (tab === 'pagos') this.loadPayments();
@@ -86,68 +106,75 @@ export class DetallePadreComponent implements OnInit {
 
   loadChildren() {
     this.adminService.getParentChildren(this.parentId).subscribe({
-      next: (data) => this.children.set(this.normalizeChildren(data as any[]))
+      next: (data) => this.children.set(this.normalizeChildren(data as Record<string, unknown>[])),
     });
   }
 
-  /** El backend puede devolver:
-   *  - estudiantes "planos": { id, name, grade, ... }
-   *  - relaciones padre-hijo:   { id (relación), student: {...}, isPrimary, relationship }
-   * Siempre dejamos un objeto plano para la plantilla.
-   */
-  private normalizeChildren(raw: any[]): any[] {
+  private normalizeChildren(raw: Record<string, unknown>[]): ChildView[] {
     return (raw ?? []).map(c => {
-      const s = c?.student ?? c;
-      const u = s?.user ?? c?.user ?? {};
-      const fallbackName = `${u?.firstName ?? ''} ${u?.lastName ?? ''}`.trim() || s?.studentCode || '(sin nombre)';
+      const s = (c['student'] as Record<string, unknown> | undefined) ?? c;
+      const u = (s['user'] as Record<string, unknown> | undefined) ?? (c['user'] as Record<string, unknown> | undefined) ?? {};
+      const fallbackName = `${u['firstName'] ?? ''} ${u['lastName'] ?? ''}`.toString().trim() || String(s['studentCode'] ?? '(sin nombre)');
       return {
-        id: s?.id ?? c?.studentId ?? c?.id ?? '',
-        name: s?.name ?? c?.name ?? fallbackName,
-        grade: s?.grade ?? c?.grade ?? s?.section?.grade ?? '',
-        level: s?.level ?? c?.level ?? '',
-        relationship: c?.relationship ?? s?.relationship ?? '',
-        status: s?.status ?? u?.status ?? c?.status ?? '',
-        enrollmentDate: c?.enrollmentDate ?? s?.enrollmentDate ?? null,
-        isPrimary: !!(c?.isPrimary ?? s?.isPrimary),
-        studentCode: s?.studentCode ?? s?.code ?? c?.studentCode ?? '',
+        id: String(s['id'] ?? c['studentId'] ?? c['id'] ?? ''),
+        name: String(s['name'] ?? c['name'] ?? fallbackName),
+        grade: String(s['grade'] ?? c['grade'] ?? ''),
+        level: String(s['level'] ?? c['level'] ?? ''),
+        relationship: String(c['relationship'] ?? s['relationship'] ?? ''),
+        status: String(s['status'] ?? u['status'] ?? c['status'] ?? ''),
+        enrollmentDate: (c['enrollmentDate'] ?? s['enrollmentDate'] ?? null) as string | null,
+        isPrimary: !!(c['isPrimary'] ?? s['isPrimary']),
+        studentCode: String(s['studentCode'] ?? s['code'] ?? c['studentCode'] ?? ''),
       };
     });
   }
 
   loadPayments() {
     this.adminService.getParentPayments(this.parentId).subscribe({
-      next: (data) => this.payments.set(data)
+      next: (data) => this.payments.set(this.normalizePayments(data as Record<string, unknown>[])),
     });
   }
 
-  setTab(tab: string) { this.selectTab(tab); }
+  private normalizePayments(raw: Record<string, unknown>[]): PaymentView[] {
+    return (raw ?? []).map((p, i) => ({
+      id: String(p['id'] ?? i),
+      concept: String(p['concept'] ?? p['description'] ?? 'Pago'),
+      amount: Number(p['amount'] ?? 0),
+      dueDate: p['dueDate'] as string | undefined,
+      status: String(p['status'] ?? ''),
+    }));
+  }
 
-  resetPassword() {
-    if (!this.parentId) return;
-    this.adminService.resetUserPassword(this.parentId).subscribe({
+  getFullName(): string {
+    const p = this.parent();
+    if (!p) return '';
+    return (p.name ?? `${p.user?.firstName ?? ''} ${p.user?.lastName ?? ''}`).trim();
+  }
+
+  parentUsername(): string {
+    const p = this.parent();
+    return p?.username || p?.dni || p?.user?.username || '—';
+  }
+
+  relationship(): string {
+    return this.parent()?.relationship || 'Apoderado';
+  }
+
+  onResetPassword() {
+    const userId = this.parent()?.user?.id;
+    if (!userId) return;
+    this.adminService.resetUserPassword(userId).subscribe({
       next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
       error: () => alert('No se pudo resetear la contraseña'),
     });
   }
 
-  onResetPassword() { this.resetPassword(); }
-
-  // ─── Vincular hijos ────────────────────────────────────────────────────
   openLinkPanel() {
     this.showLinkPanel.set(true);
     this.linkError.set('');
     this.selectedStudentIds.set(new Set());
     this.linkSearch.set('');
     this.linkAsPrimary.set(false);
-    this.loadStudentsForLink();
-  }
-
-  closeLinkPanel() {
-    this.showLinkPanel.set(false);
-    this.linkError.set('');
-  }
-
-  private loadStudentsForLink() {
     this.loadingStudents.set(true);
     this.adminService.getStudents({ pageSize: 100 }).subscribe({
       next: ({ data }) => {
@@ -159,6 +186,11 @@ export class DetallePadreComponent implements OnInit {
         this.loadingStudents.set(false);
       },
     });
+  }
+
+  closeLinkPanel() {
+    this.showLinkPanel.set(false);
+    this.linkError.set('');
   }
 
   toggleStudent(id: string) {
@@ -185,7 +217,6 @@ export class DetallePadreComponent implements OnInit {
     }
     this.linkLoading.set(true);
     this.linkError.set('');
-
     const isPrimary = this.linkAsPrimary();
     const calls = ids.map(studentId =>
       this.adminService.linkParent(studentId, this.parentId, isPrimary).pipe(
@@ -194,9 +225,9 @@ export class DetallePadreComponent implements OnInit {
     );
 
     forkJoin(calls).subscribe({
-      next: (results: any[]) => {
+      next: (results: unknown[]) => {
         this.linkLoading.set(false);
-        const failures = results.filter(r => r && (r as any).error);
+        const failures = results.filter(r => r && typeof r === 'object' && 'error' in (r as object));
         if (failures.length === ids.length) {
           this.linkError.set('No se pudo vincular ningún estudiante. Inténtalo de nuevo.');
           return;
@@ -215,14 +246,10 @@ export class DetallePadreComponent implements OnInit {
     });
   }
 
-  unlinkChild(child: any) {
-    const childId = child?.id ?? child?.studentId ?? child?.student?.id;
-    const fallbackName = `${child?.user?.firstName ?? ''} ${child?.user?.lastName ?? ''}`.trim() || 'este estudiante';
-    const childName = child?.name ?? fallbackName;
-    if (!childId) return;
-    if (!confirm(`¿Desvincular a ${childName} de este apoderado?`)) return;
-
-    this.adminService.unlinkParent(childId, this.parentId).subscribe({
+  unlinkChild(child: ChildView) {
+    if (!child.id) return;
+    if (!confirm(`¿Desvincular a ${child.name} de este apoderado?`)) return;
+    this.adminService.unlinkParent(child.id, this.parentId).subscribe({
       next: () => this.loadChildren(),
       error: () => alert('No se pudo desvincular al estudiante.'),
     });
@@ -237,28 +264,6 @@ export class DetallePadreComponent implements OnInit {
   }
 
   getStudentDisplayName(s: StudentItem): string {
-    const fallback = `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || '(sin nombre)';
-    return s.name ?? fallback;
+    return s.name ?? `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || '(sin nombre)';
   }
-
-  // ─── Helpers de plantilla existente ────────────────────────────────────
-  getFullName(): string {
-    const p = this.parent();
-    if (!p) return '';
-    return p.name ?? `${p.user.firstName} ${p.user.lastName}`;
-  }
-
-  getHeroSubtitle(): string {
-    const p = this.parent();
-    if (!p) return '';
-    const rel = p.relationship ?? '';
-    const email = p.email ?? '';
-    const parts = [rel, email].filter(Boolean);
-    return parts.join(' · ');
-  }
-  get padre() { return this.parent; }
-  totalPaid = () => (this.payments() as any[]).filter(p => p.status === 'PAID').reduce((a, p) => a + (p.amount ?? 0), 0);
-  totalPending = () => (this.payments() as any[]).filter(p => p.status !== 'PAID').reduce((a, p) => a + (p.amount ?? 0), 0);
-  paidPayments = () => (this.payments() as any[]).filter(p => p.status === 'PAID');
-  pendingPayments = () => (this.payments() as any[]).filter(p => p.status !== 'PAID');
 }

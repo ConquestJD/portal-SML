@@ -87,6 +87,8 @@ export class CrearUsuarioComponent implements OnInit {
 
   isStudentForm = computed(() => this.roleKind() === 'student');
   isTeacherForm = computed(() => this.roleKind() === 'teacher');
+  isParentForm = computed(() => this.roleKind() === 'parent');
+  isAdminForm = computed(() => this.roleKind() === 'admin');
 
   showOptional = signal(false);
 
@@ -94,6 +96,14 @@ export class CrearUsuarioComponent implements OnInit {
     const d = this.formData();
     if (this.roleKind() === 'teacher') {
       return [d.phone, d.specialty, d.teacherCode, d.bio]
+        .filter(v => !!String(v ?? '').trim()).length;
+    }
+    if (this.roleKind() === 'parent') {
+      return [d.email, d.phone, d.relationship, d.occupation]
+        .filter(v => !!String(v ?? '').trim()).length;
+    }
+    if (this.roleKind() === 'admin') {
+      return [d.email, d.phone, d.address]
         .filter(v => !!String(v ?? '').trim()).length;
     }
     return [d.email, d.phone, d.emergencyPhone, d.address, d.birthDate, d.gender]
@@ -118,6 +128,16 @@ export class CrearUsuarioComponent implements OnInit {
     if (d.firstName.trim()) n++;
     if (d.lastName.trim()) n++;
     if (this.emailReady()) n++;
+    return n;
+  });
+
+  credentialReadyCount = computed(() => {
+    const d = this.formData();
+    let n = 0;
+    if (usernameFromDni(d.dni).length >= this.MIN_DNI_DIGITS) n++;
+    if (d.firstName.trim()) n++;
+    if (d.lastName.trim()) n++;
+    if (this.isEditMode() || d.password.length >= this.MIN_PASSWORD_LENGTH) n++;
     return n;
   });
 
@@ -204,6 +224,26 @@ export class CrearUsuarioComponent implements OnInit {
             specialty:   teacher.specialty ?? teacher.department ?? '',
             teacherCode: teacher.teacherCode ?? '',
             bio:         teacher.bio ?? '',
+          }));
+        },
+      });
+    }
+
+    if (this.roleKind() === 'parent') {
+      this.adminService.getParent(id).subscribe({
+        next: (parent) => {
+          this.linkedUserId.set(parent.user?.id ?? '');
+          this.formData.update(d => ({
+            ...d,
+            firstName:     parent.user?.firstName ?? d.firstName,
+            lastName:      parent.user?.lastName ?? d.lastName,
+            username:      parent.username ?? parent.user?.username ?? d.username,
+            email:         parent.email ?? parent.user?.email ?? d.email,
+            phone:         parent.phone ?? parent.user?.phone ?? d.phone,
+            dni:           parent.dni ?? parent.username ?? d.dni,
+            status:        ((parent.status ?? parent.user?.status) as UserFormData['status']) || d.status,
+            relationship:  parent.relationship ?? '',
+            occupation:    parent.occupation ?? '',
           }));
         },
       });
@@ -321,6 +361,14 @@ export class CrearUsuarioComponent implements OnInit {
       }
     }
 
+    if ((this.roleKind() === 'parent' || this.roleKind() === 'admin') && !this.isEditMode()) {
+      if (!d.firstName.trim() || !d.lastName.trim()) {
+        this.error.set('Nombre y apellido son obligatorios');
+        this.isLoading.set(false);
+        return;
+      }
+    }
+
     const mustValidatePassword =
       this.isEditMode()
         ? !!d.password
@@ -378,6 +426,35 @@ export class CrearUsuarioComponent implements OnInit {
   }
 
   private doUpdate(d: UserFormData) {
+    if (this.roleKind() === 'parent') {
+      this.adminService.updateParent(this.userId(), {
+        firstName: d.firstName,
+        lastName: d.lastName,
+        phone: d.phone || undefined,
+        relationship: d.relationship || undefined,
+        occupation: d.occupation || undefined,
+      }).subscribe({
+        next: () => {
+          if (d.password && this.linkedUserId()) {
+            this.adminService.updateUser(this.linkedUserId(), { password: d.password } as never).subscribe({
+              next: () => this.finishUpdate(),
+              error: (err) => {
+                this.error.set(this.parseError(err) ?? 'Datos guardados, pero no se pudo cambiar la contraseña');
+                this.isLoading.set(false);
+              },
+            });
+            return;
+          }
+          this.finishUpdate();
+        },
+        error: (err) => {
+          this.error.set(this.parseError(err) ?? 'Error al actualizar apoderado');
+          this.isLoading.set(false);
+        },
+      });
+      return;
+    }
+
     if (this.roleKind() === 'teacher') {
       this.adminService.updateTeacher(this.userId(), {
         firstName: d.firstName,
