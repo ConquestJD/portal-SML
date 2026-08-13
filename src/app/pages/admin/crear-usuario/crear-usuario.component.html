@@ -1,7 +1,7 @@
 <div class="adm-page" [ngClass]="containerRoleClass()">
 
   <header class="adm-page__hero">
-    <img class="adm-page__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
+    <img class="adm-page__hero-photo" [src]="heroSrc()" alt="" decoding="async" />
     <div class="adm-page__hero-veil"></div>
     <div class="adm-page__hero-content">
       <img src="/only-logo.png" alt="" class="adm-page__crest" />
@@ -273,7 +273,7 @@
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
               <div class="stu-cred__banner">
-                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <img class="stu-cred__photo" [src]="heroSrc()" alt="" />
                 <div class="stu-cred__veil"></div>
                 <img src="/only-logo.png" alt="" class="stu-cred__crest" />
               </div>
@@ -540,7 +540,7 @@
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
               <div class="stu-cred__banner">
-                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <img class="stu-cred__photo" [src]="heroSrc()" alt="" />
                 <div class="stu-cred__veil"></div>
                 <img src="/only-logo.png" alt="" class="stu-cred__crest" />
               </div>
@@ -816,7 +816,7 @@
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
               <div class="stu-cred__banner">
-                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <img class="stu-cred__photo" [src]="heroSrc()" alt="" />
                 <div class="stu-cred__veil"></div>
                 <img src="/only-logo.png" alt="" class="stu-cred__crest" />
               </div>

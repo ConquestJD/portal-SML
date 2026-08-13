@@ -9,6 +9,7 @@ import {
 } from './user-form.strategies';
 import { RoleKind, apiRoleToKind } from '../_shared/models/role.model';
 import { AdminBreadcrumbComponent } from '../_shared/components/breadcrumb/admin-breadcrumb.component';
+import { HERO } from '../../../shared/utils/hero-image';
 
 @Component({
   selector: 'app-crear-usuario',
@@ -89,6 +90,15 @@ export class CrearUsuarioComponent implements OnInit {
   isTeacherForm = computed(() => this.roleKind() === 'teacher');
   isParentForm = computed(() => this.roleKind() === 'parent');
   isAdminForm = computed(() => this.roleKind() === 'admin');
+
+  heroSrc = computed(() => {
+    switch (this.roleKind()) {
+      case 'teacher': return HERO.teachers;
+      case 'parent': return HERO.parents;
+      case 'admin': return HERO.admin;
+      default: return HERO.students;
+    }
+  });
 
   asideFullName = computed(() => {
     const d = this.formData();
