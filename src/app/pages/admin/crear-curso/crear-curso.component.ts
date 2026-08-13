@@ -8,15 +8,25 @@ import {
   AdminService,
   AcademicYearItem,
   AssignmentItem,
+  CourseItem,
   ScheduleSlot,
   TeacherItem,
 } from '../../../services/admin.service';
-import { AdminTeacherSearchComboboxComponent } from '../_shared/components/teacher-search-combobox/admin-teacher-search-combobox.component';
+import { ADMIN_SHARED } from '../_shared';
+import {
+  PredefinedSubject,
+  buildCourseCode,
+  findSubjectById,
+  findSubjectByName,
+  subjectCoverUrl,
+  subjectsForLevel,
+} from '../../../shared/data/predefined-subjects';
+import { resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
 
 @Component({
   selector: 'app-crear-curso',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AdminTeacherSearchComboboxComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ...ADMIN_SHARED],
   templateUrl: './crear-curso.component.html',
   styleUrl: './crear-curso.component.css'
 })
@@ -29,19 +39,24 @@ export class CrearCursoComponent implements OnInit {
   scheduleError = signal('');
 
   teachers = signal<TeacherItem[]>([]);
-  /** Profesor que tenía asignación activa al abrir la edición (DELETE antes de reasignar). */
+  existingCourses = signal<CourseItem[]>([]);
   initialAssignmentTeacherId = signal('');
 
-  pageTitle = computed(() => this.isEditMode() ? 'Editar Curso' : 'Crear Curso');
-  pageSubtitle = computed(() => this.isEditMode() ? 'Modifica los datos del curso' : 'Completa los datos del nuevo curso');
+  pageTitle = computed(() => this.isEditMode() ? 'Editar materia' : 'Nueva materia');
+
+  breadcrumbItems = computed(() => [
+    { label: 'Cursos', link: '/admin/cursos' },
+    { label: this.isEditMode() ? 'Editar' : 'Nueva' },
+  ]);
 
   academicYears = signal<AcademicYearItem[]>([]);
   readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-
-  readonly colorPalette = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
-    '#f97316', '#6366f1', '#14b8a6', '#a855f7'
+  readonly weekDayShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  readonly subjectCoverUrl = subjectCoverUrl;
+  readonly levels: { key: string; label: string }[] = [
+    { key: 'inicial', label: 'Inicial' },
+    { key: 'primaria', label: 'Primaria' },
+    { key: 'secundaria', label: 'Secundaria' },
   ];
 
   readonly calendarStartHour = 7;
@@ -61,12 +76,13 @@ export class CrearCursoComponent implements OnInit {
   });
 
   formData = signal({
+    subjectId: '',
     name: '',
     code: '',
     level: '',
     grade: '',
     academicYearId: '',
-    color: this.colorPalette[0],
+    color: '#003366',
     schedule: [] as ScheduleSlot[],
     teacherId: '',
   });
@@ -79,7 +95,44 @@ export class CrearCursoComponent implements OnInit {
     return [];
   });
 
+  catalogSubjects = computed(() => subjectsForLevel(this.formData().level));
+
+  selectedSubject = computed((): PredefinedSubject | undefined => {
+    const id = this.formData().subjectId;
+    if (id) return findSubjectById(id);
+    return findSubjectByName(this.formData().name);
+  });
+
+  takenSubjectNames = computed(() => {
+    const grade = this.formData().grade;
+    if (!grade) return new Set<string>();
+    const currentId = this.courseId();
+    const names = new Set<string>();
+    for (const c of this.existingCourses()) {
+      if (c.grade !== grade) continue;
+      if (currentId && c.id === currentId) continue;
+      names.add((c.name ?? '').trim().toLowerCase());
+    }
+    return names;
+  });
+
   hasSchedule = computed(() => this.formData().schedule.length > 0);
+
+  readyCount = computed(() => {
+    const d = this.formData();
+    let n = 0;
+    if (d.level) n++;
+    if (d.grade) n++;
+    if (d.subjectId || d.name) n++;
+    if (d.teacherId) n++;
+    return n;
+  });
+
+  coverPreview = computed(() => {
+    const s = this.selectedSubject();
+    if (s) return subjectCoverUrl(s);
+    return resolveCourseCoverUrl({ name: this.formData().name });
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -91,6 +144,11 @@ export class CrearCursoComponent implements OnInit {
     this.adminService.getTeachers({ pageSize: 100 }).subscribe({
       next: ({ data }) => this.teachers.set(data),
       error: () => this.teachers.set([])
+    });
+
+    this.adminService.getCourses({ pageSize: 100 }).subscribe({
+      next: ({ data }) => this.existingCourses.set(data),
+      error: () => this.existingCourses.set([])
     });
 
     this.adminService.getAcademicYears().subscribe({
@@ -110,6 +168,45 @@ export class CrearCursoComponent implements OnInit {
         this.loadCourse(params['id']);
       }
     });
+  }
+
+  isSubjectTaken(subject: PredefinedSubject): boolean {
+    return this.takenSubjectNames().has(subject.name.toLowerCase());
+  }
+
+  selectLevel(level: string) {
+    this.formData.update(d => ({
+      ...d,
+      level,
+      grade: '',
+      subjectId: this.isEditMode() ? d.subjectId : '',
+      name: this.isEditMode() ? d.name : '',
+      code: this.isEditMode() ? d.code : '',
+    }));
+  }
+
+  selectGrade(grade: string) {
+    this.formData.update(d => ({ ...d, grade }));
+    this.refreshCode();
+  }
+
+  selectSubject(subject: PredefinedSubject) {
+    if (!this.isEditMode() && this.isSubjectTaken(subject)) return;
+    this.formData.update(d => ({
+      ...d,
+      subjectId: subject.id,
+      name: subject.name,
+      color: subject.color,
+    }));
+    this.refreshCode();
+  }
+
+  private refreshCode() {
+    if (this.isEditMode()) return;
+    const d = this.formData();
+    const subject = findSubjectById(d.subjectId);
+    if (!subject || !d.grade) return;
+    this.formData.update(f => ({ ...f, code: buildCourseCode(subject.codePrefix, d.grade) }));
   }
 
   private mapLevelToApi(levelKey: string): string {
@@ -136,14 +233,17 @@ export class CrearCursoComponent implements OnInit {
               ? 'inicial'
               : '';
 
+        const subject = findSubjectByName(course.name);
+
         this.formData.update(fd => ({
           ...fd,
+          subjectId: subject?.id ?? '',
           name: course.name,
           code: course.code,
           level: lvl || fd.level,
           grade: course.grade ?? '',
           schedule: course.schedule ?? [],
-          color: course.color ?? this.colorPalette[0],
+          color: course.color ?? subject?.color ?? '#003366',
           academicYearId: a?.academicYear?.id ?? fd.academicYearId,
           teacherId: a?.teacher?.id ?? '',
         }));
@@ -153,21 +253,6 @@ export class CrearCursoComponent implements OnInit {
       },
       error: () => this.error.set('No se pudo cargar el curso')
     });
-  }
-
-  onLevelChange() {
-    this.formData.update(d => ({ ...d, grade: '' }));
-  }
-
-  generateCode() {
-    const d = this.formData();
-    if (!d.name || !d.grade) return;
-    const code = (d.grade.substring(0, 3) + '-' + d.name.substring(0, 3)).toUpperCase().replace(/\s/g, '');
-    this.formData.update(f => ({ ...f, code }));
-  }
-
-  selectColor(color: string) {
-    this.formData.update(f => ({ ...f, color }));
   }
 
   updateScheduleDraft(field: 'day' | 'startTime' | 'endTime', value: string) {
@@ -220,10 +305,8 @@ export class CrearCursoComponent implements OnInit {
     return h * 60 + (m || 0);
   }
 
-  private calendarStartMinutes(): number { return this.calendarStartHour * 60; }
-
   getBlockTop(startTime: string): number {
-    return Math.max(0, this.timeToMinutes(startTime) - this.calendarStartMinutes());
+    return Math.max(0, this.timeToMinutes(startTime) - this.calendarStartHour * 60);
   }
 
   getBlockHeight(startTime: string, endTime: string): number {
@@ -242,8 +325,14 @@ export class CrearCursoComponent implements OnInit {
     this.success.set('');
     const d = this.formData();
 
-    if (!d.name || !d.code || !d.level || !d.grade) {
-      this.error.set('Completa nombre, código, nivel y grado');
+    if (!d.level || !d.grade) {
+      this.error.set('Elige nivel y grado');
+      this.isLoading.set(false);
+      return;
+    }
+
+    if (!d.name || !d.code) {
+      this.error.set('Elige una materia del catálogo');
       this.isLoading.set(false);
       return;
     }
@@ -344,7 +433,6 @@ export class CrearCursoComponent implements OnInit {
     );
   }
 
-  /** Busca la sección que mejor encaja con grado/nivel/año para no exponer el campo en la UI. */
   private resolveSectionId(grade: string, levelKey: string, academicYearId: string): Observable<string | null> {
     const levelApi = this.mapLevelToApi(levelKey).toLowerCase();
     return this.adminService.getSections({ academicYearId }).pipe(
