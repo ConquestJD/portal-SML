@@ -69,10 +69,12 @@ export class CrearCursoComponent implements OnInit {
     return slots;
   });
 
+  private readonly defaultStartTime = '09:00';
+
   scheduleDraft = signal<{ day: string; startTime: string; endTime: string }>({
     day: '',
-    startTime: '',
-    endTime: ''
+    startTime: this.defaultStartTime,
+    endTime: this.addHoursToTime(this.defaultStartTime, 2),
   });
 
   formData = signal({
@@ -256,6 +258,14 @@ export class CrearCursoComponent implements OnInit {
   }
 
   updateScheduleDraft(field: 'day' | 'startTime' | 'endTime', value: string) {
+    if (field === 'startTime') {
+      this.scheduleDraft.update(d => ({
+        ...d,
+        startTime: value,
+        endTime: this.addHoursToTime(value, 2),
+      }));
+      return;
+    }
     this.scheduleDraft.update(d => ({ ...d, [field]: value }));
   }
 
@@ -286,7 +296,11 @@ export class CrearCursoComponent implements OnInit {
 
     const newBlock: ScheduleSlot = { day: d.day, startTime: d.startTime, endTime: d.endTime };
     this.formData.update(f => ({ ...f, schedule: [...f.schedule, newBlock] }));
-    this.scheduleDraft.set({ day: '', startTime: '', endTime: '' });
+    this.scheduleDraft.set({
+      day: '',
+      startTime: this.defaultStartTime,
+      endTime: this.addHoursToTime(this.defaultStartTime, 2),
+    });
   }
 
   removeScheduleBlock(block: ScheduleSlot) {
@@ -298,6 +312,14 @@ export class CrearCursoComponent implements OnInit {
 
   clearAllSchedule() {
     this.formData.update(f => ({ ...f, schedule: [] }));
+  }
+
+  private addHoursToTime(time: string, hours: number): string {
+    const [h, m] = (time || this.defaultStartTime).split(':').map(Number);
+    const wrapped = (((h || 0) + hours) * 60 + (m || 0) + 24 * 60) % (24 * 60);
+    const hh = Math.floor(wrapped / 60);
+    const mm = wrapped % 60;
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
   private timeToMinutes(time: string): number {
