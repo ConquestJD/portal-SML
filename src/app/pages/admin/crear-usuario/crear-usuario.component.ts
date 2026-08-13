@@ -90,6 +90,19 @@ export class CrearUsuarioComponent implements OnInit {
   isParentForm = computed(() => this.roleKind() === 'parent');
   isAdminForm = computed(() => this.roleKind() === 'admin');
 
+  asideFullName = computed(() => {
+    const d = this.formData();
+    return `${d.firstName} ${d.lastName}`.trim();
+  });
+
+  asideInitials = computed(() => {
+    const name = this.asideFullName();
+    if (!name) return 'SML';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  });
+
   showOptional = signal(false);
 
   optionalFilledCount = computed(() => {

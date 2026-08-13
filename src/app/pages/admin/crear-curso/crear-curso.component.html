@@ -259,25 +259,34 @@
 
         <aside class="stu-aside" aria-label="Resumen de la materia">
           <div class="stu-cred">
-            <p class="stu-cred__kicker">Ficha</p>
-            <h3 class="stu-cred__title">{{ formData().name || 'Elige una materia' }}</h3>
-            <p class="stu-cred__text">
-              @if (formData().grade) { {{ formData().grade }} }
-              @else { Nivel y grado primero }
-            </p>
-            <div class="aside-cover">
-              <img [src]="coverPreview()" alt="" />
+            <div class="stu-cred__banner">
+              <img class="stu-cred__photo" [src]="coverPreview()" alt="" />
+              <div class="stu-cred__veil"></div>
+              <img src="/only-logo.png" alt="" class="stu-cred__crest" />
             </div>
-            <dl class="stu-cred__list">
-              <div>
-                <dt>Código</dt>
-                <dd>{{ formData().code || 'Se genera al elegir' }}</dd>
+            <div class="stu-cred__body">
+              <div class="stu-cred__who">
+                <span class="stu-cred__mark">{{ asideInitials() }}</span>
+                <div>
+                  <p class="stu-cred__kicker">Materia</p>
+                  <h3 class="stu-cred__title">{{ formData().name || 'Elige una materia' }}</h3>
+                </div>
               </div>
-              <div>
-                <dt>Horario</dt>
-                <dd>{{ hasSchedule() ? (formData().schedule.length + ' bloque(s)') : 'Sin bloques aún' }}</dd>
-              </div>
-            </dl>
+              <p class="stu-cred__text">
+                @if (formData().grade) { {{ formData().grade }} }
+                @else { Nivel y grado primero }
+              </p>
+              <dl class="stu-cred__list">
+                <div>
+                  <dt>Código</dt>
+                  <dd>{{ formData().code || 'Se genera al elegir' }}</dd>
+                </div>
+                <div>
+                  <dt>Horario</dt>
+                  <dd>{{ hasSchedule() ? (formData().schedule.length + ' bloque(s)') : 'Sin bloques aún' }}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
           @if (!isEditMode()) {
             <div class="stu-check">

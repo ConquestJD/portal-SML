@@ -272,20 +272,31 @@
 
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
-              <p class="stu-cred__kicker">Acceso al portal</p>
-              <h3 class="stu-cred__title">Se asigna al guardar</h3>
-              <p class="stu-cred__text">No hace falta inventar usuario ni contraseña.</p>
-
-              <dl class="stu-cred__list">
-                <div>
-                  <dt>Usuario</dt>
-                  <dd>{{ isEditMode() ? (formData().username || '—') : ('Automático · ' + studentCodePreview()) }}</dd>
+              <div class="stu-cred__banner">
+                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <div class="stu-cred__veil"></div>
+                <img src="/only-logo.png" alt="" class="stu-cred__crest" />
+              </div>
+              <div class="stu-cred__body">
+                <div class="stu-cred__who">
+                  <span class="stu-cred__mark">{{ asideInitials() }}</span>
+                  <div>
+                    <p class="stu-cred__kicker">Alumno</p>
+                    <h3 class="stu-cred__title">{{ asideFullName() || 'Nueva matrícula' }}</h3>
+                  </div>
                 </div>
-                <div>
-                  <dt>Contraseña</dt>
-                  <dd>{{ isEditMode() ? 'Sin cambios' : (studentPasswordPreview() || 'El DNI del alumno') }}</dd>
-                </div>
-              </dl>
+                <p class="stu-cred__text">El código se asigna al guardar. La contraseña es el DNI.</p>
+                <dl class="stu-cred__list">
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>{{ isEditMode() ? (formData().username || '—') : ('Automático · ' + studentCodePreview()) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Contraseña</dt>
+                    <dd>{{ isEditMode() ? 'Sin cambios' : (studentPasswordPreview() || 'El DNI del alumno') }}</dd>
+                  </div>
+                </dl>
+              </div>
             </div>
 
             @if (!isEditMode()) {
@@ -528,19 +539,31 @@
 
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
-              <p class="stu-cred__kicker">Acceso al portal</p>
-              <h3 class="stu-cred__title">Usuario = correo</h3>
-              <p class="stu-cred__text">El docente entra con su correo y el DNI como contraseña.</p>
-              <dl class="stu-cred__list">
-                <div>
-                  <dt>Usuario</dt>
-                  <dd>{{ formData().email.trim() || 'Se completa con el correo' }}</dd>
+              <div class="stu-cred__banner">
+                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <div class="stu-cred__veil"></div>
+                <img src="/only-logo.png" alt="" class="stu-cred__crest" />
+              </div>
+              <div class="stu-cred__body">
+                <div class="stu-cred__who">
+                  <span class="stu-cred__mark">{{ asideInitials() }}</span>
+                  <div>
+                    <p class="stu-cred__kicker">Docente</p>
+                    <h3 class="stu-cred__title">{{ asideFullName() || 'Nuevo docente' }}</h3>
+                  </div>
                 </div>
-                <div>
-                  <dt>Contraseña</dt>
-                  <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (studentPasswordPreview() || 'El DNI del docente') }}</dd>
-                </div>
-              </dl>
+                <p class="stu-cred__text">Entra con su correo. El DNI es la contraseña inicial.</p>
+                <dl class="stu-cred__list">
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>{{ formData().email.trim() || 'Se completa con el correo' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Contraseña</dt>
+                    <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (studentPasswordPreview() || 'El DNI del docente') }}</dd>
+                  </div>
+                </dl>
+              </div>
             </div>
             @if (!isEditMode()) {
               <div class="stu-check">
@@ -792,22 +815,31 @@
 
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
-              <p class="stu-cred__kicker">Acceso al portal</p>
-              <h3 class="stu-cred__title">Usuario = correo</h3>
-              <p class="stu-cred__text">
-                @if (isParentForm()) { El apoderado entra con su correo y el DNI como contraseña. }
-                @else { El administrador entra con su correo y el DNI como contraseña. }
-              </p>
-              <dl class="stu-cred__list">
-                <div>
-                  <dt>Usuario</dt>
-                  <dd>{{ formData().email.trim() || 'Se completa con el correo' }}</dd>
+              <div class="stu-cred__banner">
+                <img class="stu-cred__photo" src="/images/fondo.webp" alt="" />
+                <div class="stu-cred__veil"></div>
+                <img src="/only-logo.png" alt="" class="stu-cred__crest" />
+              </div>
+              <div class="stu-cred__body">
+                <div class="stu-cred__who">
+                  <span class="stu-cred__mark">{{ asideInitials() }}</span>
+                  <div>
+                    <p class="stu-cred__kicker">{{ isParentForm() ? 'Apoderado' : 'Administración' }}</p>
+                    <h3 class="stu-cred__title">{{ asideFullName() || (isParentForm() ? 'Nuevo apoderado' : 'Nuevo administrador') }}</h3>
+                  </div>
                 </div>
-                <div>
-                  <dt>Contraseña</dt>
-                  <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (studentPasswordPreview() || 'El DNI') }}</dd>
-                </div>
-              </dl>
+                <p class="stu-cred__text">Entra con su correo. El DNI es la contraseña inicial.</p>
+                <dl class="stu-cred__list">
+                  <div>
+                    <dt>Usuario</dt>
+                    <dd>{{ formData().email.trim() || 'Se completa con el correo' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Contraseña</dt>
+                    <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (studentPasswordPreview() || 'El DNI') }}</dd>
+                  </div>
+                </dl>
+              </div>
             </div>
             @if (!isEditMode()) {
               <div class="stu-check">

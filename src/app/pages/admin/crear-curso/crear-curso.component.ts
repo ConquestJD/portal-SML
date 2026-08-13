@@ -136,6 +136,14 @@ export class CrearCursoComponent implements OnInit {
     return resolveCourseCoverUrl({ name: this.formData().name });
   });
 
+  asideInitials = computed(() => {
+    const name = this.formData().name.trim();
+    if (!name) return 'SML';
+    const parts = name.split(/\s+/).filter(w => !/^(y|de|del|la|el|para)$/i.test(w));
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  });
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,

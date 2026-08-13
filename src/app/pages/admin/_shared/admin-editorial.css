@@ -451,6 +451,204 @@
 
 .roster-actions .adm-link + .adm-link { margin-left: .75rem; }
 
+/* ── Create-form credential card (aside) ───────────── */
+.stu-aside {
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.stu-cred {
+  background: var(--navy-deep);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(0 21 40 / .16);
+}
+
+.stu-cred__banner {
+  position: relative;
+  height: 6.25rem;
+  overflow: hidden;
+}
+
+.stu-cred__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 32%;
+}
+
+.stu-cred__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0 21 40 / .15) 0%, rgba(0 21 40 / .82) 100%),
+    linear-gradient(105deg, rgba(0 51 102 / .35) 0%, transparent 60%);
+}
+
+.stu-cred__crest {
+  position: absolute;
+  left: 1.1rem;
+  bottom: .9rem;
+  z-index: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 10px rgba(0 0 0 / .45));
+}
+
+.stu-cred__body {
+  padding: 1.15rem 1.15rem 1.2rem;
+  border-bottom: 3px solid var(--crimson);
+}
+
+.stu-cred__who {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .85rem;
+}
+
+.stu-cred__mark {
+  width: 2.55rem;
+  height: 2.55rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255 255 255 / .1);
+  border: 1px solid rgba(255 255 255 / .18);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.stu-cred__kicker {
+  margin: 0 0 .15rem;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .5);
+}
+
+.stu-cred__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stu-cred__text {
+  margin: 0 0 .15rem;
+  font-size: .8rem;
+  color: rgba(255 255 255 / .68);
+  line-height: 1.4;
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.stu-cred__list {
+  margin: .85rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stu-cred__list div {
+  padding: .7rem 0;
+  border-top: 1px solid rgba(255 255 255 / .12);
+}
+
+.stu-cred__list dt {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .45);
+}
+
+.stu-cred__list dd {
+  margin: .2rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.stu-check {
+  background: var(--surface);
+  padding: 1.15rem 1.15rem 1.2rem;
+  border-top: 3px solid var(--navy);
+}
+
+.stu-check__label {
+  margin: 0;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stu-check__count {
+  margin: .2rem 0 .7rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.stu-check__bar {
+  height: 2px;
+  background: var(--line);
+  margin-bottom: .9rem;
+}
+
+.stu-check__bar span {
+  display: block;
+  height: 100%;
+  background: var(--crimson);
+  transition: width .25s var(--ease);
+}
+
+.stu-check__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+
+.stu-check__items li {
+  font-size: .8rem;
+  color: var(--muted);
+  padding-left: 1.15rem;
+  position: relative;
+}
+
+.stu-check__items li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: .45rem;
+  width: .42rem;
+  height: .42rem;
+  background: var(--line);
+}
+
+.stu-check__items li.is-done {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.stu-check__items li.is-done::before { background: var(--crimson); }
+
 @keyframes admHeroIn {
   from { transform: scale(1.08); opacity: .7; }
   to { transform: scale(1.04); opacity: 1; }
@@ -467,6 +665,7 @@
     margin-top: 0;
   }
   .metrics, .metrics--3, .metrics--2 { grid-template-columns: 1fr 1fr; }
+  .stu-aside { position: static; }
 }
 
 @media (max-width: 560px) {
