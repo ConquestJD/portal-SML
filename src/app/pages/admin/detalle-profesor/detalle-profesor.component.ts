@@ -6,6 +6,19 @@ import { AdminService, TeacherItem } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
+interface CourseView {
+  id: string;
+  name: string;
+  code: string;
+  level: string;
+  grade: string;
+  section: string;
+  academicYear: string;
+  students: number;
+  classroom: string;
+  schedule: { day: string; time: string }[];
+}
+
 @Component({
   selector: 'app-detalle-profesor',
   standalone: true,
@@ -16,31 +29,33 @@ import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 export class DetalleProfesorComponent implements OnInit {
   loading = signal(true);
   error = signal('');
-  activeTab = signal('perfil');
+  activeTab = signal('ficha');
   teacherId = '';
 
   readonly tabs: AdminTab[] = [
-    { id: 'perfil',    label: 'Perfil',              icon: 'fa-user' },
-    { id: 'cursos',    label: 'Cursos activos',      icon: 'fa-book' },
-    { id: 'historial', label: 'Historial de cursos', icon: 'fa-history' },
+    { id: 'ficha',     label: 'Ficha' },
+    { id: 'cursos',    label: 'Cursos' },
+    { id: 'historial', label: 'Historial' },
   ];
 
   teacher = signal<TeacherItem | null>(null);
-  activeCourses = signal<unknown[]>([]);
-  courseHistory = signal<unknown[]>([]);
+  activeCourses = signal<CourseView[]>([]);
+  courseHistory = signal<CourseView[]>([]);
+  showAssignCourseModal = signal(false);
+  allCourses = signal<CourseView[]>([]);
 
-  resetPassword() {
-    if (!this.teacherId) return;
-    this.adminService.resetUserPassword(this.teacherId).subscribe({
-      next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
-      error: () => alert('No se pudo resetear la contraseña'),
-    });
-  }
+  private _selectedCourseId = signal('');
+  get selectedCourseId(): string { return this._selectedCourseId(); }
+  set selectedCourseId(v: string) { this._selectedCourseId.set(v); }
 
-  onResetPassword() { this.resetPassword(); }
+  availableCoursesForAssignment = computed(() => {
+    const assigned = new Set(this.activeCourses().map(c => c.id));
+    return this.allCourses().filter(c => c.id && !assigned.has(c.id));
+  });
 
-  readonly finishedCourses = computed(() => this.courseHistory() as any[]);
-  removeCourse(courseId: string) { this.unassignCourse(courseId); }
+  selectedCourse = computed(() =>
+    this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
+  );
 
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
@@ -57,7 +72,7 @@ export class DetalleProfesorComponent implements OnInit {
     });
   }
 
-  selectTab(tab: string) {
+  setTab(tab: string) {
     this.activeTab.set(tab);
     if (tab === 'cursos') this.loadActiveCourses();
     if (tab === 'historial') this.loadCourseHistory();
@@ -65,86 +80,113 @@ export class DetalleProfesorComponent implements OnInit {
 
   loadActiveCourses() {
     this.adminService.getTeacherActiveCourses(this.teacherId).subscribe({
-      next: (data) => this.activeCourses.set(this.normalizeCourses(data as any[]))
+      next: (data) => this.activeCourses.set(this.normalizeCourses(data as Record<string, unknown>[])),
     });
   }
 
   loadCourseHistory() {
     this.adminService.getTeacherCourseHistory(this.teacherId).subscribe({
-      next: (data) => this.courseHistory.set(this.normalizeCourses(data as any[]))
+      next: (data) => this.courseHistory.set(this.normalizeCourses(data as Record<string, unknown>[])),
     });
   }
 
-  /** Acepta tanto cursos planos como objetos `TeacherAssignment` con `course` anidado. */
-  private normalizeCourses(raw: any[]): any[] {
+  private normalizeCourses(raw: Record<string, unknown>[]): CourseView[] {
     return (raw ?? []).map(c => {
-      const course = c?.course ?? c;
-      const schedule = (course?.schedule ?? c?.schedule ?? []) as any[];
+      const course = (c['course'] as Record<string, unknown> | undefined) ?? c;
+      const section = c['section'] as Record<string, unknown> | undefined;
+      const year = c['academicYear'] as Record<string, unknown> | undefined;
+      const schedule = (course['schedule'] ?? c['schedule'] ?? []) as Record<string, unknown>[];
       return {
-        id: course?.id ?? c?.courseId ?? c?.id ?? '',
-        name: course?.name ?? '(sin nombre)',
-        code: course?.code ?? '',
-        level: course?.level ?? '',
-        grade: course?.grade ?? c?.section?.grade ?? '',
-        section: c?.section?.name ?? '',
-        color: course?.color ?? c?.color ?? '',
-        academicYear: c?.academicYear?.name ?? course?.academicYear ?? '',
-        students: c?.students ?? course?.students ?? 0,
-        classroom: course?.classroom ?? c?.classroom ?? '',
-        startDate: c?.startDate ?? course?.startDate ?? null,
-        endDate: c?.endDate ?? course?.endDate ?? null,
+        id: String(course['id'] ?? c['courseId'] ?? c['id'] ?? ''),
+        name: String(course['name'] ?? '(sin nombre)'),
+        code: String(course['code'] ?? ''),
+        level: String(course['level'] ?? ''),
+        grade: String(course['grade'] ?? section?.['grade'] ?? ''),
+        section: String(section?.['name'] ?? ''),
+        academicYear: String(year?.['name'] ?? course['academicYear'] ?? ''),
+        students: Number(c['students'] ?? course['students'] ?? 0),
+        classroom: String(course['classroom'] ?? c['classroom'] ?? ''),
         schedule: schedule.map(s => ({
-          day: s?.day ?? '',
-          time: s?.time ?? (s?.startTime && s?.endTime ? `${s.startTime} – ${s.endTime}` : ''),
+          day: String(s['day'] ?? ''),
+          time: String(s['time'] ?? (s['startTime'] && s['endTime'] ? `${s['startTime']} – ${s['endTime']}` : '')),
         })),
       };
     });
   }
 
-  unassignCourse(courseId: string) {
-    this.adminService.unassignCourseFromTeacher(this.teacherId, courseId).subscribe({
-      next: () => this.loadActiveCourses()
-    });
-  }
-
-  setTab(tab: string) { this.selectTab(tab); }
   getFullName(): string {
     const t = this.teacher();
     if (!t) return '';
-    return t.name ?? `${t.user.firstName} ${t.user.lastName}`;
+    return (t.name ?? `${t.user?.firstName ?? ''} ${t.user?.lastName ?? ''}`).trim();
   }
 
-  getHeroSubtitle(): string {
-    const t = this.profesor();
-    return t.department || t.specialty || 'Docente';
+  teacherEmail(): string {
+    const t = this.teacher();
+    return t?.email || t?.user?.email || '—';
   }
-  readonly profesor = computed(() => this.teacher() ?? {
-    name: '', department: '', specialty: '', email: '', phone: '', status: '',
-    teacherCode: '', bio: '',
-    user: { id: '', email: '', firstName: '', lastName: '', status: '' }
-  } as any);
-  showAssignCourseModal = signal(false);
-  availableCoursesForAssignment = signal<any[]>([]);
 
-  private _selectedCourseId = signal('');
-  get selectedCourseId(): string { return this._selectedCourseId(); }
-  set selectedCourseId(v: string) { this._selectedCourseId.set(v); }
+  specialty(): string {
+    const t = this.teacher();
+    return t?.specialty || t?.department || 'Docente';
+  }
 
-  readonly selectedCourse = computed(() =>
-    this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
-  );
+  teacherCode(): string {
+    return this.teacher()?.teacherCode || '—';
+  }
 
   getLevelLabel(level: string | undefined): string {
     const m: Record<string, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
     return m[(level ?? '').toLowerCase()] ?? (level ?? '');
   }
 
-  openAssignCourseModal() {
-    this.showAssignCourseModal.set(true);
-    this.adminService.getCourses({ pageSize: 100 }).subscribe({
-      next: ({ data }) => this.availableCoursesForAssignment.set(data as any[]),
+  courseMeta(course: CourseView): string {
+    return [
+      course.code,
+      this.getLevelLabel(course.level),
+      [course.grade, course.section].filter(Boolean).join(' '),
+      course.academicYear,
+    ].filter(Boolean).join(' · ');
+  }
+
+  onResetPassword() {
+    const userId = this.teacher()?.user?.id;
+    if (!userId) return;
+    this.adminService.resetUserPassword(userId).subscribe({
+      next: (res) => alert(`Contraseña temporal: ${res.tempPassword}`),
+      error: () => alert('No se pudo resetear la contraseña'),
     });
   }
+
+  unassignCourse(courseId: string) {
+    this.adminService.unassignCourseFromTeacher(this.teacherId, courseId).subscribe({
+      next: () => this.loadActiveCourses(),
+    });
+  }
+
+  openAssignCourseModal() {
+    this.showAssignCourseModal.set(true);
+    this._selectedCourseId.set('');
+    this.adminService.getCourses({ pageSize: 100 }).subscribe({
+      next: ({ data }) => this.allCourses.set(
+        data.map(c => ({
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          level: c.level ?? '',
+          grade: c.grade ?? '',
+          section: '',
+          academicYear: '',
+          students: c.students ?? 0,
+          classroom: c.classroom ?? '',
+          schedule: (c.schedule ?? []).map(s => ({
+            day: s.day,
+            time: s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : '',
+          })),
+        }))
+      ),
+    });
+  }
+
   closeAssignCourseModal() {
     this.showAssignCourseModal.set(false);
     this._selectedCourseId.set('');
@@ -153,12 +195,12 @@ export class DetalleProfesorComponent implements OnInit {
   assignCourse() {
     const course = this.selectedCourse();
     if (!course) return;
-    const payload = {
+    const raw = this.allCourses().find(c => c.id === course.id) as CourseView & { sectionId?: string; academicYearId?: string } | undefined;
+    this.adminService.assignCourseToTeacher(this.teacherId, {
       courseId: course.id,
-      sectionId: course.sectionId ?? '',
-      academicYearId: course.academicYearId ?? '',
-    };
-    this.adminService.assignCourseToTeacher(this.teacherId, payload).subscribe({
+      sectionId: raw?.sectionId ?? '',
+      academicYearId: raw?.academicYearId ?? '',
+    }).subscribe({
       next: () => {
         this.closeAssignCourseModal();
         this.loadActiveCourses();
