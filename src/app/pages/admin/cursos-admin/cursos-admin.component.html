@@ -6,7 +6,7 @@
     <div class="adm-page__hero-content">
       <img src="/only-logo.png" alt="" class="adm-page__crest" />
       <div>
-        <h1 class="adm-page__title">Cursos</h1>
+        <h1 class="adm-page__title">Plan de estudios</h1>
         <p class="adm-page__brand">Santa María Laura</p>
       </div>
       <div class="adm-page__hero-actions">
@@ -17,10 +17,18 @@
 
   <div class="adm-page__body">
 
-    <section class="metrics metrics--2" aria-label="Resumen">
+    <section class="metrics" aria-label="Resumen">
       <div class="metric">
         <span class="metric__n">{{ courses().length }}</span>
         <span class="metric__l">Cursos</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ withTeacherCount() }}</span>
+        <span class="metric__l">Con docente</span>
+      </div>
+      <div class="metric" [class.metric--alert]="withoutScheduleCount() > 0">
+        <span class="metric__n">{{ withoutScheduleCount() }}</span>
+        <span class="metric__l">Sin horario</span>
       </div>
       <div class="metric">
         <span class="metric__n">{{ availableGrades().length }}</span>
@@ -32,15 +40,111 @@
       <p class="adm-alert" role="alert">{{ error() }}</p>
     }
 
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Materia, código o profesor…"
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+        />
+      </label>
+      <select [(ngModel)]="filterLevel" name="filterLevel" aria-label="Nivel">
+        <option value="">Nivel</option>
+        @for (lvl of availableLevels(); track lvl) {
+          <option [value]="lvl">{{ lvl | levelLabel }}</option>
+        }
+      </select>
+      <select [(ngModel)]="filterGrade" name="filterGrade" aria-label="Grado">
+        <option value="">Grado</option>
+        @for (g of availableGrades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="adm-link" (click)="resetFilters()">Limpiar</button>
+      }
+      <div class="view-toggle" role="group" aria-label="Tipo de vista">
+        <button type="button" [class.active]="viewMode() === 'catalog'" (click)="setView('catalog')">Catálogo</button>
+        <button type="button" [class.active]="viewMode() === 'timetable'" (click)="setView('timetable')">Horario</button>
+      </div>
+    </div>
+
+    @if (hasActiveFilters()) {
+      <p class="roster-count">{{ filteredCourses().length }} de {{ courses().length }}</p>
+    }
+
     @if (loading()) {
-      <p class="feed__empty">Cargando cursos…</p>
-    } @else if (availableGrades().length === 0) {
-      <section class="feed">
-        <p class="feed__empty">
-          No hay cursos registrados.
-          <a routerLink="/admin/cursos/crear" class="adm-link">Crear el primero</a>
-        </p>
-      </section>
+      <p class="feed__empty">Cargando plan de estudios…</p>
+    } @else if (courses().length === 0) {
+      <admin-empty-state title="Aún no hay cursos" message="Crea el primero para armar el horario de cada grado.">
+        <a routerLink="/admin/cursos/crear" class="adm-link">Nuevo curso</a>
+      </admin-empty-state>
+    } @else if (filteredCourses().length === 0) {
+      <admin-empty-state title="Sin coincidencias" message="No hay cursos con esos filtros."></admin-empty-state>
+    } @else if (viewMode() === 'catalog') {
+      <div class="roster" aria-label="Catálogo de cursos">
+        @for (group of groupedCourses(); track group.grade) {
+          <section class="roster-group">
+            <header class="roster-group__head">
+              <div>
+                <p class="roster-group__kicker">{{ group.level | levelLabel }}</p>
+                <h2 class="roster-group__title">{{ group.grade }}</h2>
+              </div>
+              <div class="grade-head-side">
+                <button type="button" class="adm-link" (click)="openTimetable(group.grade)">Ver horario</button>
+                <span class="roster-group__n">{{ group.courses.length }}</span>
+              </div>
+            </header>
+
+            <div class="subject-grid">
+              @for (course of group.courses; track course.id) {
+                <article class="subject-card" [style.--accent]="courseAccent(course)">
+                  <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="subject-card__media">
+                    <img
+                      [src]="coverUrl(course)"
+                      [alt]="coverAlt(course)"
+                      class="subject-card__img"
+                      loading="lazy"
+                    />
+                    <div class="subject-card__veil"></div>
+                    <span class="subject-card__code">{{ course.code }}</span>
+                  </a>
+                  <div class="subject-card__body">
+                    <h3 class="subject-card__name">
+                      <a [routerLink]="['/admin/cursos', course.id, 'editar']">{{ course.name }}</a>
+                    </h3>
+                    <p class="subject-card__teacher" [class.is-muted]="!teacherName(course.id)">
+                      {{ teacherName(course.id) || 'Sin docente asignado' }}
+                    </p>
+                    <div class="day-strip" aria-label="Días de clase">
+                      @for (day of weekDays; track day; let i = $index) {
+                        <span
+                          class="day-strip__cell"
+                          [class.is-on]="dayHasClass(course, day)"
+                          [title]="day">{{ weekDayShort[i].charAt(0) }}</span>
+                      }
+                    </div>
+                    <p class="subject-card__meta">
+                      @if (hoursLabel(course)) { {{ hoursLabel(course) }} }
+                      @if (hoursLabel(course) && course.classroom) { · }
+                      @if (course.classroom) { {{ course.classroom }} }
+                      @if (!hoursLabel(course) && !course.classroom) { {{ scheduleHint(course) }} }
+                    </p>
+                    <div class="subject-card__actions">
+                      <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="adm-link">Editar</a>
+                      <button type="button" class="adm-link adm-link--danger" (click)="deleteCourse(course.id)">
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      </div>
     } @else {
       <nav class="adm-tabs" aria-label="Grados">
         @for (grade of availableGrades(); track grade) {
@@ -49,106 +153,78 @@
             class="adm-tabs__btn"
             [class.active]="selectedGrade() === grade"
             (click)="selectGrade(grade)">
-            {{ grade }} ({{ getCoursesCountByGrade(grade) }})
+            {{ grade }}
           </button>
         }
       </nav>
 
       @if (selectedGrade()) {
-        <div class="cursos-stage">
+        <section class="timetable" aria-label="Horario semanal">
+          <header class="timetable__head">
+            <div>
+              <p class="timetable__kicker">Semana lectiva</p>
+              <h2 class="timetable__title">{{ selectedGrade() }}</h2>
+            </div>
+            <p class="timetable__count">{{ coursesOfSelectedGrade().length }} materias</p>
+          </header>
 
-          <section class="feed stage-calendar" aria-label="Calendario semanal">
-            <div class="feed__head">
-              <h2>{{ selectedGrade() }}</h2>
-              <button type="button" class="adm-link" (click)="clearGrade()">← Todos los grados</button>
+          <div class="weekly-calendar">
+            <div class="calendar-header">
+              <div class="time-col-header">Hora</div>
+              @for (day of weekDays; track day; let i = $index) {
+                <div class="day-col-header">
+                  <span class="day-col-header__full">{{ day }}</span>
+                  <span class="day-col-header__short">{{ weekDayShort[i] }}</span>
+                </div>
+              }
             </div>
 
-            <div class="weekly-calendar">
-              <div class="calendar-header">
-                <div class="time-col-header">Hora</div>
-                @for (day of weekDays; track day) {
-                  <div class="day-col-header">{{ day.substring(0, 3) }}</div>
+            <div class="calendar-body">
+              <div class="time-col">
+                @for (slot of hourSlots(); track slot) {
+                  <div class="hour-mark">{{ slot }}</div>
                 }
               </div>
 
-              <div class="calendar-body">
-                <div class="time-col">
+              @for (day of weekDays; track day) {
+                <div class="day-col">
                   @for (slot of hourSlots(); track slot) {
-                    <div class="hour-mark">{{ slot }}</div>
+                    <div class="hour-cell"></div>
+                  }
+                  @for (item of getBlocksForDay(day); track item.course.id + item.block.startTime) {
+                    <a
+                      class="calendar-block"
+                      [routerLink]="['/admin/cursos', item.course.id, 'editar']"
+                      [style.--block]="courseAccent(item.course)"
+                      [style.top.px]="getBlockTop(item.block.startTime)"
+                      [style.height.px]="getBlockHeight(item.block.startTime, item.block.endTime)"
+                      [title]="item.course.name + ' · ' + item.block.startTime + ' – ' + item.block.endTime">
+                      <strong>{{ item.course.name }}</strong>
+                      <span>{{ item.block.startTime }} – {{ item.block.endTime }}</span>
+                      @if (teacherName(item.course.id)) {
+                        <em>{{ teacherName(item.course.id) }}</em>
+                      }
+                    </a>
                   }
                 </div>
-
-                @for (day of weekDays; track day) {
-                  <div class="day-col">
-                    @for (slot of hourSlots(); track slot) {
-                      <div class="hour-cell"></div>
-                    }
-
-                    @for (item of getBlocksForDay(day); track $index) {
-                      <div class="calendar-block"
-                           [style.top.px]="getBlockTop(item.block.startTime)"
-                           [style.height.px]="getBlockHeight(item.block.startTime, item.block.endTime)"
-                           [style.background]="item.course.color || '#003366'"
-                           [title]="item.course.name + ' · ' + item.block.startTime + ' - ' + item.block.endTime">
-                        <strong>{{ item.course.name }}</strong>
-                        <span>{{ item.block.startTime }} – {{ item.block.endTime }}</span>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
+              }
             </div>
-          </section>
+          </div>
 
-          <aside class="feed course-sidebar" aria-label="Cursos del grado">
-            <div class="feed__head">
-              <h2>Catálogo</h2>
-              <span class="feed-row__meta">{{ coursesOfSelectedGrade().length }} curso(s)</span>
-            </div>
-
-            <div class="toolbar" style="margin-bottom:.75rem">
-              <label class="search">
-                <span class="visually-hidden">Buscar</span>
-                <input type="search"
-                       placeholder="Nombre, código o profesor…"
-                       [value]="searchQuery()"
-                       (input)="searchQuery.set($any($event.target).value)">
-              </label>
-            </div>
-
-            @if (coursesOfSelectedGrade().length === 0) {
-              <p class="feed__empty">No hay cursos para este grado</p>
-            } @else {
-              <ul class="feed__list">
-                @for (course of coursesOfSelectedGrade(); track course.id) {
-                  <li>
-                    <div class="feed-row">
-                      <span class="feed-row__mark" [style.background]="course.color || '#003366'">
-                        {{ course.code.substring(0, 2) }}
-                      </span>
-                      <span class="feed-row__body">
-                        <span class="feed-row__kicker">{{ course.code }}</span>
-                        <span class="feed-row__title">{{ course.name }}</span>
-                        <span class="feed-row__meta">{{ readableSchedule(course) }}</span>
-                        <span class="feed-row__meta" [class.is-muted]="!teacherName(course.id)">
-                          {{ teacherName(course.id) || 'Sin profesor asignado' }}
-                        </span>
-                      </span>
-                      <span class="feed-row__actions">
-                        <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="adm-link">Editar</a>
-                        <button type="button" class="adm-link adm-link--danger" (click)="deleteCourse(course.id)">
-                          Eliminar
-                        </button>
-                      </span>
-                    </div>
-                  </li>
-                }
-              </ul>
-            }
-          </aside>
-        </div>
-      } @else {
-        <p class="feed__empty">Elige un grado en las pestañas para ver el calendario semanal.</p>
+          @if (coursesOfSelectedGrade().length) {
+            <ul class="legend">
+              @for (course of coursesOfSelectedGrade(); track course.id) {
+                <li>
+                  <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="legend__item">
+                    <span class="legend__swatch" [style.background]="courseAccent(course)"></span>
+                    <span class="legend__name">{{ course.name }}</span>
+                    <span class="legend__meta">{{ course.code }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
       }
     }
   </div>
