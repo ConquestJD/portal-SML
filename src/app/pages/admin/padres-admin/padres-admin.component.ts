@@ -177,7 +177,7 @@ export class PadresAdminComponent implements OnInit {
   }
 
   parentUsername(p: ParentItem): string {
-    return p.username || p.dni || p.user?.username || '—';
+    return p.email || p.user?.email || '—';
   }
 
   childrenLabel(p: ParentRow): string {

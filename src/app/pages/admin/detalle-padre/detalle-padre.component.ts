@@ -153,7 +153,7 @@ export class DetallePadreComponent implements OnInit {
 
   parentUsername(): string {
     const p = this.parent();
-    return p?.username || p?.dni || p?.user?.username || '—';
+    return p?.email || p?.user?.email || '—';
   }
 
   relationship(): string {

@@ -58,7 +58,7 @@ export function emptyFormData(): UserFormData {
 
 /**
  * Normaliza el DNI a solo dígitos.
- * En alumnos y profesores es la contraseña inicial; en padres y administradores también se usa como username.
+ * En alumnos, profesores, padres y administradores es la contraseña inicial.
  */
 export function usernameFromDni(dni: string): string {
   return (dni || '').replace(/\D/g, '');
@@ -147,19 +147,17 @@ export const PARENT_STRATEGY: UserFormStrategy = {
   singular: roleSingularLabel('parent'),
   subtitle: 'Información personal y de contacto del apoderado',
   /**
-   * `POST /parents` rechaza `address`, por eso solo pedimos relación, ocupación y DNI.
-   * El DNI se usa para generar el username del apoderado.
+   * El correo es el usuario de acceso. El DNI (solo dígitos) es la contraseña inicial.
+   * `username`/`password` los ignora el backend.
    */
   roleFields: ['relationship', 'occupation', 'dni'],
-  requiresCredentials: () => true,
-  /** `POST /parents` solo acepta el DTO base de usuario + relationship/occupation. El DNI se usa solo en cliente para construir el `username`; la dirección no la persiste el backend en el alta. */
+  requiresCredentials: (_d, isEditMode) => isEditMode ? !!_d.password : false,
   buildCreateDto: (d) => ({
-    username: usernameFromDni(d.dni) || d.username,
-    email: d.email || undefined,
-    password: d.password,
+    email: d.email.trim(),
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
+    dni: usernameFromDni(d.dni) || d.dni,
     relationship: d.relationship || undefined,
     occupation: d.occupation || undefined,
   }),
@@ -174,16 +172,14 @@ export const ADMIN_STRATEGY: UserFormStrategy = {
   singular: roleSingularLabel('admin'),
   subtitle: 'Cuenta de administrador del sistema',
   roleFields: ['dni', 'address'],
-  requiresCredentials: () => true,
+  requiresCredentials: (_d, isEditMode) => isEditMode ? !!_d.password : false,
   buildCreateDto: (d) => ({
-    username: usernameFromDni(d.dni) || d.username,
-    email: d.email || undefined,
-    password: d.password,
+    email: d.email.trim(),
     firstName: d.firstName,
     lastName: d.lastName,
     phone: d.phone || undefined,
     role: 'ADMIN',
-    dni: d.dni || undefined,
+    dni: usernameFromDni(d.dni) || d.dni,
   }),
   create: (svc, dto) => svc.createUser(dto as never),
   successMessage: 'Usuario creado correctamente',

@@ -578,30 +578,31 @@
                 <span class="stu-badge stu-badge--req">Obligatorio</span>
               </header>
               <div class="stu-grid">
-                <div class="stu-field stu-field--wide" [class.stu-field--error]="dniError()">
-                  <label class="stu-label" for="cred-dni">
-                    DNI
-                    <span class="stu-req">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="cred-dni"
-                    name="dni"
-                    class="stu-input"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    maxlength="16"
-                    [ngModel]="formData().dni"
-                    (ngModelChange)="onDniInput($event)"
-                    [disabled]="isEditMode()"
-                    placeholder="45678901"
-                    required
-                  />
-                  <span class="stu-hint">8 dígitos · será el usuario de acceso al portal</span>
-                  @if (dniError()) {
-                    <span class="stu-error">{{ dniError() }}</span>
-                  }
-                </div>
+                @if (!isEditMode()) {
+                  <div class="stu-field stu-field--wide" [class.stu-field--error]="dniError()">
+                    <label class="stu-label" for="cred-dni">
+                      DNI
+                      <span class="stu-req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="cred-dni"
+                      name="dni"
+                      class="stu-input"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="16"
+                      [ngModel]="formData().dni"
+                      (ngModelChange)="onDniInput($event)"
+                      placeholder="45678901"
+                      required
+                    />
+                    <span class="stu-hint">8 dígitos · será la contraseña de acceso</span>
+                    @if (dniError()) {
+                      <span class="stu-error">{{ dniError() }}</span>
+                    }
+                  </div>
+                }
                 <div class="stu-field">
                   <label class="stu-label" for="cred-firstName">
                     Nombre
@@ -634,55 +635,67 @@
                     placeholder="García"
                   />
                 </div>
+                <div class="stu-field stu-field--wide" [class.stu-field--error]="emailError()">
+                  <label class="stu-label" for="cred-email">
+                    Correo
+                    <span class="stu-req">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="cred-email"
+                    name="email"
+                    class="stu-input"
+                    [ngModel]="formData().email"
+                    (ngModelChange)="update('email', $event)"
+                    placeholder="ana.garcia@correo.com"
+                    required
+                  />
+                  <span class="stu-hint">Será el usuario de acceso al portal</span>
+                  @if (emailError()) {
+                    <span class="stu-error">{{ emailError() }}</span>
+                  }
+                </div>
               </div>
             </section>
 
-            <section class="stu-block" aria-labelledby="cred-access-title">
-              <header class="stu-block__head">
-                <span class="stu-step" aria-hidden="true">2</span>
-                <div>
-                  <h2 id="cred-access-title" class="stu-block__title">Acceso</h2>
-                  <p class="stu-block__lead">
-                    @if (isEditMode()) { Deja la contraseña vacía si no quieres cambiarla }
-                    @else { El usuario es el DNI; define una contraseña }
-                  </p>
+            @if (isEditMode()) {
+              <section class="stu-block" aria-labelledby="cred-access-title">
+                <header class="stu-block__head">
+                  <span class="stu-step" aria-hidden="true">2</span>
+                  <div>
+                    <h2 id="cred-access-title" class="stu-block__title">Acceso</h2>
+                    <p class="stu-block__lead">Deja la contraseña vacía si no quieres cambiarla</p>
+                  </div>
+                </header>
+                <div class="stu-grid">
+                  <div class="stu-field">
+                    <label class="stu-label">Usuario</label>
+                    <input
+                      type="text"
+                      class="stu-input"
+                      readonly
+                      tabindex="-1"
+                      [value]="formData().email || formData().username || '—'"
+                    />
+                    <span class="stu-hint">Entra con su correo</span>
+                  </div>
+                  <div class="stu-field">
+                    <label class="stu-label" for="cred-password">Nueva contraseña</label>
+                    <input
+                      type="password"
+                      id="cred-password"
+                      class="stu-input"
+                      [ngModel]="formData().password"
+                      (ngModelChange)="update('password', $event)"
+                      name="newPassword"
+                      [attr.minlength]="MIN_PASSWORD_LENGTH"
+                      autocomplete="new-password"
+                    />
+                    <span class="stu-hint">Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres</span>
+                  </div>
                 </div>
-                <span class="stu-badge stu-badge--req">Obligatorio</span>
-              </header>
-              <div class="stu-grid">
-                <div class="stu-field">
-                  <label class="stu-label">Usuario</label>
-                  <input
-                    type="text"
-                    class="stu-input"
-                    readonly
-                    tabindex="-1"
-                    [value]="isEditMode() ? (formData().username || '—') : (formData().username || 'Se genera con el DNI')"
-                  />
-                  <span class="stu-hint">Igual al DNI, en dígitos</span>
-                </div>
-                <div class="stu-field">
-                  <label class="stu-label" for="cred-password">
-                    {{ isEditMode() ? 'Nueva contraseña' : 'Contraseña' }}
-                    @if (!isEditMode()) {
-                      <span class="stu-req">*</span>
-                    }
-                  </label>
-                  <input
-                    type="password"
-                    id="cred-password"
-                    class="stu-input"
-                    [ngModel]="formData().password"
-                    (ngModelChange)="update('password', $event)"
-                    [name]="isEditMode() ? 'newPassword' : 'password'"
-                    [required]="!isEditMode()"
-                    [attr.minlength]="MIN_PASSWORD_LENGTH"
-                    autocomplete="new-password"
-                  />
-                  <span class="stu-hint">Mínimo {{ MIN_PASSWORD_LENGTH }} caracteres</span>
-                </div>
-              </div>
-            </section>
+              </section>
+            }
 
             <section class="stu-optional" [class.is-open]="showOptional()">
               <button
@@ -698,9 +711,9 @@
                     @if (optionalFilledCount()) {
                       {{ optionalFilledCount() }} completado{{ optionalFilledCount() === 1 ? '' : 's' }}
                     } @else if (isParentForm()) {
-                      Email, teléfono y relación
+                      Teléfono, relación y ocupación
                     } @else {
-                      Email, teléfono y dirección
+                      Teléfono y dirección
                     }
                   </span>
                 </span>
@@ -709,18 +722,6 @@
               @if (showOptional()) {
                 <div class="stu-optional__body">
                   <div class="stu-grid">
-                    <div class="stu-field">
-                      <label class="stu-label" for="cred-email">Email</label>
-                      <input
-                        type="email"
-                        id="cred-email"
-                        name="email"
-                        class="stu-input"
-                        [ngModel]="formData().email"
-                        (ngModelChange)="update('email', $event)"
-                        placeholder="correo@ejemplo.com"
-                      />
-                    </div>
                     <div class="stu-field">
                       <label class="stu-label" for="cred-phone">Teléfono</label>
                       <input
@@ -792,19 +793,19 @@
           <aside class="stu-aside" aria-label="Resumen de acceso">
             <div class="stu-cred">
               <p class="stu-cred__kicker">Acceso al portal</p>
-              <h3 class="stu-cred__title">Usuario = DNI</h3>
+              <h3 class="stu-cred__title">Usuario = correo</h3>
               <p class="stu-cred__text">
-                @if (isParentForm()) { El apoderado entra con su DNI y la contraseña que definas aquí. }
-                @else { El administrador entra con su DNI y la contraseña que definas aquí. }
+                @if (isParentForm()) { El apoderado entra con su correo y el DNI como contraseña. }
+                @else { El administrador entra con su correo y el DNI como contraseña. }
               </p>
               <dl class="stu-cred__list">
                 <div>
                   <dt>Usuario</dt>
-                  <dd>{{ formData().username || 'Se completa con el DNI' }}</dd>
+                  <dd>{{ formData().email.trim() || 'Se completa con el correo' }}</dd>
                 </div>
                 <div>
                   <dt>Contraseña</dt>
-                  <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (formData().password ? 'Definida' : 'Pendiente') }}</dd>
+                  <dd>{{ isEditMode() ? 'Sin cambios salvo que la escribas' : (studentPasswordPreview() || 'El DNI') }}</dd>
                 </div>
               </dl>
             </div>
@@ -819,7 +820,7 @@
                   <li [class.is-done]="dniReady()">DNI</li>
                   <li [class.is-done]="!!formData().firstName.trim()">Nombre</li>
                   <li [class.is-done]="!!formData().lastName.trim()">Apellido</li>
-                  <li [class.is-done]="formData().password.length >= MIN_PASSWORD_LENGTH">Contraseña</li>
+                  <li [class.is-done]="emailReady()">Correo</li>
                 </ul>
               </div>
             }

@@ -44,7 +44,7 @@
         <span class="visually-hidden">Buscar</span>
         <input
           type="search"
-          placeholder="Nombre, usuario o email…"
+          placeholder="Nombre o correo…"
           [(ngModel)]="searchQuery"
           name="searchQuery"
         />
@@ -83,7 +83,7 @@
               <thead>
                 <tr>
                   <th>Administrador</th>
-                  <th>Usuario</th>
+                  <th>Correo</th>
                   <th>Último acceso</th>
                   <th>Estado</th>
                   <th><span class="visually-hidden">Acciones</span></th>
@@ -97,14 +97,14 @@
                         <span class="roster-person__mark">{{ getInitials(user) }}</span>
                         <span class="roster-person__text">
                           <span class="roster-person__name">{{ getFullName(user) }}</span>
-                          @if (user.email) {
-                            <span class="roster-person__meta">{{ user.email }}</span>
+                          @if (user.phone) {
+                            <span class="roster-person__meta">{{ user.phone }}</span>
                           }
                         </span>
                       </span>
                     </td>
                     <td>
-                      <span class="roster-code">{{ user.username || '—' }}</span>
+                      <span class="roster-code">{{ user.email || '—' }}</span>
                     </td>
                     <td class="roster-dni">{{ user.lastLogin || 'Nunca' }}</td>
                     <td>

@@ -99,11 +99,11 @@ export class CrearUsuarioComponent implements OnInit {
         .filter(v => !!String(v ?? '').trim()).length;
     }
     if (this.roleKind() === 'parent') {
-      return [d.email, d.phone, d.relationship, d.occupation]
+      return [d.phone, d.relationship, d.occupation]
         .filter(v => !!String(v ?? '').trim()).length;
     }
     if (this.roleKind() === 'admin') {
-      return [d.email, d.phone, d.address]
+      return [d.phone, d.address]
         .filter(v => !!String(v ?? '').trim()).length;
     }
     return [d.email, d.phone, d.emergencyPhone, d.address, d.birthDate, d.gender]
@@ -137,7 +137,7 @@ export class CrearUsuarioComponent implements OnInit {
     if (usernameFromDni(d.dni).length >= this.MIN_DNI_DIGITS) n++;
     if (d.firstName.trim()) n++;
     if (d.lastName.trim()) n++;
-    if (this.isEditMode() || d.password.length >= this.MIN_PASSWORD_LENGTH) n++;
+    if (this.emailReady()) n++;
     return n;
   });
 
@@ -240,7 +240,7 @@ export class CrearUsuarioComponent implements OnInit {
             username:      parent.username ?? parent.user?.username ?? d.username,
             email:         parent.email ?? parent.user?.email ?? d.email,
             phone:         parent.phone ?? parent.user?.phone ?? d.phone,
-            dni:           parent.dni ?? parent.username ?? d.dni,
+            dni:           /^\d{8,}$/.test(parent.dni ?? '') ? parent.dni! : d.dni,
             status:        ((parent.status ?? parent.user?.status) as UserFormData['status']) || d.status,
             relationship:  parent.relationship ?? '',
             occupation:    parent.occupation ?? '',
@@ -259,7 +259,7 @@ export class CrearUsuarioComponent implements OnInit {
       email:     user.email ?? '',
       phone:     user.phone ?? '',
       status:    (user.status as UserFormData['status']) ?? 'ACTIVE',
-      dni: user.dni ?? (/^\d+$/.test(user.username ?? '') ? usernameFromDni(user.username ?? '') : ''),
+      dni: user.dni ?? (/^\d{8,}$/.test(user.username ?? '') ? usernameFromDni(user.username ?? '') : ''),
     }));
   }
 
@@ -279,10 +279,10 @@ export class CrearUsuarioComponent implements OnInit {
     this.formData.update(d => ({ ...d, level, grade: '' }));
   }
 
-  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta, excepto alumnos y profesores. */
+  /** Sincroniza DNI ↔ nombre de usuario (solo dígitos) en alta, excepto alumnos, profesores, padres y administradores. */
   onDniInput(value: string) {
     this.formData.update(d => ({ ...d, dni: value }));
-    if (!this.isEditMode() && this.roleKind() !== 'student' && this.roleKind() !== 'teacher') {
+    if (!this.isEditMode() && this.roleKind() !== 'student' && this.roleKind() !== 'teacher' && this.roleKind() !== 'parent' && this.roleKind() !== 'admin') {
       const u = usernameFromDni(value);
       this.formData.update(d => ({ ...d, username: u }));
     }
@@ -299,7 +299,7 @@ export class CrearUsuarioComponent implements OnInit {
   }
 
   emailError(): string {
-    if (this.isEditMode() || this.roleKind() !== 'teacher') return '';
+    if (this.isEditMode() || (this.roleKind() !== 'teacher' && this.roleKind() !== 'parent' && this.roleKind() !== 'admin')) return '';
     const email = this.formData().email.trim();
     if (!email) return 'El correo es obligatorio';
     if (!this.isValidEmail(email)) return 'Ingresa un correo válido';
@@ -367,12 +367,18 @@ export class CrearUsuarioComponent implements OnInit {
         this.isLoading.set(false);
         return;
       }
+      const mailErr = this.emailError();
+      if (mailErr) {
+        this.error.set(mailErr);
+        this.isLoading.set(false);
+        return;
+      }
     }
 
     const mustValidatePassword =
       this.isEditMode()
         ? !!d.password
-        : this.roleKind() !== 'student' && this.roleKind() !== 'teacher' && this.credentialsRequired();
+        : this.roleKind() !== 'student' && this.roleKind() !== 'teacher' && this.roleKind() !== 'parent' && this.roleKind() !== 'admin' && this.credentialsRequired();
     if (mustValidatePassword && d.password.length < this.MIN_PASSWORD_LENGTH) {
       this.error.set(`La contraseña debe tener al menos ${this.MIN_PASSWORD_LENGTH} caracteres`);
       this.isLoading.set(false);
@@ -401,9 +407,10 @@ export class CrearUsuarioComponent implements OnInit {
         if (code) {
           const dni = usernameFromDni(d.dni);
           alert(`Estudiante creado.\nUsuario de acceso: ${code}\nContraseña: ${dni}`);
-        } else if (this.roleKind() === 'teacher') {
+        } else if (this.roleKind() === 'teacher' || this.roleKind() === 'parent' || this.roleKind() === 'admin') {
           const dni = usernameFromDni(d.dni);
-          alert(`Profesor creado.\nUsuario de acceso: ${d.email.trim()}\nContraseña: ${dni}`);
+          const label = this.roleKind() === 'teacher' ? 'Profesor' : this.roleKind() === 'parent' ? 'Apoderado' : 'Administrador';
+          alert(`${label} creado.\nUsuario de acceso: ${d.email.trim()}\nContraseña: ${dni}`);
         }
         this.router.navigate([strategy.listPath]);
       },
@@ -431,6 +438,7 @@ export class CrearUsuarioComponent implements OnInit {
         firstName: d.firstName,
         lastName: d.lastName,
         phone: d.phone || undefined,
+        email: d.email || undefined,
         relationship: d.relationship || undefined,
         occupation: d.occupation || undefined,
       }).subscribe({

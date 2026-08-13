@@ -28,10 +28,14 @@ export interface UserItem {
   phone?: string; createdAt?: string; lastLogin?: string;
 }
 export interface CreateUserDto {
-  username: string;
-  email?: string; password: string; firstName: string; lastName: string;
-  phone?: string; role: string;
-  dni?: string;
+  username?: string;
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: string;
+  dni: string;
 }
 
 // ─── STUDENTS ────────────────────────────────────────────────────────────────
@@ -95,12 +99,15 @@ export interface ParentItem {
   children?: number; childrenList?: { id: string; name: string; grade: string }[];
 }
 export interface CreateParentDto {
-  username: string;
-  email?: string; password: string; firstName: string; lastName: string;
+  username?: string;
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
-  dni?: string;
-  address?: string;
-  relationship?: string; occupation?: string;
+  dni: string;
+  relationship?: string;
+  occupation?: string;
 }
 
 // ─── COURSES ─────────────────────────────────────────────────────────────────
@@ -302,9 +309,8 @@ export class AdminService {
       phone:     p.phone     ?? u.phone     ?? '',
       status:    p.status    ?? u.status    ?? '',
       username,
-      // El backend de `/parents` no persiste el DNI: solo se usa para generar el username,
-      // por eso el username vale como DNI cuando no viene un campo dedicado.
-      dni:       p.dni       ?? u.dni       ?? username,
+      // El DNI no se persiste en `/parents`; solo se infiere si el username es numérico (altas antiguas).
+      dni:       p.dni ?? u.dni ?? (/^\d{8,}$/.test(username) ? username : ''),
       address:   p.address   ?? u.address   ?? '',
       createdAt: p.createdAt ?? u.createdAt ?? '',
     };
