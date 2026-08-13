@@ -146,9 +146,10 @@ export class PadresAdminComponent implements OnInit {
   }
 
   private normalizeChildren(raw: unknown[]): ChildSummary[] {
-    return (raw ?? []).map((c: Record<string, unknown>) => {
-      const s = (c['student'] as Record<string, unknown> | undefined) ?? c;
-      const u = (s['user'] as Record<string, unknown> | undefined) ?? (c['user'] as Record<string, unknown> | undefined) ?? {};
+    return (raw ?? []).map((row) => {
+      const c = (row ?? {}) as Record<string, unknown>;
+      const s = ((c['student'] as Record<string, unknown> | undefined) ?? c);
+      const u = ((s['user'] as Record<string, unknown> | undefined) ?? (c['user'] as Record<string, unknown> | undefined) ?? {});
       const id = String(s['id'] ?? c['studentId'] ?? c['id'] ?? '');
       const first = String(u['firstName'] ?? s['firstName'] ?? '');
       const last = String(u['lastName'] ?? s['lastName'] ?? '');

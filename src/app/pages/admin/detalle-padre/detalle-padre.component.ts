@@ -264,6 +264,7 @@ export class DetallePadreComponent implements OnInit {
   }
 
   getStudentDisplayName(s: StudentItem): string {
-    return s.name ?? `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || '(sin nombre)';
+    const fallback = `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim();
+    return s.name || fallback || '(sin nombre)';
   }
 }
