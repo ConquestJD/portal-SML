@@ -6,73 +6,98 @@
     <div class="adm-page__hero-content">
       <img src="/only-logo.png" alt="" class="adm-page__crest" />
       <div>
-        <h1 class="adm-page__title">Configuración del colegio</h1>
+        <h1 class="adm-page__title">Identidad del colegio</h1>
         <p class="adm-page__brand">Santa María Laura</p>
       </div>
     </div>
   </header>
 
   <div class="adm-page__body">
-    <form class="id-form feed" (ngSubmit)="saveSettings()">
 
-      <section class="id-hero-name" aria-labelledby="school-name-label">
-        <label class="id-label id-label--hero" id="school-name-label" for="school-name">
-          Nombre del colegio
-        </label>
-        <input
-          id="school-name"
-          type="text"
-          class="id-input id-input--school"
-          name="name"
-          [ngModel]="schoolData().name"
-          (ngModelChange)="patchSchool('name', $event)"
-          placeholder="Nombre institucional"
-        />
-        <p class="id-name-preview" aria-hidden="true">{{ schoolData().name || '—' }}</p>
+    @if (saved()) {
+      <p class="adm-alert adm-alert--ok" role="status">Identidad actualizada</p>
+    }
+
+    <form (ngSubmit)="saveSettings()">
+
+      <section class="identity" aria-labelledby="school-identity">
+        <div class="identity__crest">
+          <img src="/only-logo.png" alt="" />
+        </div>
+        <div class="identity__copy">
+          <p class="identity__kicker">Colegio</p>
+          <label class="visually-hidden" for="school-name">Nombre del colegio</label>
+          <input
+            id="school-name"
+            type="text"
+            class="identity__name"
+            name="name"
+            [ngModel]="schoolData().name"
+            (ngModelChange)="patchSchool('name', $event)"
+          />
+          <p class="identity__place">{{ schoolData().address || 'Dirección institucional' }}</p>
+        </div>
+        @if (activeYear(); as year) {
+          <div class="identity__year">
+            <span class="identity__year-kicker">Año lectivo</span>
+            <strong>{{ year.name }}</strong>
+            <span>{{ year.status === 'ACTIVE' ? 'En curso' : year.status }}</span>
+          </div>
+        }
       </section>
 
-      <section class="id-section">
-        <h2 class="id-section__title">Contacto institucional</h2>
-        <div class="id-grid">
-          <div class="id-field id-field--wide">
-            <label class="id-label" for="school-address">Dirección</label>
+      <div class="mod-grid">
+        <section class="mod">
+          <header class="mod__head">
+            <h2>Sede</h2>
+          </header>
+          <div class="cfg-field cfg-field--wide">
+            <label class="cfg-label" for="school-address">Dirección</label>
             <input
               id="school-address"
               type="text"
-              class="id-input"
+              class="cfg-input"
               name="address"
               [ngModel]="schoolData().address"
               (ngModelChange)="patchSchool('address', $event)"
             />
           </div>
-          <div class="id-field">
-            <label class="id-label" for="school-phone">Teléfono</label>
-            <input
-              id="school-phone"
-              type="tel"
-              class="id-input"
-              name="phone"
-              [ngModel]="schoolData().phone"
-              (ngModelChange)="patchSchool('phone', $event)"
-            />
-          </div>
-          <div class="id-field">
-            <label class="id-label" for="school-email">Email</label>
-            <input
-              id="school-email"
-              type="email"
-              class="id-input"
-              name="email"
-              [ngModel]="schoolData().email"
-              (ngModelChange)="patchSchool('email', $event)"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <div class="id-actions">
+        <section class="mod">
+          <header class="mod__head">
+            <h2>Contacto</h2>
+          </header>
+          <div class="cfg-grid">
+            <div class="cfg-field">
+              <label class="cfg-label" for="school-phone">Teléfono</label>
+              <input
+                id="school-phone"
+                type="tel"
+                class="cfg-input"
+                name="phone"
+                [ngModel]="schoolData().phone"
+                (ngModelChange)="patchSchool('phone', $event)"
+              />
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label" for="school-email">Correo</label>
+              <input
+                id="school-email"
+                type="email"
+                class="cfg-input"
+                name="email"
+                [ngModel]="schoolData().email"
+                (ngModelChange)="patchSchool('email', $event)"
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="cfg-actions">
         <button type="submit" class="adm-btn adm-btn--solid">
-          Guardar configuración
+          Guardar identidad
         </button>
       </div>
     </form>
