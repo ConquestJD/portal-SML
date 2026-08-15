@@ -31,6 +31,10 @@ export class EstudiantesComponent implements OnInit {
   get filterLevel(): string { return this._filterLevel(); }
   set filterLevel(v: string) { this._filterLevel.set(v); }
 
+  private _filterEnrollment = signal('');
+  get filterEnrollment(): string { return this._filterEnrollment(); }
+  set filterEnrollment(v: string) { this._filterEnrollment.set(v); }
+
   private _filterStatus = signal('');
   get filterStatus(): string { return this._filterStatus(); }
   set filterStatus(v: string) { this._filterStatus.set(v); }
@@ -47,6 +51,7 @@ export class EstudiantesComponent implements OnInit {
   filteredStudents = computed(() => {
     const grade = this._filterGrade();
     const level = this._filterLevel();
+    const enroll = this._filterEnrollment();
     const status = this._filterStatus();
     const q = this._searchQuery().trim().toLowerCase();
 
@@ -54,6 +59,9 @@ export class EstudiantesComponent implements OnInit {
       if (grade && s.grade !== grade) return false;
       if (level && (s.level ?? '').toLowerCase() !== level) return false;
       if (status && s.status !== status) return false;
+      if (enroll === 'matriculado' && s.enrollmentKind !== 'active' && s.enrollmentKind !== 'late') return false;
+      if (enroll === 'sin' && s.enrollmentKind !== 'none') return false;
+      if (enroll === 'retirado' && s.enrollmentKind !== 'withdrawn') return false;
       if (q) {
         const text = `${s.name ?? ''} ${s.code ?? ''} ${s.email ?? ''} ${s.dni ?? ''} ${s.phone ?? ''}`.toLowerCase();
         if (!text.includes(q)) return false;
@@ -71,7 +79,7 @@ export class EstudiantesComponent implements OnInit {
   groupedStudents = computed(() => {
     const groups = new Map<string, StudentItem[]>();
     for (const s of this.filteredStudents()) {
-      const key = (s.grade ?? '').trim() || 'Sin matrícula';
+      const key = s.enrollmentKind === 'none' ? 'Sin matrícula' : ((s.grade ?? '').trim() || 'Sin matrícula');
       const list = groups.get(key) ?? [];
       list.push(s);
       groups.set(key, list);
@@ -89,13 +97,20 @@ export class EstudiantesComponent implements OnInit {
   });
 
   totalActive = computed(() => this.students().filter(s => s.status === 'activo').length);
-  totalEnrolled = computed(() => this.students().filter(s => !!s.grade).length);
+  totalEnrolled = computed(() =>
+    this.students().filter(s => s.enrollmentKind === 'active' || s.enrollmentKind === 'late').length
+  );
+  activeYearName = computed(() =>
+    this.students().find(s => s.academicYearName)?.academicYearName ?? 'este año'
+  );
 
   hasActiveFilters = computed(() =>
-    !!this._searchQuery() || !!this._filterGrade() || !!this._filterLevel() || !!this._filterStatus()
+    !!this._searchQuery() || !!this._filterGrade() || !!this._filterLevel() || !!this._filterStatus() || !!this._filterEnrollment()
   );
 
   constructor(private adminService: AdminService) {}
+
+  busyId = signal('');
 
   ngOnInit() { this.load(); }
 
@@ -118,6 +133,7 @@ export class EstudiantesComponent implements OnInit {
     this._filterGrade.set('');
     this._filterLevel.set('');
     this._filterStatus.set('');
+    this._filterEnrollment.set('');
   }
 
   getInitials(s: StudentItem): string {
@@ -130,6 +146,37 @@ export class EstudiantesComponent implements OnInit {
 
   studentCode(s: StudentItem): string {
     return s.code || s.studentCode || s.username || '—';
+  }
+
+  enrollmentLabel(s: StudentItem): string {
+    switch (s.enrollmentKind) {
+      case 'active': return 'Matriculado';
+      case 'late': return 'Ingreso tardío';
+      case 'withdrawn': return 'Retiro anticipado';
+      default: return 'Sin matrícula';
+    }
+  }
+
+  isSuspended(s: StudentItem): boolean {
+    return s.status === 'suspendido' || s.status === 'SUSPENDED';
+  }
+
+  toggleSuspend(s: StudentItem) {
+    const next = this.isSuspended(s) ? 'ACTIVE' : 'SUSPENDED';
+    const verb = next === 'SUSPENDED' ? 'suspender' : 'reactivar';
+    if (!confirm(`¿${verb.charAt(0).toUpperCase() + verb.slice(1)} la cuenta de ${s.name || 'este alumno'}?`)) return;
+    this.error.set('');
+    this.busyId.set(s.id);
+    this.adminService.patchStudentAccountStatus(s.id, next).subscribe({
+      next: (updated) => {
+        this.students.update(list => list.map(row => row.id === s.id ? { ...row, ...updated } : row));
+        this.busyId.set('');
+      },
+      error: () => {
+        this.error.set('No se pudo actualizar la cuenta.');
+        this.busyId.set('');
+      }
+    });
   }
 
   private compareGrades(a: string, b: string): number {

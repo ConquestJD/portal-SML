@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -15,6 +15,8 @@ export class MatriculaComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   showForm = signal(false);
+  saving = signal(false);
+  busyId = signal('');
 
   enrollments = signal<EnrollmentItem[]>([]);
   academicYears = signal<AcademicYearItem[]>([]);
@@ -27,6 +29,10 @@ export class MatriculaComponent implements OnInit {
   totalPages = signal(1);
 
   formData = signal({ studentId: '', sectionId: '', academicYearId: '', grade: '', section: '', academicYear: '' });
+
+  studentsWithoutEnrollment = computed(() =>
+    this.students().filter(s => s.enrollmentKind === 'none')
+  );
 
   constructor(private adminService: AdminService) {}
 
@@ -57,14 +63,40 @@ export class MatriculaComponent implements OnInit {
   save() {
     const { studentId, sectionId, academicYearId } = this.formData();
     if (!studentId || !sectionId || !academicYearId) return;
+    this.error.set('');
+    this.saving.set(true);
     this.adminService.createEnrollment({ studentId, sectionId, academicYearId }).subscribe({
-      next: () => { this.showForm.set(false); this.load(); }
+      next: () => {
+        this.showForm.set(false);
+        this.saving.set(false);
+        this.adminService.getStudents({ pageSize: 100 }).subscribe({ next: ({ data }) => this.students.set(data) });
+        this.load();
+      },
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'No se pudo matricular al estudiante.');
+        this.saving.set(false);
+      }
     });
   }
 
-  updateStatus(enrollmentId: string, status: string) {
-    this.adminService.updateEnrollment(enrollmentId, { status }).subscribe({
-      next: () => this.load()
+  updateStatus(enrollment: EnrollmentItem, status: string) {
+    if (status === 'WITHDRAWN') {
+      const name = `${enrollment.student?.user?.firstName ?? ''} ${enrollment.student?.user?.lastName ?? ''}`.trim() || 'este alumno';
+      if (!confirm(`¿Registrar retiro anticipado de ${name}? Se cancelarán las pensiones de los meses siguientes. El mes en curso se mantiene.`)) {
+        return;
+      }
+    }
+    this.error.set('');
+    this.busyId.set(enrollment.id);
+    this.adminService.updateEnrollment(enrollment.id, { status }).subscribe({
+      next: () => {
+        this.busyId.set('');
+        this.load();
+      },
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'No se pudo actualizar la matrícula.');
+        this.busyId.set('');
+      }
     });
   }
 
@@ -72,6 +104,21 @@ export class MatriculaComponent implements OnInit {
 
   enrollStudent() {
     this.formData.set({ studentId: '', sectionId: '', academicYearId: '', grade: '', section: '', academicYear: '' });
+    this.error.set('');
     this.showForm.set(true);
+  }
+
+  enrollmentStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      ACTIVE: 'Matriculado',
+      WITHDRAWN: 'Retiro anticipado',
+      TRANSFERRED: 'Trasladado',
+      COMPLETED: 'Completado',
+    };
+    return map[status] ?? status;
+  }
+
+  studentLabel(s: StudentItem): string {
+    return s.name || `${s.user?.firstName ?? ''} ${s.user?.lastName ?? ''}`.trim() || 'Estudiante';
   }
 }

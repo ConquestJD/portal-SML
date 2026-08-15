@@ -189,6 +189,18 @@
   background: #eef3f8;
 }
 
+.mat-pill[data-status="WITHDRAWN"] {
+  border-color: var(--crimson);
+  color: var(--crimson);
+  background: #f8eef0;
+}
+
+.mat-pill[data-status="COMPLETED"],
+.mat-pill[data-status="TRANSFERRED"] {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
 .mat-table__actions { white-space: nowrap; }
 
 .mat-pager {

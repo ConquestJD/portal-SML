@@ -37,6 +37,9 @@
         </div>
         <div class="id-strip__meta">
           <p class="id-strip__grade">{{ getStudentSubtitle() }}</p>
+          <span class="enroll-badge" [attr.data-kind]="student().enrollmentKind || 'none'">
+            {{ enrollmentKindLabel() }}
+          </span>
           <admin-status-badge [value]="student().status"></admin-status-badge>
         </div>
       </div>
@@ -72,6 +75,18 @@
                   <dd>{{ student().address }}</dd>
                 </div>
               }
+              <div class="facts--wide">
+                <dt>Matrícula {{ student().academicYearName || 'año lectivo' }}</dt>
+                <dd>
+                  {{ enrollmentKindLabel() }}
+                  @if (student().enrollmentKind === 'late' && student().enrolledAt) {
+                    · ingresó el {{ student().enrolledAt | date:'mediumDate' }}
+                  }
+                  @if (student().enrollmentKind === 'none') {
+                    · aún no figura en el año académico vigente
+                  }
+                </dd>
+              </div>
             </dl>
           </section>
 
@@ -209,9 +224,15 @@
           </section>
 
           <p class="enroll-line">
-            {{ getEnrollmentStatusLabel(getCurrentEnrollment()?.status) }}
-            @if (getCurrentEnrollment()?.academicYear?.name) {
-              · {{ getCurrentEnrollment()?.academicYear?.name }}
+            {{ enrollmentKindLabel() }}
+            @if (student().academicYearName) {
+              · {{ student().academicYearName }}
+            }
+            @if (student().enrollmentKind === 'late' && student().enrolledAt) {
+              · ingreso el {{ student().enrolledAt | date:'mediumDate' }}
+            }
+            @if (getCurrentEnrollment()?.withdrawnAt) {
+              · retiro el {{ getCurrentEnrollment()?.withdrawnAt | date:'mediumDate' }}
             }
           </p>
 
@@ -224,9 +245,9 @@
 
           <section class="mod">
             <header class="mod__head">
-              <h2>Movimientos</h2>
+              <h2>Pensiones mensuales</h2>
               <button type="button" class="adm-link" (click)="togglePaymentForm()">
-                {{ showPaymentForm() ? 'Cerrar' : 'Registrar pago' }}
+                {{ showPaymentForm() ? 'Cerrar' : 'Registrar otro pago' }}
               </button>
             </header>
 
@@ -268,17 +289,50 @@
             @if (paymentsLoading()) {
               <p class="mod__empty">Cargando pagos…</p>
             } @else if (studentPayments().length === 0) {
-              <p class="mod__empty">No hay pagos registrados.</p>
-            } @else {
-              <ul class="log">
-                @for (payment of studentPayments(); track payment.id) {
-                  <li>
-                    <span class="log__date">{{ payment.concept }}</span>
-                    <span class="log__course">S/ {{ payment.amount | number:'1.2-2' }}</span>
-                    <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
-                  </li>
+              <p class="mod__empty">
+                @if (student().enrollmentKind === 'none') {
+                  Este alumno aún no tiene matrícula en el año vigente. Al matricularlo se generan las pensiones mensuales.
+                } @else {
+                  No hay pensiones ni pagos registrados.
                 }
-              </ul>
+              </p>
+            } @else {
+              <div class="pay-table-wrap">
+                <table class="pay-table">
+                  <thead>
+                    <tr>
+                      <th>Concepto</th>
+                      <th>Vence</th>
+                      <th>Monto</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (payment of studentPayments(); track payment.id) {
+                      <tr>
+                        <td class="pay-table__concept">{{ payment.concept }}</td>
+                        <td>{{ payment.dueDate ? (payment.dueDate | date:'mediumDate') : '—' }}</td>
+                        <td>S/ {{ payment.amount | number:'1.2-2' }}</td>
+                        <td>
+                          <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
+                        </td>
+                        <td class="roster-actions">
+                          @if (isOpenInstallment(payment)) {
+                            <button
+                              type="button"
+                              class="adm-link"
+                              [disabled]="markingPaymentId() === payment.id"
+                              (click)="markPaymentPaid(payment)">
+                              Marcar pagado
+                            </button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             }
           </section>
         </div>

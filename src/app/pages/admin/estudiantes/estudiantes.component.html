@@ -29,7 +29,7 @@
       </div>
       <div class="metric">
         <span class="metric__n">{{ totalEnrolled() }}</span>
-        <span class="metric__l">Matriculados</span>
+        <span class="metric__l">Matriculados {{ activeYearName() }}</span>
       </div>
     </section>
 
@@ -59,10 +59,15 @@
           <option [value]="g">{{ g }}</option>
         }
       </select>
-      <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Estado">
-        <option value="">Estado</option>
+      <select [(ngModel)]="filterEnrollment" name="filterEnrollment" aria-label="Matrícula">
+        <option value="">Matrícula</option>
+        <option value="matriculado">Matriculados este año</option>
+        <option value="sin">Sin matrícula</option>
+        <option value="retirado">Retiro anticipado</option>
+      </select>
+      <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Cuenta">
+        <option value="">Cuenta</option>
         <option value="activo">Activos</option>
-        <option value="retirado">Retirados</option>
         <option value="suspendido">Suspendidos</option>
       </select>
       @if (hasActiveFilters()) {
@@ -99,7 +104,8 @@
                     <th>Alumno</th>
                     <th>Código</th>
                     <th>DNI</th>
-                    <th>Estado</th>
+                    <th>Matrícula</th>
+                    <th>Cuenta</th>
                     <th><span class="visually-hidden">Acciones</span></th>
                   </tr>
                 </thead>
@@ -122,11 +128,28 @@
                       </td>
                       <td class="roster-dni">{{ student.dni || '—' }}</td>
                       <td>
+                        <span class="enroll-badge" [attr.data-kind]="student.enrollmentKind || 'none'">
+                          {{ enrollmentLabel(student) }}
+                        </span>
+                      </td>
+                      <td>
                         <admin-status-badge [value]="student.status"></admin-status-badge>
                       </td>
                       <td class="roster-actions">
                         <a [routerLink]="['/admin/estudiantes', student.id]" class="adm-link">Ver</a>
+                        <a
+                          [routerLink]="['/admin/estudiantes', student.id]"
+                          [queryParams]="{ tab: 'pagos' }"
+                          class="adm-link">Pagos</a>
                         <a [routerLink]="['/admin/estudiantes', student.id, 'editar']" class="adm-link">Editar</a>
+                        <button
+                          type="button"
+                          class="adm-link"
+                          [class.adm-link--danger]="!isSuspended(student)"
+                          [disabled]="busyId() === student.id"
+                          (click)="toggleSuspend(student)">
+                          {{ isSuspended(student) ? 'Reactivar' : 'Suspender' }}
+                        </button>
                       </td>
                     </tr>
                   }

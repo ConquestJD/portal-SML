@@ -56,18 +56,21 @@
               (ngModelChange)="update('studentId', $event)"
             >
               <option value="">Buscar estudiante…</option>
-              @for (s of students(); track s.id) {
+              @for (s of studentsWithoutEnrollment(); track s.id) {
                 <option [value]="s.id">
-                  {{ s.user?.firstName }} {{ s.user?.lastName }}
-                  @if (s.studentCode) { · {{ s.studentCode }} }
+                  {{ studentLabel(s) }}
+                  @if (s.code || s.studentCode) { · {{ s.code || s.studentCode }} }
                 </option>
               }
             </select>
+            @if (studentsWithoutEnrollment().length === 0) {
+              <p class="mat-panel__hint">Todos los alumnos ya tienen matrícula en el año vigente.</p>
+            }
           </section>
 
           <section class="mat-panel" [class.mat-panel--active]="!!formData().studentId && !formData().academicYearId">
             <h2 class="mat-panel__title">Año académico</h2>
-            <p class="mat-panel__hint">Periodo de vigencia</p>
+            <p class="mat-panel__hint">Si ingresa después del inicio, solo se cobran los meses restantes</p>
             <label class="mat-label" for="mat-year">Año *</label>
             <select
               id="mat-year"
@@ -109,9 +112,9 @@
           <button
             type="submit"
             class="adm-btn adm-btn--solid"
-            [disabled]="!formData().studentId || !formData().academicYearId || !formData().sectionId"
+            [disabled]="saving() || !formData().studentId || !formData().academicYearId || !formData().sectionId"
           >
-            Matricular
+            {{ saving() ? 'Matriculando…' : 'Matricular' }}
           </button>
         </div>
       </form>
@@ -163,6 +166,7 @@
                 <th>Grado</th>
                 <th>Sección</th>
                 <th>Año</th>
+                <th>Ingreso</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
@@ -177,16 +181,26 @@
                   <td>{{ e.grade || e.section?.grade || '—' }}</td>
                   <td>{{ e.section?.name || '—' }}</td>
                   <td>{{ e.academicYear?.name || '—' }}</td>
+                  <td>{{ e.enrolledAt ? (e.enrolledAt | date:'mediumDate') : '—' }}</td>
                   <td>
-                    <span class="mat-pill" [attr.data-status]="e.status">{{ e.status }}</span>
+                    <span class="mat-pill" [attr.data-status]="e.status">{{ enrollmentStatusLabel(e.status) }}</span>
                   </td>
                   <td class="mat-table__actions">
-                    @if (e.status !== 'ACTIVE') {
-                      <button type="button" class="adm-link" (click)="updateStatus(e.id, 'ACTIVE')">Activar</button>
+                    @if (e.status === 'WITHDRAWN') {
+                      <button
+                        type="button"
+                        class="adm-link"
+                        [disabled]="busyId() === e.id"
+                        (click)="updateStatus(e, 'ACTIVE')">Reactivar</button>
                     }
                     @if (e.status === 'ACTIVE') {
-                      <button type="button" class="adm-link" (click)="updateStatus(e.id, 'INACTIVE')">Desactivar</button>
+                      <button
+                        type="button"
+                        class="adm-link adm-link--danger"
+                        [disabled]="busyId() === e.id"
+                        (click)="updateStatus(e, 'WITHDRAWN')">Retirar</button>
                     }
+                    <a [routerLink]="['/admin/estudiantes', e.student?.id]" [queryParams]="{ tab: 'pagos' }" class="adm-link">Pagos</a>
                   </td>
                 </tr>
               }

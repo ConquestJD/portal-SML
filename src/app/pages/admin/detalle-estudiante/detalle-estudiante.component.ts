@@ -79,8 +79,10 @@ export class DetalleEstudianteComponent implements OnInit {
 
   ngOnInit() {
     this.studentId = this.route.snapshot.paramMap.get('id') ?? '';
+    const tab = this.route.snapshot.queryParamMap.get('tab');
     this.loadStudent();
     this.loadParents();
+    if (tab) this.selectTab(tab);
   }
 
   loadStudent() {
@@ -304,7 +306,42 @@ export class DetalleEstudianteComponent implements OnInit {
     const total = list.length;
     return { present, absent, late, total, percentage: total > 0 ? Math.round(present / total * 100) : 0 };
   });
-  getCurrentEnrollment() { return this.student()?.enrollments?.[0]; }
+  getCurrentEnrollment() {
+    const list = this.student()?.enrollments ?? [];
+    return list.find((e: { academicYear?: { status?: string } }) => e.academicYear?.status === 'ACTIVE') ?? list[0];
+  }
+
+  enrollmentKindLabel(): string {
+    const s = this.student();
+    switch (s?.enrollmentKind) {
+      case 'active': return 'Matriculado';
+      case 'late': return 'Ingreso tardío';
+      case 'withdrawn': return 'Retiro anticipado';
+      default: return this.getEnrollmentStatusLabel(this.getCurrentEnrollment()?.status);
+    }
+  }
+
+  markingPaymentId = signal('');
+
+  markPaymentPaid(payment: StudentPaymentItem) {
+    if (payment.status === 'PAID' || payment.status === 'CANCELLED') return;
+    this.paymentError.set('');
+    this.markingPaymentId.set(payment.id);
+    this.adminService.updateStudentPayment(this.studentId, payment.id, 'PAID').subscribe({
+      next: (updated) => {
+        this.studentPayments.update(list => list.map(p => p.id === payment.id ? { ...p, ...updated, concept: updated.concept || p.concept } : p));
+        this.markingPaymentId.set('');
+      },
+      error: () => {
+        this.paymentError.set('No se pudo marcar el pago.');
+        this.markingPaymentId.set('');
+      }
+    });
+  }
+
+  isOpenInstallment(payment: StudentPaymentItem): boolean {
+    return payment.status === 'PENDING' || payment.status === 'OVERDUE';
+  }
   getStatusBadgeClass(status: string): string {
     const map: Record<string, string> = {
       ACTIVE: 'badge-success',

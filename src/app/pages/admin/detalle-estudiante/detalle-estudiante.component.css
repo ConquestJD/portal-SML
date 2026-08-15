@@ -42,6 +42,36 @@
   color: var(--ink);
 }
 
+.enroll-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: .2rem .45rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.enroll-badge[data-kind="active"] {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #eef3f8;
+}
+
+.enroll-badge[data-kind="late"] {
+  border-color: #9a6b12;
+  color: #9a6b12;
+  background: #f8f1e0;
+}
+
+.enroll-badge[data-kind="withdrawn"] {
+  border-color: var(--crimson);
+  color: var(--crimson);
+  background: #f8eef0;
+}
+
 .mod-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -285,6 +315,40 @@
   font-family: var(--font-display);
   font-style: italic;
   color: var(--muted);
+}
+
+.pay-table-wrap {
+  overflow-x: auto;
+}
+
+.pay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pay-table th {
+  text-align: left;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.pay-table td {
+  padding: .7rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: .9rem;
+}
+
+.pay-table tbody tr:last-child td { border-bottom: none; }
+
+.pay-table__concept {
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .pay-form {

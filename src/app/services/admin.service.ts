@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface PageMeta {
@@ -51,6 +51,18 @@ export interface StudentItem {
   name?: string; code?: string; email?: string; phone?: string; status?: string;
   grade?: string; level?: string; section?: string;
   dni?: string; emergencyPhone?: string; username?: string; tutor?: string;
+  enrollments?: Array<{
+    id: string;
+    status: string;
+    enrolledAt?: string;
+    withdrawnAt?: string | null;
+    section?: { name?: string; grade?: string; level?: string };
+    academicYear?: { id?: string; name?: string; startDate?: string; endDate?: string; status?: string };
+  }>;
+  enrollmentKind?: 'none' | 'active' | 'late' | 'withdrawn';
+  enrollmentStatus?: string;
+  academicYearName?: string;
+  enrolledAt?: string;
 }
 export interface CreateStudentDto {
   username?: string;
@@ -152,6 +164,8 @@ export interface CreateAcademicYearDto {
 // ─── ENROLLMENTS ─────────────────────────────────────────────────────────────
 export interface EnrollmentItem {
   id: string; status: string;
+  enrolledAt?: string;
+  withdrawnAt?: string | null;
   student: { id: string; studentCode: string; user: { firstName: string; lastName: string } };
   section: { id: string; name: string; grade: string };
   academicYear: { id: string; name: string };
@@ -262,6 +276,17 @@ export class AdminService {
     const statusMap: Record<string, string> = { ACTIVE: 'activo', INACTIVE: 'retirado', SUSPENDED: 'suspendido' };
     const rawStatus = s.status ?? s.user?.status ?? '';
     const u = s.user ?? ({} as StudentItem['user']);
+    const current = this.currentYearEnrollment(s);
+    const yearStart = current?.academicYear?.startDate ? new Date(current.academicYear.startDate) : null;
+    const enrolledAt = current?.enrolledAt ? new Date(current.enrolledAt) : null;
+    const lateCutoff = yearStart ? new Date(yearStart.getTime() + 14 * 24 * 60 * 60 * 1000) : null;
+    let enrollmentKind: StudentItem['enrollmentKind'] = 'none';
+    if (current?.status === 'ACTIVE') {
+      enrollmentKind = enrolledAt && lateCutoff && enrolledAt > lateCutoff ? 'late' : 'active';
+    } else if (current?.status === 'WITHDRAWN') {
+      enrollmentKind = 'withdrawn';
+    }
+
     return {
       ...s,
       name:     s.name  ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
@@ -273,9 +298,19 @@ export class AdminService {
       address:  s.address ?? u.address ?? '',
       createdAt: s.createdAt ?? u.createdAt ?? '',
       status:   statusMap[rawStatus] ?? rawStatus.toLowerCase(),
-      grade:    s.grade ?? '',
-      level:    s.level ?? '',
+      grade:    current?.section?.grade ?? s.grade ?? '',
+      level:    current?.section?.level ?? s.level ?? '',
+      section:  current?.section?.name ?? s.section ?? '',
+      enrollmentKind,
+      enrollmentStatus: current?.status ?? '',
+      academicYearName: current?.academicYear?.name ?? '',
+      enrolledAt: current?.enrolledAt,
     };
+  }
+
+  private currentYearEnrollment(s: StudentItem) {
+    const list = s.enrollments ?? [];
+    return list.find(e => e.academicYear?.status === 'ACTIVE') ?? list[0];
   }
 
   private normalizeTeacher(t: TeacherItem): TeacherItem {
@@ -357,41 +392,29 @@ export class AdminService {
   }
   getStudentDocuments(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/students/${id}/documents`); }
   getStudentPayments(id: string, f: { status?: string } = {}): Observable<StudentPaymentItem[]> {
-    return this.get<unknown[]>(`/students/${id}/parents`).pipe(
-      switchMap((parents) => {
-        const parentIds = parents
-          .map((p: any) => p?.parentId ?? p?.id)
-          .filter((pid: string | undefined): pid is string => !!pid);
-
-        if (!parentIds.length) return of([]);
-
-        return forkJoin(
-          parentIds.map(parentId =>
-            this.get<StudentPaymentItem[]>(`/parents/${parentId}/payments`, buildParams(f)).pipe(
-              catchError(() => of([]))
-            )
-          )
-        ).pipe(
-          map((paymentsByParent) => paymentsByParent.flat()),
-          map((payments) => {
-            const filtered = payments.filter((payment: any) => {
-              const paymentStudentId = payment?.studentId ?? payment?.childId ?? payment?.student?.id ?? payment?.child?.id;
-              return paymentStudentId ? paymentStudentId === id : true;
-            });
-
-            const uniq = new Map<string, StudentPaymentItem>();
-            for (const payment of filtered) {
-              const paymentId = payment?.id ? String(payment.id) : `${payment?.concept ?? 'pago'}-${payment?.dueDate ?? ''}-${payment?.amount ?? ''}`;
-              if (!uniq.has(paymentId)) uniq.set(paymentId, payment as StudentPaymentItem);
-            }
-            return Array.from(uniq.values());
-          })
-        );
-      })
+    return this.get<Array<StudentPaymentItem & { description?: string }>>(`/students/${id}/payments`, buildParams(f)).pipe(
+      map(rows => (rows ?? []).map(p => ({
+        ...p,
+        concept: p.concept || p.description || 'Pago',
+      })))
     );
   }
   registerStudentPayment(id: string, dto: RegisterStudentPaymentDto): Observable<StudentPaymentItem> {
     return this.http.post<{ success: boolean; data: StudentPaymentItem }>(`${this.url}/students/${id}/payments`, dto).pipe(map(r => r.data));
+  }
+  updateStudentPayment(studentId: string, paymentId: string, status: string): Observable<StudentPaymentItem> {
+    return this.http.patch<{ success: boolean; data: StudentPaymentItem & { description?: string } }>(
+      `${this.url}/students/${studentId}/payments/${paymentId}`,
+      { status },
+    ).pipe(map(r => ({
+      ...r.data,
+      concept: r.data.concept || r.data.description || 'Pago',
+    })));
+  }
+  patchStudentAccountStatus(id: string, status: 'ACTIVE' | 'SUSPENDED'): Observable<StudentItem> {
+    return this.http.patch<{ success: boolean; data: StudentItem }>(`${this.url}/students/${id}/status`, { status }).pipe(
+      map(r => this.normalizeStudent(r.data))
+    );
   }
   uploadStudentDocuments(id: string, files: File[]): Observable<unknown> {
     const fd = new FormData();
