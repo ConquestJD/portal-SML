@@ -7,7 +7,7 @@ export type FieldKey =
   // student
   | 'level' | 'grade' | 'studentCode' | 'birthDate' | 'gender' | 'bloodType' | 'medicalNotes' | 'emergencyPhone'
   // teacher
-  | 'department' | 'specialization' | 'degree' | 'university' | 'teacherCode' | 'specialty' | 'bio'
+  | 'department' | 'specialization' | 'degree' | 'university' | 'teacherCode' | 'bio'
   // parent
   | 'relationship' | 'occupation';
 
@@ -40,7 +40,6 @@ export interface UserFormData {
   degree: string;
   university: string;
   teacherCode: string;
-  specialty: string;
   bio: string;
   // parent
   relationship: string;
@@ -51,7 +50,7 @@ export function emptyFormData(): UserFormData {
   return {
     firstName: '', lastName: '', username: '', email: '', password: '', phone: '', dni: '', address: '', status: 'ACTIVE',
     level: '', grade: '', studentCode: '', birthDate: '', gender: '', bloodType: '', medicalNotes: '', emergencyPhone: '',
-    department: '', specialization: '', degree: '', university: '', teacherCode: '', specialty: '', bio: '',
+    department: '', specialization: '', degree: '', university: '', teacherCode: '', bio: '',
     relationship: '', occupation: '',
   };
 }

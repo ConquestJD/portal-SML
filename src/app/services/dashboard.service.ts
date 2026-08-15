@@ -20,7 +20,7 @@ export interface StudentDashboard {
 }
 
 export interface TeacherDashboard {
-  teacher?: { name: string; specialty?: string };
+  teacher?: { name: string };
   summary: {
     totalCourses: number;
     totalStudents: number;

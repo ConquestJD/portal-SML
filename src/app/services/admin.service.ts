@@ -25,7 +25,7 @@ export interface UserItem {
   displayRole?: string;
   status: string;
   displayStatus?: string;
-  phone?: string; createdAt?: string; lastLogin?: string;
+  phone?: string; createdAt?: string;
 }
 export interface CreateUserDto {
   username?: string;
@@ -62,7 +62,7 @@ export interface CreateStudentDto {
 
 // ─── TEACHERS ────────────────────────────────────────────────────────────────
 export interface TeacherItem {
-  id: string; teacherCode?: string; specialty?: string; bio?: string;
+  id: string; teacherCode?: string; bio?: string;
   user: {
     id: string; email: string; firstName: string; lastName: string; status: string;
     phone?: string; username?: string; dni?: string; address?: string; createdAt?: string;
@@ -82,7 +82,7 @@ export interface CreateTeacherDto {
   lastName: string;
   dni: string;
   phone?: string;
-  teacherCode?: string; specialty?: string; bio?: string;
+  teacherCode?: string; bio?: string;
 }
 
 // ─── PARENTS ─────────────────────────────────────────────────────────────────
@@ -292,7 +292,6 @@ export class AdminService {
       dni:       t.dni ?? u.dni ?? (/^\d{8,}$/.test(username) ? username : ''),
       address:   t.address   ?? u.address   ?? '',
       createdAt: t.createdAt ?? u.createdAt ?? '',
-      department: t.department ?? t.specialty ?? '',
       courses: t.courses ?? 0,
       students: t.students ?? 0,
       grades: t.grades ?? []

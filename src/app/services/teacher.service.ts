@@ -153,7 +153,7 @@ export interface TeacherCourseAnnouncement {
 }
 
 export interface TeacherProfile {
-  id: string; teacherCode?: string; specialty?: string; bio?: string;
+  id: string; teacherCode?: string; bio?: string;
   user: { id: string; email: string; firstName: string; lastName: string; phone?: string; avatarUrl?: string };
 }
 
@@ -678,7 +678,7 @@ export class TeacherService {
   getProfile(): Observable<TeacherProfile> {
     return this.get<TeacherProfile>('/teacher/profile');
   }
-  updateProfile(dto: { bio?: string; specialty?: string; phone?: string }): Observable<TeacherProfile> {
+  updateProfile(dto: { bio?: string; phone?: string }): Observable<TeacherProfile> {
     return this.http.put<{ success: boolean; data: TeacherProfile }>(
       `${this.url}/teacher/profile`, dto
     ).pipe(map(r => r.data));
