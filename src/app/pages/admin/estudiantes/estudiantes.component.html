@@ -18,18 +18,22 @@
 
   <div class="adm-page__body">
 
-    <section class="metrics metrics--3" aria-label="Resumen">
+    <section class="metrics" aria-label="Resumen">
       <div class="metric">
         <span class="metric__n">{{ total() }}</span>
         <span class="metric__l">Registrados</span>
       </div>
       <div class="metric">
-        <span class="metric__n">{{ totalActive() }}</span>
-        <span class="metric__l">Activos</span>
+        <span class="metric__n">{{ totalEnrolled() }}</span>
+        <span class="metric__l">Matriculados {{ academicYearName() }}</span>
       </div>
       <div class="metric">
-        <span class="metric__n">{{ totalEnrolled() }}</span>
-        <span class="metric__l">Matriculados {{ activeYearName() }}</span>
+        <span class="metric__n">{{ totalOnTime() }}</span>
+        <span class="metric__l">Pensiones al día</span>
+      </div>
+      <div class="metric metric--alert">
+        <span class="metric__n">{{ totalOverdue() }}</span>
+        <span class="metric__l">Con retraso</span>
       </div>
     </section>
 
@@ -38,6 +42,13 @@
     }
 
     <div class="toolbar">
+      @if (years().length) {
+        <select [(ngModel)]="filterYear" name="filterYear" aria-label="Año académico">
+          @for (y of years(); track y.id) {
+            <option [value]="y.id">{{ y.name }}</option>
+          }
+        </select>
+      }
       <label class="search">
         <span class="visually-hidden">Buscar</span>
         <input
@@ -60,10 +71,15 @@
         }
       </select>
       <select [(ngModel)]="filterEnrollment" name="filterEnrollment" aria-label="Matrícula">
-        <option value="">Matrícula</option>
-        <option value="matriculado">Matriculados este año</option>
-        <option value="sin">Sin matrícula</option>
+        <option value="">Matrícula {{ academicYearName() }}</option>
+        <option value="matriculado">Sí matriculados</option>
+        <option value="sin">No matriculados</option>
         <option value="retirado">Retiro anticipado</option>
+      </select>
+      <select [(ngModel)]="filterTuition" name="filterTuition" aria-label="Pensiones">
+        <option value="">Pensiones</option>
+        <option value="atrasado">Con retraso</option>
+        <option value="aldia">Al día</option>
       </select>
       <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Cuenta">
         <option value="">Cuenta</option>
@@ -104,7 +120,8 @@
                     <th>Alumno</th>
                     <th>Código</th>
                     <th>DNI</th>
-                    <th>Matrícula</th>
+                    <th>Matrícula {{ academicYearName() }}</th>
+                    <th>Pensiones</th>
                     <th>Cuenta</th>
                     <th><span class="visually-hidden">Acciones</span></th>
                   </tr>
@@ -130,6 +147,11 @@
                       <td>
                         <span class="enroll-badge" [attr.data-kind]="student.enrollmentKind || 'none'">
                           {{ enrollmentLabel(student) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="tuition-badge" [attr.data-kind]="tuitionKind(student)">
+                          {{ tuitionLabel(student) }}
                         </span>
                       </td>
                       <td>

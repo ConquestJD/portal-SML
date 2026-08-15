@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService, StudentItem } from '../../../services/admin.service';
+import { AdminService, StudentItem, AcademicYearItem } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 
 @Component({
@@ -18,6 +18,9 @@ export class EstudiantesComponent implements OnInit {
   total = signal(0);
 
   students = signal<StudentItem[]>([]);
+  years = signal<AcademicYearItem[]>([]);
+  selectedYearId = signal('');
+  academicYearName = signal('2026');
 
   private _searchQuery = signal('');
   get searchQuery(): string { return this._searchQuery(); }
@@ -35,11 +38,20 @@ export class EstudiantesComponent implements OnInit {
   get filterEnrollment(): string { return this._filterEnrollment(); }
   set filterEnrollment(v: string) { this._filterEnrollment.set(v); }
 
+  private _filterTuition = signal('');
+  get filterTuition(): string { return this._filterTuition(); }
+  set filterTuition(v: string) { this._filterTuition.set(v); }
+
   private _filterStatus = signal('');
   get filterStatus(): string { return this._filterStatus(); }
   set filterStatus(v: string) { this._filterStatus.set(v); }
 
-  /** Lista única de grados a partir de los estudiantes cargados. */
+  get filterYear(): string { return this.selectedYearId(); }
+  set filterYear(v: string) {
+    if (v === this.selectedYearId()) return;
+    this.onYearChange(v);
+  }
+
   availableGrades = computed(() =>
     Array.from(new Set(this.students().map(s => s.grade ?? '').filter(Boolean))).sort()
   );
@@ -52,6 +64,7 @@ export class EstudiantesComponent implements OnInit {
     const grade = this._filterGrade();
     const level = this._filterLevel();
     const enroll = this._filterEnrollment();
+    const tuition = this._filterTuition();
     const status = this._filterStatus();
     const q = this._searchQuery().trim().toLowerCase();
 
@@ -62,6 +75,8 @@ export class EstudiantesComponent implements OnInit {
       if (enroll === 'matriculado' && s.enrollmentKind !== 'active' && s.enrollmentKind !== 'late') return false;
       if (enroll === 'sin' && s.enrollmentKind !== 'none') return false;
       if (enroll === 'retirado' && s.enrollmentKind !== 'withdrawn') return false;
+      if (tuition === 'atrasado' && !this.hasOverdue(s)) return false;
+      if (tuition === 'aldia' && (this.hasOverdue(s) || s.enrollmentKind === 'none')) return false;
       if (q) {
         const text = `${s.name ?? ''} ${s.code ?? ''} ${s.email ?? ''} ${s.dni ?? ''} ${s.phone ?? ''}`.toLowerCase();
         if (!text.includes(q)) return false;
@@ -96,30 +111,58 @@ export class EstudiantesComponent implements OnInit {
     });
   });
 
-  totalActive = computed(() => this.students().filter(s => s.status === 'activo').length);
   totalEnrolled = computed(() =>
     this.students().filter(s => s.enrollmentKind === 'active' || s.enrollmentKind === 'late').length
   );
-  activeYearName = computed(() =>
-    this.students().find(s => s.academicYearName)?.academicYearName ?? 'este año'
+  totalOverdue = computed(() => this.students().filter(s => this.hasOverdue(s)).length);
+  totalOnTime = computed(() =>
+    this.students().filter(s =>
+      (s.enrollmentKind === 'active' || s.enrollmentKind === 'late') && !this.hasOverdue(s)
+    ).length
   );
 
   hasActiveFilters = computed(() =>
-    !!this._searchQuery() || !!this._filterGrade() || !!this._filterLevel() || !!this._filterStatus() || !!this._filterEnrollment()
+    !!this._searchQuery() || !!this._filterGrade() || !!this._filterLevel()
+    || !!this._filterStatus() || !!this._filterEnrollment() || !!this._filterTuition()
   );
 
   constructor(private adminService: AdminService) {}
 
   busyId = signal('');
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.adminService.getAcademicYears().subscribe({
+      next: (years) => {
+        this.years.set(years ?? []);
+        const active = (years ?? []).find(y => y.status === 'ACTIVE') ?? (years ?? [])[0];
+        if (active) {
+          this.selectedYearId.set(active.id);
+          this.academicYearName.set(active.name);
+        }
+        this.load();
+      },
+      error: () => this.load()
+    });
+  }
+
+  onYearChange(id: string) {
+    this.selectedYearId.set(id);
+    const year = this.years().find(y => y.id === id);
+    this.academicYearName.set(year?.name ?? this.academicYearName());
+    this.load();
+  }
 
   load() {
     this.loading.set(true);
-    this.adminService.getStudents({ page: 1, pageSize: 100 }).subscribe({
+    this.adminService.getStudents({
+      page: 1,
+      pageSize: 100,
+      academicYearId: this.selectedYearId() || undefined,
+    }).subscribe({
       next: ({ data, meta }) => {
         this.students.set(data);
         this.total.set(meta.total);
+        if (meta.academicYear?.name) this.academicYearName.set(meta.academicYear.name);
         this.loading.set(false);
       },
       error: () => { this.error.set('Error al cargar estudiantes'); this.loading.set(false); }
@@ -134,6 +177,7 @@ export class EstudiantesComponent implements OnInit {
     this._filterLevel.set('');
     this._filterStatus.set('');
     this._filterEnrollment.set('');
+    this._filterTuition.set('');
   }
 
   getInitials(s: StudentItem): string {
@@ -150,11 +194,30 @@ export class EstudiantesComponent implements OnInit {
 
   enrollmentLabel(s: StudentItem): string {
     switch (s.enrollmentKind) {
-      case 'active': return 'Matriculado';
-      case 'late': return 'Ingreso tardío';
-      case 'withdrawn': return 'Retiro anticipado';
-      default: return 'Sin matrícula';
+      case 'active': return 'Sí';
+      case 'late': return 'Sí · tardío';
+      case 'withdrawn': return 'Retirado';
+      default: return 'No';
     }
+  }
+
+  hasOverdue(s: StudentItem): boolean {
+    return (s.tuition?.overdueCount ?? 0) > 0;
+  }
+
+  tuitionKind(s: StudentItem): 'overdue' | 'ok' | 'none' {
+    if (this.hasOverdue(s)) return 'overdue';
+    if (s.enrollmentKind === 'active' || s.enrollmentKind === 'late') return 'ok';
+    return 'none';
+  }
+
+  tuitionLabel(s: StudentItem): string {
+    if (this.hasOverdue(s)) {
+      const months = s.tuition?.overdueMonths ?? [];
+      return months.length ? `Retraso: ${months.join(', ')}` : 'Retraso';
+    }
+    if (s.enrollmentKind === 'active' || s.enrollmentKind === 'late') return 'Al día';
+    return '—';
   }
 
   isSuspended(s: StudentItem): boolean {
@@ -169,7 +232,7 @@ export class EstudiantesComponent implements OnInit {
     this.busyId.set(s.id);
     this.adminService.patchStudentAccountStatus(s.id, next).subscribe({
       next: (updated) => {
-        this.students.update(list => list.map(row => row.id === s.id ? { ...row, ...updated } : row));
+        this.students.update(list => list.map(row => row.id === s.id ? { ...row, ...updated, tuition: row.tuition } : row));
         this.busyId.set('');
       },
       error: () => {

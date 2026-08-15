@@ -342,6 +342,31 @@ export class DetalleEstudianteComponent implements OnInit {
   isOpenInstallment(payment: StudentPaymentItem): boolean {
     return payment.status === 'PENDING' || payment.status === 'OVERDUE';
   }
+
+  paymentsByYear = computed(() => {
+    const groups = new Map<string, StudentPaymentItem[]>();
+    for (const payment of this.studentPayments()) {
+      const year = payment.dueDate ? String(new Date(payment.dueDate).getFullYear()) : 'Otros';
+      const list = groups.get(year) ?? [];
+      list.push(payment);
+      groups.set(year, list);
+    }
+    return Array.from(groups.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([year, payments]) => ({ year, payments }));
+  });
+
+  overdueMonthsLabel = computed(() => {
+    const overdue = this.studentPayments()
+      .filter(p => p.status === 'OVERDUE' && p.dueDate)
+      .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime());
+    if (!overdue.length) return '';
+    const months = overdue.map(p => {
+      const d = new Date(p.dueDate!);
+      return d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+    });
+    return months.join(', ');
+  });
   getStatusBadgeClass(status: string): string {
     const map: Record<string, string> = {
       ACTIVE: 'badge-success',

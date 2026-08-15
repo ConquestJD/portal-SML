@@ -76,7 +76,7 @@
                 </div>
               }
               <div class="facts--wide">
-                <dt>Matrícula {{ student().academicYearName || 'año lectivo' }}</dt>
+                <dt>Matrícula {{ student().academicYearName || '2026' }}</dt>
                 <dd>
                   {{ enrollmentKindLabel() }}
                   @if (student().enrollmentKind === 'late' && student().enrolledAt) {
@@ -224,10 +224,8 @@
           </section>
 
           <p class="enroll-line">
+            Matrícula {{ student().academicYearName || '' }}:
             {{ enrollmentKindLabel() }}
-            @if (student().academicYearName) {
-              · {{ student().academicYearName }}
-            }
             @if (student().enrollmentKind === 'late' && student().enrolledAt) {
               · ingreso el {{ student().enrolledAt | date:'mediumDate' }}
             }
@@ -235,6 +233,10 @@
               · retiro el {{ getCurrentEnrollment()?.withdrawnAt | date:'mediumDate' }}
             }
           </p>
+
+          @if (overdueMonthsLabel()) {
+            <p class="pay-overdue">Retraso en {{ overdueMonthsLabel() }}</p>
+          }
 
           @if (paymentSuccess()) {
             <p class="adm-alert adm-alert--ok">{{ paymentSuccess() }}</p>
@@ -297,42 +299,45 @@
                 }
               </p>
             } @else {
-              <div class="pay-table-wrap">
-                <table class="pay-table">
-                  <thead>
-                    <tr>
-                      <th>Concepto</th>
-                      <th>Vence</th>
-                      <th>Monto</th>
-                      <th>Estado</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (payment of studentPayments(); track payment.id) {
+              @for (group of paymentsByYear(); track group.year) {
+                <h3 class="pay-year">{{ group.year }}</h3>
+                <div class="pay-table-wrap">
+                  <table class="pay-table">
+                    <thead>
                       <tr>
-                        <td class="pay-table__concept">{{ payment.concept }}</td>
-                        <td>{{ payment.dueDate ? (payment.dueDate | date:'mediumDate') : '—' }}</td>
-                        <td>S/ {{ payment.amount | number:'1.2-2' }}</td>
-                        <td>
-                          <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
-                        </td>
-                        <td class="roster-actions">
-                          @if (isOpenInstallment(payment)) {
-                            <button
-                              type="button"
-                              class="adm-link"
-                              [disabled]="markingPaymentId() === payment.id"
-                              (click)="markPaymentPaid(payment)">
-                              Marcar pagado
-                            </button>
-                          }
-                        </td>
+                        <th>Mes</th>
+                        <th>Vence</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th></th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      @for (payment of group.payments; track payment.id) {
+                        <tr [class.is-overdue]="payment.status === 'OVERDUE'">
+                          <td class="pay-table__concept">{{ payment.concept }}</td>
+                          <td>{{ payment.dueDate ? (payment.dueDate | date:'mediumDate') : '—' }}</td>
+                          <td>S/ {{ payment.amount | number:'1.2-2' }}</td>
+                          <td>
+                            <admin-status-badge [value]="payment.status" kind="payment"></admin-status-badge>
+                          </td>
+                          <td class="roster-actions">
+                            @if (isOpenInstallment(payment)) {
+                              <button
+                                type="button"
+                                class="adm-link"
+                                [disabled]="markingPaymentId() === payment.id"
+                                (click)="markPaymentPaid(payment)">
+                                Marcar pagado
+                              </button>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
             }
           </section>
         </div>

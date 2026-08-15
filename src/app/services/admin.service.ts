@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 
 export interface PageMeta {
   page: number; pageSize: number; total: number; totalPages: number;
+  academicYear?: { id: string; name: string; status: string } | null;
 }
 
 function buildParams(filters: Record<string, string | number | boolean | undefined>): HttpParams {
@@ -63,6 +64,12 @@ export interface StudentItem {
   enrollmentStatus?: string;
   academicYearName?: string;
   enrolledAt?: string;
+  tuition?: {
+    overdueCount: number;
+    overdueMonths: string[];
+    currentMonthStatus: string;
+    currentMonth: string;
+  };
 }
 export interface CreateStudentDto {
   username?: string;
@@ -351,7 +358,7 @@ export class AdminService {
   }
 
   // ─── STUDENTS ─────────────────────────────────────────────────────────────
-  getStudents(f: { grade?: string; section?: string; status?: string; search?: string; page?: number; pageSize?: number } = {}) {
+  getStudents(f: { grade?: string; section?: string; status?: string; search?: string; page?: number; pageSize?: number; academicYearId?: string } = {}) {
     return this.getList<StudentItem>('/students', buildParams(f)).pipe(
       map(r => ({ ...r, data: r.data.map(s => this.normalizeStudent(s)) }))
     );

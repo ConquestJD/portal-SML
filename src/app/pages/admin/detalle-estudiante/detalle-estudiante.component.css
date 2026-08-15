@@ -317,6 +317,22 @@
   color: var(--muted);
 }
 
+.pay-overdue {
+  margin: 0;
+  font-weight: 700;
+  color: var(--crimson);
+}
+
+.pay-year {
+  margin: 1rem 0 .4rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.pay-year:first-child { margin-top: 0; }
+
 .pay-table-wrap {
   overflow-x: auto;
 }
@@ -345,6 +361,14 @@
 }
 
 .pay-table tbody tr:last-child td { border-bottom: none; }
+
+.pay-table tbody tr.is-overdue td {
+  background: #fdf4f6;
+}
+
+.pay-table tbody tr.is-overdue .pay-table__concept {
+  color: var(--crimson);
+}
 
 .pay-table__concept {
   font-weight: 600;
