@@ -421,6 +421,9 @@ export class AdminService {
   updateTeacher(id: string, dto: Partial<CreateTeacherDto>): Observable<TeacherItem> {
     return this.http.put<{ success: boolean; data: TeacherItem }>(`${this.url}/teachers/${id}`, dto).pipe(map(r => r.data));
   }
+  deleteTeacher(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/teachers/${id}`);
+  }
   getTeacherActiveCourses(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/teachers/${id}/courses/active`); }
   getTeacherCourseHistory(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/teachers/${id}/courses/history`); }
   /** `sectionId` opcional si el colegio ya no usa secciones; el backend valida según contrato vigente. */
@@ -484,7 +487,12 @@ export class AdminService {
 
   getCourses(f: { grade?: string; level?: string; status?: string; search?: string; page?: number; pageSize?: number } = {}) {
     return this.getList<CourseItem>('/courses', buildParams(f)).pipe(
-      map(r => ({ ...r, data: r.data.map(c => this.mergeCourseExtras(c)) }))
+      map(r => ({
+        ...r,
+        data: r.data
+          .map(c => this.mergeCourseExtras(c))
+          .filter(c => f.status ? true : (c.status || 'ACTIVE').toUpperCase() !== 'ARCHIVED'),
+      }))
     );
   }
   getCourse(id: string): Observable<CourseItem> {

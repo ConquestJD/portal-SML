@@ -16,6 +16,7 @@ export class ProfesoresComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   total = signal(0);
+  busyId = signal('');
 
   profesores = signal<TeacherItem[]>([]);
 
@@ -42,45 +43,26 @@ export class ProfesoresComponent implements OnInit {
     const status = this._filterStatus();
     const q = this._searchQuery().trim().toLowerCase();
 
-    return this.profesores().filter(p => {
-      if (specialty && this.specialtyOf(p) !== specialty) return false;
-      if (status === 'activo' && !this.isActive(p)) return false;
-      if (status === 'inactivo' && this.isActive(p)) return false;
-      if (q) {
-        const text = [
-          this.getFullName(p),
-          p.email ?? p.user?.email ?? '',
-          p.teacherCode ?? '',
-          this.specialtyOf(p),
-          p.phone ?? '',
-        ].join(' ').toLowerCase();
-        if (!text.includes(q)) return false;
-      }
-      return true;
-    });
-  });
-
-  groupedProfesores = computed(() => {
-    const groups = new Map<string, TeacherItem[]>();
-    for (const p of this.filteredProfesores()) {
-      const key = this.specialtyOf(p);
-      const list = groups.get(key) ?? [];
-      list.push(p);
-      groups.set(key, list);
-    }
-
-    const keys = Array.from(groups.keys()).sort((a, b) => {
-      if (a === 'Sin especialidad') return 1;
-      if (b === 'Sin especialidad') return -1;
-      return a.localeCompare(b, 'es');
-    });
-
-    return keys.map(specialty => ({
-      specialty,
-      teachers: (groups.get(specialty) ?? []).slice().sort((a, b) =>
-        this.getFullName(a).localeCompare(this.getFullName(b), 'es')
-      ),
-    }));
+    return this.profesores()
+      .filter(p => {
+        if (specialty && this.specialtyOf(p) !== specialty) return false;
+        if (status === 'activo' && !this.isActive(p)) return false;
+        if (status === 'suspendido' && !this.isSuspended(p)) return false;
+        if (status === 'inactivo' && (this.isActive(p) || this.isSuspended(p))) return false;
+        if (q) {
+          const text = [
+            this.getFullName(p),
+            p.email ?? p.user?.email ?? '',
+            p.teacherCode ?? '',
+            this.specialtyOf(p),
+            p.phone ?? '',
+          ].join(' ').toLowerCase();
+          if (!text.includes(q)) return false;
+        }
+        return true;
+      })
+      .slice()
+      .sort((a, b) => this.getFullName(a).localeCompare(this.getFullName(b), 'es'));
   });
 
   totalActive = computed(() => this.profesores().filter(p => this.isActive(p)).length);
@@ -146,7 +128,68 @@ export class ProfesoresComponent implements OnInit {
     return s === 'active' || s === 'activo';
   }
 
+  isSuspended(p: TeacherItem): boolean {
+    const s = (p.status ?? p.user?.status ?? '').toLowerCase();
+    return s === 'suspended' || s === 'suspendido';
+  }
+
+  toggleSuspend(p: TeacherItem) {
+    const userId = p.user?.id;
+    if (!userId) {
+      this.error.set('No se encontró la cuenta de este profesor.');
+      return;
+    }
+
+    const next = this.isSuspended(p) ? 'ACTIVE' : 'SUSPENDED';
+    const label = next === 'SUSPENDED' ? 'suspender' : 'reactivar';
+    if (!confirm(`¿${label.charAt(0).toUpperCase() + label.slice(1)} la cuenta de ${this.getFullName(p)}?`)) return;
+
+    this.error.set('');
+    this.busyId.set(p.id);
+    this.adminService.patchUserStatus(userId, next).subscribe({
+      next: () => {
+        this.profesores.update(list => list.map(t => {
+          if (t.id !== p.id) return t;
+          return {
+            ...t,
+            status: next,
+            user: t.user ? { ...t.user, status: next } : t.user,
+          };
+        }));
+        this.busyId.set('');
+      },
+      error: (err) => {
+        this.error.set(this.extractApiMessage(err) || 'No se pudo actualizar el estado de la cuenta.');
+        this.busyId.set('');
+      }
+    });
+  }
+
+  deleteTeacher(p: TeacherItem) {
+    if (!confirm(`¿Eliminar la cuenta de ${this.getFullName(p)}? Dejará de aparecer en el claustro y no podrá ingresar.`)) return;
+    this.error.set('');
+    this.busyId.set(p.id);
+    this.adminService.deleteTeacher(p.id).subscribe({
+      next: () => {
+        this.profesores.update(list => list.filter(t => t.id !== p.id));
+        this.total.update(n => Math.max(0, n - 1));
+        this.busyId.set('');
+      },
+      error: (err) => {
+        this.error.set(this.extractApiMessage(err) || 'No se pudo eliminar la cuenta.');
+        this.busyId.set('');
+      }
+    });
+  }
+
   private withCourseCount(p: TeacherItem): TeacherItem {
     return { ...p, courses: this.courseCount(p) };
+  }
+
+  private extractApiMessage(err: unknown): string {
+    const e = err as { error?: { error?: { message?: unknown }; message?: unknown }; message?: unknown };
+    const raw = e?.error?.error?.message ?? e?.error?.message ?? e?.message;
+    if (Array.isArray(raw)) return raw.join(', ');
+    return typeof raw === 'string' ? raw : '';
   }
 }
