@@ -21,65 +21,125 @@
       <img class="admin-dash__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
       <div class="admin-dash__hero-veil"></div>
       <div class="admin-dash__hero-content">
-        <img src="/only-logo.png" alt="" class="admin-dash__crest" />
-        <div>
-          <h1 class="admin-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
-          <p class="admin-dash__brand">Santa María Laura</p>
+        <div class="admin-dash__welcome">
+          <img src="/only-logo.png" alt="" class="admin-dash__crest" />
+          <div>
+            <p class="admin-dash__kicker">Dirección · Santa María Laura</p>
+            <h1 class="admin-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
+            <p class="admin-dash__brand">
+              @if (activeYear(); as year) {
+                Año lectivo {{ year.name }}
+              } @else {
+                Colegio de alto rendimiento · Abancay
+              }
+            </p>
+          </div>
+        </div>
+        <div class="admin-dash__date" aria-label="Fecha de hoy">
+          <span class="admin-dash__date-week">{{ weekdayLabel() }}</span>
+          <span class="admin-dash__date-day">{{ dayNumber() }}</span>
+          <span class="admin-dash__date-month">{{ monthYearLabel() }}</span>
         </div>
       </div>
     </header>
 
     <div class="admin-dash__body">
 
-      <section class="metrics" aria-label="Resumen">
-        <a routerLink="/admin/estudiantes" class="metric">
-          <span class="metric__n">{{ totalStudents() }}</span>
-          <span class="metric__l">Estudiantes</span>
-        </a>
-        <a routerLink="/admin/profesores" class="metric">
-          <span class="metric__n">{{ totalTeachers() }}</span>
-          <span class="metric__l">Profesores</span>
-        </a>
-        <a routerLink="/admin/padres" class="metric">
-          <span class="metric__n">{{ totalParents() }}</span>
-          <span class="metric__l">Padres</span>
-        </a>
-        <a routerLink="/admin/matricula" class="metric">
-          <span class="metric__n">{{ activeEnrollments() }}</span>
-          <span class="metric__l">Matrículas</span>
-        </a>
+      <section class="census" aria-labelledby="census-title">
+        <div class="census__head">
+          <h2 id="census-title">Censo escolar</h2>
+          <p>{{ communitySize() }} personas en la comunidad</p>
+        </div>
+        <div class="metrics">
+          <a routerLink="/admin/estudiantes" class="metric">
+            <span class="metric__kicker">En el aula</span>
+            <span class="metric__n">{{ totalStudents() }}</span>
+            <span class="metric__l">Estudiantes</span>
+          </a>
+          <a routerLink="/admin/profesores" class="metric">
+            <span class="metric__kicker">Claustro</span>
+            <span class="metric__n">{{ totalTeachers() }}</span>
+            <span class="metric__l">Profesores</span>
+          </a>
+          <a routerLink="/admin/padres" class="metric">
+            <span class="metric__kicker">Hogares</span>
+            <span class="metric__n">{{ totalParents() }}</span>
+            <span class="metric__l">Familias</span>
+          </a>
+          <a routerLink="/admin/matricula" class="metric">
+            <span class="metric__kicker">Vigentes</span>
+            <span class="metric__n">{{ activeEnrollments() }}</span>
+            <span class="metric__l">Matrículas</span>
+          </a>
+        </div>
       </section>
 
-      @if (hasAttention()) {
-        <section class="pulse" aria-label="Pendientes">
-          @if (pendingJustifications() > 0) {
-            <a routerLink="/admin/estudiantes" class="pulse__item">
-              <span class="pulse__n">{{ pendingJustifications() }}</span>
-              <span class="pulse__l">Justificaciones</span>
+      <section class="desk" aria-labelledby="desk-title">
+        <h2 id="desk-title">Hoy en dirección</h2>
+        @if (hasAttention()) {
+          <div class="pulse">
+            @if (pendingJustifications() > 0) {
+              <a routerLink="/admin/estudiantes" class="pulse__item">
+                <span class="pulse__n">{{ pendingJustifications() }}</span>
+                <span class="pulse__copy">
+                  <span class="pulse__l">Justificaciones por revisar</span>
+                  <span class="pulse__hint">Asistencia de estudiantes</span>
+                </span>
+              </a>
+            }
+            @if (pendingPayments() > 0) {
+              <a routerLink="/admin/reportes" class="pulse__item">
+                <span class="pulse__n">{{ pendingPayments() }}</span>
+                <span class="pulse__copy">
+                  <span class="pulse__l">Pagos por regularizar</span>
+                  <span class="pulse__hint">Tesorería familiar</span>
+                </span>
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="desk__ok">Sin pendientes de dirección. El colegio está al día.</p>
+        }
+      </section>
+
+      <section class="directory" aria-labelledby="dir-title">
+        <div class="directory__head">
+          <h2 id="dir-title">El colegio</h2>
+          <p>Entrar a cada área de gestión</p>
+        </div>
+        <nav class="directory__grid" aria-label="Áreas del colegio">
+          @for (item of directory; track item.link) {
+            <a [routerLink]="item.link" class="dir-card">
+              <img [src]="item.photo" alt="" decoding="async" />
+              <span class="dir-card__veil"></span>
+              <span class="dir-card__copy">
+                <span class="dir-card__hint">{{ item.hint }}</span>
+                <span class="dir-card__label">{{ item.label }}</span>
+              </span>
             </a>
           }
-          @if (pendingPayments() > 0) {
-            <a routerLink="/admin/reportes" class="pulse__item">
-              <span class="pulse__n">{{ pendingPayments() }}</span>
-              <span class="pulse__l">Pagos</span>
-            </a>
-          }
-        </section>
-      }
+        </nav>
+      </section>
 
       <div class="admin-dash__split">
         <section class="feed" aria-labelledby="feed-title">
           <div class="feed__head">
-            <h2 id="feed-title">Comunicados</h2>
+            <h2 id="feed-title">Mural institucional</h2>
             <a routerLink="/admin/comunicados">Ver todos</a>
           </div>
           @if (recentAnnouncements().length === 0) {
-            <p class="feed__empty">Sin comunicados aún</p>
+            <p class="feed__empty">El mural está en silencio. Publica el primer comunicado del periodo.</p>
           } @else {
             <ul class="feed__list">
               @for (item of recentAnnouncements(); track item.id) {
                 <li>
-                  <span class="feed__title">{{ item.title }}</span>
+                  <a routerLink="/admin/comunicados" class="feed__link">
+                    <span class="feed__kicker">{{ announcementKicker(item) }}</span>
+                    <span class="feed__title">{{ item.title }}</span>
+                    @if (announcementExcerpt(item); as excerpt) {
+                      <span class="feed__excerpt">{{ excerpt }}</span>
+                    }
+                  </a>
                   @if (formatAnnouncementDate(item)) {
                     <time>{{ formatAnnouncementDate(item) }}</time>
                   }
@@ -89,11 +149,17 @@
           }
         </section>
 
-        <nav class="shortcuts" aria-label="Accesos">
-          @for (s of shortcuts; track s.link) {
-            <a [routerLink]="s.link">{{ s.label }}</a>
-          }
-        </nav>
+        <section class="actions" aria-labelledby="actions-title">
+          <h2 id="actions-title">Hacer ahora</h2>
+          <nav class="actions__list">
+            @for (a of actions; track a.link) {
+              <a [routerLink]="a.link" class="actions__item">
+                <span class="actions__label">{{ a.label }}</span>
+                <span class="actions__hint">{{ a.hint }}</span>
+              </a>
+            }
+          </nav>
+        </section>
       </div>
     </div>
   }
