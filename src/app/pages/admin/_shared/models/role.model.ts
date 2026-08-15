@@ -118,7 +118,7 @@ export function normalizeUserStatus(status: string | undefined): UserStatus | un
 // ─── PAYMENT STATUS ──────────────────────────────────────────────────────────
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  PAID: 'Pagado', PENDING: 'Pendiente', OVERDUE: 'Vencido', CANCELLED: 'Cancelado',
+  PAID: 'Pagado', PENDING: 'Pendiente', OVERDUE: 'Vencido', CANCELLED: 'Omitido',
 };
 const PAYMENT_STATUS_CLASS: Record<string, string> = {
   PAID: 'badge-success', PENDING: 'badge-warning', OVERDUE: 'badge-error', CANCELLED: 'badge-secondary',

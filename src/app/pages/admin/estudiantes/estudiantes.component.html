@@ -154,7 +154,7 @@
                           {{ tuitionLabel(student) }}
                         </span>
                       </td>
-                      <td>
+                      <td [title]="student.suspendReason || ''">
                         <admin-status-badge [value]="student.status"></admin-status-badge>
                       </td>
                       <td class="roster-actions">
@@ -184,3 +184,29 @@
     }
   </div>
 </div>
+
+@if (suspendTarget(); as target) {
+  <div class="modal-overlay" (click)="closeSuspendModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <header class="modal-card__head">
+        <h3>Suspender cuenta</h3>
+        <button type="button" class="adm-link" (click)="closeSuspendModal()">Cerrar</button>
+      </header>
+      <p class="modal-card__lead">{{ target.name }}. Indica el motivo; quedará en la ficha del alumno.</p>
+      <label class="modal-card__label">
+        Motivo *
+        <textarea
+          class="stu-like"
+          rows="3"
+          [(ngModel)]="suspendReason"
+          name="suspendReason"
+          placeholder="Ej. retiro temporal, falta de pago, medida disciplinaria…"></textarea>
+      </label>
+      <div class="modal-card__foot">
+        <button type="button" class="adm-btn adm-btn--solid" (click)="confirmSuspend()" [disabled]="busyId() === target.id">
+          Suspender
+        </button>
+      </div>
+    </div>
+  </div>
+}

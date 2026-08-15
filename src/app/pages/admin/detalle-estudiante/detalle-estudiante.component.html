@@ -75,6 +75,12 @@
                   <dd>{{ student().address }}</dd>
                 </div>
               }
+              @if (student().status === 'suspendido' && student().suspendReason) {
+                <div class="facts--wide">
+                  <dt>Motivo de suspensión</dt>
+                  <dd>{{ student().suspendReason }}</dd>
+                </div>
+              }
               <div class="facts--wide">
                 <dt>Matrícula {{ student().academicYearName || '2026' }}</dt>
                 <dd>
@@ -252,6 +258,7 @@
                 {{ showPaymentForm() ? 'Cerrar' : 'Registrar otro pago' }}
               </button>
             </header>
+            <p class="mod__hint">Se generan desde el inicio del año. Si el alumno ingresó después, omite los meses anteriores.</p>
 
             @if (showPaymentForm()) {
               <div class="pay-form">
@@ -269,7 +276,7 @@
                     <option value="PAID">Pagado</option>
                     <option value="PENDING">Pendiente</option>
                     <option value="OVERDUE">Vencido</option>
-                    <option value="CANCELLED">Cancelado</option>
+                    <option value="CANCELLED">Omitido</option>
                   </select>
                 </label>
                 <label>
@@ -314,8 +321,13 @@
                     </thead>
                     <tbody>
                       @for (payment of group.payments; track payment.id) {
-                        <tr [class.is-overdue]="payment.status === 'OVERDUE'">
-                          <td class="pay-table__concept">{{ payment.concept }}</td>
+                        <tr [class.is-overdue]="payment.status === 'OVERDUE'" [class.is-omitted]="payment.status === 'CANCELLED'">
+                          <td class="pay-table__concept">
+                            {{ payment.concept }}
+                            @if (payment.notes && payment.status === 'CANCELLED') {
+                              <small class="pay-note">{{ payment.notes }}</small>
+                            }
+                          </td>
                           <td>{{ payment.dueDate ? (payment.dueDate | date:'mediumDate') : '—' }}</td>
                           <td>S/ {{ payment.amount | number:'1.2-2' }}</td>
                           <td>
@@ -329,6 +341,22 @@
                                 [disabled]="markingPaymentId() === payment.id"
                                 (click)="markPaymentPaid(payment)">
                                 Marcar pagado
+                              </button>
+                              <button
+                                type="button"
+                                class="adm-link"
+                                [disabled]="markingPaymentId() === payment.id"
+                                (click)="omitPayment(payment)">
+                                Omitir
+                              </button>
+                            }
+                            @if (payment.status === 'CANCELLED') {
+                              <button
+                                type="button"
+                                class="adm-link"
+                                [disabled]="markingPaymentId() === payment.id"
+                                (click)="restorePayment(payment)">
+                                Restaurar
                               </button>
                             }
                           </td>

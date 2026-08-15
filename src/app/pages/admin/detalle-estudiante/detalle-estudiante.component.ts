@@ -324,16 +324,35 @@ export class DetalleEstudianteComponent implements OnInit {
   markingPaymentId = signal('');
 
   markPaymentPaid(payment: StudentPaymentItem) {
-    if (payment.status === 'PAID' || payment.status === 'CANCELLED') return;
+    this.setPaymentStatus(payment, 'PAID');
+  }
+
+  omitPayment(payment: StudentPaymentItem) {
+    if (!this.isOpenInstallment(payment)) return;
+    const notes = window.prompt(
+      `Motivo para omitir ${payment.concept} (no se cobrará ni contará como retraso).`,
+      'Ingreso tardío',
+    );
+    if (notes == null) return;
+    this.setPaymentStatus(payment, 'CANCELLED', notes.trim() || 'Omitido');
+  }
+
+  restorePayment(payment: StudentPaymentItem) {
+    if (payment.status !== 'CANCELLED') return;
+    if (!confirm(`¿Volver a cobrar ${payment.concept}?`)) return;
+    this.setPaymentStatus(payment, 'PENDING');
+  }
+
+  private setPaymentStatus(payment: StudentPaymentItem, status: string, notes?: string) {
     this.paymentError.set('');
     this.markingPaymentId.set(payment.id);
-    this.adminService.updateStudentPayment(this.studentId, payment.id, 'PAID').subscribe({
+    this.adminService.updateStudentPayment(this.studentId, payment.id, status, notes).subscribe({
       next: (updated) => {
         this.studentPayments.update(list => list.map(p => p.id === payment.id ? { ...p, ...updated, concept: updated.concept || p.concept } : p));
         this.markingPaymentId.set('');
       },
       error: () => {
-        this.paymentError.set('No se pudo marcar el pago.');
+        this.paymentError.set('No se pudo actualizar el pago.');
         this.markingPaymentId.set('');
       }
     });
@@ -504,7 +523,7 @@ export class DetalleEstudianteComponent implements OnInit {
       PAID: 'Pagado',
       PENDING: 'Pendiente',
       OVERDUE: 'Vencido',
-      CANCELLED: 'Cancelado'
+      CANCELLED: 'Omitido'
     };
     return map[status] ?? status;
   }

@@ -129,6 +129,8 @@ export class EstudiantesComponent implements OnInit {
   constructor(private adminService: AdminService) {}
 
   busyId = signal('');
+  suspendTarget = signal<StudentItem | null>(null);
+  suspendReason = '';
 
   ngOnInit() {
     this.adminService.getAcademicYears().subscribe({
@@ -225,18 +227,42 @@ export class EstudiantesComponent implements OnInit {
   }
 
   toggleSuspend(s: StudentItem) {
-    const next = this.isSuspended(s) ? 'ACTIVE' : 'SUSPENDED';
-    const verb = next === 'SUSPENDED' ? 'suspender' : 'reactivar';
-    if (!confirm(`¿${verb.charAt(0).toUpperCase() + verb.slice(1)} la cuenta de ${s.name || 'este alumno'}?`)) return;
+    if (this.isSuspended(s)) {
+      if (!confirm(`¿Reactivar la cuenta de ${s.name || 'este alumno'}? Volverá a quedar matriculado en el año vigente.`)) return;
+      this.patchStatus(s, 'ACTIVE');
+      return;
+    }
+    this.suspendTarget.set(s);
+    this.suspendReason = '';
+  }
+
+  closeSuspendModal() {
+    this.suspendTarget.set(null);
+    this.suspendReason = '';
+  }
+
+  confirmSuspend() {
+    const s = this.suspendTarget();
+    const reason = this.suspendReason.trim();
+    if (!s) return;
+    if (reason.length < 3) {
+      this.error.set('Indica el motivo de la suspensión.');
+      return;
+    }
+    this.patchStatus(s, 'SUSPENDED', reason);
+  }
+
+  private patchStatus(s: StudentItem, next: 'ACTIVE' | 'SUSPENDED', reason?: string) {
     this.error.set('');
     this.busyId.set(s.id);
-    this.adminService.patchStudentAccountStatus(s.id, next).subscribe({
+    this.adminService.patchStudentAccountStatus(s.id, next, reason).subscribe({
       next: (updated) => {
         this.students.update(list => list.map(row => row.id === s.id ? { ...row, ...updated, tuition: row.tuition } : row));
         this.busyId.set('');
+        this.closeSuspendModal();
       },
-      error: () => {
-        this.error.set('No se pudo actualizar la cuenta.');
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'No se pudo actualizar la cuenta.');
         this.busyId.set('');
       }
     });

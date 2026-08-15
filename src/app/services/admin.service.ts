@@ -64,6 +64,8 @@ export interface StudentItem {
   enrollmentStatus?: string;
   academicYearName?: string;
   enrolledAt?: string;
+  suspendReason?: string | null;
+  suspendedAt?: string | null;
   tuition?: {
     overdueCount: number;
     overdueMonths: string[];
@@ -409,17 +411,20 @@ export class AdminService {
   registerStudentPayment(id: string, dto: RegisterStudentPaymentDto): Observable<StudentPaymentItem> {
     return this.http.post<{ success: boolean; data: StudentPaymentItem }>(`${this.url}/students/${id}/payments`, dto).pipe(map(r => r.data));
   }
-  updateStudentPayment(studentId: string, paymentId: string, status: string): Observable<StudentPaymentItem> {
+  updateStudentPayment(studentId: string, paymentId: string, status: string, notes?: string): Observable<StudentPaymentItem> {
     return this.http.patch<{ success: boolean; data: StudentPaymentItem & { description?: string } }>(
       `${this.url}/students/${studentId}/payments/${paymentId}`,
-      { status },
+      { status, ...(notes !== undefined ? { notes } : {}) },
     ).pipe(map(r => ({
       ...r.data,
       concept: r.data.concept || r.data.description || 'Pago',
     })));
   }
-  patchStudentAccountStatus(id: string, status: 'ACTIVE' | 'SUSPENDED'): Observable<StudentItem> {
-    return this.http.patch<{ success: boolean; data: StudentItem }>(`${this.url}/students/${id}/status`, { status }).pipe(
+  patchStudentAccountStatus(id: string, status: 'ACTIVE' | 'SUSPENDED', reason?: string): Observable<StudentItem> {
+    return this.http.patch<{ success: boolean; data: StudentItem }>(
+      `${this.url}/students/${id}/status`,
+      { status, ...(reason ? { reason } : {}) },
+    ).pipe(
       map(r => this.normalizeStudent(r.data))
     );
   }

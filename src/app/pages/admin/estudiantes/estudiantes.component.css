@@ -215,6 +215,80 @@
   color: var(--crimson);
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0 21 40 / .45);
+  display: grid;
+  place-items: center;
+  z-index: 40;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(28rem, 100%);
+  background: #fff;
+  padding: 1.25rem 1.3rem 1.35rem;
+}
+
+.modal-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: .75rem;
+}
+
+.modal-card__head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--navy);
+}
+
+.modal-card__lead {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.modal-card__label {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stu-like {
+  width: 100%;
+  min-height: 2.5rem;
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: #f7f8fa;
+  padding: .45rem .65rem;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  outline: none;
+}
+
+.stu-like:focus {
+  border-bottom-color: var(--navy);
+  background: #fff;
+}
+
+.modal-card__foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 @media (max-width: 640px) {
   .roster-group__head {
     padding: 1rem 1rem .75rem;

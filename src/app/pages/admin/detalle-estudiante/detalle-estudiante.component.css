@@ -370,6 +370,18 @@
   color: var(--crimson);
 }
 
+.pay-table tbody tr.is-omitted td {
+  opacity: .65;
+}
+
+.pay-note {
+  display: block;
+  margin-top: .15rem;
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .pay-table__concept {
   font-weight: 600;
   color: var(--ink);
