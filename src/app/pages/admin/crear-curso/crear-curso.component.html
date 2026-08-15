@@ -152,7 +152,15 @@
               <span class="stu-step" aria-hidden="true">4</span>
               <div>
                 <h2 id="curso-schedule-title" class="stu-block__title">Horario</h2>
-                <p class="stu-block__lead">Bloques semanales · opcional al crear</p>
+                <p class="stu-block__lead">
+                  @if (formData().grade && occupiedBlockCount() > 0) {
+                    Horas ya tomadas en {{ formData().grade }} · elige un hueco libre
+                  } @else if (formData().grade) {
+                    Bloques semanales · este grado aún no tiene horario
+                  } @else {
+                    Elige el grado para ver las horas ya ocupadas
+                  }
+                </p>
               </div>
               <span class="stu-badge stu-badge--opt">Opcional</span>
             </header>
@@ -203,7 +211,12 @@
             </div>
 
             <div class="schedule-meta">
-              <span>{{ formData().schedule.length }} bloque(s)</span>
+              <span>
+                {{ formData().schedule.length }} bloque(s) de esta materia
+                @if (occupiedBlockCount() > 0) {
+                  · {{ occupiedBlockCount() }} ocupado(s) en el grado
+                }
+              </span>
               @if (hasSchedule()) {
                 <button type="button" class="adm-link" (click)="clearAllSchedule()">Vaciar</button>
               }
@@ -230,9 +243,21 @@
                     @for (slot of hourSlots(); track slot) {
                       <div class="hour-cell"></div>
                     }
-                    @for (block of getBlocksForDay(day); track block.startTime) {
+                    @for (item of getOccupiedBlocksForDay(day); track item.course.id + item.block.startTime + item.block.endTime) {
                       <div
-                        class="calendar-block"
+                        class="calendar-block calendar-block--busy"
+                        [style.--block]="courseAccent(item.course)"
+                        [style.top.px]="getBlockTop(item.block.startTime)"
+                        [style.height.px]="getBlockHeight(item.block.startTime, item.block.endTime)"
+                        [title]="item.course.name + ' · ' + item.block.startTime + ' – ' + item.block.endTime">
+                        <strong>{{ item.course.name }}</strong>
+                        <span>{{ item.block.startTime }} – {{ item.block.endTime }}</span>
+                        <em>Ocupado</em>
+                      </div>
+                    }
+                    @for (block of getBlocksForDay(day); track block.startTime + block.endTime) {
+                      <div
+                        class="calendar-block calendar-block--own"
                         [style.--block]="formData().color"
                         [style.top.px]="getBlockTop(block.startTime)"
                         [style.height.px]="getBlockHeight(block.startTime, block.endTime)">
@@ -245,14 +270,25 @@
                 }
               </div>
             </div>
+
+            @if (occupiedCourses().length) {
+              <ul class="schedule-legend" aria-label="Materias ya horariadas en este grado">
+                @for (course of occupiedCourses(); track course.id) {
+                  <li>
+                    <span class="schedule-legend__swatch" [style.background]="courseAccent(course)"></span>
+                    {{ course.name }}
+                  </li>
+                }
+              </ul>
+            }
           </section>
 
           <div class="stu-actions">
-            <a routerLink="/admin/cursos" class="adm-btn cu-btn--body">Cancelar</a>
-            <button type="submit" class="adm-btn adm-btn--solid stu-submit" [disabled]="isLoading()">
+            <a routerLink="/admin/cursos" class="adm-btn cu-btn--cancel">Cancelar</a>
+            <button type="submit" class="adm-btn cu-btn--add" [class.is-ready]="formReady()" [disabled]="isLoading()">
               @if (isLoading()) { Guardando… }
               @else if (isEditMode()) { Guardar cambios }
-              @else { Ofertar materia }
+              @else { Agregar Curso }
             </button>
           </div>
         </div>
@@ -289,8 +325,8 @@
             </div>
           </div>
           @if (!isEditMode()) {
-            <div class="stu-check">
-              <p class="stu-check__label">Listo para ofertar</p>
+            <div class="stu-check" [class.stu-check--ready]="formReady()" [class.stu-check--pending]="!formReady()">
+              <p class="stu-check__label">{{ formReady() ? 'Listo para agregar el curso' : 'Faltan datos para agregar el curso' }}</p>
               <p class="stu-check__count">{{ readyCount() }} / 4 obligatorios</p>
               <div class="stu-check__bar" aria-hidden="true">
                 <span [style.width.%]="readyCount() * 25"></span>

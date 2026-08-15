@@ -219,9 +219,20 @@ export class CursosAdminComponent implements OnInit {
   }
 
   deleteCourse(id: string) {
-    if (!confirm('¿Estás seguro de eliminar este curso?')) return;
+    if (!confirm('¿Eliminar este curso del plan de estudios?')) return;
+    this.error.set('');
     this.adminService.deleteCourse(id).subscribe({
-      next: () => this.load()
+      next: () => {
+        this.courses.update(list => list.filter(c => c.id !== id));
+        const teachers = { ...this.teacherByCourseId() };
+        delete teachers[id];
+        this.teacherByCourseId.set(teachers);
+      },
+      error: (err) => {
+        const raw = err?.error?.error?.message ?? err?.error?.message ?? err?.message;
+        const message = Array.isArray(raw) ? raw.join(', ') : (typeof raw === 'string' ? raw : '');
+        this.error.set(message || 'No se pudo eliminar el curso.');
+      }
     });
   }
 

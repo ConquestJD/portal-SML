@@ -118,6 +118,21 @@ export class CrearCursoComponent implements OnInit {
     return names;
   });
 
+  occupiedCourses = computed(() => {
+    const grade = this.formData().grade;
+    const currentId = this.courseId();
+    if (!grade) return [] as CourseItem[];
+    return this.existingCourses().filter(c => {
+      if (c.grade !== grade) return false;
+      if (currentId && c.id === currentId) return false;
+      return (c.schedule ?? []).length > 0;
+    });
+  });
+
+  occupiedBlockCount = computed(() =>
+    this.occupiedCourses().reduce((n, c) => n + (c.schedule?.length ?? 0), 0)
+  );
+
   hasSchedule = computed(() => this.formData().schedule.length > 0);
 
   readyCount = computed(() => {
@@ -129,6 +144,8 @@ export class CrearCursoComponent implements OnInit {
     if (d.teacherId) n++;
     return n;
   });
+
+  formReady = computed(() => this.readyCount() === 4);
 
   coverPreview = computed(() => {
     const s = this.selectedSubject();
@@ -156,10 +173,7 @@ export class CrearCursoComponent implements OnInit {
       error: () => this.teachers.set([])
     });
 
-    this.adminService.getCourses({ pageSize: 100 }).subscribe({
-      next: ({ data }) => this.existingCourses.set(data),
-      error: () => this.existingCourses.set([])
-    });
+    this.loadExistingCourses();
 
     this.adminService.getAcademicYears().subscribe({
       next: (years) => {
@@ -198,6 +212,7 @@ export class CrearCursoComponent implements OnInit {
   selectGrade(grade: string) {
     this.formData.update(d => ({ ...d, grade }));
     this.refreshCode();
+    this.loadExistingCourses(grade);
   }
 
   selectSubject(subject: PredefinedSubject) {
@@ -294,11 +309,17 @@ export class CrearCursoComponent implements OnInit {
       return;
     }
 
-    const overlaps = this.formData().schedule.some(s =>
-      s.day === d.day && !(d.endTime <= s.startTime || d.startTime >= s.endTime)
-    );
-    if (overlaps) {
+    const ownOverlap = this.formData().schedule.find(s => this.slotsOverlap(d, s));
+    if (ownOverlap) {
       this.scheduleError.set(`Ya hay un bloque en ${d.day} que se cruza con ese horario`);
+      return;
+    }
+
+    const busy = this.findOccupiedOverlap(d.day, d.startTime, d.endTime);
+    if (busy) {
+      this.scheduleError.set(
+        `Ese horario se cruza con ${busy.course.name} (${busy.block.startTime} – ${busy.block.endTime})`
+      );
       return;
     }
 
@@ -330,6 +351,60 @@ export class CrearCursoComponent implements OnInit {
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
+  private loadExistingCourses(grade?: string) {
+    this.adminService.getCourses({
+      ...(grade ? { grade } : {}),
+      pageSize: 200,
+    }).subscribe({
+      next: ({ data }) => {
+        if (!grade) {
+          this.existingCourses.set(data);
+          return;
+        }
+        const byId = new Map(this.existingCourses().map(c => [c.id, c]));
+        for (const course of data) byId.set(course.id, course);
+        this.existingCourses.set([...byId.values()]);
+      },
+      error: () => {
+        if (!grade) this.existingCourses.set([]);
+      }
+    });
+  }
+
+  private findOccupiedOverlap(
+    day: string,
+    startTime: string,
+    endTime: string
+  ): { course: CourseItem; block: ScheduleSlot } | null {
+    const probe = { day, startTime, endTime };
+    for (const course of this.occupiedCourses()) {
+      for (const block of course.schedule ?? []) {
+        if (this.slotsOverlap(probe, block)) return { course, block };
+      }
+    }
+    return null;
+  }
+
+  private slotsOverlap(
+    a: { day: string; startTime: string; endTime: string },
+    b: ScheduleSlot
+  ): boolean {
+    if (!this.sameDay(a.day, b.day)) return false;
+    return !(a.endTime <= b.startTime || a.startTime >= b.endTime);
+  }
+
+  private sameDay(a: string, b: string): boolean {
+    return this.normalizeDay(a) === this.normalizeDay(b);
+  }
+
+  private normalizeDay(day: string): string {
+    return (day || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
   private timeToMinutes(time: string): number {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + (m || 0);
@@ -345,8 +420,22 @@ export class CrearCursoComponent implements OnInit {
 
   getBlocksForDay(day: string): ScheduleSlot[] {
     return this.formData().schedule
-      .filter(s => s.day === day)
+      .filter(s => this.sameDay(s.day, day))
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }
+
+  getOccupiedBlocksForDay(day: string): { course: CourseItem; block: ScheduleSlot }[] {
+    const result: { course: CourseItem; block: ScheduleSlot }[] = [];
+    for (const course of this.occupiedCourses()) {
+      for (const block of course.schedule ?? []) {
+        if (this.sameDay(block.day, day)) result.push({ course, block });
+      }
+    }
+    return result.sort((a, b) => a.block.startTime.localeCompare(b.block.startTime));
+  }
+
+  courseAccent(course: CourseItem): string {
+    return course.color || '#5c6b7e';
   }
 
   onSubmit() {
@@ -375,6 +464,17 @@ export class CrearCursoComponent implements OnInit {
 
     if (!d.academicYearId) {
       this.error.set('Selecciona el año académico para registrar la asignación del profesor.');
+      this.isLoading.set(false);
+      return;
+    }
+
+    const clash = d.schedule
+      .map(slot => this.findOccupiedOverlap(slot.day, slot.startTime, slot.endTime))
+      .find((hit): hit is { course: CourseItem; block: ScheduleSlot } => hit != null);
+    if (clash) {
+      this.error.set(
+        `El horario se cruza con ${clash.course.name} (${clash.block.day} ${clash.block.startTime} – ${clash.block.endTime}). Elige otra hora.`
+      );
       this.isLoading.set(false);
       return;
     }
