@@ -118,7 +118,7 @@ export class CrearUsuarioComponent implements OnInit {
   optionalFilledCount = computed(() => {
     const d = this.formData();
     if (this.roleKind() === 'teacher') {
-      return [d.phone, d.specialty, d.teacherCode, d.bio]
+      return [d.phone, d.teacherCode, d.bio]
         .filter(v => !!String(v ?? '').trim()).length;
     }
     if (this.roleKind() === 'parent') {
@@ -244,7 +244,6 @@ export class CrearUsuarioComponent implements OnInit {
             phone:       teacher.phone ?? teacher.user?.phone ?? d.phone,
             dni:         /^\d{8,}$/.test(teacher.dni ?? '') ? teacher.dni! : d.dni,
             status:      ((teacher.status ?? teacher.user?.status) as UserFormData['status']) || d.status,
-            specialty:   teacher.specialty ?? teacher.department ?? '',
             teacherCode: teacher.teacherCode ?? '',
             bio:         teacher.bio ?? '',
           }));
@@ -492,7 +491,6 @@ export class CrearUsuarioComponent implements OnInit {
         lastName: d.lastName,
         phone: d.phone || undefined,
         email: d.email || undefined,
-        specialty: d.specialty || undefined,
         bio: d.bio || undefined,
       }).subscribe({
         next: () => {

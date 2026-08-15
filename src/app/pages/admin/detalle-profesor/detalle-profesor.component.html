@@ -36,7 +36,7 @@
           <strong>{{ teacherEmail() }}</strong>
         </div>
         <div class="id-strip__meta">
-          <p class="id-strip__grade">{{ specialty() }}</p>
+          <p class="id-strip__grade">Docente</p>
           <admin-status-badge [value]="t.status ?? t.user?.status"></admin-status-badge>
         </div>
       </div>
@@ -53,10 +53,6 @@
               <div>
                 <dt>Nombre</dt>
                 <dd>{{ getFullName() || '—' }}</dd>
-              </div>
-              <div>
-                <dt>Especialidad</dt>
-                <dd>{{ specialty() }}</dd>
               </div>
               <div>
                 <dt>Teléfono</dt>

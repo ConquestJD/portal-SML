@@ -132,7 +132,6 @@ export const TEACHER_STRATEGY: UserFormStrategy = {
     lastName: d.lastName,
     phone: d.phone || undefined,
     dni: usernameFromDni(d.dni) || d.dni,
-    specialty: d.specialty || d.specialization || undefined,
     teacherCode: d.teacherCode || undefined,
     bio: d.bio || undefined,
   }),

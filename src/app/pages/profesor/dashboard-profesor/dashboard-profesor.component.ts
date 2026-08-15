@@ -18,7 +18,6 @@ export class DashboardProfesorComponent implements OnInit {
 
   teacherName = signal('Profesor');
   firstName = computed(() => this.teacherName().trim().split(/\s+/)[0] || 'Profesor');
-  specialty = signal('');
 
   teacherCourses = signal<TeacherCourse[]>([]);
   coursesLoading = signal(true);
@@ -64,7 +63,6 @@ export class DashboardProfesorComponent implements OnInit {
         this.totalStudents.set(data.summary.totalStudents);
         this.pendingGrading.set(data.summary.pendingGrading);
         this.attendancePending.set(data.summary.attendancePending);
-        if (data.teacher?.specialty) this.specialty.set(data.teacher.specialty);
         if (data.teacher?.name) this.teacherName.set(data.teacher.name);
         this.loading.set(false);
       },

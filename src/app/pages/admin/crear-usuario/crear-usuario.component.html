@@ -466,7 +466,7 @@
                     @if (optionalFilledCount()) {
                       {{ optionalFilledCount() }} completado{{ optionalFilledCount() === 1 ? '' : 's' }}
                     } @else {
-                      Teléfono, especialidad y código
+                      Teléfono, código y nota
                     }
                   </span>
                 </span>
@@ -484,18 +484,6 @@
                         class="stu-input"
                         [ngModel]="formData().phone"
                         (ngModelChange)="update('phone', $event)"
-                      />
-                    </div>
-                    <div class="stu-field">
-                      <label class="stu-label" for="tea-specialty">Especialidad</label>
-                      <input
-                        type="text"
-                        id="tea-specialty"
-                        name="specialty"
-                        class="stu-input"
-                        [ngModel]="formData().specialty"
-                        (ngModelChange)="update('specialty', $event)"
-                        placeholder="Matemática, Comunicación…"
                       />
                     </div>
                     <div class="stu-field">

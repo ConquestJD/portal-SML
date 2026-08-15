@@ -125,11 +125,6 @@ export class DetalleProfesorComponent implements OnInit {
     return t?.email || t?.user?.email || '—';
   }
 
-  specialty(): string {
-    const t = this.teacher();
-    return t?.specialty || t?.department || 'Docente';
-  }
-
   teacherCode(): string {
     return this.teacher()?.teacherCode || '—';
   }

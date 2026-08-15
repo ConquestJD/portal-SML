@@ -63,8 +63,7 @@
               </div>
               <div>
                 <h2 class="perf-name">{{ profileData().name }}</h2>
-                <p class="perf-meta">{{ profileData().department }}</p>
-                <p class="perf-meta">{{ profileData().specialization }}</p>
+                <p class="perf-meta">Docente · Santa María Laura</p>
               </div>
             </div>
             <div class="perf-actions">
@@ -156,28 +155,6 @@
               <h2>Información profesional</h2>
             </div>
             <div class="perf-grid">
-              <div class="perf-field">
-                <label class="perf-label">Departamento</label>
-                <input
-                  type="text"
-                  class="perf-input"
-                  [ngModel]="profileData().department"
-                  (ngModelChange)="updateDepartment($event)"
-                  [readonly]="!isEditing()"
-                  name="department"
-                />
-              </div>
-              <div class="perf-field">
-                <label class="perf-label">Especialización</label>
-                <input
-                  type="text"
-                  class="perf-input"
-                  [ngModel]="profileData().specialization"
-                  (ngModelChange)="updateSpecialization($event)"
-                  [readonly]="!isEditing()"
-                  name="specialization"
-                />
-              </div>
               <div class="perf-field perf-field--full">
                 <label class="perf-label">Biografía</label>
                 <textarea

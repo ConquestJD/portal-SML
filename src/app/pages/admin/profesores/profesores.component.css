@@ -19,7 +19,7 @@
 .roster-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 48rem;
+  min-width: 44rem;
 }
 
 .roster-table th {

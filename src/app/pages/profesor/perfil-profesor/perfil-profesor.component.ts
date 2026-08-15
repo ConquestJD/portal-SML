@@ -23,7 +23,7 @@ export class PerfilProfesorComponent implements OnInit {
   readonly isSaving = this.saving;
 
   profile = signal<TeacherProfile | null>(null);
-  formData = signal({ bio: '', specialty: '', phone: '' });
+  formData = signal({ bio: '', phone: '' });
   editDraft = signal({
     name: '',
     email: '',
@@ -31,8 +31,6 @@ export class PerfilProfesorComponent implements OnInit {
     address: '',
     birthDate: '',
     hireDate: '',
-    department: '',
-    specialization: '',
     bio: '',
   });
 
@@ -49,8 +47,6 @@ export class PerfilProfesorComponent implements OnInit {
         address: '',
         birthDate: '',
         hireDate: '',
-        department: '',
-        specialization: '',
         bio: '',
         photo: fallbackPhoto,
       };
@@ -66,8 +62,6 @@ export class PerfilProfesorComponent implements OnInit {
       address: '—',
       birthDate: '',
       hireDate: '',
-      department: '—',
-      specialization: fd.specialty || p.specialty || '—',
       bio: fd.bio ?? p.bio ?? '',
       photo: p.user.avatarUrl ?? fallbackPhoto,
     };
@@ -86,7 +80,6 @@ export class PerfilProfesorComponent implements OnInit {
         this.profile.set(data);
         this.formData.set({
           bio: data.bio ?? '',
-          specialty: data.specialty ?? '',
           phone: data.user.phone ?? ''
         });
         this.loading.set(false);
@@ -108,8 +101,6 @@ export class PerfilProfesorComponent implements OnInit {
       address: pd.address,
       birthDate: pd.birthDate,
       hireDate: pd.hireDate,
-      department: pd.department,
-      specialization: pd.specialization,
       bio: pd.bio,
     });
     this.editing.set(true);
@@ -120,7 +111,6 @@ export class PerfilProfesorComponent implements OnInit {
     if (p) {
       this.formData.set({
         bio: p.bio ?? '',
-        specialty: p.specialty ?? '',
         phone: p.user.phone ?? '',
       });
     }
@@ -128,13 +118,12 @@ export class PerfilProfesorComponent implements OnInit {
   }
 
   private patchDraft(
-    field: 'name' | 'email' | 'phone' | 'address' | 'birthDate' | 'hireDate' | 'department' | 'specialization' | 'bio',
+    field: 'name' | 'email' | 'phone' | 'address' | 'birthDate' | 'hireDate' | 'bio',
     value: string,
   ) {
     this.editDraft.update((d) => ({ ...d, [field]: value }));
     if (field === 'phone') this.formData.update((f) => ({ ...f, phone: value }));
     if (field === 'bio') this.formData.update((f) => ({ ...f, bio: value }));
-    if (field === 'specialization') this.formData.update((f) => ({ ...f, specialty: value }));
   }
 
   updateName(value: string) { this.patchDraft('name', value); }
@@ -143,8 +132,6 @@ export class PerfilProfesorComponent implements OnInit {
   updateAddress(value: string) { this.patchDraft('address', value); }
   updateBirthDate(value: string) { this.patchDraft('birthDate', value); }
   updateHireDate(value: string) { this.patchDraft('hireDate', value); }
-  updateDepartment(value: string) { this.patchDraft('department', value); }
-  updateSpecialization(value: string) { this.patchDraft('specialization', value); }
   updateBio(value: string) { this.patchDraft('bio', value); }
 
   updateCurrentPassword(value: string) {

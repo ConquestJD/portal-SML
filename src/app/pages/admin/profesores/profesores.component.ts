@@ -24,28 +24,16 @@ export class ProfesoresComponent implements OnInit {
   get searchQuery(): string { return this._searchQuery(); }
   set searchQuery(v: string) { this._searchQuery.set(v); }
 
-  private _filterSpecialty = signal('');
-  get filterSpecialty(): string { return this._filterSpecialty(); }
-  set filterSpecialty(v: string) { this._filterSpecialty.set(v); }
-
   private _filterStatus = signal('');
   get filterStatus(): string { return this._filterStatus(); }
   set filterStatus(v: string) { this._filterStatus.set(v); }
 
-  availableSpecialties = computed(() =>
-    Array.from(new Set(
-      this.profesores().map(p => this.specialtyOf(p)).filter(s => s !== 'Sin especialidad')
-    )).sort((a, b) => a.localeCompare(b, 'es'))
-  );
-
   filteredProfesores = computed(() => {
-    const specialty = this._filterSpecialty();
     const status = this._filterStatus();
     const q = this._searchQuery().trim().toLowerCase();
 
     return this.profesores()
       .filter(p => {
-        if (specialty && this.specialtyOf(p) !== specialty) return false;
         if (status === 'activo' && !this.isActive(p)) return false;
         if (status === 'suspendido' && !this.isSuspended(p)) return false;
         if (status === 'inactivo' && (this.isActive(p) || this.isSuspended(p))) return false;
@@ -54,7 +42,6 @@ export class ProfesoresComponent implements OnInit {
             this.getFullName(p),
             p.email ?? p.user?.email ?? '',
             p.teacherCode ?? '',
-            this.specialtyOf(p),
             p.phone ?? '',
           ].join(' ').toLowerCase();
           if (!text.includes(q)) return false;
@@ -72,7 +59,7 @@ export class ProfesoresComponent implements OnInit {
   );
 
   hasActiveFilters = computed(() =>
-    !!this._searchQuery() || !!this._filterSpecialty() || !!this._filterStatus()
+    !!this._searchQuery() || !!this._filterStatus()
   );
 
   constructor(private adminService: AdminService) {}
@@ -93,7 +80,6 @@ export class ProfesoresComponent implements OnInit {
 
   resetFilters() {
     this._searchQuery.set('');
-    this._filterSpecialty.set('');
     this._filterStatus.set('');
   }
 
@@ -107,10 +93,6 @@ export class ProfesoresComponent implements OnInit {
     const parts = name.split(/\s+/).filter(Boolean);
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  }
-
-  specialtyOf(p: TeacherItem): string {
-    return (p.specialty || p.department || '').trim() || 'Sin especialidad';
   }
 
   teacherEmail(p: TeacherItem): string {

@@ -41,17 +41,11 @@
         <span class="visually-hidden">Buscar</span>
         <input
           type="search"
-          placeholder="Nombre, correo o especialidad…"
+          placeholder="Nombre o correo…"
           [(ngModel)]="searchQuery"
           name="searchQuery"
         />
       </label>
-      <select [(ngModel)]="filterSpecialty" name="filterSpecialty" aria-label="Especialidad">
-        <option value="">Especialidad</option>
-        @for (s of availableSpecialties(); track s) {
-          <option [value]="s">{{ s }}</option>
-        }
-      </select>
       <select [(ngModel)]="filterStatus" name="filterStatus" aria-label="Estado">
         <option value="">Estado</option>
         <option value="activo">Activos</option>
@@ -78,7 +72,6 @@
               <tr>
                 <th>Docente</th>
                 <th>Correo</th>
-                <th>Especialidad</th>
                 <th>Cursos</th>
                 <th>Estado</th>
                 <th><span class="visually-hidden">Acciones</span></th>
@@ -101,7 +94,6 @@
                   <td>
                     <span class="roster-code">{{ teacherEmail(profesor) }}</span>
                   </td>
-                  <td>{{ specialtyOf(profesor) }}</td>
                   <td class="roster-dni">{{ courseCount(profesor) }}</td>
                   <td>
                     <admin-status-badge [value]="profesor.status ?? profesor.user?.status"></admin-status-badge>
