@@ -107,12 +107,12 @@
               @for (course of activeCourses(); track course.id) {
                 <li>
                   <div class="course-row">
-                    <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-row__body">
+                    <a [routerLink]="['/admin/cursos', course.courseId || course.id, 'editar']" class="course-row__body">
                       <span class="course-row__title">{{ course.name }}</span>
                       <span class="course-row__meta">{{ courseMeta(course) || 'Sin ficha de curso' }}</span>
                     </a>
                     <span class="course-row__n">{{ course.students || '—' }}</span>
-                    <button type="button" class="adm-link adm-link--danger" (click)="unassignCourse(course.id)">Quitar</button>
+                    <button type="button" class="adm-link adm-link--danger" (click)="unassignCourse(course.courseId || course.id)">Quitar</button>
                   </div>
                   @if (course.schedule.length) {
                     <p class="course-row__sched">
@@ -129,24 +129,99 @@
       }
 
       @if (activeTab() === 'historial') {
-        <section class="mod">
-          <header class="mod__head">
-            <h2>Historial</h2>
-          </header>
-          @if (courseHistory().length === 0) {
-            <p class="mod__empty">Aún no hay cursos finalizados.</p>
-          } @else {
-            <ol class="timeline">
-              @for (course of courseHistory(); track course.id) {
-                <li>
-                  <strong>{{ course.academicYear || '—' }}</strong>
-                  <span>{{ course.name }}{{ course.grade ? ' · ' + course.grade : '' }}</span>
-                  <em>{{ course.code || 'Cerrado' }}</em>
-                </li>
-              }
-            </ol>
+        <div class="mod-stack">
+          <section class="metrics metrics--3" aria-label="Resumen de trayectoria">
+            <div class="metric">
+              <span class="metric__n">{{ historyYearCount() }}</span>
+              <span class="metric__l">Años</span>
+            </div>
+            <div class="metric">
+              <span class="metric__n">{{ courseHistory().length }}</span>
+              <span class="metric__l">Cursos dictados</span>
+            </div>
+            <div class="metric">
+              <span class="metric__n">{{ historyActiveCount() }}</span>
+              <span class="metric__l">Vigentes</span>
+            </div>
+          </section>
+
+          @if (courseHistory().length) {
+            <div class="toolbar">
+              <select [(ngModel)]="historyYear" name="historyYear" aria-label="Año">
+                <option value="">Todos los años</option>
+                @for (year of historyYears(); track year) {
+                  <option [value]="year">{{ year }}</option>
+                }
+              </select>
+              <select [(ngModel)]="historyStatus" name="historyStatus" aria-label="Estado">
+                <option value="">Estado</option>
+                <option value="vigente">Vigentes</option>
+                <option value="cerrado">Cerrados</option>
+              </select>
+            </div>
           }
-        </section>
+
+          @if (historyLoading()) {
+            <p class="feed__empty">Cargando historial…</p>
+          } @else if (courseHistory().length === 0) {
+            <section class="mod">
+              <p class="mod__empty">Este docente aún no tiene cursos en su trayectoria.</p>
+            </section>
+          } @else if (filteredHistory().length === 0) {
+            <section class="mod">
+              <p class="mod__empty">No hay cursos con estos filtros.</p>
+            </section>
+          } @else {
+            <div class="roster" aria-label="Historial de cursos">
+              @for (group of historyByYear(); track group.year) {
+                <section class="roster-group">
+                  <header class="roster-group__head">
+                    <div>
+                      <p class="roster-group__kicker">Año lectivo</p>
+                      <h2 class="roster-group__title">{{ group.year }}</h2>
+                    </div>
+                    <span class="roster-group__n">{{ group.courses.length }}</span>
+                  </header>
+                  <div class="roster-table-wrap">
+                    <table class="roster-table">
+                      <thead>
+                        <tr>
+                          <th>Curso</th>
+                          <th>Grado</th>
+                          <th>Sección</th>
+                          <th>Alumnos</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (course of group.courses; track course.id) {
+                          <tr>
+                            <td>
+                              <a [routerLink]="['/admin/cursos', course.courseId || course.id, 'editar']" class="course-link">
+                                <span class="course-link__name">{{ course.name }}</span>
+                                @if (course.code) {
+                                  <span class="course-link__meta">{{ course.code }}</span>
+                                }
+                              </a>
+                            </td>
+                            <td>{{ course.grade || '—' }}</td>
+                            <td>{{ course.section || '—' }}</td>
+                            <td>{{ course.students || '—' }}</td>
+                            <td>
+                              <span class="enroll-badge" [attr.data-kind]="course.isActive ? 'active' : 'none'">
+                                {{ assignmentStatus(course) }}
+                              </span>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              }
+            </div>
+          }
+        </div>
       }
 
       @if (showAssignCourseModal()) {

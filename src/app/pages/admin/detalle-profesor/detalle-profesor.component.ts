@@ -8,6 +8,7 @@ import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
 interface CourseView {
   id: string;
+  courseId: string;
   name: string;
   code: string;
   level: string;
@@ -16,6 +17,8 @@ interface CourseView {
   academicYear: string;
   students: number;
   classroom: string;
+  isActive: boolean;
+  createdAt?: string;
   schedule: { day: string; time: string }[];
 }
 
@@ -41,8 +44,17 @@ export class DetalleProfesorComponent implements OnInit {
   teacher = signal<TeacherItem | null>(null);
   activeCourses = signal<CourseView[]>([]);
   courseHistory = signal<CourseView[]>([]);
+  historyLoading = signal(false);
   showAssignCourseModal = signal(false);
   allCourses = signal<CourseView[]>([]);
+
+  private _historyYear = signal('');
+  get historyYear(): string { return this._historyYear(); }
+  set historyYear(v: string) { this._historyYear.set(v); }
+
+  private _historyStatus = signal('');
+  get historyStatus(): string { return this._historyStatus(); }
+  set historyStatus(v: string) { this._historyStatus.set(v); }
 
   private _selectedCourseId = signal('');
   get selectedCourseId(): string { return this._selectedCourseId(); }
@@ -56,6 +68,37 @@ export class DetalleProfesorComponent implements OnInit {
   selectedCourse = computed(() =>
     this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
   );
+
+  historyYears = computed(() =>
+    Array.from(new Set(this.courseHistory().map(c => c.academicYear).filter(Boolean))).sort((a, b) => b.localeCompare(a, 'es'))
+  );
+
+  filteredHistory = computed(() => {
+    const year = this._historyYear();
+    const status = this._historyStatus();
+    return this.courseHistory().filter(c => {
+      if (year && c.academicYear !== year) return false;
+      if (status === 'vigente' && !c.isActive) return false;
+      if (status === 'cerrado' && c.isActive) return false;
+      return true;
+    });
+  });
+
+  historyByYear = computed(() => {
+    const groups = new Map<string, CourseView[]>();
+    for (const course of this.filteredHistory()) {
+      const key = course.academicYear || 'Sin año';
+      const list = groups.get(key) ?? [];
+      list.push(course);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries())
+      .sort((a, b) => b[0].localeCompare(a[0], 'es'))
+      .map(([year, courses]) => ({ year, courses }));
+  });
+
+  historyYearCount = computed(() => this.historyYears().length);
+  historyActiveCount = computed(() => this.courseHistory().filter(c => c.isActive).length);
 
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
@@ -85,8 +128,13 @@ export class DetalleProfesorComponent implements OnInit {
   }
 
   loadCourseHistory() {
+    this.historyLoading.set(true);
     this.adminService.getTeacherCourseHistory(this.teacherId).subscribe({
-      next: (data) => this.courseHistory.set(this.normalizeCourses(data as Record<string, unknown>[])),
+      next: (data) => {
+        this.courseHistory.set(this.normalizeCourses(data as Record<string, unknown>[]));
+        this.historyLoading.set(false);
+      },
+      error: () => this.historyLoading.set(false),
     });
   }
 
@@ -94,22 +142,29 @@ export class DetalleProfesorComponent implements OnInit {
     return (raw ?? []).map(c => {
       const course = (c['course'] as Record<string, unknown> | undefined) ?? c;
       const section = c['section'] as Record<string, unknown> | undefined;
-      const year = c['academicYear'] as Record<string, unknown> | undefined;
+      const year = (c['academicYear'] as Record<string, unknown> | undefined)
+        ?? (section?.['academicYear'] as Record<string, unknown> | undefined);
+      const count = section?.['_count'] as { enrollments?: number } | undefined;
       const schedule = (course['schedule'] ?? c['schedule'] ?? []) as Record<string, unknown>[];
+      const assignmentId = String(c['id'] ?? '');
+      const courseId = String(course['id'] ?? c['courseId'] ?? '');
       return {
-        id: String(course['id'] ?? c['courseId'] ?? c['id'] ?? ''),
+        id: assignmentId || courseId,
+        courseId,
         name: String(course['name'] ?? '(sin nombre)'),
         code: String(course['code'] ?? ''),
-        level: String(course['level'] ?? ''),
-        grade: String(course['grade'] ?? section?.['grade'] ?? ''),
+        level: String(section?.['level'] ?? course['level'] ?? ''),
+        grade: String(section?.['grade'] ?? course['grade'] ?? ''),
         section: String(section?.['name'] ?? ''),
         academicYear: String(year?.['name'] ?? course['academicYear'] ?? ''),
-        students: Number(c['students'] ?? course['students'] ?? 0),
+        students: Number(count?.enrollments ?? c['students'] ?? course['students'] ?? 0),
         classroom: String(course['classroom'] ?? c['classroom'] ?? ''),
-        schedule: schedule.map(s => ({
+        isActive: c['isActive'] !== false,
+        createdAt: c['createdAt'] ? String(c['createdAt']) : undefined,
+        schedule: Array.isArray(schedule) ? schedule.map(s => ({
           day: String(s['day'] ?? ''),
           time: String(s['time'] ?? (s['startTime'] && s['endTime'] ? `${s['startTime']} – ${s['endTime']}` : '')),
-        })),
+        })) : [],
       };
     });
   }
@@ -143,6 +198,10 @@ export class DetalleProfesorComponent implements OnInit {
     ].filter(Boolean).join(' · ');
   }
 
+  assignmentStatus(course: CourseView): string {
+    return course.isActive ? 'Vigente' : 'Cerrado';
+  }
+
   onResetPassword() {
     const userId = this.teacher()?.user?.id;
     if (!userId) return;
@@ -165,6 +224,7 @@ export class DetalleProfesorComponent implements OnInit {
       next: ({ data }) => this.allCourses.set(
         data.map(c => ({
           id: c.id,
+          courseId: c.id,
           name: c.name,
           code: c.code,
           level: c.level ?? '',
@@ -173,6 +233,7 @@ export class DetalleProfesorComponent implements OnInit {
           academicYear: '',
           students: c.students ?? 0,
           classroom: c.classroom ?? '',
+          isActive: true,
           schedule: (c.schedule ?? []).map(s => ({
             day: s.day,
             time: s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : '',

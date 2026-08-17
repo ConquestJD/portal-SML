@@ -171,6 +171,125 @@
   color: var(--muted);
 }
 
+.mod-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.roster-group {
+  background: var(--surface);
+  box-shadow: 0 1px 0 rgba(20 32 51 / .04);
+}
+
+.roster-group__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem .85rem;
+  border-bottom: 3px solid var(--navy);
+}
+
+.roster-group__kicker {
+  margin: 0 0 .15rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.roster-group__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
+}
+
+.roster-group__n {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.roster-table-wrap { overflow-x: auto; }
+
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 36rem;
+}
+
+.roster-table th {
+  text-align: left;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .7rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  background: #f7f8fa;
+}
+
+.roster-table td {
+  padding: .85rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.roster-table tbody tr:last-child td { border-bottom: none; }
+
+.course-link {
+  display: flex;
+  flex-direction: column;
+  gap: .12rem;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.course-link__name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.course-link:hover .course-link__name { color: var(--crimson); }
+
+.course-link__meta {
+  font-size: .75rem;
+  color: var(--muted);
+}
+
+.enroll-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: .2rem .45rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.enroll-badge[data-kind="active"] {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #eef3f8;
+}
+
 .timeline {
   list-style: none;
   margin: 0;
