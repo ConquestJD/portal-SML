@@ -9,70 +9,150 @@
         <h1 class="adm-page__title">Reportes</h1>
         <p class="adm-page__brand">Santa María Laura</p>
       </div>
+      <div class="adm-page__hero-actions no-print">
+        <button type="button" class="adm-btn adm-btn--ghost" (click)="printReport()" [disabled]="!report()">
+          Imprimir
+        </button>
+        <button type="button" class="adm-btn adm-btn--primary" (click)="exportCsv()" [disabled]="!report() || !rowCount()">
+          Exportar CSV
+        </button>
+      </div>
     </div>
   </header>
 
   <div class="adm-page__body">
 
+    <div class="print-masthead" aria-hidden="true">
+      <img src="/only-logo.png" alt="" />
+      <div>
+        <p class="print-masthead__kicker">Colegio Santa María Laura</p>
+        <h2>{{ report()?.title || 'Reporte' }}</h2>
+        <p>
+          {{ selectedYearName() }}
+          @if (report()?.generatedAt) {
+            · {{ report()!.generatedAt | date:'medium' }}
+          }
+        </p>
+      </div>
+    </div>
+
+    <admin-tabs [tabs]="tabs" [activeTab]="selectedType()" (activeTabChange)="setTab($event)"></admin-tabs>
+
+    <p class="rpt-lead">{{ reportHint() }}</p>
+
+    <div class="toolbar no-print">
+      @if (years().length) {
+        <select [(ngModel)]="academicYearId" name="academicYearId" aria-label="Año académico">
+          @for (year of years(); track year.id) {
+            <option [value]="year.id">{{ year.name }}</option>
+          }
+        </select>
+      }
+      <select [(ngModel)]="grade" name="grade" aria-label="Grado">
+        <option value="">Todos los grados</option>
+        @for (g of grades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+      @if (showStatusFilter()) {
+        <select [(ngModel)]="status" name="status" aria-label="Estado">
+          <option value="">Estado</option>
+          @for (opt of statusOptions(); track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      }
+      @if (showPeriodFilter()) {
+        <select [(ngModel)]="periodId" name="periodId" aria-label="Periodo">
+          <option value="">Todos los periodos</option>
+          @for (period of periods(); track period.id) {
+            <option [value]="period.id">{{ period.name }}</option>
+          }
+        </select>
+      }
+      @if (showDateFilter()) {
+        <label class="rpt-date">
+          <span>Desde</span>
+          <input type="date" [(ngModel)]="startDate" name="startDate" />
+        </label>
+        <label class="rpt-date">
+          <span>Hasta</span>
+          <input type="date" [(ngModel)]="endDate" name="endDate" />
+        </label>
+      }
+      <span class="toolbar__spacer"></span>
+      <button type="button" class="adm-btn adm-btn--solid" (click)="generateReport()" [disabled]="loading()">
+        {{ loading() ? 'Generando…' : 'Actualizar' }}
+      </button>
+    </div>
+
     @if (error()) {
       <p class="adm-alert" role="alert">{{ error() }}</p>
     }
 
-    <div class="rpt-mosaic" role="list">
-      @for (report of reportTypes(); track report.id) {
-        <article
-          class="rpt-tile feed"
-          role="listitem"
-          [attr.data-type]="report.id"
-          [class.rpt-tile--active]="selectedType() === report.id"
-        >
-          <div class="rpt-tile__mark" aria-hidden="true">
-            @switch (report.id) {
-              @case ('students') { <i class="fas fa-user-graduate"></i> }
-              @case ('attendance') { <i class="fas fa-calendar-check"></i> }
-              @case ('grades') { <i class="fas fa-chart-bar"></i> }
-              @case ('enrollments') { <i class="fas fa-clipboard-list"></i> }
-              @case ('teachers') { <i class="fas fa-chalkboard-teacher"></i> }
-              @case ('payments') { <i class="fas fa-file-invoice-dollar"></i> }
-              @default { <i class="fas fa-file-alt"></i> }
-            }
-          </div>
-          <h2 class="rpt-tile__title">{{ report.label }}</h2>
-          <p class="rpt-tile__meta">Tipo · {{ report.value }}</p>
-          <div class="rpt-tile__actions">
-            <button
-              type="button"
-              class="adm-btn adm-btn--solid"
-              [disabled]="loading() && selectedType() === report.id"
-              (click)="generateReport(report.id)"
-            >
-              @if (loading() && selectedType() === report.id) {
-                Generando…
-              } @else {
-                Generar
-              }
-            </button>
-            <button
-              type="button"
-              class="adm-btn rpt-btn--outline"
-              [disabled]="loading()"
-              (click)="generateReport(report.id)"
-            >
-              Exportar
-            </button>
-          </div>
-        </article>
+    @if (loading() && !report()) {
+      <p class="feed__empty">Generando reporte…</p>
+    } @else if (report(); as r) {
+      @if (r.summary.length) {
+        <section class="metrics" [class.metrics--3]="r.summary.length === 3" [class.metrics--2]="r.summary.length === 2" aria-label="Indicadores">
+          @for (item of r.summary; track item.label) {
+            <div class="metric" [class.metric--alert]="metricAlert(item.label)">
+              <span class="metric__n">{{ item.value }}</span>
+              <span class="metric__l">{{ item.label }}</span>
+            </div>
+          }
+        </section>
       }
-    </div>
 
-    @if (reportData()) {
-      <section class="feed rpt-preview" aria-label="Resultado del reporte">
-        <div class="feed__head">
-          <h2>Resultado · {{ reportLabel(selectedType()) }}</h2>
-          <span class="rpt-preview__badge">Generado</span>
+      @if (rowCount() === 0) {
+        <section class="mod">
+          <p class="mod__empty">No hay datos para estos filtros.</p>
+        </section>
+      } @else {
+        <p class="roster-count">{{ rowCount() }} {{ rowCount() === 1 ? 'registro' : 'registros' }} · {{ r.title }}</p>
+        <div class="roster" aria-label="Resultado del reporte">
+          @for (group of r.groups; track group.title) {
+            <section class="roster-group">
+              <header class="roster-group__head">
+                <div>
+                  <p class="roster-group__kicker">{{ selectedType() === 'payments' ? 'Mes' : selectedType() === 'teachers' ? 'Año lectivo' : 'Grado' }}</p>
+                  <h2 class="roster-group__title">{{ group.title }}</h2>
+                </div>
+                <span class="roster-group__n">{{ group.rows.length }}</span>
+              </header>
+              <div class="roster-table-wrap">
+                <table class="roster-table">
+                  <thead>
+                    <tr>
+                      @for (col of r.columns; track col.key) {
+                        <th>{{ col.label }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of group.rows; track $index) {
+                      <tr>
+                        @for (col of r.columns; track col.key) {
+                          <td>
+                            @if (col.key === 'rate') {
+                              <div class="rate">
+                                <span class="rate__bar" [style.width]="rateWidth(cell(row, col.key))"></span>
+                                <span class="rate__n">{{ cell(row, col.key) }}</span>
+                              </div>
+                            } @else {
+                              {{ cell(row, col.key) }}
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          }
         </div>
-        <pre class="rpt-preview__data">{{ reportData() | json }}</pre>
-      </section>
+      }
     }
   </div>
 </div>

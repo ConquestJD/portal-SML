@@ -166,6 +166,20 @@ export interface AcademicYearItem {
   periods?: AcademicPeriod[];
 }
 export interface AcademicPeriod { id: string; name: string; startDate: string; endDate: string; }
+
+export type ReportCell = string | number;
+export interface ReportSummaryItem { label: string; value: ReportCell }
+export interface ReportColumn { key: string; label: string }
+export interface ReportGroup { title: string; rows: Record<string, ReportCell>[] }
+export interface ReportResult {
+  type: string;
+  title: string;
+  generatedAt: string;
+  academicYear?: string;
+  summary: ReportSummaryItem[];
+  columns: ReportColumn[];
+  groups: ReportGroup[];
+}
 export interface CreateAcademicYearDto {
   name: string; startDate: string; endDate: string; status: string;
 }
@@ -616,8 +630,8 @@ export class AdminService {
   }
 
   // ─── REPORTS ──────────────────────────────────────────────────────────────
-  getReport(type: string, params: Record<string, string> = {}): Observable<unknown> {
-    return this.http.get<{ success: boolean; data: unknown }>(`${this.url}/reports/${type}`, { params: buildParams(params) })
+  getReport(type: string, params: Record<string, string> = {}): Observable<ReportResult> {
+    return this.http.get<{ success: boolean; data: ReportResult }>(`${this.url}/reports/${type}`, { params: buildParams(params) })
       .pipe(map(r => r.data));
   }
 }
