@@ -195,12 +195,13 @@ export class EstudiantesComponent implements OnInit {
   }
 
   enrollmentLabel(s: StudentItem): string {
-    switch (s.enrollmentKind) {
-      case 'active': return 'Sí';
-      case 'late': return 'Sí · tardío';
-      case 'withdrawn': return 'Retirado';
-      default: return 'No';
-    }
+    if (s.enrollmentKind === 'active' || s.enrollmentKind === 'late') return 'Sí';
+    if (s.enrollmentKind === 'withdrawn') return 'No';
+    return 'No';
+  }
+
+  enrollmentKind(s: StudentItem): 'active' | 'none' {
+    return s.enrollmentKind === 'active' || s.enrollmentKind === 'late' ? 'active' : 'none';
   }
 
   hasOverdue(s: StudentItem): boolean {

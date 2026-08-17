@@ -145,7 +145,7 @@
                       </td>
                       <td class="roster-dni">{{ student.dni || '—' }}</td>
                       <td>
-                        <span class="enroll-badge" [attr.data-kind]="student.enrollmentKind || 'none'">
+                        <span class="enroll-badge" [attr.data-kind]="enrollmentKind(student)">
                           {{ enrollmentLabel(student) }}
                         </span>
                       </td>
