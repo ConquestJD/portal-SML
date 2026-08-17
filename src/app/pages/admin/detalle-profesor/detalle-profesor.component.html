@@ -36,8 +36,8 @@
           <strong>{{ teacherEmail() }}</strong>
         </div>
         <div class="id-strip__meta">
-          <p class="id-strip__grade">{{ teacherSubtitle() }}</p>
-          <admin-status-badge [value]="t.status ?? t.user?.status"></admin-status-badge>
+          <p class="id-strip__grade">Docente</p>
+          <admin-status-badge [value]="teacherStatusValue()"></admin-status-badge>
         </div>
       </div>
 
@@ -69,10 +69,6 @@
                   <dt>Teléfono</dt>
                   <dd>{{ t.phone || t.user?.phone || '—' }}</dd>
                 </div>
-                <div>
-                  <dt>Código</dt>
-                  <dd>{{ teacherCode() }}</dd>
-                </div>
                 <div class="facts--wide">
                   <dt>Correo</dt>
                   <dd>{{ teacherEmail() }}</dd>
@@ -97,24 +93,12 @@
                   <dd>{{ teacherEmail() }}</dd>
                 </div>
                 <div>
-                  <dt>Contraseña inicial</dt>
-                  <dd>El DNI del docente</dd>
-                </div>
-                @if (teacherUsername() && teacherUsername() !== teacherEmail()) {
-                  <div>
-                    <dt>Usuario interno</dt>
-                    <dd>{{ teacherUsername() }}</dd>
-                  </div>
-                }
-                <div>
                   <dt>Registro</dt>
                   <dd>{{ t.createdAt ? (t.createdAt | date:'longDate') : '—' }}</dd>
                 </div>
                 <div>
                   <dt>Estado</dt>
-                  <dd>
-                    <admin-status-badge [value]="t.status ?? t.user?.status"></admin-status-badge>
-                  </dd>
+                  <dd>{{ teacherStatusLabel() }}</dd>
                 </div>
               </dl>
             </section>
@@ -145,7 +129,7 @@
                       {{ course.name }}
                     </a>
                     <span class="load-list__meta">
-                      {{ [course.grade, course.section, course.academicYear].filter(Boolean).join(' · ') || 'Sin sección' }}
+                      {{ [course.grade, course.academicYear].filter(Boolean).join(' · ') || 'Sin grado' }}
                     </span>
                     <span class="load-list__n">{{ course.students || '—' }}</span>
                   </li>
@@ -193,7 +177,7 @@
             <p class="feed__empty">Cargando cursos…</p>
           } @else if (activeCourses().length === 0) {
             <section class="mod">
-              <p class="mod__empty">Sin cursos asignados. Asigna un curso a una sección del año lectivo.</p>
+              <p class="mod__empty">Sin cursos asignados. Asigna un curso del año lectivo.</p>
             </section>
           } @else if (filteredActiveCourses().length === 0) {
             <section class="mod">
@@ -215,7 +199,6 @@
                       <thead>
                         <tr>
                           <th>Curso</th>
-                          <th>Sección</th>
                           <th>Año</th>
                           <th>Alumnos</th>
                           <th>Horario</th>
@@ -233,7 +216,6 @@
                                 }
                               </a>
                             </td>
-                            <td>{{ course.section || '—' }}</td>
                             <td>{{ course.academicYear || '—' }}</td>
                             <td>{{ course.students || '—' }}</td>
                             <td class="sched-cell">{{ scheduleLabel(course) }}</td>
@@ -314,7 +296,6 @@
                         <tr>
                           <th>Curso</th>
                           <th>Grado</th>
-                          <th>Sección</th>
                           <th>Alumnos</th>
                           <th>Estado</th>
                         </tr>
@@ -331,7 +312,6 @@
                               </a>
                             </td>
                             <td>{{ course.grade || '—' }}</td>
-                            <td>{{ course.section || '—' }}</td>
                             <td>{{ course.students || '—' }}</td>
                             <td>
                               <span class="enroll-badge" [attr.data-kind]="course.isActive ? 'active' : 'none'">
@@ -357,7 +337,7 @@
               <h3>Asignar curso</h3>
               <button type="button" class="adm-link" (click)="closeAssignCourseModal()">Cerrar</button>
             </header>
-            <p class="mod__hint">El docente dictará el curso en una sección del año lectivo.</p>
+            <p class="mod__hint">El docente dictará el curso en el año lectivo seleccionado.</p>
             <div class="pay-form">
               <label>
                 Año académico
@@ -369,33 +349,19 @@
                 </select>
               </label>
               <label>
-                Sección
-                <select class="stu-like" [(ngModel)]="selectedSectionId" name="sectionId" [disabled]="!selectedYearId">
-                  <option value="">Seleccionar</option>
-                  @for (section of sectionsForYear(); track section.id) {
-                    <option [value]="section.id">{{ sectionOptionLabel(section) }}</option>
-                  }
-                </select>
-              </label>
-              <label>
                 Curso
-                <select class="stu-like" [(ngModel)]="selectedCourseId" name="courseId" [disabled]="!selectedSectionId">
+                <select class="stu-like" [(ngModel)]="selectedCourseId" name="courseId" [disabled]="!selectedYearId">
                   <option value="">Seleccionar</option>
                   @for (course of availableCoursesForAssignment(); track course.id) {
                     <option [value]="course.id">{{ courseOptionLabel(course) }}</option>
                   }
                 </select>
               </label>
-              @if (selectedSectionId && availableCoursesForAssignment().length === 0) {
-                <p class="mod__empty">Todos los cursos del catálogo ya están asignados a esta sección.</p>
+              @if (selectedYearId && availableCoursesForAssignment().length === 0) {
+                <p class="mod__empty">Todos los cursos del catálogo ya están asignados.</p>
               }
               @if (selectedCourse(); as course) {
-                <p class="mod__hint">
-                  {{ course.name }}
-                  @if (selectedSection(); as section) {
-                    · {{ section.grade }} {{ section.name }}
-                  }
-                </p>
+                <p class="mod__hint">{{ [course.name, course.grade].filter(Boolean).join(' · ') }}</p>
               }
               @if (assignError()) {
                 <p class="adm-alert" role="alert">{{ assignError() }}</p>

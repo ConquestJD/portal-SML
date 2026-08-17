@@ -77,31 +77,12 @@ export class DetalleProfesorComponent implements OnInit {
   get selectedCourseId(): string { return this._selectedCourseId(); }
   set selectedCourseId(v: string) { this._selectedCourseId.set(v); }
 
-  private _selectedSectionId = signal('');
-  get selectedSectionId(): string { return this._selectedSectionId(); }
-  set selectedSectionId(v: string) { this._selectedSectionId.set(v); }
-
   private _selectedYearId = signal('');
   get selectedYearId(): string { return this._selectedYearId(); }
-  set selectedYearId(v: string) {
-    this._selectedYearId.set(v);
-    const still = this.sectionsForYear().some(s => s.id === this._selectedSectionId());
-    if (!still) this._selectedSectionId.set('');
-  }
-
-  sectionsForYear = computed(() => {
-    const yearId = this._selectedYearId();
-    return this.sections().filter(s => !yearId || s.academicYear?.id === yearId);
-  });
+  set selectedYearId(v: string) { this._selectedYearId.set(v); }
 
   availableCoursesForAssignment = computed(() => {
-    const sectionId = this._selectedSectionId();
-    const assigned = new Set(
-      this.activeCourses()
-        .filter(c => !sectionId || c.sectionId === sectionId)
-        .map(c => c.courseId)
-        .filter(Boolean)
-    );
+    const assigned = new Set(this.activeCourses().map(c => c.courseId).filter(Boolean));
     return this.catalogCourses().filter(c => c.id && !assigned.has(c.id));
   });
 
@@ -109,12 +90,8 @@ export class DetalleProfesorComponent implements OnInit {
     this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
   );
 
-  selectedSection = computed(() =>
-    this.sections().find(s => s.id === this._selectedSectionId()) ?? null
-  );
-
   canAssign = computed(() =>
-    !!this._selectedCourseId() && !!this._selectedSectionId() && !!this._selectedYearId() && !this.assignSaving()
+    !!this._selectedCourseId() && !!this._selectedYearId() && !this.assignSaving()
   );
 
   historyYears = computed(() =>
@@ -276,21 +253,28 @@ export class DetalleProfesorComponent implements OnInit {
     return t?.email || t?.user?.email || '—';
   }
 
-  teacherCode(): string {
-    return this.teacher()?.teacherCode || '—';
-  }
-
   teacherDni(): string {
     return this.teacher()?.dni || this.teacher()?.user?.dni || '';
   }
 
-  teacherUsername(): string {
-    return this.teacher()?.username || this.teacher()?.user?.username || '';
+  teacherStatusValue(): string {
+    const t = this.teacher();
+    return (t?.user?.status || t?.status || '').trim();
   }
 
-  teacherSubtitle(): string {
-    const code = this.teacherCode();
-    return code && code !== '—' ? `Docente · ${code}` : 'Docente';
+  teacherStatusLabel(): string {
+    const raw = this.teacherStatusValue();
+    const map: Record<string, string> = {
+      ACTIVE: 'Activo',
+      INACTIVE: 'Inactivo',
+      SUSPENDED: 'Suspendido',
+      ON_LEAVE: 'De licencia',
+      activo: 'Activo',
+      inactivo: 'Inactivo',
+      suspendido: 'Suspendido',
+      'de licencia': 'De licencia',
+    };
+    return map[raw] || raw || '—';
   }
 
   getLevelLabel(level: string | undefined): string {
@@ -302,7 +286,7 @@ export class DetalleProfesorComponent implements OnInit {
     return [
       course.code,
       this.getLevelLabel(course.level),
-      [course.grade, course.section].filter(Boolean).join(' '),
+      course.grade,
       course.academicYear,
     ].filter(Boolean).join(' · ');
   }
@@ -319,13 +303,16 @@ export class DetalleProfesorComponent implements OnInit {
     return course.isActive ? 'Vigente' : 'Cerrado';
   }
 
-  sectionOptionLabel(section: SectionItem): string {
-    const year = section.academicYear?.name ? ` · ${section.academicYear.name}` : '';
-    return `${section.grade} ${section.name}${year}`.trim();
-  }
-
   courseOptionLabel(course: CourseItem): string {
     return [course.name, course.grade, course.code].filter(Boolean).join(' · ');
+  }
+
+  private resolveSectionId(course: CourseItem, yearId: string): string {
+    const ofYear = this.sections().filter(s => !yearId || s.academicYear?.id === yearId);
+    const byGrade = course.grade
+      ? ofYear.find(s => s.grade === course.grade)
+      : undefined;
+    return (byGrade ?? ofYear[0])?.id ?? '';
   }
 
   onResetPassword() {
@@ -338,8 +325,7 @@ export class DetalleProfesorComponent implements OnInit {
   }
 
   unassignCourse(course: CourseView) {
-    const where = [course.grade, course.section].filter(Boolean).join(' ');
-    const label = where ? `${course.name} · ${where}` : course.name;
+    const label = [course.name, course.grade].filter(Boolean).join(' · ');
     if (!confirm(`¿Quitar ${label} de la carga de este docente?`)) return;
     this.adminService.unassignCourseFromTeacher(this.teacherId, course.id).subscribe({
       next: () => this.loadActiveCourses(),
@@ -352,7 +338,6 @@ export class DetalleProfesorComponent implements OnInit {
     this.assignError.set('');
     this.assignSaving.set(false);
     this._selectedCourseId.set('');
-    this._selectedSectionId.set('');
     forkJoin({
       courses: this.adminService.getCourses({ pageSize: 100 }),
       sections: this.adminService.getSections(),
@@ -372,18 +357,23 @@ export class DetalleProfesorComponent implements OnInit {
   closeAssignCourseModal() {
     this.showAssignCourseModal.set(false);
     this._selectedCourseId.set('');
-    this._selectedSectionId.set('');
     this.assignError.set('');
     this.assignSaving.set(false);
   }
 
   assignCourse() {
-    if (!this.canAssign()) return;
+    const course = this.selectedCourse();
+    if (!this.canAssign() || !course) return;
+    const sectionId = this.resolveSectionId(course, this.selectedYearId);
+    if (!sectionId) {
+      this.assignError.set('No hay un grado configurado para este año académico.');
+      return;
+    }
     this.assignSaving.set(true);
     this.assignError.set('');
     this.adminService.assignCourseToTeacher(this.teacherId, {
       courseId: this.selectedCourseId,
-      sectionId: this.selectedSectionId,
+      sectionId,
       academicYearId: this.selectedYearId,
     }).subscribe({
       next: () => {

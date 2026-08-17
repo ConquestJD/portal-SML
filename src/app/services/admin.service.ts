@@ -325,12 +325,16 @@ export class AdminService {
   private normalizeTeacher(t: TeacherItem): TeacherItem {
     const u = t.user ?? ({} as TeacherItem['user']);
     const username = t.username ?? u.username ?? '';
+    const statusMap: Record<string, string> = {
+      ACTIVE: 'activo', INACTIVE: 'inactivo', SUSPENDED: 'suspendido', ON_LEAVE: 'de licencia',
+    };
+    const rawStatus = String(u.status || t.status || '');
     return {
       ...t,
       name:      t.name      ?? `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
       email:     t.email     ?? u.email     ?? '',
       phone:     t.phone     ?? u.phone     ?? '',
-      status:    t.status    ?? u.status    ?? '',
+      status:    statusMap[rawStatus] ?? rawStatus.toLowerCase(),
       username,
       // El DNI no se persiste en `/teachers`; solo se infiere si el username es numérico (altas antiguas).
       dni:       t.dni ?? u.dni ?? (/^\d{8,}$/.test(username) ? username : ''),

@@ -78,20 +78,24 @@ const USER_STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Activo',
   INACTIVE: 'Inactivo',
   SUSPENDED: 'Suspendido',
+  ON_LEAVE: 'De licencia',
   activo: 'Activo',
   inactivo: 'Inactivo',
   suspendido: 'Suspendido',
   retirado: 'Retirado',
+  'de licencia': 'De licencia',
 };
 
 const USER_STATUS_CLASS: Record<string, string> = {
   ACTIVE: 'badge-success',
   INACTIVE: 'badge-secondary',
   SUSPENDED: 'badge-error',
+  ON_LEAVE: 'badge-warning',
   activo: 'badge-success',
   inactivo: 'badge-secondary',
   suspendido: 'badge-error',
   retirado: 'badge-secondary',
+  'de licencia': 'badge-warning',
 };
 
 export function userStatusLabel(status: string | null | undefined): string {
