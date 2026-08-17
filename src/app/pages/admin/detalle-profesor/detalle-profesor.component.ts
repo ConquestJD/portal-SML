@@ -2,13 +2,21 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AdminService, TeacherItem } from '../../../services/admin.service';
+import { forkJoin } from 'rxjs';
+import {
+  AdminService,
+  TeacherItem,
+  CourseItem,
+  SectionItem,
+  AcademicYearItem,
+} from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
 
 interface CourseView {
   id: string;
   courseId: string;
+  sectionId: string;
   name: string;
   code: string;
   level: string;
@@ -43,10 +51,15 @@ export class DetalleProfesorComponent implements OnInit {
 
   teacher = signal<TeacherItem | null>(null);
   activeCourses = signal<CourseView[]>([]);
+  coursesLoading = signal(false);
   courseHistory = signal<CourseView[]>([]);
   historyLoading = signal(false);
   showAssignCourseModal = signal(false);
-  allCourses = signal<CourseView[]>([]);
+  catalogCourses = signal<CourseItem[]>([]);
+  sections = signal<SectionItem[]>([]);
+  academicYears = signal<AcademicYearItem[]>([]);
+  assignSaving = signal(false);
+  assignError = signal('');
 
   private _historyYear = signal('');
   get historyYear(): string { return this._historyYear(); }
@@ -56,17 +69,52 @@ export class DetalleProfesorComponent implements OnInit {
   get historyStatus(): string { return this._historyStatus(); }
   set historyStatus(v: string) { this._historyStatus.set(v); }
 
+  private _coursesGrade = signal('');
+  get coursesGrade(): string { return this._coursesGrade(); }
+  set coursesGrade(v: string) { this._coursesGrade.set(v); }
+
   private _selectedCourseId = signal('');
   get selectedCourseId(): string { return this._selectedCourseId(); }
   set selectedCourseId(v: string) { this._selectedCourseId.set(v); }
 
+  private _selectedSectionId = signal('');
+  get selectedSectionId(): string { return this._selectedSectionId(); }
+  set selectedSectionId(v: string) { this._selectedSectionId.set(v); }
+
+  private _selectedYearId = signal('');
+  get selectedYearId(): string { return this._selectedYearId(); }
+  set selectedYearId(v: string) {
+    this._selectedYearId.set(v);
+    const still = this.sectionsForYear().some(s => s.id === this._selectedSectionId());
+    if (!still) this._selectedSectionId.set('');
+  }
+
+  sectionsForYear = computed(() => {
+    const yearId = this._selectedYearId();
+    return this.sections().filter(s => !yearId || s.academicYear?.id === yearId);
+  });
+
   availableCoursesForAssignment = computed(() => {
-    const assigned = new Set(this.activeCourses().map(c => c.id));
-    return this.allCourses().filter(c => c.id && !assigned.has(c.id));
+    const sectionId = this._selectedSectionId();
+    const assigned = new Set(
+      this.activeCourses()
+        .filter(c => !sectionId || c.sectionId === sectionId)
+        .map(c => c.courseId)
+        .filter(Boolean)
+    );
+    return this.catalogCourses().filter(c => c.id && !assigned.has(c.id));
   });
 
   selectedCourse = computed(() =>
     this.availableCoursesForAssignment().find(c => c.id === this._selectedCourseId()) ?? null
+  );
+
+  selectedSection = computed(() =>
+    this.sections().find(s => s.id === this._selectedSectionId()) ?? null
+  );
+
+  canAssign = computed(() =>
+    !!this._selectedCourseId() && !!this._selectedSectionId() && !!this._selectedYearId() && !this.assignSaving()
   );
 
   historyYears = computed(() =>
@@ -100,11 +148,41 @@ export class DetalleProfesorComponent implements OnInit {
   historyYearCount = computed(() => this.historyYears().length);
   historyActiveCount = computed(() => this.courseHistory().filter(c => c.isActive).length);
 
+  courseGrades = computed(() =>
+    Array.from(new Set(this.activeCourses().map(c => c.grade).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'))
+  );
+
+  filteredActiveCourses = computed(() => {
+    const grade = this._coursesGrade();
+    return this.activeCourses().filter(c => !grade || c.grade === grade);
+  });
+
+  coursesByGrade = computed(() => {
+    const groups = new Map<string, CourseView[]>();
+    for (const course of this.filteredActiveCourses()) {
+      const key = course.grade || 'Sin grado';
+      const list = groups.get(key) ?? [];
+      list.push(course);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], 'es'))
+      .map(([grade, courses]) => ({ grade, courses }));
+  });
+
+  activeCourseCount = computed(() => this.activeCourses().length);
+  activeGradeCount = computed(() => this.courseGrades().length);
+  activeStudentCount = computed(() =>
+    this.activeCourses().reduce((sum, c) => sum + (c.students || 0), 0)
+  );
+  fichaLoadPreview = computed(() => this.activeCourses().slice(0, 6));
+
   constructor(private route: ActivatedRoute, private adminService: AdminService) {}
 
   ngOnInit() {
     this.teacherId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadTeacher();
+    this.loadActiveCourses();
   }
 
   loadTeacher() {
@@ -122,8 +200,13 @@ export class DetalleProfesorComponent implements OnInit {
   }
 
   loadActiveCourses() {
+    this.coursesLoading.set(true);
     this.adminService.getTeacherActiveCourses(this.teacherId).subscribe({
-      next: (data) => this.activeCourses.set(this.normalizeCourses(data as Record<string, unknown>[])),
+      next: (data) => {
+        this.activeCourses.set(this.normalizeCourses(data as Record<string, unknown>[]));
+        this.coursesLoading.set(false);
+      },
+      error: () => this.coursesLoading.set(false),
     });
   }
 
@@ -151,6 +234,7 @@ export class DetalleProfesorComponent implements OnInit {
       return {
         id: assignmentId || courseId,
         courseId,
+        sectionId: String(c['sectionId'] ?? section?.['id'] ?? ''),
         name: String(course['name'] ?? '(sin nombre)'),
         code: String(course['code'] ?? ''),
         level: String(section?.['level'] ?? course['level'] ?? ''),
@@ -175,6 +259,18 @@ export class DetalleProfesorComponent implements OnInit {
     return (t.name ?? `${t.user?.firstName ?? ''} ${t.user?.lastName ?? ''}`).trim();
   }
 
+  firstName(): string {
+    const t = this.teacher();
+    return t?.user?.firstName || this.getFullName().split(' ')[0] || '—';
+  }
+
+  lastName(): string {
+    const t = this.teacher();
+    if (t?.user?.lastName) return t.user.lastName;
+    const parts = this.getFullName().split(' ').slice(1);
+    return parts.join(' ') || '—';
+  }
+
   teacherEmail(): string {
     const t = this.teacher();
     return t?.email || t?.user?.email || '—';
@@ -182,6 +278,19 @@ export class DetalleProfesorComponent implements OnInit {
 
   teacherCode(): string {
     return this.teacher()?.teacherCode || '—';
+  }
+
+  teacherDni(): string {
+    return this.teacher()?.dni || this.teacher()?.user?.dni || '';
+  }
+
+  teacherUsername(): string {
+    return this.teacher()?.username || this.teacher()?.user?.username || '';
+  }
+
+  teacherSubtitle(): string {
+    const code = this.teacherCode();
+    return code && code !== '—' ? `Docente · ${code}` : 'Docente';
   }
 
   getLevelLabel(level: string | undefined): string {
@@ -198,8 +307,25 @@ export class DetalleProfesorComponent implements OnInit {
     ].filter(Boolean).join(' · ');
   }
 
+  scheduleLabel(course: CourseView): string {
+    if (!course.schedule.length) return '—';
+    return course.schedule
+      .map(s => [s.day, s.time].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join(' · ');
+  }
+
   assignmentStatus(course: CourseView): string {
     return course.isActive ? 'Vigente' : 'Cerrado';
+  }
+
+  sectionOptionLabel(section: SectionItem): string {
+    const year = section.academicYear?.name ? ` · ${section.academicYear.name}` : '';
+    return `${section.grade} ${section.name}${year}`.trim();
+  }
+
+  courseOptionLabel(course: CourseItem): string {
+    return [course.name, course.grade, course.code].filter(Boolean).join(' · ');
   }
 
   onResetPassword() {
@@ -211,57 +337,67 @@ export class DetalleProfesorComponent implements OnInit {
     });
   }
 
-  unassignCourse(courseId: string) {
-    this.adminService.unassignCourseFromTeacher(this.teacherId, courseId).subscribe({
+  unassignCourse(course: CourseView) {
+    const where = [course.grade, course.section].filter(Boolean).join(' ');
+    const label = where ? `${course.name} · ${where}` : course.name;
+    if (!confirm(`¿Quitar ${label} de la carga de este docente?`)) return;
+    this.adminService.unassignCourseFromTeacher(this.teacherId, course.id).subscribe({
       next: () => this.loadActiveCourses(),
+      error: () => alert('No se pudo quitar el curso.'),
     });
   }
 
   openAssignCourseModal() {
     this.showAssignCourseModal.set(true);
+    this.assignError.set('');
+    this.assignSaving.set(false);
     this._selectedCourseId.set('');
-    this.adminService.getCourses({ pageSize: 100 }).subscribe({
-      next: ({ data }) => this.allCourses.set(
-        data.map(c => ({
-          id: c.id,
-          courseId: c.id,
-          name: c.name,
-          code: c.code,
-          level: c.level ?? '',
-          grade: c.grade ?? '',
-          section: '',
-          academicYear: '',
-          students: c.students ?? 0,
-          classroom: c.classroom ?? '',
-          isActive: true,
-          schedule: (c.schedule ?? []).map(s => ({
-            day: s.day,
-            time: s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : '',
-          })),
-        }))
-      ),
+    this._selectedSectionId.set('');
+    forkJoin({
+      courses: this.adminService.getCourses({ pageSize: 100 }),
+      sections: this.adminService.getSections(),
+      years: this.adminService.getAcademicYears(),
+    }).subscribe({
+      next: ({ courses, sections, years }) => {
+        this.catalogCourses.set(courses.data);
+        this.sections.set(sections.data);
+        this.academicYears.set(years);
+        const active = years.find(y => y.status === 'ACTIVE') ?? years[0];
+        this.selectedYearId = active?.id ?? '';
+      },
+      error: () => this.assignError.set('No se pudieron cargar los datos para asignar.'),
     });
   }
 
   closeAssignCourseModal() {
     this.showAssignCourseModal.set(false);
     this._selectedCourseId.set('');
+    this._selectedSectionId.set('');
+    this.assignError.set('');
+    this.assignSaving.set(false);
   }
 
   assignCourse() {
-    const course = this.selectedCourse();
-    if (!course) return;
-    const raw = this.allCourses().find(c => c.id === course.id) as CourseView & { sectionId?: string; academicYearId?: string } | undefined;
+    if (!this.canAssign()) return;
+    this.assignSaving.set(true);
+    this.assignError.set('');
     this.adminService.assignCourseToTeacher(this.teacherId, {
-      courseId: course.id,
-      sectionId: raw?.sectionId ?? '',
-      academicYearId: raw?.academicYearId ?? '',
+      courseId: this.selectedCourseId,
+      sectionId: this.selectedSectionId,
+      academicYearId: this.selectedYearId,
     }).subscribe({
       next: () => {
+        this.assignSaving.set(false);
         this.closeAssignCourseModal();
         this.loadActiveCourses();
       },
-      error: () => alert('No se pudo asignar el curso. Faltan sección o año académico.'),
+      error: (err) => {
+        this.assignSaving.set(false);
+        const msg = err?.error?.message;
+        this.assignError.set(
+          Array.isArray(msg) ? msg.join('. ') : (msg || 'No se pudo asignar el curso.')
+        );
+      },
     });
   }
 }
