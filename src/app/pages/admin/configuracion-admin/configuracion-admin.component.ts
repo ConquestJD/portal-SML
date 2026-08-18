@@ -1,20 +1,18 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
   AdminService,
   AcademicYearItem,
-  CourseItem,
-  SectionItem,
   CreateAcademicYearDto,
-  CreateSectionDto,
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
+import { PredefinedSubject, SchoolLevel } from '../../../shared/data/predefined-subjects';
+import { SubjectCatalogService } from '../../../shared/data/subject-catalog.service';
 
-type TabId = 'colegio' | 'cursos' | 'anio' | 'grados' | 'pensiones';
+type TabId = 'colegio' | 'materias' | 'anio' | 'pensiones';
 
 interface SchoolIdentity {
   name: string;
@@ -34,7 +32,7 @@ const DEFAULT_IDENTITY: SchoolIdentity = {
 @Component({
   selector: 'app-configuracion-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, ...ADMIN_SHARED],
+  imports: [CommonModule, FormsModule, DatePipe, ...ADMIN_SHARED],
   templateUrl: './configuracion-admin.component.html',
   styleUrl: './configuracion-admin.component.css'
 })
@@ -46,35 +44,29 @@ export class ConfiguracionAdminComponent implements OnInit {
 
   readonly tabs: AdminTab[] = [
     { id: 'colegio', label: 'Colegio' },
-    { id: 'cursos', label: 'Cursos' },
+    { id: 'materias', label: 'Materias' },
     { id: 'anio', label: 'Año lectivo' },
-    { id: 'grados', label: 'Grados' },
     { id: 'pensiones', label: 'Pensiones' },
   ];
 
   schoolData = signal<SchoolIdentity>({ ...DEFAULT_IDENTITY });
   years = signal<AcademicYearItem[]>([]);
-  courses = signal<CourseItem[]>([]);
-  sections = signal<SectionItem[]>([]);
+  subjects = signal<PredefinedSubject[]>([]);
 
-  private _courseGrade = signal('');
-  get courseGrade(): string { return this._courseGrade(); }
-  set courseGrade(v: string) { this._courseGrade.set(v); }
+  subjectFormOpen = signal(false);
+  subjectEditId = signal('');
+  subjectForm = signal({
+    name: '',
+    codePrefix: '',
+    color: '#003366',
+    inicial: false,
+    primaria: true,
+    secundaria: true,
+  });
 
   yearFormOpen = signal(false);
   yearEditId = signal('');
   yearForm = signal<CreateAcademicYearDto>({ name: '', startDate: '', endDate: '', status: 'UPCOMING' });
-
-  gradeFormOpen = signal(false);
-  gradeEditId = signal('');
-  gradeForm = signal<CreateSectionDto>({ name: 'A', grade: '', level: '', academicYearId: '', capacity: 30 });
-
-  readonly levels = ['Inicial', 'Primaria', 'Secundaria'];
-  readonly gradesByLevel: Record<string, string[]> = {
-    Inicial: ['3 años', '4 años', '5 años'],
-    Primaria: ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'],
-    Secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria'],
-  };
 
   monthlyTuitionAmount = signal(250);
   applyToPending = signal(false);
@@ -84,30 +76,10 @@ export class ConfiguracionAdminComponent implements OnInit {
     this.years().find(y => this.yearStatusKey(y.status) === 'active') ?? this.years()[0] ?? null
   );
 
-  courseGrades = computed(() =>
-    Array.from(new Set(this.courses().map(c => c.grade).filter(Boolean) as string[]))
-      .sort((a, b) => a.localeCompare(b, 'es'))
-  );
-
-  filteredCourses = computed(() => {
-    const grade = this._courseGrade();
-    return this.courses().filter(c => !grade || c.grade === grade);
-  });
-
-  gradesOfYear = computed(() => {
-    const yearId = this.activeYear()?.id;
-    const list = this.sections().filter(s => !yearId || s.academicYear?.id === yearId);
-    const unique = new Map<string, SectionItem>();
-    for (const s of list) {
-      const key = `${s.grade}|${s.level}|${s.academicYear?.id}`;
-      if (!unique.has(key)) unique.set(key, s);
-    }
-    return Array.from(unique.values()).sort((a, b) =>
-      `${a.level} ${a.grade}`.localeCompare(`${b.level} ${b.grade}`, 'es')
-    );
-  });
-
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private subjectCatalog: SubjectCatalogService,
+  ) {}
 
   ngOnInit() {
     this.schoolData.set(this.readIdentity());
@@ -124,24 +96,18 @@ export class ConfiguracionAdminComponent implements OnInit {
     this.loading.set(true);
     forkJoin({
       years: this.adminService.getAcademicYears(),
-      courses: this.adminService.getCourses({ pageSize: 100 }),
-      sections: this.adminService.getSections(),
       settings: this.adminService.getSettings(),
     }).subscribe({
-      next: ({ years, courses, sections, settings }) => {
+      next: ({ years, settings }) => {
         this.years.set(years ?? []);
-        this.courses.set(courses.data ?? []);
-        this.sections.set((sections.data ?? []).map(s => this.normalizeSection(s)));
         this.monthlyTuitionAmount.set(settings?.monthlyTuitionAmount ?? 250);
+        this.subjects.set(this.subjectCatalog.hydrate(settings?.subjects));
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
         this.adminService.getAcademicYears().subscribe({ next: (y) => this.years.set(y ?? []) });
-        this.adminService.getCourses({ pageSize: 100 }).subscribe({ next: (r) => this.courses.set(r.data ?? []) });
-        this.adminService.getSections().subscribe({
-          next: (r) => this.sections.set((r.data ?? []).map(s => this.normalizeSection(s))),
-        });
+        this.subjectCatalog.load().subscribe({ next: (list) => this.subjects.set(list) });
       },
     });
   }
@@ -155,19 +121,105 @@ export class ConfiguracionAdminComponent implements OnInit {
     this.saved.set('Identidad del colegio guardada.');
   }
 
-  courseStatusLabel(status: string): string {
-    const key = (status || '').toUpperCase();
-    if (key === 'ACTIVE') return 'Activo';
-    if (key === 'INACTIVE') return 'Inactivo';
-    if (key === 'ARCHIVED') return 'Archivado';
-    return status || '—';
+  levelLabel(levels: SchoolLevel[]): string {
+    const map: Record<SchoolLevel, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+    return levels.map(l => map[l]).filter(Boolean).join(', ') || '—';
   }
 
-  archiveCourse(course: CourseItem) {
-    if (!confirm(`¿Archivar ${course.name}? Dejará de aparecer en el plan de estudios.`)) return;
-    this.adminService.deleteCourse(course.id).subscribe({
-      next: () => this.reload(),
-      error: () => this.error.set('No se pudo archivar el curso.'),
+  openSubjectForm(subject?: PredefinedSubject) {
+    if (subject) {
+      this.subjectEditId.set(subject.id);
+      this.subjectForm.set({
+        name: subject.name,
+        codePrefix: subject.codePrefix,
+        color: subject.color,
+        inicial: subject.levels.includes('inicial'),
+        primaria: subject.levels.includes('primaria'),
+        secundaria: subject.levels.includes('secundaria'),
+      });
+    } else {
+      this.subjectEditId.set('');
+      this.subjectForm.set({
+        name: '',
+        codePrefix: '',
+        color: '#003366',
+        inicial: false,
+        primaria: true,
+        secundaria: true,
+      });
+    }
+    this.subjectFormOpen.set(true);
+  }
+
+  cancelSubjectForm() {
+    this.subjectFormOpen.set(false);
+    this.subjectEditId.set('');
+  }
+
+  patchSubject(field: 'name' | 'codePrefix' | 'color', value: string) {
+    this.subjectForm.update(d => {
+      const next = { ...d, [field]: value };
+      if (field === 'name' && !this.subjectEditId()) {
+        next.codePrefix = this.subjectCatalog.prefixFromName(value);
+      }
+      return next;
+    });
+  }
+
+  toggleSubjectLevel(level: 'inicial' | 'primaria' | 'secundaria', on: boolean) {
+    this.subjectForm.update(d => ({ ...d, [level]: on }));
+  }
+
+  saveSubject() {
+    const f = this.subjectForm();
+    const name = f.name.trim();
+    if (!name) {
+      this.error.set('Indica el nombre de la materia.');
+      return;
+    }
+    const levels: SchoolLevel[] = [];
+    if (f.inicial) levels.push('inicial');
+    if (f.primaria) levels.push('primaria');
+    if (f.secundaria) levels.push('secundaria');
+    if (!levels.length) {
+      this.error.set('Elige al menos un nivel.');
+      return;
+    }
+    const current = [...this.subjects()];
+    const draft = this.subjectCatalog.normalize({
+      id: this.subjectEditId() || this.subjectCatalog.slug(name),
+      name,
+      codePrefix: f.codePrefix,
+      color: f.color,
+      levels,
+    });
+    const duplicate = current.some(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== draft.id);
+    if (duplicate) {
+      this.error.set('Ya existe una materia con ese nombre.');
+      return;
+    }
+    const next = this.subjectEditId()
+      ? current.map(s => s.id === draft.id ? draft : s)
+      : [...current, draft];
+    this.subjectCatalog.save(next).subscribe({
+      next: (list) => {
+        this.subjects.set(list);
+        this.cancelSubjectForm();
+        this.saved.set('Materia guardada. Ya aparece al crear un curso.');
+      },
+      error: () => this.error.set('No se pudo guardar la materia.'),
+    });
+  }
+
+  removeSubject(subject: PredefinedSubject) {
+    if (!confirm(`¿Quitar ${subject.name} del catálogo de materias? Los cursos ya creados no se borran.`)) return;
+    const next = this.subjects().filter(s => s.id !== subject.id);
+    this.subjectCatalog.save(next).subscribe({
+      next: (list) => {
+        this.subjects.set(list);
+        this.saved.set('Materia quitada del catálogo.');
+      },
+      error: () => this.error.set('No se pudo quitar la materia.'),
     });
   }
 
@@ -226,66 +278,6 @@ export class ConfiguracionAdminComponent implements OnInit {
     });
   }
 
-  gradesForLevel(): string[] {
-    return this.gradesByLevel[this.gradeForm().level] ?? [];
-  }
-
-  openGradeForm(section?: SectionItem) {
-    const yearId = this.activeYear()?.id ?? '';
-    if (section) {
-      this.gradeEditId.set(section.id);
-      this.gradeForm.set({
-        name: section.name || 'A',
-        grade: section.grade,
-        level: section.level,
-        academicYearId: section.academicYear?.id ?? yearId,
-        capacity: section.capacity || 30,
-      });
-    } else {
-      this.gradeEditId.set('');
-      this.gradeForm.set({ name: 'A', grade: '', level: '', academicYearId: yearId, capacity: 30 });
-    }
-    this.gradeFormOpen.set(true);
-  }
-
-  cancelGradeForm() {
-    this.gradeFormOpen.set(false);
-    this.gradeEditId.set('');
-  }
-
-  patchGrade(field: keyof CreateSectionDto, value: string | number) {
-    this.gradeForm.update(d => ({ ...d, [field]: value }));
-  }
-
-  saveGrade() {
-    const dto = { ...this.gradeForm(), name: this.gradeForm().name || 'A' };
-    if (!dto.grade || !dto.level || !dto.academicYearId) return;
-    if (!this.gradeEditId()) {
-      const exists = this.sections().some(
-        s => s.grade === dto.grade && s.academicYear?.id === dto.academicYearId
-      );
-      if (exists) {
-        this.error.set('Ese grado ya está registrado en el año seleccionado.');
-        return;
-      }
-    }
-    const req = this.gradeEditId()
-      ? this.adminService.updateSection(this.gradeEditId(), dto)
-      : this.adminService.createSection(dto);
-    req.subscribe({
-      next: () => {
-        this.cancelGradeForm();
-        this.saved.set('Grado guardado.');
-        this.reload();
-      },
-      error: () => this.error.set('No se pudo guardar el grado.'),
-    });
-  }
-
-  enrolledOf(section: SectionItem): number {
-    return section.enrolledCount ?? 0;
-  }
-
   saveTuition() {
     const amount = Number(this.monthlyTuitionAmount());
     if (!Number.isFinite(amount) || amount < 1) {
@@ -311,14 +303,6 @@ export class ConfiguracionAdminComponent implements OnInit {
         this.error.set('No se pudo guardar el monto de la pensión.');
       },
     });
-  }
-
-  private normalizeSection(s: SectionItem): SectionItem {
-    const raw = s as SectionItem & { _count?: { enrollments?: number }; enrolled?: number };
-    return {
-      ...s,
-      enrolledCount: s.enrolledCount ?? raw._count?.enrollments ?? raw.enrolled ?? 0,
-    };
   }
 
   private toDateInput(value: string): string {

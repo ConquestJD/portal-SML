@@ -25,16 +25,12 @@
     @if (activeTab() === 'colegio') {
       <section class="metrics" aria-label="Resumen del colegio">
         <div class="metric">
-          <span class="metric__n">{{ courses().length }}</span>
-          <span class="metric__l">Cursos</span>
+          <span class="metric__n">{{ subjects().length }}</span>
+          <span class="metric__l">Materias</span>
         </div>
         <div class="metric">
           <span class="metric__n">{{ years().length }}</span>
           <span class="metric__l">Años</span>
-        </div>
-        <div class="metric">
-          <span class="metric__n">{{ gradesOfYear().length }}</span>
-          <span class="metric__l">Grados</span>
         </div>
         <div class="metric">
           <span class="metric__n">S/ {{ monthlyTuitionAmount() }}</span>
@@ -122,52 +118,84 @@
       </form>
     }
 
-    @if (activeTab() === 'cursos') {
+    @if (activeTab() === 'materias') {
       <div class="toolbar">
-        <select [(ngModel)]="courseGrade" name="courseGrade" aria-label="Grado">
-          <option value="">Todos los grados</option>
-          @for (g of courseGrades(); track g) {
-            <option [value]="g">{{ g }}</option>
-          }
-        </select>
         <span class="toolbar__spacer"></span>
-        <a routerLink="/admin/cursos/crear" class="adm-btn adm-btn--solid">Nuevo curso</a>
+        <button type="button" class="adm-btn adm-btn--solid" (click)="openSubjectForm()">Nueva materia</button>
       </div>
 
-      @if (loading() && courses().length === 0) {
-        <p class="feed__empty">Cargando cursos…</p>
-      } @else if (filteredCourses().length === 0) {
+      @if (subjectFormOpen()) {
         <section class="mod">
-          <p class="mod__empty">No hay cursos en el catálogo. Crea el primero para el plan de estudios.</p>
+          <header class="mod__head">
+            <h2>{{ subjectEditId() ? 'Editar materia' : 'Nueva materia' }}</h2>
+          </header>
+          <form class="cfg-grid" (ngSubmit)="saveSubject()">
+            <div class="cfg-field">
+              <label class="cfg-label">Nombre</label>
+              <input class="cfg-input" required [ngModel]="subjectForm().name" (ngModelChange)="patchSubject('name', $event)" name="subjectName" />
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Código</label>
+              <input class="cfg-input" maxlength="4" [ngModel]="subjectForm().codePrefix" (ngModelChange)="patchSubject('codePrefix', $event)" name="subjectCode" />
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Color</label>
+              <input class="cfg-input" type="color" [ngModel]="subjectForm().color" (ngModelChange)="patchSubject('color', $event)" name="subjectColor" />
+            </div>
+            <div class="cfg-field cfg-field--wide">
+              <span class="cfg-label">Niveles</span>
+              <div class="cfg-checks">
+                <label class="cfg-check">
+                  <input type="checkbox" [ngModel]="subjectForm().inicial" (ngModelChange)="toggleSubjectLevel('inicial', $event)" name="lvlInicial" />
+                  Inicial
+                </label>
+                <label class="cfg-check">
+                  <input type="checkbox" [ngModel]="subjectForm().primaria" (ngModelChange)="toggleSubjectLevel('primaria', $event)" name="lvlPrimaria" />
+                  Primaria
+                </label>
+                <label class="cfg-check">
+                  <input type="checkbox" [ngModel]="subjectForm().secundaria" (ngModelChange)="toggleSubjectLevel('secundaria', $event)" name="lvlSecundaria" />
+                  Secundaria
+                </label>
+              </div>
+            </div>
+            <div class="cfg-actions cfg-actions--form">
+              <button type="button" class="adm-link" (click)="cancelSubjectForm()">Cancelar</button>
+              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (subjects().length === 0) {
+        <section class="mod">
+          <p class="mod__empty">No hay materias en el catálogo. Agrégalas para poder crear cursos.</p>
         </section>
       } @else {
-        <p class="roster-count">{{ filteredCourses().length }} {{ filteredCourses().length === 1 ? 'curso' : 'cursos' }}</p>
+        <p class="roster-count">{{ subjects().length }} {{ subjects().length === 1 ? 'materia' : 'materias' }}</p>
         <section class="roster-group">
           <div class="roster-table-wrap">
             <table class="roster-table">
               <thead>
                 <tr>
-                  <th>Curso</th>
+                  <th>Materia</th>
                   <th>Código</th>
-                  <th>Grado</th>
-                  <th>Nivel</th>
-                  <th>Estado</th>
+                  <th>Niveles</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                @for (course of filteredCourses(); track course.id) {
+                @for (subject of subjects(); track subject.id) {
                   <tr>
                     <td>
-                      <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a>
+                      <span class="subject-swatch" [style.background]="subject.color"></span>
+                      {{ subject.name }}
                     </td>
-                    <td>{{ course.code }}</td>
-                    <td>{{ course.grade || '—' }}</td>
-                    <td>{{ course.level || '—' }}</td>
-                    <td>{{ courseStatusLabel(course.status) }}</td>
+                    <td>{{ subject.codePrefix }}</td>
+                    <td>{{ levelLabel(subject.levels) }}</td>
                     <td>
-                      <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="adm-link">Editar</a>
-                      <button type="button" class="adm-link adm-link--danger" (click)="archiveCourse(course)">Archivar</button>
+                      <button type="button" class="adm-link" (click)="openSubjectForm(subject)">Editar</button>
+                      <button type="button" class="adm-link adm-link--danger" (click)="removeSubject(subject)">Quitar</button>
                     </td>
                   </tr>
                 }
@@ -248,107 +276,6 @@
                     </td>
                     <td>
                       <button type="button" class="adm-link" (click)="openYearForm(year)">Editar</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
-      }
-    }
-
-    @if (activeTab() === 'grados') {
-      <div class="toolbar">
-        <span class="toolbar__spacer"></span>
-        <button type="button" class="adm-btn adm-btn--solid" (click)="openGradeForm()">Nuevo grado</button>
-      </div>
-
-      @if (gradeFormOpen()) {
-        <section class="mod">
-          <header class="mod__head">
-            <h2>{{ gradeEditId() ? 'Editar grado' : 'Nuevo grado' }}</h2>
-          </header>
-          <form class="cfg-grid" (ngSubmit)="saveGrade()">
-            <div class="cfg-field">
-              <label class="cfg-label">Nivel</label>
-              <select
-                class="cfg-input"
-                required
-                [ngModel]="gradeForm().level"
-                (ngModelChange)="patchGrade('level', $event); patchGrade('grade', '')"
-                name="gradeLevel"
-              >
-                <option value="">Seleccionar</option>
-                @for (level of levels; track level) {
-                  <option [value]="level">{{ level }}</option>
-                }
-              </select>
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Grado</label>
-              <select class="cfg-input" required [ngModel]="gradeForm().grade" (ngModelChange)="patchGrade('grade', $event)" name="gradeName">
-                <option value="">Seleccionar</option>
-                @for (g of gradesForLevel(); track g) {
-                  <option [value]="g">{{ g }}</option>
-                }
-              </select>
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Año lectivo</label>
-              <select class="cfg-input" required [ngModel]="gradeForm().academicYearId" (ngModelChange)="patchGrade('academicYearId', $event)" name="gradeYear">
-                @for (year of years(); track year.id) {
-                  <option [value]="year.id">{{ year.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Vacantes</label>
-              <input
-                class="cfg-input"
-                type="number"
-                min="1"
-                [ngModel]="gradeForm().capacity"
-                (ngModelChange)="patchGrade('capacity', +$event)"
-                name="gradeCapacity"
-              />
-            </div>
-            <div class="cfg-actions cfg-actions--form">
-              <button type="button" class="adm-link" (click)="cancelGradeForm()">Cancelar</button>
-              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
-            </div>
-          </form>
-        </section>
-      }
-
-      @if (gradesOfYear().length === 0) {
-        <section class="mod">
-          <p class="mod__empty">No hay grados en el año vigente. Agrégalos para matricular alumnos.</p>
-        </section>
-      } @else {
-        <section class="roster-group">
-          <div class="roster-table-wrap">
-            <table class="roster-table">
-              <thead>
-                <tr>
-                  <th>Grado</th>
-                  <th>Nivel</th>
-                  <th>Año</th>
-                  <th>Alumnos</th>
-                  <th>Vacantes</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (grade of gradesOfYear(); track grade.id) {
-                  <tr>
-                    <td>{{ grade.grade }}</td>
-                    <td>{{ grade.level || '—' }}</td>
-                    <td>{{ grade.academicYear?.name || '—' }}</td>
-                    <td>{{ enrolledOf(grade) }}</td>
-                    <td>{{ grade.capacity || '—' }}</td>
-                    <td>
-                      <button type="button" class="adm-link" (click)="openGradeForm(grade)">Editar</button>
                     </td>
                   </tr>
                 }

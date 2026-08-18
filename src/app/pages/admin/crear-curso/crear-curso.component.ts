@@ -16,11 +16,9 @@ import { ADMIN_SHARED } from '../_shared';
 import {
   PredefinedSubject,
   buildCourseCode,
-  findSubjectById,
-  findSubjectByName,
   subjectCoverUrl,
-  subjectsForLevel,
 } from '../../../shared/data/predefined-subjects';
+import { SubjectCatalogService } from '../../../shared/data/subject-catalog.service';
 import { resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
 
 @Component({
@@ -97,12 +95,12 @@ export class CrearCursoComponent implements OnInit {
     return [];
   });
 
-  catalogSubjects = computed(() => subjectsForLevel(this.formData().level));
+  catalogSubjects = computed(() => this.subjectCatalog.forLevel(this.formData().level));
 
   selectedSubject = computed((): PredefinedSubject | undefined => {
     const id = this.formData().subjectId;
-    if (id) return findSubjectById(id);
-    return findSubjectByName(this.formData().name);
+    if (id) return this.subjectCatalog.findById(id);
+    return this.subjectCatalog.findByName(this.formData().name);
   });
 
   takenSubjectNames = computed(() => {
@@ -164,10 +162,12 @@ export class CrearCursoComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private adminService: AdminService
+    private adminService: AdminService,
+    private subjectCatalog: SubjectCatalogService,
   ) {}
 
   ngOnInit() {
+    this.subjectCatalog.load().subscribe();
     this.adminService.getTeachers({ pageSize: 100 }).subscribe({
       next: ({ data }) => this.teachers.set(data),
       error: () => this.teachers.set([])
@@ -229,7 +229,7 @@ export class CrearCursoComponent implements OnInit {
   private refreshCode() {
     if (this.isEditMode()) return;
     const d = this.formData();
-    const subject = findSubjectById(d.subjectId);
+    const subject = this.subjectCatalog.findById(d.subjectId);
     if (!subject || !d.grade) return;
     this.formData.update(f => ({ ...f, code: buildCourseCode(subject.codePrefix, d.grade) }));
   }
@@ -258,7 +258,7 @@ export class CrearCursoComponent implements OnInit {
               ? 'inicial'
               : '';
 
-        const subject = findSubjectByName(course.name);
+        const subject = this.subjectCatalog.findByName(course.name);
 
         this.formData.update(fd => ({
           ...fd,

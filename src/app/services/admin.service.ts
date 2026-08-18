@@ -187,6 +187,14 @@ export interface CreateAcademicYearDto {
 export interface SchoolSettings {
   monthlyTuitionAmount: number;
   updatedPending?: number;
+  subjects?: Array<{
+    id: string;
+    name: string;
+    codePrefix: string;
+    color: string;
+    coverKey: string;
+    levels: string[];
+  }>;
 }
 
 // ─── ENROLLMENTS ─────────────────────────────────────────────────────────────
@@ -644,7 +652,11 @@ export class AdminService {
   getSettings(): Observable<SchoolSettings> {
     return this.get<SchoolSettings>('/settings');
   }
-  updateSettings(dto: { monthlyTuitionAmount: number; applyToPending?: boolean }): Observable<SchoolSettings> {
+  updateSettings(dto: {
+    monthlyTuitionAmount?: number;
+    applyToPending?: boolean;
+    subjects?: SchoolSettings['subjects'];
+  }): Observable<SchoolSettings> {
     return this.http.put<{ success: boolean; data: SchoolSettings }>(`${this.url}/settings`, dto)
       .pipe(map(r => r.data));
   }
