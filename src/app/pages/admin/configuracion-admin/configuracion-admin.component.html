@@ -6,100 +6,389 @@
     <div class="adm-page__hero-content">
       <img src="/only-logo.png" alt="" class="adm-page__crest" />
       <div>
-        <h1 class="adm-page__title">Identidad del colegio</h1>
+        <h1 class="adm-page__title">Configuración</h1>
         <p class="adm-page__brand">Santa María Laura</p>
       </div>
     </div>
   </header>
 
   <div class="adm-page__body">
+    <admin-tabs [tabs]="tabs" [activeTab]="activeTab()" (activeTabChange)="setTab($event)"></admin-tabs>
 
     @if (saved()) {
-      <p class="adm-alert adm-alert--ok" role="status">Identidad actualizada</p>
+      <p class="adm-alert adm-alert--ok" role="status">{{ saved() }}</p>
+    }
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
     }
 
-    <form (ngSubmit)="saveSettings()">
-
-      <section class="identity" aria-labelledby="school-identity">
-        <div class="identity__crest">
-          <img src="/only-logo.png" alt="" />
+    @if (activeTab() === 'colegio') {
+      <section class="metrics" aria-label="Resumen del colegio">
+        <div class="metric">
+          <span class="metric__n">{{ courses().length }}</span>
+          <span class="metric__l">Cursos</span>
         </div>
-        <div class="identity__copy">
-          <p class="identity__kicker">Colegio</p>
-          <label class="visually-hidden" for="school-name">Nombre del colegio</label>
-          <input
-            id="school-name"
-            type="text"
-            class="identity__name"
-            name="name"
-            [ngModel]="schoolData().name"
-            (ngModelChange)="patchSchool('name', $event)"
-          />
-          <p class="identity__place">{{ schoolData().address || 'Dirección institucional' }}</p>
+        <div class="metric">
+          <span class="metric__n">{{ years().length }}</span>
+          <span class="metric__l">Años</span>
         </div>
-        @if (activeYear(); as year) {
-          <div class="identity__year">
-            <span class="identity__year-kicker">Año lectivo</span>
-            <strong>{{ year.name }}</strong>
-            <span>{{ year.status === 'ACTIVE' ? 'En curso' : year.status }}</span>
-          </div>
-        }
+        <div class="metric">
+          <span class="metric__n">{{ gradesOfYear().length }}</span>
+          <span class="metric__l">Grados</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">S/ {{ monthlyTuitionAmount() }}</span>
+          <span class="metric__l">Pensión mensual</span>
+        </div>
       </section>
 
-      <div class="mod-grid">
-        <section class="mod">
-          <header class="mod__head">
-            <h2>Sede</h2>
-          </header>
-          <div class="cfg-field cfg-field--wide">
-            <label class="cfg-label" for="school-address">Dirección</label>
+      <form (ngSubmit)="saveIdentity()">
+        <section class="identity" aria-labelledby="school-identity">
+          <div class="identity__crest">
+            <img src="/only-logo.png" alt="" />
+          </div>
+          <div class="identity__copy">
+            <p class="identity__kicker">Colegio</p>
+            <label class="visually-hidden" for="school-name">Nombre del colegio</label>
             <input
-              id="school-address"
+              id="school-name"
               type="text"
-              class="cfg-input"
-              name="address"
-              [ngModel]="schoolData().address"
-              (ngModelChange)="patchSchool('address', $event)"
+              class="identity__name"
+              name="name"
+              [ngModel]="schoolData().name"
+              (ngModelChange)="patchSchool('name', $event)"
             />
+            <p class="identity__place">{{ schoolData().address || 'Dirección institucional' }}</p>
           </div>
+          @if (activeYear(); as year) {
+            <div class="identity__year">
+              <span class="identity__year-kicker">Año lectivo</span>
+              <strong>{{ year.name }}</strong>
+              <span>{{ yearStatusLabel(year.status) }}</span>
+            </div>
+          }
         </section>
 
+        <div class="mod-grid">
+          <section class="mod">
+            <header class="mod__head">
+              <h2>Sede</h2>
+            </header>
+            <div class="cfg-field cfg-field--wide">
+              <label class="cfg-label" for="school-address">Dirección</label>
+              <input
+                id="school-address"
+                type="text"
+                class="cfg-input"
+                name="address"
+                [ngModel]="schoolData().address"
+                (ngModelChange)="patchSchool('address', $event)"
+              />
+            </div>
+          </section>
+          <section class="mod">
+            <header class="mod__head">
+              <h2>Contacto</h2>
+            </header>
+            <div class="cfg-grid">
+              <div class="cfg-field">
+                <label class="cfg-label" for="school-phone">Teléfono</label>
+                <input
+                  id="school-phone"
+                  type="tel"
+                  class="cfg-input"
+                  name="phone"
+                  [ngModel]="schoolData().phone"
+                  (ngModelChange)="patchSchool('phone', $event)"
+                />
+              </div>
+              <div class="cfg-field">
+                <label class="cfg-label" for="school-email">Correo</label>
+                <input
+                  id="school-email"
+                  type="email"
+                  class="cfg-input"
+                  name="email"
+                  [ngModel]="schoolData().email"
+                  (ngModelChange)="patchSchool('email', $event)"
+                />
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="cfg-actions">
+          <button type="submit" class="adm-btn adm-btn--solid">Guardar identidad</button>
+        </div>
+      </form>
+    }
+
+    @if (activeTab() === 'cursos') {
+      <div class="toolbar">
+        <select [(ngModel)]="courseGrade" name="courseGrade" aria-label="Grado">
+          <option value="">Todos los grados</option>
+          @for (g of courseGrades(); track g) {
+            <option [value]="g">{{ g }}</option>
+          }
+        </select>
+        <span class="toolbar__spacer"></span>
+        <a routerLink="/admin/cursos/crear" class="adm-btn adm-btn--solid">Nuevo curso</a>
+      </div>
+
+      @if (loading() && courses().length === 0) {
+        <p class="feed__empty">Cargando cursos…</p>
+      } @else if (filteredCourses().length === 0) {
+        <section class="mod">
+          <p class="mod__empty">No hay cursos en el catálogo. Crea el primero para el plan de estudios.</p>
+        </section>
+      } @else {
+        <p class="roster-count">{{ filteredCourses().length }} {{ filteredCourses().length === 1 ? 'curso' : 'cursos' }}</p>
+        <section class="roster-group">
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Curso</th>
+                  <th>Código</th>
+                  <th>Grado</th>
+                  <th>Nivel</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (course of filteredCourses(); track course.id) {
+                  <tr>
+                    <td>
+                      <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="course-link">{{ course.name }}</a>
+                    </td>
+                    <td>{{ course.code }}</td>
+                    <td>{{ course.grade || '—' }}</td>
+                    <td>{{ course.level || '—' }}</td>
+                    <td>{{ courseStatusLabel(course.status) }}</td>
+                    <td>
+                      <a [routerLink]="['/admin/cursos', course.id, 'editar']" class="adm-link">Editar</a>
+                      <button type="button" class="adm-link adm-link--danger" (click)="archiveCourse(course)">Archivar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+
+    @if (activeTab() === 'anio') {
+      <div class="toolbar">
+        <span class="toolbar__spacer"></span>
+        <button type="button" class="adm-btn adm-btn--solid" (click)="openYearForm()">Nuevo año</button>
+      </div>
+
+      @if (yearFormOpen()) {
         <section class="mod">
           <header class="mod__head">
-            <h2>Contacto</h2>
+            <h2>{{ yearEditId() ? 'Editar año' : 'Nuevo año lectivo' }}</h2>
           </header>
-          <div class="cfg-grid">
+          <form class="cfg-grid" (ngSubmit)="saveYear()">
             <div class="cfg-field">
-              <label class="cfg-label" for="school-phone">Teléfono</label>
-              <input
-                id="school-phone"
-                type="tel"
-                class="cfg-input"
-                name="phone"
-                [ngModel]="schoolData().phone"
-                (ngModelChange)="patchSchool('phone', $event)"
-              />
+              <label class="cfg-label">Nombre</label>
+              <input class="cfg-input" required [ngModel]="yearForm().name" (ngModelChange)="patchYear('name', $event)" name="yearName" />
             </div>
             <div class="cfg-field">
-              <label class="cfg-label" for="school-email">Correo</label>
-              <input
-                id="school-email"
-                type="email"
-                class="cfg-input"
-                name="email"
-                [ngModel]="schoolData().email"
-                (ngModelChange)="patchSchool('email', $event)"
-              />
+              <label class="cfg-label">Estado</label>
+              <select class="cfg-input" [ngModel]="yearForm().status" (ngModelChange)="patchYear('status', $event)" name="yearStatus">
+                <option value="UPCOMING">Próximo</option>
+                <option value="ACTIVE">En curso</option>
+                <option value="CLOSED">Cerrado</option>
+              </select>
             </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Inicio</label>
+              <input class="cfg-input" type="date" required [ngModel]="yearForm().startDate" (ngModelChange)="patchYear('startDate', $event)" name="yearStart" />
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Fin</label>
+              <input class="cfg-input" type="date" required [ngModel]="yearForm().endDate" (ngModelChange)="patchYear('endDate', $event)" name="yearEnd" />
+            </div>
+            <div class="cfg-actions cfg-actions--form">
+              <button type="button" class="adm-link" (click)="cancelYearForm()">Cancelar</button>
+              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (years().length === 0) {
+        <section class="mod">
+          <p class="mod__empty">Aún no hay años lectivos. Crea el año vigente para matricular y generar pensiones.</p>
+        </section>
+      } @else {
+        <section class="roster-group">
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Año</th>
+                  <th>Inicio</th>
+                  <th>Fin</th>
+                  <th>Estado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (year of years(); track year.id) {
+                  <tr>
+                    <td>{{ year.name }}</td>
+                    <td>{{ year.startDate | date:'mediumDate' }}</td>
+                    <td>{{ year.endDate | date:'mediumDate' }}</td>
+                    <td>
+                      <span class="enroll-badge" [attr.data-kind]="yearStatusKey(year.status) === 'active' ? 'active' : 'none'">
+                        {{ yearStatusLabel(year.status) }}
+                      </span>
+                    </td>
+                    <td>
+                      <button type="button" class="adm-link" (click)="openYearForm(year)">Editar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </section>
+      }
+    }
+
+    @if (activeTab() === 'grados') {
+      <div class="toolbar">
+        <span class="toolbar__spacer"></span>
+        <button type="button" class="adm-btn adm-btn--solid" (click)="openGradeForm()">Nuevo grado</button>
       </div>
 
-      <div class="cfg-actions">
-        <button type="submit" class="adm-btn adm-btn--solid">
-          Guardar identidad
-        </button>
-      </div>
-    </form>
+      @if (gradeFormOpen()) {
+        <section class="mod">
+          <header class="mod__head">
+            <h2>{{ gradeEditId() ? 'Editar grado' : 'Nuevo grado' }}</h2>
+          </header>
+          <form class="cfg-grid" (ngSubmit)="saveGrade()">
+            <div class="cfg-field">
+              <label class="cfg-label">Nivel</label>
+              <select
+                class="cfg-input"
+                required
+                [ngModel]="gradeForm().level"
+                (ngModelChange)="patchGrade('level', $event); patchGrade('grade', '')"
+                name="gradeLevel"
+              >
+                <option value="">Seleccionar</option>
+                @for (level of levels; track level) {
+                  <option [value]="level">{{ level }}</option>
+                }
+              </select>
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Grado</label>
+              <select class="cfg-input" required [ngModel]="gradeForm().grade" (ngModelChange)="patchGrade('grade', $event)" name="gradeName">
+                <option value="">Seleccionar</option>
+                @for (g of gradesForLevel(); track g) {
+                  <option [value]="g">{{ g }}</option>
+                }
+              </select>
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Año lectivo</label>
+              <select class="cfg-input" required [ngModel]="gradeForm().academicYearId" (ngModelChange)="patchGrade('academicYearId', $event)" name="gradeYear">
+                @for (year of years(); track year.id) {
+                  <option [value]="year.id">{{ year.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Vacantes</label>
+              <input
+                class="cfg-input"
+                type="number"
+                min="1"
+                [ngModel]="gradeForm().capacity"
+                (ngModelChange)="patchGrade('capacity', +$event)"
+                name="gradeCapacity"
+              />
+            </div>
+            <div class="cfg-actions cfg-actions--form">
+              <button type="button" class="adm-link" (click)="cancelGradeForm()">Cancelar</button>
+              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (gradesOfYear().length === 0) {
+        <section class="mod">
+          <p class="mod__empty">No hay grados en el año vigente. Agrégalos para matricular alumnos.</p>
+        </section>
+      } @else {
+        <section class="roster-group">
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Grado</th>
+                  <th>Nivel</th>
+                  <th>Año</th>
+                  <th>Alumnos</th>
+                  <th>Vacantes</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (grade of gradesOfYear(); track grade.id) {
+                  <tr>
+                    <td>{{ grade.grade }}</td>
+                    <td>{{ grade.level || '—' }}</td>
+                    <td>{{ grade.academicYear?.name || '—' }}</td>
+                    <td>{{ enrolledOf(grade) }}</td>
+                    <td>{{ grade.capacity || '—' }}</td>
+                    <td>
+                      <button type="button" class="adm-link" (click)="openGradeForm(grade)">Editar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+
+    @if (activeTab() === 'pensiones') {
+      <section class="mod">
+        <header class="mod__head">
+          <h2>Pensión mensual</h2>
+        </header>
+        <p class="mod__hint">Las cuotas nuevas usarán este monto. El vencimiento sigue siendo el día 5 de cada mes.</p>
+        <form class="pay-form" (ngSubmit)="saveTuition()">
+          <label>
+            Monto (soles)
+            <input
+              class="cfg-input"
+              type="number"
+              min="1"
+              step="0.01"
+              name="monthlyTuitionAmount"
+              [ngModel]="monthlyTuitionAmount()"
+              (ngModelChange)="monthlyTuitionAmount.set(+$event)"
+            />
+          </label>
+          <label class="cfg-check">
+            <input type="checkbox" [ngModel]="applyToPending()" (ngModelChange)="applyToPending.set($event)" name="applyToPending" />
+            Actualizar cuotas pendientes y en retraso del año vigente
+          </label>
+          <div class="cfg-actions">
+            <button type="submit" class="adm-btn adm-btn--solid" [disabled]="tuitionSaving()">
+              {{ tuitionSaving() ? 'Guardando…' : 'Guardar pensión' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    }
   </div>
 </div>

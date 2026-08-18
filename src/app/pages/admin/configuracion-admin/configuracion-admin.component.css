@@ -1,5 +1,7 @@
 @import '../_shared/admin-editorial.css';
 
+.toolbar__spacer { flex: 1; min-width: .5rem; }
+
 .identity {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -101,9 +103,13 @@
 .mod {
   background: var(--surface);
   padding: 1.15rem 1.25rem 1.3rem;
+  margin-bottom: 1rem;
 }
 
 .mod__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   margin-bottom: 1rem;
   padding-bottom: .55rem;
   border-bottom: 1px solid var(--line);
@@ -115,6 +121,20 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--navy);
+}
+
+.mod__hint {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.mod__empty {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
 }
 
 .cfg-grid {
@@ -152,13 +172,77 @@
 .cfg-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
+  align-items: center;
   margin-top: 1rem;
 }
 
+.cfg-actions--form { grid-column: 1 / -1; }
+
+.cfg-check {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-size: .9rem;
+  color: var(--ink);
+}
+
+.pay-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 22rem;
+}
+
+.pay-form label {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pay-form .cfg-check {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: .9rem;
+}
+
+.course-link {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.course-link:hover { color: var(--crimson); }
+
+.enroll-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: .2rem .45rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.enroll-badge[data-kind="active"] {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #eef3f8;
+}
+
+.roster-table td .adm-link + .adm-link,
+.roster-table td .adm-link + button {
+  margin-left: .75rem;
+}
+
 @media (max-width: 800px) {
-  .identity {
-    grid-template-columns: auto 1fr;
-  }
+  .identity { grid-template-columns: auto 1fr; }
   .identity__year {
     grid-column: 1 / -1;
     align-items: flex-start;

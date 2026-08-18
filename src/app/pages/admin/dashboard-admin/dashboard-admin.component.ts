@@ -49,7 +49,7 @@ export class DashboardAdminComponent implements OnInit {
     { label: 'Matrícula', hint: 'Inscripciones', link: '/admin/matricula', photo: '/images/heroes/classrooms.webp' },
     { label: 'Comunicados', hint: 'Mural institucional', link: '/admin/comunicados', photo: '/images/heroes/announcements.webp' },
     { label: 'Reportes', hint: 'Indicadores', link: '/admin/reportes', photo: '/images/heroes/reports.webp' },
-    { label: 'Identidad', hint: 'Sede y año lectivo', link: '/admin/configuracion', photo: '/images/heroes/settings.webp' },
+    { label: 'Identidad', hint: 'Colegio, cursos, año y pensiones', link: '/admin/configuracion', photo: '/images/heroes/settings.webp' },
   ];
 
   actions = [

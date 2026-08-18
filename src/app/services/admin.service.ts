@@ -184,6 +184,11 @@ export interface CreateAcademicYearDto {
   name: string; startDate: string; endDate: string; status: string;
 }
 
+export interface SchoolSettings {
+  monthlyTuitionAmount: number;
+  updatedPending?: number;
+}
+
 // ─── ENROLLMENTS ─────────────────────────────────────────────────────────────
 export interface EnrollmentItem {
   id: string; status: string;
@@ -632,6 +637,15 @@ export class AdminService {
   // ─── REPORTS ──────────────────────────────────────────────────────────────
   getReport(type: string, params: Record<string, string> = {}): Observable<ReportResult> {
     return this.http.get<{ success: boolean; data: ReportResult }>(`${this.url}/reports/${type}`, { params: buildParams(params) })
+      .pipe(map(r => r.data));
+  }
+
+  // ─── SETTINGS ─────────────────────────────────────────────────────────────
+  getSettings(): Observable<SchoolSettings> {
+    return this.get<SchoolSettings>('/settings');
+  }
+  updateSettings(dto: { monthlyTuitionAmount: number; applyToPending?: boolean }): Observable<SchoolSettings> {
+    return this.http.put<{ success: boolean; data: SchoolSettings }>(`${this.url}/settings`, dto)
       .pipe(map(r => r.data));
   }
 }
