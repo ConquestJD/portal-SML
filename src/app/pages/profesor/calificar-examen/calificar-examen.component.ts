@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   TeacherExam,
   TeacherService,
@@ -14,10 +14,12 @@ interface ExamStudent {
   name: string;
 }
 
+type ExamFilter = 'all' | 'pending' | 'graded';
+
 @Component({
   selector: 'app-calificar-examen',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './calificar-examen.component.html',
   styleUrl: './calificar-examen.component.css',
 })
@@ -36,12 +38,14 @@ export class CalificarExamenComponent implements OnInit {
   exam = signal<TeacherExam | null>(null);
   students = signal<ExamStudent[]>([]);
   draftScores = signal<Record<string, string>>({});
+  searchQuery = signal('');
+  filterChip = signal<ExamFilter>('all');
 
-  filledCount = computed(() => {
-    const exam = this.exam();
-    if (!exam) return 0;
-    return this.students().filter(s => this.scoreOf(s.id) != null).length;
-  });
+  filledCount = computed(() =>
+    this.students().filter(s => this.scoreOf(s.id) != null).length,
+  );
+
+  pendingCount = computed(() => Math.max(0, this.students().length - this.filledCount()));
 
   average = computed(() => {
     const scores = this.students()
@@ -62,6 +66,18 @@ export class CalificarExamenComponent implements OnInit {
     });
   });
 
+  filteredStudents = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const chip = this.filterChip();
+    return this.students().filter(s => {
+      const graded = this.scoreOf(s.id) != null;
+      if (chip === 'pending' && graded) return false;
+      if (chip === 'graded' && !graded) return false;
+      if (!q) return true;
+      return s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
+    });
+  });
+
   ngOnInit() {
     const cId = this.route.snapshot.paramMap.get('courseId') ?? '';
     const eId = this.route.snapshot.paramMap.get('examId') ?? '';
@@ -79,6 +95,10 @@ export class CalificarExamenComponent implements OnInit {
     void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'examenes' } });
   }
 
+  setFilter(chip: ExamFilter) {
+    this.filterChip.set(chip);
+  }
+
   periodInput(studentId: string): string {
     const drafts = this.draftScores();
     if (Object.prototype.hasOwnProperty.call(drafts, studentId)) return drafts[studentId];
@@ -89,6 +109,46 @@ export class CalificarExamenComponent implements OnInit {
   setDraftScore(studentId: string, value: string | number) {
     this.draftScores.update(d => ({ ...d, [studentId]: String(value ?? '') }));
     this.success.set('');
+  }
+
+  isInvalid(studentId: string): boolean {
+    const exam = this.exam();
+    const raw = this.draftScores()[studentId];
+    if (raw == null || !String(raw).trim() || !exam) return false;
+    return this.parseScore(raw, exam.maxScore) == null;
+  }
+
+  isGraded(studentId: string): boolean {
+    return this.scoreOf(studentId) != null;
+  }
+
+  studentInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '·';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  formatExamDate(iso?: string | null): string {
+    if (!iso) return 'Sin fecha';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('es-PE', { dateStyle: 'long', timeStyle: 'short' });
+  }
+
+  onScoreKeydown(event: KeyboardEvent, studentId: string) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    const rows = this.filteredStudents();
+    const idx = rows.findIndex(s => s.id === studentId);
+    const next = rows[idx + 1];
+    if (!next) {
+      this.saveScores();
+      return;
+    }
+    const el = document.querySelector<HTMLInputElement>(`input[data-exam-cell="${next.id}"]`);
+    el?.focus();
+    el?.select();
   }
 
   saveScores() {

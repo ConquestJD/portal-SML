@@ -1,18 +1,27 @@
-<div class="prof-page compose">
+<div class="prof-page exam">
 
-  <header class="compose__mast">
-    <button type="button" class="compose__back" (click)="cancel()">← Exámenes del curso</button>
+  <header class="exam-mast">
+    <button type="button" class="exam-mast__back" (click)="cancel()">← Exámenes del curso</button>
     @if (courseLabel()) {
-      <p class="compose__kicker">{{ courseLabel() }}</p>
+      <p class="exam-mast__kicker">{{ courseLabel() }}</p>
     }
-    <h1 class="compose__title">{{ exam()?.title || 'Calificar examen' }}</h1>
+    <h1 class="exam-mast__title">{{ exam()?.title || 'Examen' }}</h1>
+    @if (exam(); as current) {
+      <ul class="exam-mast__facts">
+        <li>{{ formatExamDate(current.examDate) }}</li>
+        @if (current.period?.name) {
+          <li>{{ current.period?.name }}</li>
+        }
+        <li>Sobre {{ current.maxScore }}</li>
+      </ul>
+    }
   </header>
 
   <div class="prof-page__body">
 
     @if (loading()) {
       <p class="feed__empty">Cargando examen…</p>
-    } @else {
+    } @else if (exam(); as current) {
 
       @if (error()) {
         <div class="prof-alert" role="alert">{{ error() }}</div>
@@ -21,73 +30,117 @@
         <div class="prof-alert prof-alert--ok" role="status">{{ success() }}</div>
       }
 
-      @if (exam(); as current) {
-        <section class="metrics metrics--3" aria-label="Resumen del examen">
-          <div class="metric">
-            <span class="metric__n">{{ filledCount() }}/{{ students().length }}</span>
-            <span class="metric__l">Calificados</span>
+      <div class="exam-layout">
+        <div class="exam-main">
+          <div class="toolbar">
+            <label class="search">
+              <span class="visually-hidden">Buscar alumno</span>
+              <input
+                type="search"
+                placeholder="Buscar alumno…"
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event)"
+              />
+            </label>
           </div>
-          <div class="metric">
-            <span class="metric__n">{{ average() ?? '—' }}</span>
-            <span class="metric__l">Promedio</span>
-          </div>
-          <div class="metric">
-            <span class="metric__n">{{ current.maxScore }}</span>
-            <span class="metric__l">Nota máxima</span>
-          </div>
-        </section>
 
-        @if (students().length === 0) {
-          <p class="feed__empty">Sin alumnos para calificar en este curso.</p>
-        } @else {
-          <section class="sheet">
-            <table class="sheet__table">
-              <thead>
-                <tr>
-                  <th>Alumno</th>
-                  <th class="sheet__center">Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (student of students(); track student.id) {
-                  <tr>
-                    <td>
-                      <span class="sheet__name">{{ student.name }}</span>
-                      @if (student.code) {
-                        <span class="sheet__code">{{ student.code }}</span>
-                      }
-                    </td>
-                    <td class="sheet__center">
-                      <input
-                        class="sheet__input"
-                        type="number"
-                        min="0"
-                        [max]="current.maxScore"
-                        step="0.5"
-                        [ngModel]="periodInput(student.id)"
-                        (ngModelChange)="setDraftScore(student.id, $event)"
-                        [attr.aria-label]="'Nota de ' + student.name"
-                      />
-                    </td>
-                  </tr>
+          <nav class="prof-tabs prof-tabs--inline" aria-label="Filtro de alumnos">
+            <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'all'" (click)="setFilter('all')">Todos</button>
+            <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'pending'" (click)="setFilter('pending')">Pendientes</button>
+            <button type="button" class="prof-tabs__btn" [class.active]="filterChip() === 'graded'" (click)="setFilter('graded')">Calificados</button>
+          </nav>
+
+          @if (students().length === 0) {
+            <p class="feed__empty">Sin alumnos para calificar en este curso.</p>
+          } @else if (filteredStudents().length === 0) {
+            <p class="feed__empty">Ningún alumno coincide con ese filtro.</p>
+          } @else {
+            <section class="acta" aria-label="Notas del examen">
+              <header class="acta__head">
+                <span>Alumno</span>
+                <span>Estado</span>
+                <span>Nota</span>
+              </header>
+              <ul class="acta__list">
+                @for (student of filteredStudents(); track student.id) {
+                  <li class="acta__row" [class.is-done]="isGraded(student.id)">
+                    <div class="acta__person">
+                      <span class="acta__mark">{{ studentInitials(student.name) }}</span>
+                      <span class="acta__text">
+                        <span class="acta__name">{{ student.name }}</span>
+                        @if (student.code) {
+                          <span class="acta__code">{{ student.code }}</span>
+                        }
+                      </span>
+                    </div>
+                    <span class="acta__status" [class.is-on]="isGraded(student.id)">
+                      {{ isGraded(student.id) ? 'Calificado' : 'Pendiente' }}
+                    </span>
+                    <input
+                      class="acta__score"
+                      [class.is-bad]="isInvalid(student.id)"
+                      type="number"
+                      min="0"
+                      [max]="current.maxScore"
+                      step="0.5"
+                      inputmode="decimal"
+                      [attr.data-exam-cell]="student.id"
+                      [ngModel]="periodInput(student.id)"
+                      (ngModelChange)="setDraftScore(student.id, $event)"
+                      (keydown)="onScoreKeydown($event, student.id)"
+                      [attr.aria-label]="'Nota de ' + student.name"
+                    />
+                  </li>
                 }
-              </tbody>
-            </table>
+              </ul>
+            </section>
+          }
+        </div>
+
+        <aside class="exam-aside">
+          <section class="exam-brief">
+            <h2>Indicaciones</h2>
+            @if (current.description?.trim()) {
+              <p>{{ current.description }}</p>
+            } @else {
+              <p class="exam-brief__empty">Sin indicaciones para este examen.</p>
+            }
           </section>
 
-          <div class="sheet__bar">
-            <p class="sheet__hint">Escala de 0 a {{ current.maxScore }}. Deja en blanco a quien aún no rinde.</p>
-            <button
-              type="button"
-              class="prof-btn prof-btn--solid"
-              [disabled]="saving() || !dirty()"
-              (click)="saveScores()"
-            >
-              {{ saving() ? 'Guardando…' : 'Guardar notas' }}
-            </button>
-          </div>
-        }
-      }
+          <section class="exam-stats" aria-label="Resumen">
+            <div>
+              <span class="exam-stats__n">{{ filledCount() }}/{{ students().length }}</span>
+              <span class="exam-stats__l">Calificados</span>
+            </div>
+            <div [class.is-alert]="pendingCount() > 0">
+              <span class="exam-stats__n">{{ pendingCount() }}</span>
+              <span class="exam-stats__l">Pendientes</span>
+            </div>
+            <div>
+              <span class="exam-stats__n">{{ average() ?? '—' }}</span>
+              <span class="exam-stats__l">Promedio</span>
+            </div>
+          </section>
+
+          <p class="exam-aside__hint">Escala de 0 a {{ current.maxScore }}. Enter baja al siguiente. Deja en blanco a quien aún no rinde.</p>
+
+          <button
+            type="button"
+            class="prof-btn prof-btn--solid exam-aside__save"
+            [disabled]="saving() || !dirty()"
+            (click)="saveScores()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar notas' }}
+          </button>
+
+          <a
+            [routerLink]="['/profesor/cursos', courseId(), 'examenes', current.id]"
+            class="prof-link"
+          >
+            Editar datos del examen
+          </a>
+        </aside>
+      </div>
     }
   </div>
 </div>

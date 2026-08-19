@@ -242,6 +242,13 @@ button.pulse__item:hover { background: #ffe8eb; }
   color: var(--ink);
 }
 
+.task-item__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.task-item__title a:hover { color: var(--crimson); }
+
 .task-item__meta {
   margin: 0;
   font-size: .78rem;

@@ -337,7 +337,9 @@
                   <article class="task-item">
                     <div class="task-item__main">
                       <div class="task-item__head">
-                        <h2 class="task-item__title">{{ exam.title }}</h2>
+                        <h2 class="task-item__title">
+                          <a [routerLink]="['/profesor/cursos', courseId(), 'examenes', exam.id, 'calificar']">{{ exam.title }}</a>
+                        </h2>
                         @if (exam.period?.name) {
                           <span class="task-item__badge">{{ exam.period?.name }}</span>
                         }
