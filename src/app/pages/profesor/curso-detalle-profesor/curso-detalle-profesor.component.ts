@@ -191,7 +191,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
           id: `_ph-${i}`,
           title,
           kind: 'placeholder' as const,
-          files: [],
+          files: [] as MaterialBinFile[],
         }));
     bins.push({
       id: '_loose',
