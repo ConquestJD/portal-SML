@@ -291,4 +291,163 @@
   .shelf {
     gap: .45rem;
   }
+
+  .brief-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .brief-card__mark,
+  .brief-card__cta {
+    grid-column: 2;
+  }
+}
+
+/* ── Mesa de tareas ────────────────────────────────── */
+.brief .toolbar {
+  margin-bottom: 1rem;
+}
+
+.brief__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+
+.brief-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: .9rem 1.1rem;
+  padding: .95rem 1.1rem;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  border-left: 3px solid var(--navy);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+
+.brief-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0 51 102 / .08);
+}
+
+.brief-card:hover .brief-card__title {
+  color: var(--crimson);
+}
+
+.brief-card[data-kind='vencida'] {
+  border-left-color: var(--crimson);
+  background: #fff8f8;
+}
+
+.brief-card[data-kind='entregada'] {
+  border-left-color: #2d6a4f;
+}
+
+.brief-card[data-kind='calificada'] {
+  border-left-color: #1a5a8a;
+}
+
+.brief-card__when {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.1rem;
+  padding: .35rem .4rem .4rem;
+  background: #eef1f5;
+  color: var(--navy);
+}
+
+.brief-card[data-kind='vencida'] .brief-card__when {
+  background: #fff5f6;
+  color: var(--crimson);
+}
+
+.brief-card__day {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: .95;
+}
+
+.brief-card__month {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.brief-card__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .18rem;
+}
+
+.brief-card__kicker {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brief-card__title {
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--navy);
+  transition: color .15s var(--ease);
+}
+
+.brief-card__meta {
+  font-size: .8rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+  text-transform: capitalize;
+}
+
+.brief-card__mark {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  background: #eef4fa;
+  padding: .28rem .55rem;
+}
+
+.brief-card[data-kind='vencida'] .brief-card__mark {
+  background: #fff5f6;
+  color: var(--crimson);
+}
+
+.brief-card[data-kind='entregada'] .brief-card__mark,
+.brief-card[data-kind='calificada'] .brief-card__mark {
+  background: #f0faf4;
+  color: #1a6b4a;
+}
+
+.brief-card[data-kind='calificada'] .brief-card__mark {
+  background: #eef4fa;
+  color: var(--navy);
+}
+
+.brief-card__cta {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--navy);
+  border-bottom: 1px solid transparent;
+}
+
+.brief-card:hover .brief-card__cta {
+  color: var(--crimson);
+  border-bottom-color: var(--crimson);
 }

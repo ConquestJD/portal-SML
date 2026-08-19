@@ -194,55 +194,73 @@
       }
 
       @if (activeTab() === 'tareas') {
-        <div class="toolbar">
-          <nav class="prof-tabs prof-tabs--inline" aria-label="Filtro de tareas">
-            <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'all'" (click)="taskFilter.set('all')">Todas</button>
-            <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'pending'" (click)="taskFilter.set('pending')">Pendientes</button>
-          </nav>
-        </div>
+        <section class="brief">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Mesa</p>
+              <h2 class="mod-head__title">Tareas del curso</h2>
+              <p class="mod-head__meta">
+                {{ tasks().length }} {{ tasks().length === 1 ? 'tarea' : 'tareas' }}
+                @if (pendingTasksCount() > 0) {
+                  · {{ pendingTasksCount() }} por entregar
+                }
+              </p>
+            </div>
+          </header>
 
-        @if (filteredTasks().length === 0) {
-          <section class="feed">
-            @if (tasks().length === 0) {
-              <p class="feed__empty">Aún no hay tareas en este curso.</p>
-            } @else {
-              <p class="feed__empty">No hay tareas pendientes.</p>
-            }
-          </section>
-        } @else {
-          <section class="feed" aria-label="Tareas del curso">
-            <ul class="feed__list">
+          @if (overdueTasksCount() > 0 && taskFilter() !== 'done') {
+            <section class="pulse" aria-label="Vencidas">
+              <button type="button" class="pulse__item" (click)="taskFilter.set('pending')">
+                <span class="pulse__n">{{ overdueTasksCount() }}</span>
+                <span class="pulse__l">{{ overdueTasksCount() === 1 ? 'Tarea vencida' : 'Tareas vencidas' }}</span>
+              </button>
+            </section>
+          }
+
+          <div class="toolbar">
+            <nav class="prof-tabs prof-tabs--inline" aria-label="Filtro de tareas">
+              <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'all'" (click)="taskFilter.set('all')">Todas</button>
+              <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'pending'" (click)="taskFilter.set('pending')">Por entregar</button>
+              <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'done'" (click)="taskFilter.set('done')">Entregadas</button>
+            </nav>
+          </div>
+
+          @if (filteredTasks().length === 0) {
+            <section class="feed">
+              @if (tasks().length === 0) {
+                <p class="feed__empty">Aún no hay tareas en este curso.</p>
+              } @else {
+                <p class="feed__empty">No hay tareas en este filtro.</p>
+              }
+            </section>
+          } @else {
+            <ul class="brief__list">
               @for (task of filteredTasks(); track task.id) {
                 <li>
-                  <article class="task-item">
-                    <div class="task-item__main">
-                      <div class="task-item__head">
-                        <h2 class="task-item__title">
-                          <a [routerLink]="['/tareas', task.id]">{{ task.title }}</a>
-                        </h2>
-                        <span class="task-item__badge" [class.task-item__badge--closed]="taskIsDone(task)">
-                          {{ taskStatusLabel(task) }}
-                        </span>
-                      </div>
-                      <p class="task-item__meta">
-                        {{ formatDueDate(task.dueDate) }}
-                        · Nota máxima {{ task.maxScore }}
+                  <a [routerLink]="['/tareas', task.id]" class="brief-card" [attr.data-kind]="taskKind(task)">
+                    <time class="brief-card__when" [attr.datetime]="task.dueDate || null">
+                      <span class="brief-card__day">{{ dueDay(task.dueDate) }}</span>
+                      <span class="brief-card__month">{{ dueMonth(task.dueDate) }}</span>
+                    </time>
+                    <span class="brief-card__body">
+                      <span class="brief-card__kicker">
+                        {{ deliveryLabel(task) }}
+                        · Máx. {{ task.maxScore }}
                         @if (task.submission?.score != null) {
                           · Nota {{ task.submission?.score }}
                         }
-                      </p>
-                    </div>
-                    <div class="feed-row__actions">
-                      <a [routerLink]="['/tareas', task.id]" class="prof-link">
-                        {{ taskIsDone(task) ? 'Ver entrega' : 'Entregar' }}
-                      </a>
-                    </div>
-                  </article>
+                      </span>
+                      <span class="brief-card__title">{{ task.title }}</span>
+                      <span class="brief-card__meta">{{ formatDueDate(task.dueDate) }}</span>
+                    </span>
+                    <span class="brief-card__mark">{{ taskStatusLabel(task) }}</span>
+                    <span class="brief-card__cta">{{ taskCta(task) }}</span>
+                  </a>
                 </li>
               }
             </ul>
-          </section>
-        }
+          }
+        </section>
       }
 
       @if (activeTab() === 'notas') {

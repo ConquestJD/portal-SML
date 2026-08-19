@@ -18,7 +18,8 @@ import { isMaterialFolder, materialFolderTitle } from '../../services/teacher.se
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course-cover';
 
 type TabType = 'material' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
-type TaskFilter = 'all' | 'pending';
+type TaskFilter = 'all' | 'pending' | 'done';
+type TaskKind = 'pendiente' | 'vencida' | 'entregada' | 'calificada';
 
 interface MaterialBinFile {
   id: string;
@@ -168,10 +169,18 @@ export class CursoDetalleComponent implements OnInit {
   });
 
   filteredTasks = computed(() => {
-    const list = this.tasks();
-    if (this.taskFilter() === 'pending') return list.filter(t => !this.taskIsDone(t));
-    return list;
+    const f = this.taskFilter();
+    const list = this.tasks().filter(t => {
+      if (f === 'pending') return !this.taskIsDone(t);
+      if (f === 'done') return this.taskIsDone(t);
+      return true;
+    });
+    return [...list].sort((a, b) => this.taskSortRank(a) - this.taskSortRank(b));
   });
+
+  overdueTasksCount = computed(() =>
+    this.tasks().filter(t => this.taskKind(t) === 'vencida').length,
+  );
 
   scheduleCount = computed(() => this.course()?.course?.schedule?.length ?? 0);
 
@@ -506,23 +515,79 @@ export class CursoDetalleComponent implements OnInit {
     return mime.split('/')[1]?.toUpperCase() || 'Archivo';
   }
 
-  taskStatusLabel(task: StudentTask): string {
+  taskKind(task: StudentTask): TaskKind {
     const st = (task.submission?.status ?? task.status ?? '').toUpperCase();
-    if (st === 'GRADED') return 'Calificada';
-    if (st === 'SUBMITTED' || st === 'APPROVED') return 'Entregada';
+    if (st === 'GRADED' || (task.submission?.score != null && Number.isFinite(Number(task.submission.score)))) {
+      return 'calificada';
+    }
+    if (st === 'SUBMITTED' || st === 'APPROVED' || st === 'LATE') return 'entregada';
+    if (this.taskIsOverdue(task)) return 'vencida';
+    return 'pendiente';
+  }
+
+  taskStatusLabel(task: StudentTask): string {
+    const kind = this.taskKind(task);
+    if (kind === 'calificada') return 'Calificada';
+    if (kind === 'entregada') return 'Entregada';
+    if (kind === 'vencida') return 'Vencida';
     return 'Pendiente';
   }
 
   taskIsDone(task: StudentTask): boolean {
-    const st = (task.submission?.status ?? task.status ?? '').toUpperCase();
-    return st === 'SUBMITTED' || st === 'GRADED' || st === 'APPROVED';
+    const kind = this.taskKind(task);
+    return kind === 'entregada' || kind === 'calificada';
+  }
+
+  taskIsOverdue(task: StudentTask): boolean {
+    if (!task.dueDate) return false;
+    const t = new Date(task.dueDate).getTime();
+    return Number.isFinite(t) && t < Date.now();
+  }
+
+  taskCta(task: StudentTask): string {
+    const kind = this.taskKind(task);
+    if (kind === 'calificada') return 'Ver nota';
+    if (kind === 'entregada') return 'Ver entrega';
+    return 'Entregar';
+  }
+
+  deliveryLabel(task: StudentTask): string {
+    const d = (task.deliveryType ?? '').toLowerCase();
+    if (d === 'texto') return 'Texto';
+    if (d === 'ambos') return 'Archivo o texto';
+    if (d === 'clase') return 'En clase';
+    return 'Archivo';
+  }
+
+  dueDay(raw?: string): string {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '—';
+    return String(d.getDate());
+  }
+
+  dueMonth(raw?: string): string {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
   }
 
   formatDueDate(raw?: string): string {
     if (!raw) return 'Sin fecha de entrega';
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return raw;
-    return `Entrega ${d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}`;
+    return d.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'long' });
+  }
+
+  private taskSortRank(task: StudentTask): number {
+    const kind = this.taskKind(task);
+    const due = task.dueDate ? new Date(task.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+    const dueSafe = Number.isFinite(due) ? due : Number.MAX_SAFE_INTEGER;
+    if (kind === 'vencida') return dueSafe;
+    if (kind === 'pendiente') return 1e13 + dueSafe;
+    if (kind === 'entregada') return 2e13 + dueSafe;
+    return 3e13 + dueSafe;
   }
 
   formatGradeDate(g: StudentGrade): string {
