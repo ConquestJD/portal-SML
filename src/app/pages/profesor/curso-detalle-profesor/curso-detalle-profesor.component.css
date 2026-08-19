@@ -301,19 +301,9 @@ button.pulse__item:hover { background: #ffe8eb; }
   color: var(--muted);
   font-family: var(--font-display);
   font-style: italic;
+  max-width: 38rem;
+  line-height: 1.45;
 }
-
-.bim-nav { margin: 0 0 1rem; flex-wrap: wrap; }
-
-.bim-nav__now {
-  margin-left: .35rem;
-  font-size: .58rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--crimson);
-}
-
-.gradebook .metrics { margin-bottom: 1rem; }
 
 /* ── Notas: libro ──────────────────────────────────── */
 .gradebook {
@@ -321,17 +311,27 @@ button.pulse__item:hover { background: #ffe8eb; }
   padding: 1.15rem 1.25rem 1.25rem;
 }
 
+.gradebook .toolbar { margin-bottom: .85rem; }
+
+.gradebook__summary {
+  margin-left: auto;
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
 .gradebook__wrap { overflow-x: auto; }
 
 .gradebook__table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 32rem;
+  min-width: 36rem;
 }
 
 .gradebook__table th,
 .gradebook__table td {
-  padding: .7rem .85rem;
+  padding: .55rem .6rem;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
@@ -352,11 +352,53 @@ button.pulse__item:hover { background: #ffe8eb; }
   left: 0;
   background: var(--surface);
   z-index: 1;
+  min-width: 11rem;
 }
 
 .gradebook__table th:first-child { background: #f7f8fa; }
 
+.gradebook__table tbody tr:hover td { background: #f7f9fc; }
+.gradebook__table tbody tr:hover td:first-child { background: #f7f9fc; }
+
 .gradebook__center { text-align: center; }
+
+.gradebook__table th.is-now,
+.gradebook__table td.is-now {
+  background: #eef4fa;
+}
+
+.gradebook__table th.is-now { color: var(--navy); }
+
+.gradebook__table tbody tr:hover td.is-now { background: #e4eef7; }
+
+.gradebook__period {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.gradebook__period-name {
+  display: block;
+  margin-top: .15rem;
+  font-size: .58rem;
+  letter-spacing: .1em;
+  font-weight: 700;
+}
+
+.gradebook__fill {
+  display: block;
+  margin-top: .2rem;
+  font-size: .62rem;
+  letter-spacing: .04em;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--muted);
+}
 
 .gradebook__name { display: block; font-weight: 600; color: var(--ink); }
 
@@ -371,30 +413,36 @@ button.pulse__item:hover { background: #ffe8eb; }
 
 .gradebook__avg {
   font-family: var(--font-display);
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--navy);
 }
 
-.gradebook__muted { font-weight: 600; color: var(--muted); }
-
-.gradebook__past {
-  font-family: var(--font-display);
-  color: var(--muted);
-}
-
 .gradebook__input {
-  width: 4.6rem;
+  width: 3.4rem;
   border: none;
-  border-bottom: 2px solid var(--navy);
+  border-bottom: 1px solid var(--line);
   background: transparent;
   text-align: center;
   font: inherit;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: var(--navy);
+  color: var(--ink);
   outline: none;
+  padding: .15rem 0;
+  -moz-appearance: textfield;
 }
+
+.gradebook__input::-webkit-outer-spin-button,
+.gradebook__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.gradebook__input:focus { border-bottom-color: var(--navy); color: var(--navy); }
+
+.gradebook__input.is-bad { border-bottom-color: var(--crimson); color: var(--crimson); }
 
 .gradebook__bar {
   display: flex;
@@ -403,6 +451,8 @@ button.pulse__item:hover { background: #ffe8eb; }
   justify-content: space-between;
   gap: .75rem 1.25rem;
   margin-top: 1rem;
+  padding-top: .85rem;
+  border-top: 1px solid var(--line);
 }
 
 .gradebook__hint {

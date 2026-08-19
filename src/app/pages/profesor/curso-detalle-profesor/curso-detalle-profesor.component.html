@@ -198,10 +198,13 @@
           <header class="mod-head">
             <div>
               <p class="mod-head__kicker">Libro de notas</p>
-              <h2 class="mod-head__title">{{ selectedPeriod()?.name || 'Bimestres' }}</h2>
-              @if (formatPeriodRange(selectedPeriod()); as range) {
-                <p class="mod-head__meta">{{ range }}</p>
-              }
+              <h2 class="mod-head__title">Calificaciones del año</h2>
+              <p class="mod-head__meta">
+                Una fila por alumno, una columna por bimestre. El promedio se calcula solo.
+                @if (currentPeriod(); as current) {
+                  El bimestre en curso es {{ current.name }}.
+                }
+              </p>
             </div>
             @if (periods().length && students().length) {
               <button type="button" class="prof-link" (click)="exportGradebookCsv()">Exportar CSV</button>
@@ -222,89 +225,87 @@
           } @else if (periods().length === 0) {
             <p class="feed__empty">Este año lectivo aún no tiene bimestres. Cuando administración los cree podrás registrar las notas aquí.</p>
           } @else {
-            <nav class="prof-tabs prof-tabs--inline bim-nav" aria-label="Bimestres">
-              @for (period of periods(); track period.id) {
-                <button
-                  type="button"
-                  class="prof-tabs__btn"
-                  [class.active]="selectedPeriodId() === period.id"
-                  (click)="selectPeriod(period.id)"
-                >
-                  {{ period.name }}
-                  @if (isCurrentPeriod(period)) {
-                    <span class="bim-nav__now">Actual</span>
-                  }
-                </button>
-              }
-            </nav>
-
-            <section class="metrics metrics--3" aria-label="Resumen del bimestre">
-              <div class="metric">
-                <span class="metric__n">{{ periodStats().filled }}/{{ periodStats().total }}</span>
-                <span class="metric__l">Notas cargadas</span>
-              </div>
-              <div class="metric">
-                <span class="metric__n">{{ periodStats().average ?? '—' }}</span>
-                <span class="metric__l">Promedio del bimestre</span>
-              </div>
-              <div class="metric">
-                <span class="metric__n">{{ withAnnualAverage() }}</span>
-                <span class="metric__l">Con promedio anual</span>
-              </div>
-            </section>
-
-            <div class="gradebook__wrap">
-              <table class="gradebook__table">
-                <thead>
-                  <tr>
-                    <th>Alumno</th>
-                    <th class="gradebook__center">Nota {{ selectedPeriod()?.name }}</th>
-                    @for (period of otherPeriods(); track period.id) {
-                      <th class="gradebook__center gradebook__muted">{{ period.name }}</th>
-                    }
-                    <th class="gradebook__center">Promedio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of gradebookRows(); track row.student.id) {
-                    <tr>
-                      <td>
-                        <span class="gradebook__name">{{ row.student.name }}</span>
-                        @if (row.student.code) {
-                          <span class="gradebook__code">{{ row.student.code }}</span>
-                        }
-                      </td>
-                      <td class="gradebook__center">
-                        <input
-                          class="gradebook__input"
-                          type="number"
-                          min="0"
-                          max="20"
-                          step="0.5"
-                          [ngModel]="periodInput(row.student.id)"
-                          (ngModelChange)="setDraftScore(row.student.id, $event)"
-                          [attr.aria-label]="'Nota de ' + row.student.name"
-                        />
-                      </td>
-                      @for (period of otherPeriods(); track period.id) {
-                        <td class="gradebook__center gradebook__past">{{ cellScore(row.student.id, period.id) ?? '—' }}</td>
-                      }
-                      <td class="gradebook__center gradebook__avg">{{ row.average ?? '—' }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
+            <div class="toolbar">
+              <label class="search">
+                <span class="visually-hidden">Buscar alumno</span>
+                <input
+                  type="search"
+                  placeholder="Buscar alumno…"
+                  [ngModel]="gradeQuery()"
+                  (ngModelChange)="gradeQuery.set($event)"
+                />
+              </label>
+              <span class="gradebook__summary">
+                {{ students().length }} {{ students().length === 1 ? 'alumno' : 'alumnos' }}
+                · Promedio del curso {{ classAverage() ?? '—' }}
+              </span>
             </div>
 
+            @if (gradebookRows().length === 0) {
+              <p class="feed__empty">Ningún alumno coincide con esa búsqueda.</p>
+            } @else {
+              <div class="gradebook__wrap">
+                <table class="gradebook__table">
+                  <thead>
+                    <tr>
+                      <th>Alumno</th>
+                      @for (period of periods(); track period.id) {
+                        <th
+                          class="gradebook__center"
+                          [class.is-now]="isCurrentPeriod(period)"
+                        >
+                          <span class="gradebook__period">{{ shortPeriodName(period) }}</span>
+                          <span class="gradebook__period-name">Bimestre</span>
+                          <span class="gradebook__fill">{{ periodFilled(period.id) }}/{{ students().length }}</span>
+                        </th>
+                      }
+                      <th class="gradebook__center">Promedio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of gradebookRows(); track row.student.id) {
+                      <tr>
+                        <td>
+                          <span class="gradebook__name">{{ row.student.name }}</span>
+                          @if (row.student.code) {
+                            <span class="gradebook__code">{{ row.student.code }}</span>
+                          }
+                        </td>
+                        @for (period of periods(); track period.id) {
+                          <td class="gradebook__center" [class.is-now]="isCurrentPeriod(period)">
+                            <input
+                              class="gradebook__input"
+                              [class.is-bad]="isInvalidCell(row.student.id, period.id)"
+                              type="number"
+                              min="0"
+                              max="20"
+                              step="0.5"
+                              inputmode="decimal"
+                              [attr.data-grade-cell]="cellKey(row.student.id, period.id)"
+                              [ngModel]="cellInput(row.student.id, period.id)"
+                              (ngModelChange)="setCellScore(row.student.id, period.id, $event)"
+                              (keydown)="onScoreKeydown($event, row.student.id, period.id)"
+                              [attr.aria-label]="row.student.name + ', ' + period.name"
+                            />
+                          </td>
+                        }
+                        <td class="gradebook__center gradebook__avg">{{ row.average ?? '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
             <div class="gradebook__bar">
-              <p class="gradebook__hint">Escala vigesimal (0 a 20). Elige el bimestre, completa las notas y guarda.</p>
+              <p class="gradebook__hint">Escala de 0 a 20. Enter baja al siguiente alumno. Tab cambia de bimestre.</p>
               <button
                 type="button"
                 class="prof-btn prof-btn--solid prof-btn--sm"
                 [disabled]="gradeSaving() || !gradebookDirty()"
-                (click)="savePeriodGrades()"
+                (click)="saveGradebook()"
               >
-                {{ gradeSaving() ? 'Guardando…' : 'Guardar notas del bimestre' }}
+                {{ gradeSaving() ? 'Guardando…' : 'Guardar notas' }}
               </button>
             </div>
           }
