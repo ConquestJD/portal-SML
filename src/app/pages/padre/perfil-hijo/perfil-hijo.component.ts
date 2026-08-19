@@ -231,8 +231,4 @@ export class PerfilHijoComponent implements OnInit {
     if (avg == null || Number.isNaN(avg)) return 0;
     return Math.min(100, Math.max(0, (avg / 20) * 100));
   }
-
-  courseInitial(name: string): string {
-    return (name?.trim().charAt(0) ?? '?').toUpperCase();
-  }
 }

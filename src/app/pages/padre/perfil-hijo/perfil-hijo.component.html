@@ -270,23 +270,28 @@
                 <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}" class="padre-link">Ver cursos</a>
               </p>
             } @else {
-              <ul class="course-rows">
-                @for (course of profile.courses; track course.id) {
-                  <li>
-                    <a
-                      [routerLink]="['/padre/cursos', course.id]"
-                      [queryParams]="{childId: selectedChildId()}"
-                      class="course-row"
-                    >
-                      <span class="course-row__mark">{{ courseInitial(course.name) }}</span>
-                      <span class="course-row__body">
-                        <span class="course-row__name">{{ course.name }}</span>
-                        <span class="course-row__meta">{{ course.teacher }}</span>
-                      </span>
-                    </a>
-                  </li>
-                }
-              </ul>
+              <table class="roster">
+                <thead>
+                  <tr>
+                    <th>Curso</th>
+                    <th>Docente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (course of profile.courses; track course.id) {
+                    <tr>
+                      <td>
+                        <a
+                          [routerLink]="['/padre/cursos', course.id]"
+                          [queryParams]="{childId: selectedChildId()}"
+                          class="roster__link"
+                        >{{ course.name }}</a>
+                      </td>
+                      <td>{{ course.teacher }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             }
           </section>
         }

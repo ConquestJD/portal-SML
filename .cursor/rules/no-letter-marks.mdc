@@ -1,0 +1,12 @@
+---
+description: No usar recuadros con una letra o sílaba como avatar de lista
+alwaysApply: true
+---
+
+# Sin recuadros de inicial
+
+No uses un recuadro de color (azul u otro) con una letra, sílaba o inicial dentro como marca visual de cursos, filas, tarjetas o listados. Se ve amateur.
+
+En su lugar: tipografía, tablas (curso / docente), fotos reales, o solo texto con jerarquía (nombre + meta).
+
+No reintroduzcas variantes como `course-row__mark`, `course-card__cover--mark`, `feed-row__mark` con una inicial, ni `courseInitial()` para pintar esa caja.
