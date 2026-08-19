@@ -10,7 +10,10 @@ type TabType = 'informacion' | 'materiales' | 'tareas';
 export interface ParentCourseDetailVm {
   name: string;
   code: string;
+  description: string;
+  gradeLine: string;
   academicYear: string;
+  hours: number | null;
   average: string;
   teacher: string;
   teacherEmail: string;
@@ -45,6 +48,9 @@ export class CursoDetallePadreComponent implements OnInit {
   childId = '';
   courseId = '';
   activeTab = signal<TabType>('informacion');
+
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
 
   courseVm = signal<ParentCourseDetailVm | null>(null);
   units = signal<Record<string, unknown>[]>([]);
@@ -186,12 +192,8 @@ export class CursoDetallePadreComponent implements OnInit {
     });
   }
 
-  teacherInitial(c: ParentCourseDetailVm): string {
-    return (c.teacher?.charAt(0) ?? '?').toUpperCase();
-  }
-
-  scheduleDayMark(day: string): string {
-    return (day?.charAt(0) ?? 'H').toUpperCase();
+  dayHasClass(c: ParentCourseDetailVm, day: string): boolean {
+    return c.schedule.some((s) => this.normalizeDay(s.day) === day);
   }
 
   padUnitNumber(n: unknown): string {
@@ -229,8 +231,6 @@ export class CursoDetallePadreComponent implements OnInit {
     const course = (a['course'] as Record<string, unknown>) ?? {};
     const teacher = (a['teacher'] as Record<string, unknown>) ?? {};
     const user = (teacher['user'] as Record<string, unknown>) ?? {};
-    const academicYear = (a['academicYear'] as Record<string, unknown>) ?? {};
-
     const fn = (user['firstName'] as string) ?? '';
     const ln = (user['lastName'] as string) ?? '';
     const teacherName = `${fn} ${ln}`.trim() || '—';
@@ -242,6 +242,16 @@ export class CursoDetallePadreComponent implements OnInit {
       avg = String(a['average']);
     }
 
+    const academicYearObj =
+      (a['academicYear'] as Record<string, unknown> | undefined) ??
+      ((a['section'] as Record<string, unknown> | undefined)?.['academicYear'] as Record<string, unknown> | undefined) ??
+      {};
+    const section = (a['section'] as Record<string, unknown> | undefined) ?? {};
+    const grade = String(course['grade'] ?? section['grade'] ?? '').trim();
+    const level = String(course['level'] ?? section['level'] ?? '').trim();
+    const hours = typeof course['hours'] === 'number' ? course['hours'] : null;
+    const description = String(course['description'] ?? '').trim();
+
     const scheduleRows = this.scheduleRowsFromField(
       course['schedule'] ?? a['schedule'],
     );
@@ -249,7 +259,10 @@ export class CursoDetallePadreComponent implements OnInit {
     return {
       name: (course['name'] as string) ?? '—',
       code: (course['code'] as string) ?? '—',
-      academicYear: (academicYear['name'] as string) ?? '—',
+      description,
+      gradeLine: [grade, level].filter(Boolean).join(' · '),
+      academicYear: String(academicYearObj['name'] ?? '—'),
+      hours,
       average: avg,
       teacher: teacherName,
       teacherEmail: (user['email'] as string) ?? '',
@@ -257,6 +270,31 @@ export class CursoDetallePadreComponent implements OnInit {
       teacherAvatar: (user['avatarUrl'] as string) ?? null,
       schedule: scheduleRows.length ? scheduleRows : [],
     };
+  }
+
+  private normalizeDay(raw: string): string {
+    const key = raw.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const map: Record<string, string> = {
+      lunes: 'Lunes',
+      lun: 'Lunes',
+      monday: 'Lunes',
+      martes: 'Martes',
+      mar: 'Martes',
+      tuesday: 'Martes',
+      miercoles: 'Miércoles',
+      mie: 'Miércoles',
+      wednesday: 'Miércoles',
+      jueves: 'Jueves',
+      jue: 'Jueves',
+      thursday: 'Jueves',
+      viernes: 'Viernes',
+      vie: 'Viernes',
+      friday: 'Viernes',
+      sabado: 'Sábado',
+      sab: 'Sábado',
+      saturday: 'Sábado',
+    };
+    return map[key] ?? raw.trim();
   }
 
   /** Construye filas día + horas a partir del JSON de horario del curso. */
@@ -299,7 +337,7 @@ export class CursoDetallePadreComponent implements OnInit {
           if (timeRange === '—') {
             timeRange = this.formatTimeRange(x['time'], null);
           }
-          return { day: dayStr, time: timeRange };
+          return { day: this.normalizeDay(dayStr), time: timeRange };
         })
         .filter((r) => r.day !== '—' || r.time !== '—');
     }

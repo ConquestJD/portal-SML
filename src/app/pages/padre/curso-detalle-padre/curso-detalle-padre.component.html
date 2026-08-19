@@ -50,21 +50,27 @@
     <div class="padre-page__body">
 
       <p class="body-nav">
-        <a routerLink="/padre/cursos" class="padre-link">← Cursos</a>
+        <a [routerLink]="['/padre/cursos']" [queryParams]="{ childId: childId }" class="padre-link">← Cursos</a>
         <span class="body-nav__sep">/</span>
         <span class="body-nav__current">{{ c.code }}</span>
       </p>
 
-      <p class="page-context">Año académico {{ c.academicYear }} · Prof. {{ c.teacher }}</p>
-
-      <section class="metrics metrics--2" aria-label="Resumen del curso">
+      <section class="metrics" aria-label="Resumen del curso">
         <div class="metric">
           <span class="metric__n">{{ c.average }}</span>
           <span class="metric__l">Promedio</span>
         </div>
         <div class="metric">
-          <span class="metric__n">{{ c.schedule.length }}</span>
-          <span class="metric__l">Franjas horarias</span>
+          <span class="metric__n">{{ c.hours ?? '—' }}</span>
+          <span class="metric__l">Horas</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ c.schedule.length || '—' }}</span>
+          <span class="metric__l">Bloques</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n metric__n--sm">{{ c.gradeLine || '—' }}</span>
+          <span class="metric__l">Grado</span>
         </div>
       </section>
 
@@ -75,48 +81,104 @@
       </nav>
 
       @if (activeTab() === 'informacion') {
-        <div class="detail-panels">
-          <section class="feed">
-            <div class="feed__head"><h2>Profesor</h2></div>
-            <div class="teacher-row">
-              @if (c.teacherAvatar) {
-                <img [src]="c.teacherAvatar" [alt]="c.teacher" class="teacher-row__photo" />
-              } @else {
-                <span class="teacher-row__mark">{{ teacherInitial(c) }}</span>
-              }
-              <div class="teacher-row__body">
-                <strong>{{ c.teacher }}</strong>
-                @if (c.teacherEmail) {
-                  <a [href]="'mailto:' + c.teacherEmail" class="contact-link">{{ c.teacherEmail }}</a>
-                }
-                @if (c.teacherPhone) {
-                  <a [href]="'tel:' + c.teacherPhone" class="contact-link">{{ c.teacherPhone }}</a>
-                }
+        <div class="info-split">
+          <section class="sheet">
+            <header class="mod-head">
+              <div>
+                <p class="mod-head__kicker">Ficha</p>
+                <h2 class="mod-head__title">Datos del curso</h2>
               </div>
-              <button type="button" class="padre-btn padre-btn--solid" (click)="sendMessageToTeacher()">Mensaje</button>
-            </div>
-          </section>
+            </header>
+            <dl class="facts">
+              <div>
+                <dt>Curso</dt>
+                <dd>{{ c.name }}</dd>
+              </div>
+              <div>
+                <dt>Código</dt>
+                <dd>{{ c.code }}</dd>
+              </div>
+              @if (c.gradeLine) {
+                <div>
+                  <dt>Grado</dt>
+                  <dd>{{ c.gradeLine }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Año lectivo</dt>
+                <dd>{{ c.academicYear }}</dd>
+              </div>
+              @if (c.hours != null) {
+                <div>
+                  <dt>Horas semanales</dt>
+                  <dd>{{ c.hours }} h</dd>
+                </div>
+              }
+              <div>
+                <dt>Docente</dt>
+                <dd>{{ c.teacher }}</dd>
+              </div>
+            </dl>
+            @if (c.description) {
+              <h3 class="sheet__sub">Descripción</h3>
+              <p class="sheet__note">{{ c.description }}</p>
+            }
 
-          <section class="feed">
-            <div class="feed__head"><h2>Horarios</h2></div>
+            <header class="mod-head mod-head--inner">
+              <div>
+                <p class="mod-head__kicker">Semana</p>
+                <h2 class="mod-head__title">Horario</h2>
+              </div>
+            </header>
             @if (c.schedule.length === 0) {
               <p class="feed__empty">No hay horario registrado para este curso.</p>
             } @else {
-              <ul class="feed__list">
-                @for (scheduleItem of c.schedule; track scheduleItem.day + scheduleItem.time) {
-                  <li>
-                    <div class="feed-row feed-row--static">
-                      <span class="feed-row__mark">{{ scheduleDayMark(scheduleItem.day) }}</span>
-                      <span class="feed-row__body">
-                        <span class="feed-row__title">{{ scheduleItem.day }}</span>
-                        <span class="feed-row__meta">{{ scheduleItem.time }}</span>
-                      </span>
-                    </div>
-                  </li>
+              <div class="day-strip" aria-label="Días de clase">
+                @for (day of weekDays; track day; let i = $index) {
+                  <span
+                    class="day-strip__cell"
+                    [class.is-on]="dayHasClass(c, day)"
+                    [title]="day"
+                  >{{ weekDayShort[i] }}</span>
                 }
-              </ul>
+              </div>
+              <table class="acta">
+                <thead>
+                  <tr>
+                    <th>Día</th>
+                    <th>Hora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (scheduleItem of c.schedule; track scheduleItem.day + scheduleItem.time) {
+                    <tr>
+                      <td>{{ scheduleItem.day }}</td>
+                      <td>{{ scheduleItem.time }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             }
           </section>
+
+          <aside class="side">
+            <section class="side__block">
+              <h2>Docente</h2>
+              @if (c.teacherAvatar) {
+                <img [src]="c.teacherAvatar" [alt]="c.teacher" class="side__photo" />
+              }
+              <p class="side__name">{{ c.teacher }}</p>
+              @if (c.teacherEmail) {
+                <a [href]="'mailto:' + c.teacherEmail" class="side__link">{{ c.teacherEmail }}</a>
+              }
+              @if (c.teacherPhone) {
+                <a [href]="'tel:' + c.teacherPhone" class="side__link">{{ c.teacherPhone }}</a>
+              }
+              <button type="button" class="padre-btn padre-btn--solid side__btn" (click)="sendMessageToTeacher()">
+                Enviar mensaje
+              </button>
+            </section>
+          </aside>
         </div>
       }
 
