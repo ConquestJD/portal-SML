@@ -14,7 +14,7 @@
     </div>
   } @else if (task(); as t) {
 
-    <header class="tdet__hero">
+    <header class="tdet__hero" [attr.data-status]="taskUiStatus()">
       <img class="tdet__hero-photo" src="/images/heroes/tasks.webp" alt="" decoding="async" />
       <div class="tdet__hero-veil"></div>
       <div class="tdet__hero-top">
@@ -22,12 +22,26 @@
         <span class="tdet__badge" [attr.data-status]="taskUiStatus()">{{ taskUiStatusLabel() }}</span>
       </div>
       <div class="tdet__hero-content">
-        <p class="tdet__course">{{ t.course?.name?.trim() || 'Curso' }}</p>
-        <h1 class="tdet__title">{{ t.title }}</h1>
-        <p class="tdet__brand">
-          @if (t.teacherName) { {{ t.teacherName }} · }
-          {{ deliveryHint() }}
-        </p>
+        <div class="tdet__hero-main">
+          <p class="tdet__course">{{ t.course?.name?.trim() || 'Curso' }}</p>
+          <h1 class="tdet__title">{{ t.title }}</h1>
+          <p class="tdet__brand">
+            @if (t.teacherName) { {{ t.teacherName }} · }
+            {{ deliveryTypeLabel() }}
+            @if (t.unit?.title) {
+              ·
+              @if (t.unit?.number != null) {
+                Unidad {{ t.unit!.number }} —
+              }
+              {{ t.unit!.title }}
+            }
+          </p>
+        </div>
+        <time class="tdet__due" [attr.datetime]="t.dueDate || null">
+          <span class="tdet__due-day">{{ dueDay(t.dueDate) }}</span>
+          <span class="tdet__due-month">{{ dueMonth(t.dueDate) }}</span>
+          <span class="tdet__due-rel">{{ dueRelative() }}</span>
+        </time>
       </div>
     </header>
 
@@ -35,6 +49,30 @@
 
       @if (downloadError()) {
         <p class="alert alert--error" role="alert">{{ downloadError() }}</p>
+      }
+
+      @if (taskUiStatus() === 'vencida') {
+        <section class="pulse" aria-label="Aviso">
+          <div class="pulse__item">
+            <span class="pulse__n">!</span>
+            <span class="pulse__l">El plazo venció. Aún puedes entregar si el docente lo permite.</span>
+          </div>
+        </section>
+      }
+
+      @if (taskUiStatus() === 'calificada' && t.submission?.score != null) {
+        <section class="verdict" [attr.data-tone]="scoreTone()" aria-label="Calificación">
+          <div>
+            <p class="verdict__kicker">Tu nota</p>
+            <p class="verdict__score">{{ t.submission!.score }} <span>de {{ t.maxScore ?? 20 }}</span></p>
+          </div>
+          @if (scorePct()) {
+            <p class="verdict__pct">{{ scorePct() }}</p>
+          }
+          @if (t.submission?.feedback?.trim()) {
+            <p class="verdict__note">{{ t.submission!.feedback }}</p>
+          }
+        </section>
       }
 
       <section class="metrics" aria-label="Datos de la tarea">
@@ -47,7 +85,7 @@
           <span class="metric__l">Puntos máx.</span>
         </div>
         <div class="metric">
-          <span class="metric__n metric__n--sm">{{ t.submission?.submittedAt ? formatDueShort(t.submission!.submittedAt) : '—' }}</span>
+          <span class="metric__n metric__n--sm">{{ deliveryTypeLabel() }}</span>
           <span class="metric__l">Entrega</span>
         </div>
         <div class="metric metric--accent">
@@ -58,25 +96,18 @@
 
       <div class="tdet__split">
         <section class="panel">
-          <div class="panel__head">
-            <h2>Descripción</h2>
-          </div>
+          <header class="panel__head">
+            <p class="panel__kicker">Consigna</p>
+            <h2>Qué pide el docente</h2>
+          </header>
           @if (t.description?.trim()) {
             <p class="panel__text">{{ t.description }}</p>
           } @else {
-            <p class="panel__empty">Sin descripción adicional</p>
-          }
-
-          @if (t.unit?.title) {
-            <p class="panel__meta">
-              Unidad
-              @if (t.unit?.number != null) { {{ t.unit!.number }} — }
-              {{ t.unit!.title }}
-            </p>
+            <p class="panel__empty">Sin descripción adicional. Revisa el material adjunto o las indicaciones en clase.</p>
           }
 
           @if (t.attachments?.length) {
-            <div class="panel__subhead">Material del docente</div>
+            <p class="panel__subhead">Material del docente</p>
             <ul class="file-list">
               @for (m of t.attachments; track m.id) {
                 <li>
@@ -88,13 +119,17 @@
           }
         </section>
 
-        <aside class="panel">
+        <aside class="panel panel--desk" [attr.data-status]="taskUiStatus()">
+          <header class="panel__head">
+            <p class="panel__kicker">Mesa</p>
+            <h2>Mi entrega</h2>
+          </header>
+
+          <p class="desk-status">{{ taskUiStatusLabel() }}</p>
+
           @if (t.submission) {
-            <div class="panel__head">
-              <h2>Mi entrega</h2>
-            </div>
             @if (t.submission.submittedAt) {
-              <p class="panel__meta">Enviada {{ t.submission.submittedAt | date: 'short' }}</p>
+              <p class="panel__meta">Enviada {{ formatDue(t.submission.submittedAt) }}</p>
             }
             @if (t.submission.content?.trim()) {
               <p class="panel__text">{{ t.submission.content }}</p>
@@ -109,24 +144,31 @@
                 }
               </ul>
             }
-            @if (t.submission.feedback?.trim()) {
-              <div class="panel__subhead">Retroalimentación</div>
+            @if (t.submission.feedback?.trim() && taskUiStatus() !== 'calificada') {
+              <p class="panel__subhead">Retroalimentación</p>
               <p class="panel__text">{{ t.submission.feedback }}</p>
             }
+            @if (maxSubmissionsCap() > 1) {
+              <p class="panel__meta">
+                Envío {{ effectiveSubmitCount() }} de {{ maxSubmissionsCap() }}.
+                @if (canEditSubmission()) {
+                  Quedan {{ remainingSubmissions() }}.
+                }
+              </p>
+            }
           } @else {
-            <div class="panel__head">
-              <h2>Mi entrega</h2>
-            </div>
-            <p class="panel__empty">Aún no has entregado</p>
+            <p class="panel__empty">Aún no has entregado. {{ deliveryHint() }}</p>
+            <p class="panel__meta">{{ formatDueFull(t.dueDate) }}</p>
           }
         </aside>
       </div>
 
       @if (canEditSubmission()) {
         <section class="panel panel--form">
-          <div class="panel__head">
+          <header class="panel__head">
+            <p class="panel__kicker">Envío</p>
             <h2>{{ t.submission ? 'Actualizar entrega' : 'Entregar tarea' }}</h2>
-          </div>
+          </header>
           <p class="panel__meta">{{ deliveryHint() }}</p>
           @if (maxSubmissionsCap() > 1) {
             <p class="panel__meta">
@@ -163,10 +205,25 @@
           @if (showFileField()) {
             <div class="field">
               <span class="field__label">Archivos (máx. 5)</span>
-              <label class="file-pick">
-                <input type="file" multiple (change)="onFilesSelected($event)" />
-                <span>Elegir archivos</span>
-              </label>
+              <div
+                class="drop"
+                [class.is-over]="fileDragOver()"
+                (dragover)="onFileDragOver($event)"
+                (dragenter)="onFileDragOver($event)"
+                (dragleave)="onFileDragLeave($event)"
+                (drop)="onFileDrop($event)"
+              >
+                <input
+                  #fileInput
+                  type="file"
+                  class="drop__input"
+                  multiple
+                  (change)="onFilesSelected($event)"
+                />
+                <button type="button" class="drop__btn" (click)="browseFiles($event)">
+                  Elige archivos o arrástralos aquí
+                </button>
+              </div>
               @if (selectedFiles.length > 0) {
                 <ul class="file-list">
                   @for (file of selectedFiles; track $index) {

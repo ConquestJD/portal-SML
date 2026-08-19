@@ -1,9 +1,10 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentService, StudentTask } from '../../../services/student.service';
+import { pickLocalFiles } from '../../profesor/_utils/pick-local-files';
 
 type TaskUiStatus = 'pendiente' | 'vencida' | 'en-revision' | 'calificada';
 
@@ -24,12 +25,15 @@ export class TareaDetalleComponent implements OnInit {
   /** Error al descargar adjuntos (requiere petición autenticada, no window.open). */
   downloadError = signal('');
   showSubmitConfirmation = signal(false);
+  fileDragOver = signal(false);
   readonly isLoading = this.loading;
 
   task = signal<StudentTask | null>(null);
   /** Texto del formulario (ngModel); se sincroniza al cargar la tarea. */
   submissionDraft = '';
   selectedFiles: File[] = [];
+
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private route: ActivatedRoute,
@@ -78,6 +82,78 @@ export class TareaDetalleComponent implements OnInit {
     return Number.isNaN(x.getTime())
       ? d
       : x.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  }
+
+  formatDueFull(d?: string): string {
+    if (!d) return 'Sin fecha límite';
+    const x = new Date(d);
+    if (Number.isNaN(x.getTime())) return d;
+    return x.toLocaleString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
+  dueDay(d?: string): string {
+    if (!d) return '—';
+    const x = new Date(d);
+    return Number.isNaN(x.getTime()) ? '—' : String(x.getDate());
+  }
+
+  dueMonth(d?: string): string {
+    if (!d) return '';
+    const x = new Date(d);
+    if (Number.isNaN(x.getTime())) return '';
+    return x.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
+  dueRelative(): string {
+    const raw = this.task()?.dueDate;
+    if (!raw) return 'Sin plazo fijado';
+    const due = new Date(raw).getTime();
+    if (!Number.isFinite(due)) return '';
+    const diff = due - Date.now();
+    const past = diff < 0;
+    const abs = Math.abs(diff);
+    const mins = Math.max(1, Math.round(abs / 60000));
+    const hours = Math.round(abs / 3600000);
+    const days = Math.round(abs / 86400000);
+    const unit = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+    let span: string;
+    if (mins < 60) span = unit(mins, 'minuto', 'minutos');
+    else if (hours < 48) span = unit(hours, 'hora', 'horas');
+    else span = unit(days, 'día', 'días');
+    return past ? `Venció hace ${span}` : `Vence en ${span}`;
+  }
+
+  deliveryTypeLabel(): string {
+    const d = this.deliveryType();
+    if (d === 'texto') return 'Texto';
+    if (d === 'ambos') return 'Archivo y texto';
+    if (d === 'clase') return 'En clase';
+    return 'Archivo';
+  }
+
+  scorePct(): string {
+    const t = this.task();
+    const sc = t?.submission?.score;
+    const max = t?.maxScore ?? 20;
+    if (sc == null || !Number.isFinite(Number(sc)) || max <= 0) return '';
+    return `${Math.round((Number(sc) / max) * 1000) / 10}%`;
+  }
+
+  scoreTone(): 'high' | 'mid' | 'low' | '' {
+    const t = this.task();
+    const sc = t?.submission?.score;
+    const max = t?.maxScore ?? 20;
+    if (sc == null || !Number.isFinite(Number(sc)) || max <= 0) return '';
+    const pct = (Number(sc) / max) * 100;
+    if (pct >= 70) return 'high';
+    if (pct >= 55) return 'mid';
+    return 'low';
   }
 
   private submitted(t: StudentTask): boolean {
@@ -185,9 +261,60 @@ export class TareaDetalleComponent implements OnInit {
 
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    const added = Array.from(input.files ?? []);
-    this.selectedFiles = [...this.selectedFiles, ...added].slice(0, 5);
+    this.addFiles(Array.from(input.files ?? []));
     input.value = '';
+  }
+
+  async browseFiles(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const picked = await pickLocalFiles({ multiple: true, startIn: 'documents' });
+    if (picked === 'fallback') {
+      this.fileInput?.nativeElement.click();
+      return;
+    }
+    this.addFiles(picked);
+  }
+
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.fileDragOver.set(true);
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const zone = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && zone.contains(next)) return;
+    this.fileDragOver.set(false);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.fileDragOver.set(false);
+    this.addFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  private fileKey(f: File): string {
+    return `${f.name}:${f.size}:${f.lastModified}`;
+  }
+
+  private addFiles(incoming: File[]) {
+    if (!incoming.length) return;
+    const seen = new Set(this.selectedFiles.map((f) => this.fileKey(f)));
+    const next = [...this.selectedFiles];
+    for (const f of incoming) {
+      const k = this.fileKey(f);
+      if (seen.has(k)) continue;
+      if (next.length >= 5) break;
+      next.push(f);
+      seen.add(k);
+    }
+    this.selectedFiles = next;
   }
 
   removeFile(i: number) {

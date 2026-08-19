@@ -71,14 +71,20 @@
   color: #fff;
 }
 
-.tdet__badge[data-status="vencida"] { border-color: #ffb3bf; color: #ffd0d6; }
-.tdet__badge[data-status="calificada"] { border-color: #9fd4b8; color: #c8f0d8; }
+.tdet__badge[data-status="pendiente"] { border-color: rgba(255 255 255 / .55); }
+.tdet__badge[data-status="en-revision"] { border-color: #9fd4b8; color: #c8f0d8; }
+.tdet__badge[data-status="vencida"] { border-color: #ffb3bf; color: #ffd0d6; background: rgba(196 30 58 / .25); }
+.tdet__badge[data-status="calificada"] { border-color: #9fd4b8; color: #c8f0d8; background: rgba(26 107 74 / .28); }
 
 .tdet__hero-content {
   position: relative; z-index: 1;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1.25rem;
   padding: 1.5rem 2rem 1.75rem;
   animation: rise .7s var(--ease) .12s both;
 }
+
+.tdet__hero-main { min-width: 0; }
 
 .tdet__course {
   margin: 0 0 .4rem;
@@ -98,6 +104,49 @@
   margin: 0;
   font-size: .85rem; font-weight: 500;
   color: rgba(255 255 255 / .75);
+}
+
+.tdet__due {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.5rem;
+  padding: .7rem .85rem .8rem;
+  background: rgba(255 255 255 / .12);
+  color: #fff;
+  text-align: center;
+}
+
+.tdet__hero[data-status="vencida"] .tdet__due {
+  background: rgba(196 30 58 / .45);
+}
+
+.tdet__hero[data-status="calificada"] .tdet__due {
+  background: rgba(26 107 74 / .4);
+}
+
+.tdet__due-day {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.tdet__due-month {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: .15rem 0 .35rem;
+}
+
+.tdet__due-rel {
+  font-size: .68rem;
+  font-weight: 600;
+  color: rgba(255 255 255 / .8);
+  max-width: 7.5rem;
+  line-height: 1.25;
 }
 
 .tdet__body {
@@ -140,6 +189,77 @@
   letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
 }
 
+.pulse { margin: 0 0 1.15rem; }
+
+.pulse__item {
+  display: flex; align-items: baseline; gap: .75rem;
+  padding: .9rem 1.15rem;
+  background: #fff5f6;
+  border-left: 3px solid var(--crimson);
+}
+
+.pulse__n {
+  font-family: var(--font-display);
+  font-size: 1.5rem; font-weight: 600; color: var(--crimson); line-height: 1;
+}
+
+.pulse__l { font-size: .9rem; font-weight: 600; color: var(--ink); }
+
+.verdict {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .35rem 1.25rem;
+  align-items: end;
+  padding: 1.2rem 1.25rem 1.15rem;
+  margin-bottom: 1.15rem;
+  background: var(--surface);
+  border-bottom: 3px solid var(--navy);
+}
+
+.verdict[data-tone="high"] { border-bottom-color: #1a6b4a; }
+.verdict[data-tone="mid"] { border-bottom-color: #9a6b12; }
+.verdict[data-tone="low"] { border-bottom-color: var(--crimson); }
+
+.verdict__kicker {
+  margin: 0 0 .2rem;
+  font-size: .68rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+
+.verdict__score {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 2.7rem);
+  font-weight: 600; line-height: 1; color: var(--navy);
+}
+
+.verdict[data-tone="high"] .verdict__score { color: #1a6b4a; }
+.verdict[data-tone="mid"] .verdict__score { color: #9a6b12; }
+.verdict[data-tone="low"] .verdict__score { color: var(--crimson); }
+
+.verdict__score span {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.verdict__pct {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.verdict__note {
+  grid-column: 1 / -1;
+  margin: .35rem 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .tdet__split {
   display: grid;
   grid-template-columns: 1.2fr .9fr;
@@ -153,18 +273,38 @@
 }
 
 .panel--form { margin-top: .25rem; }
+.panel--desk[data-status="vencida"] { border-left: 3px solid var(--crimson); }
+.panel--desk[data-status="calificada"] { border-left: 3px solid #1a6b4a; }
+.panel--desk[data-status="en-revision"] { border-left: 3px solid #1a5a8a; }
+.panel--desk[data-status="pendiente"] { border-left: 3px solid var(--navy); }
 
 .panel__head {
-  display: flex; align-items: baseline; justify-content: space-between;
+  display: flex; flex-direction: column; align-items: flex-start;
   margin-bottom: .75rem; padding-bottom: .55rem;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 3px solid var(--navy);
+}
+
+.panel__kicker {
+  margin: 0 0 .15rem;
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
 }
 
 .panel__head h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.15rem; font-weight: 600; color: var(--navy);
+  font-size: 1.25rem; font-weight: 600; color: var(--navy);
 }
+
+.desk-status {
+  margin: 0 0 .5rem;
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--navy);
+}
+
+.panel--desk[data-status="vencida"] .desk-status { color: var(--crimson); }
+.panel--desk[data-status="calificada"] .desk-status { color: #1a6b4a; }
 
 .panel__subhead {
   margin: 1rem 0 .5rem;
@@ -248,6 +388,42 @@
 }
 
 .file-pick input { display: none; }
+
+.drop {
+  position: relative;
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--line);
+  background: #fafbfc;
+  text-align: center;
+}
+
+.drop.is-over {
+  border-color: var(--navy);
+  background: #eef4fa;
+}
+
+.drop__input {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;
+}
+
+.drop__btn {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: .35rem 0;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.drop__btn:hover { color: var(--crimson); }
 
 .tdet__btn {
   border: none; padding: .65rem 1.15rem;
@@ -366,8 +542,14 @@
 
 @media (max-width: 560px) {
   .tdet__hero { min-height: 200px; }
-  .tdet__hero-content { padding: 1.25rem 1.15rem 1.35rem; }
+  .tdet__hero-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem 1.15rem 1.35rem;
+  }
+  .tdet__due { align-self: flex-start; }
   .tdet__body { padding: 1.15rem 1rem 1.75rem; }
+  .verdict { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
