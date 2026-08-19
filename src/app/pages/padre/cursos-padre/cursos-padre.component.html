@@ -49,26 +49,43 @@
       <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
     } @else if (children().length) {
 
-      @if (selectedChild(); as ch) {
-        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
-      }
+      <section class="metrics metrics--2" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n">{{ isLoading() ? '…' : courses().length }}</span>
+          <span class="metric__l">Cursos</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ isLoading() ? '…' : teacherCount() }}</span>
+          <span class="metric__l">Docentes</span>
+        </div>
+      </section>
 
-      <div class="toolbar">
-        <label class="search">
-          <span class="visually-hidden">Buscar curso</span>
-          <input
-            type="text"
-            placeholder="Buscar curso, código o profesor…"
-            [value]="searchQuery()"
-            (input)="onSearchInput($event)"
-          />
-        </label>
-      </div>
+      <section class="sheet">
+        <header class="mod-head">
+          <div>
+            <p class="mod-head__kicker">Año lectivo</p>
+            <h2 class="mod-head__title">Asignaturas</h2>
+            @if (selectedChild(); as ch) {
+              <p class="mod-head__meta">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
+            }
+          </div>
+        </header>
 
-      @if (isLoading()) {
-        <p class="feed__empty">Cargando cursos…</p>
-      } @else if (filteredCourses().length === 0) {
-        <section class="feed">
+        <div class="toolbar">
+          <label class="search">
+            <span class="visually-hidden">Buscar curso</span>
+            <input
+              type="search"
+              placeholder="Buscar curso, código o docente…"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+            />
+          </label>
+        </div>
+
+        @if (isLoading()) {
+          <p class="feed__empty">Cargando cursos…</p>
+        } @else if (filteredCourses().length === 0) {
           <p class="feed__empty">
             @if (searchQuery()) {
               No se encontraron cursos con ese criterio.
@@ -76,28 +93,43 @@
               No hay asignaturas activas para este hijo.
             }
           </p>
-        </section>
-      } @else {
-        <div class="course-grid">
-          @for (course of filteredCourses(); track course.id) {
-            <a
-              class="course-card"
-              [routerLink]="['/padre/cursos', course.id]"
-              [queryParams]="{ childId: selectedChildId() }"
-            >
-              <div class="course-card__cover course-card__cover--mark">{{ courseInitial(course) }}</div>
-              <div class="course-card__body">
-                <h3 class="course-card__title">{{ course.name }}</h3>
-                <p class="course-card__meta">{{ course.code }} · {{ course.teacher }}</p>
-                <p class="course-card__meta">{{ course.schedule }}</p>
-                @if (course.hours != null) {
-                  <p class="course-card__meta">{{ course.hours }} h. semanales</p>
+        } @else {
+          <div class="roster-wrap">
+            <table class="roster">
+              <thead>
+                <tr>
+                  <th>Curso</th>
+                  <th>Código</th>
+                  <th>Docente</th>
+                  <th>Horario</th>
+                  @if (hasHours()) {
+                    <th>Horas</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (course of filteredCourses(); track course.id) {
+                  <tr>
+                    <td>
+                      <a
+                        [routerLink]="['/padre/cursos', course.id]"
+                        [queryParams]="{ childId: selectedChildId() }"
+                        class="roster__link"
+                      >{{ course.name }}</a>
+                    </td>
+                    <td>{{ displayValue(course.code) }}</td>
+                    <td>{{ course.teacher }}</td>
+                    <td>{{ displayValue(course.schedule) }}</td>
+                    @if (hasHours()) {
+                      <td>{{ hoursLabel(course.hours) }}</td>
+                    }
+                  </tr>
                 }
-              </div>
-            </a>
-          }
-        </div>
-      }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
     }
   </div>
 </div>

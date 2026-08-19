@@ -4,19 +4,112 @@
   margin: 0 0 1rem;
 }
 
-.page-context {
-  margin: 0 0 1rem;
+.sheet {
+  background: var(--surface);
+  padding: 1.2rem 1.3rem 1.4rem;
+}
+
+.mod-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.05rem;
+  padding-bottom: .7rem;
+  border-bottom: 3px solid var(--navy);
+}
+
+.mod-head__kicker {
+  margin: 0 0 .15rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mod-head__title {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
+}
+
+.mod-head__meta {
+  margin: .35rem 0 0;
+  font-family: var(--font-display);
+  font-size: .95rem;
   font-style: italic;
   color: var(--muted);
 }
 
-.course-card__cover--mark {
-  display: grid;
-  place-items: center;
+.sheet .toolbar {
+  margin-bottom: .35rem;
+}
+
+.sheet .feed__empty {
+  margin: 0;
+  padding: 1.1rem 0 .2rem;
+}
+
+.roster-wrap {
+  overflow-x: auto;
+}
+
+.roster {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roster th,
+.roster td {
+  text-align: left;
+  padding: .75rem 1.15rem .75rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: baseline;
+}
+
+.roster th:last-child,
+.roster td:last-child {
+  padding-right: 0;
+}
+
+.roster thead th {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: .15rem;
+}
+
+.roster tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.roster td {
+  font-size: .98rem;
+  color: var(--ink);
+}
+
+.roster td:nth-child(n + 2) {
+  color: var(--muted);
   font-family: var(--font-display);
-  font-size: 2rem;
+  font-style: italic;
+}
+
+.roster__link {
+  color: var(--navy);
   font-weight: 600;
-  color: #fff;
+  text-decoration: none;
+}
+
+.roster__link:hover { color: var(--crimson); }
+
+@media (max-width: 720px) {
+  .roster {
+    min-width: 36rem;
+  }
 }

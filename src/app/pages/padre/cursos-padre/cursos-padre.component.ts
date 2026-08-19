@@ -1,6 +1,5 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ParentService, Child } from '../../../services/parent.service';
 
@@ -11,14 +10,13 @@ export interface ParentListedCourse {
   code: string;
   teacher: string;
   schedule: string;
-  average: string;
   hours: number | null;
 }
 
 @Component({
   selector: 'app-cursos-padre',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './cursos-padre.component.html',
   styleUrl: './cursos-padre.component.css',
 })
@@ -48,6 +46,15 @@ export class CursosPadreComponent implements OnInit {
     }
     return list;
   });
+
+  teacherCount = computed(() => {
+    const names = this.courses()
+      .map((c) => c.teacher.trim())
+      .filter((name) => name && name !== '—');
+    return new Set(names).size;
+  });
+
+  hasHours = computed(() => this.filteredCourses().some((c) => c.hours != null));
 
   constructor(
     private parentService: ParentService,
@@ -102,7 +109,9 @@ export class CursosPadreComponent implements OnInit {
   }
 
   getChildGrade(c: Child): string {
-    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+    const grade = (c.grade ?? c.enrollments?.[0]?.section?.grade ?? '').trim();
+    const level = (c.level ?? c.enrollments?.[0]?.section?.level ?? '').trim();
+    return [grade, level].filter(Boolean).join(' · ');
   }
 
   getChildInitial(c: Child): string {
@@ -111,13 +120,18 @@ export class CursosPadreComponent implements OnInit {
     return (fn + ln).toUpperCase() || '?';
   }
 
-  courseInitial(course: ParentListedCourse): string {
-    return (course.name?.charAt(0) ?? '?').toUpperCase();
-  }
-
   onSearchInput(event: Event) {
     const el = event.target as HTMLInputElement;
     this.searchQuery.set(el.value);
+  }
+
+  displayValue(value: string): string {
+    const v = (value ?? '').trim();
+    return !v || v === '—' ? '—' : v;
+  }
+
+  hoursLabel(hours: number | null): string {
+    return hours == null ? '—' : `${hours} h`;
   }
 
   private mapAssignment(row: unknown): ParentListedCourse {
@@ -140,7 +154,6 @@ export class CursosPadreComponent implements OnInit {
       code,
       teacher: teacherName,
       schedule: this.formatSchedule(scheduleRaw),
-      average: '—',
       hours,
     };
   }
