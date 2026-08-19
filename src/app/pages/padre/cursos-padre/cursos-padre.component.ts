@@ -1,7 +1,15 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ParentService, Child } from '../../../services/parent.service';
+import { courseCoverAlt, resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
+
+export interface ParentScheduleSlot {
+  day: string;
+  startTime: string;
+  endTime: string;
+}
 
 /** Una fila por docente-asignación (id = TeacherAssignment.id para rutas del portal). */
 export interface ParentListedCourse {
@@ -9,14 +17,16 @@ export interface ParentListedCourse {
   name: string;
   code: string;
   teacher: string;
-  schedule: string;
+  color: string;
+  imageUrl: string | null;
   hours: number | null;
+  schedule: ParentScheduleSlot[];
 }
 
 @Component({
   selector: 'app-cursos-padre',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './cursos-padre.component.html',
   styleUrl: './cursos-padre.component.css',
 })
@@ -25,26 +35,26 @@ export class CursosPadreComponent implements OnInit {
   error = signal('');
   selectedChildId = signal('');
   searchQuery = signal('');
+  viewMode = signal<'catalog' | 'list'>('catalog');
   children = signal<Child[]>([]);
-  /** Filas ya mapeadas desde la API */
   courses = signal<ParentListedCourse[]>([]);
 
   readonly isLoading = this.loading;
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
 
   selectedChild = computed(() => this.children().find((c) => c.id === this.selectedChildId()) ?? null);
 
   filteredCourses = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
-    let list = this.courses();
-    if (q) {
-      list = list.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.code.toLowerCase().includes(q) ||
-          c.teacher.toLowerCase().includes(q),
-      );
-    }
-    return list;
+    const list = [...this.courses()].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    if (!q) return list;
+    return list.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        c.teacher.toLowerCase().includes(q),
+    );
   });
 
   teacherCount = computed(() => {
@@ -54,7 +64,11 @@ export class CursosPadreComponent implements OnInit {
     return new Set(names).size;
   });
 
-  hasHours = computed(() => this.filteredCourses().some((c) => c.hours != null));
+  withoutScheduleCount = computed(
+    () => this.courses().filter((c) => c.schedule.length === 0).length,
+  );
+
+  hasActiveFilters = computed(() => !!this.searchQuery().trim());
 
   constructor(
     private parentService: ParentService,
@@ -70,8 +84,7 @@ export class CursosPadreComponent implements OnInit {
           return;
         }
         const qId = this.route.snapshot.queryParamMap.get('childId');
-        const initial =
-          qId && data.some((c) => c.id === qId) ? qId! : data[0].id;
+        const initial = qId && data.some((c) => c.id === qId) ? qId : data[0].id;
         this.selectedChildId.set(initial);
         this.loadCourses(initial);
       },
@@ -84,6 +97,7 @@ export class CursosPadreComponent implements OnInit {
 
   selectChild(id: string) {
     this.selectedChildId.set(id);
+    this.searchQuery.set('');
     this.loadCourses(id);
   }
 
@@ -104,6 +118,10 @@ export class CursosPadreComponent implements OnInit {
     });
   }
 
+  resetFilters() {
+    this.searchQuery.set('');
+  }
+
   getChildName(c: Child): string {
     return `${c.user.firstName} ${c.user.lastName}`;
   }
@@ -120,18 +138,29 @@ export class CursosPadreComponent implements OnInit {
     return (fn + ln).toUpperCase() || '?';
   }
 
-  onSearchInput(event: Event) {
-    const el = event.target as HTMLInputElement;
-    this.searchQuery.set(el.value);
+  coverUrl(course: ParentListedCourse): string {
+    return resolveCourseCoverUrl({ name: course.name, imageUrl: course.imageUrl });
   }
 
-  displayValue(value: string): string {
-    const v = (value ?? '').trim();
-    return !v || v === '—' ? '—' : v;
+  coverAlt(course: ParentListedCourse): string {
+    return courseCoverAlt(course.name);
   }
 
-  hoursLabel(hours: number | null): string {
-    return hours == null ? '—' : `${hours} h`;
+  dayHasClass(course: ParentListedCourse, day: string): boolean {
+    return course.schedule.some((s) => s.day === day);
+  }
+
+  scheduleHint(course: ParentListedCourse): string {
+    if (!course.schedule.length) return 'Sin horario';
+    return course.schedule
+      .slice(0, 3)
+      .map((s) => `${s.day.slice(0, 3)} ${s.startTime}–${s.endTime}`.trim())
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  hoursLabel(course: ParentListedCourse): string {
+    return course.hours ? `${course.hours} h` : '';
   }
 
   private mapAssignment(row: unknown): ParentListedCourse {
@@ -142,42 +171,55 @@ export class CursosPadreComponent implements OnInit {
     const fn = (user['firstName'] as string) ?? '';
     const ln = (user['lastName'] as string) ?? '';
     const teacherName = `${fn} ${ln}`.trim() || '—';
-
-    const name = (course['name'] as string) ?? '—';
-    const code = (course['code'] as string) ?? '—';
-    const hours = typeof course['hours'] === 'number' ? (course['hours'] as number) : null;
-    const scheduleRaw = course['schedule'];
+    const imageUrl = typeof course['imageUrl'] === 'string' ? course['imageUrl'].trim() : '';
 
     return {
       id: String(a['id'] ?? ''),
-      name,
-      code,
+      name: String(course['name'] ?? 'Curso'),
+      code: String(course['code'] ?? '').trim(),
       teacher: teacherName,
-      schedule: this.formatSchedule(scheduleRaw),
-      hours,
+      color: String(course['color'] ?? '').trim() || '#003366',
+      imageUrl: imageUrl || null,
+      hours: typeof course['hours'] === 'number' ? course['hours'] : null,
+      schedule: this.parseSchedule(course['schedule']),
     };
   }
 
-  private formatSchedule(s: unknown): string {
-    if (s == null) return '—';
-    if (typeof s === 'string') return s.trim() || '—';
-    if (Array.isArray(s) && s.length) {
-      const parts = (s as Record<string, unknown>[])
-        .map((x) => {
-          const day = x['day'] ?? x['día'];
-          const start = x['start'] ?? x['inicio'];
-          const end = x['end'] ?? x['fin'];
-          const bits = [day, start, end].filter((v) => v != null && String(v).trim() !== '');
-          return bits.map(String).join(' ');
-        })
-        .filter(Boolean);
-      return parts.length ? parts.join(' · ') : '—';
-    }
-    if (typeof s === 'object' && s !== null) {
-      const o = s as Record<string, unknown>;
-      if (typeof o['label'] === 'string' && o['label'].trim()) return o['label'];
-      if (typeof o['text'] === 'string' && o['text'].trim()) return o['text'];
-    }
-    return '—';
+  private parseSchedule(raw: unknown): ParentScheduleSlot[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        const x = (item ?? {}) as Record<string, unknown>;
+        const day = this.normalizeDay(String(x['day'] ?? x['día'] ?? ''));
+        const startTime = String(x['startTime'] ?? x['start'] ?? x['inicio'] ?? '').trim();
+        const endTime = String(x['endTime'] ?? x['end'] ?? x['fin'] ?? '').trim();
+        return { day, startTime, endTime };
+      })
+      .filter((s) => s.day);
+  }
+
+  private normalizeDay(raw: string): string {
+    const key = raw.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const map: Record<string, string> = {
+      lunes: 'Lunes',
+      lun: 'Lunes',
+      monday: 'Lunes',
+      martes: 'Martes',
+      mar: 'Martes',
+      tuesday: 'Martes',
+      miercoles: 'Miércoles',
+      mie: 'Miércoles',
+      wednesday: 'Miércoles',
+      jueves: 'Jueves',
+      jue: 'Jueves',
+      thursday: 'Jueves',
+      viernes: 'Viernes',
+      vie: 'Viernes',
+      friday: 'Viernes',
+      sabado: 'Sábado',
+      sab: 'Sábado',
+      saturday: 'Sábado',
+    };
+    return map[key] ?? raw.trim();
   }
 }

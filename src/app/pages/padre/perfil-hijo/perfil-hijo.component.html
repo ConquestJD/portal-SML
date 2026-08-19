@@ -270,7 +270,7 @@
                 <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}" class="padre-link">Ver cursos</a>
               </p>
             } @else {
-              <table class="roster">
+              <table class="acta">
                 <thead>
                   <tr>
                     <th>Curso</th>
@@ -284,7 +284,7 @@
                         <a
                           [routerLink]="['/padre/cursos', course.id]"
                           [queryParams]="{childId: selectedChildId()}"
-                          class="roster__link"
+                          class="acta__link"
                         >{{ course.name }}</a>
                       </td>
                       <td>{{ course.teacher }}</td>

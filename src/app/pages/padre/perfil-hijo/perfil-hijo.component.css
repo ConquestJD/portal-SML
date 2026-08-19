@@ -273,26 +273,26 @@
   margin: 0;
 }
 
-.roster {
+.acta {
   width: 100%;
   border-collapse: collapse;
 }
 
-.roster th,
-.roster td {
+.acta th,
+.acta td {
   text-align: left;
   padding: .7rem 1rem .7rem 0;
   border-bottom: 1px solid var(--line);
   vertical-align: baseline;
 }
 
-.roster th:last-child,
-.roster td:last-child {
+.acta th:last-child,
+.acta td:last-child {
   padding-right: 0;
   width: 42%;
 }
 
-.roster thead th {
+.acta thead th {
   font-size: .68rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -301,29 +301,29 @@
   padding-top: 0;
 }
 
-.roster tbody tr:last-child th,
-.roster tbody tr:last-child td {
+.acta tbody tr:last-child th,
+.acta tbody tr:last-child td {
   border-bottom: none;
 }
 
-.roster td {
+.acta td {
   font-size: 1rem;
   color: var(--ink);
 }
 
-.roster td:last-child {
+.acta td:last-child {
   color: var(--muted);
   font-family: var(--font-display);
   font-style: italic;
 }
 
-.roster__link {
+.acta__link {
   color: var(--navy);
   font-weight: 600;
   text-decoration: none;
 }
 
-.roster__link:hover { color: var(--crimson); }
+.acta__link:hover { color: var(--crimson); }
 
 @media (max-width: 860px) {
   .perfil-split { grid-template-columns: 1fr; }
