@@ -56,28 +56,52 @@
             @for (row of block.rows; track row.id) {
               <li>
                 @if (isTaskRow(row) && row.taskId) {
-                  <a [routerLink]="['/tareas', row.taskId]" class="nota-row">
+                  <a [routerLink]="['/tareas', row.taskId]" class="nota-row" [attr.data-kind]="row.kind">
+                    <span class="nota-row__kind">{{ kindLabel(row.kind) }}</span>
                     <span class="nota-row__body">
-                      <span class="nota-row__kind">Tarea</span>
                       <span class="nota-row__title">{{ row.label }}</span>
-                      <span class="nota-row__meta">{{ row.dateLabel }} · Máx. {{ row.maxLabel }}</span>
+                      <span class="nota-row__meta">
+                        {{ row.dateLabel }}
+                        @if (row.maxLabel !== '—') {
+                          · Máx. {{ row.maxLabel }}
+                        }
+                      </span>
                     </span>
                     <span class="nota-row__score">
-                      <strong>{{ row.scoreLabel }}</strong>
-                      @if (row.pctLabel !== '—') {
-                        <span [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
+                      @if (isPending(row)) {
+                        <span class="nota-row__pending">Sin calificar</span>
+                      } @else {
+                        <strong>{{ row.scoreLabel }}</strong>
+                        @if (row.pctLabel !== '—') {
+                          <span [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
+                        }
                       }
                     </span>
                   </a>
                 } @else {
-                  <div class="nota-row nota-row--static">
+                  <div class="nota-row nota-row--static" [attr.data-kind]="row.kind">
+                    <span class="nota-row__kind">{{ kindLabel(row.kind) }}</span>
                     <span class="nota-row__body">
-                      <span class="nota-row__kind">Período</span>
                       <span class="nota-row__title">{{ row.label }}</span>
-                      <span class="nota-row__meta">{{ row.dateLabel }}</span>
+                      <span class="nota-row__meta">
+                        {{ row.dateLabel }}
+                        @if (row.kind === 'examen' && row.maxLabel !== '—') {
+                          · Máx. {{ row.maxLabel }}
+                        }
+                        @if (row.notes) {
+                          · {{ row.notes }}
+                        }
+                      </span>
                     </span>
                     <span class="nota-row__score">
-                      <strong>{{ row.scoreLabel }}</strong>
+                      @if (isPending(row)) {
+                        <span class="nota-row__pending">Sin calificar</span>
+                      } @else {
+                        <strong>{{ row.scoreLabel }}</strong>
+                        @if (row.pctLabel !== '—') {
+                          <span [ngClass]="pctClass(row)">{{ row.pctLabel }}</span>
+                        }
+                      }
                     </span>
                   </div>
                 }

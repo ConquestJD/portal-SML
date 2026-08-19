@@ -156,8 +156,11 @@
 .feed__list li:last-child { border-bottom: none; }
 
 .nota-row {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 1rem; padding: .8rem 0;
+  display: grid;
+  grid-template-columns: 6.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .85rem 1rem;
+  padding: .85rem 0;
   text-decoration: none; color: inherit;
 }
 
@@ -167,13 +170,23 @@
   color: var(--crimson);
 }
 
-.nota-row__body {
-  display: flex; flex-direction: column; gap: .15rem; min-width: 0;
-}
-
 .nota-row__kind {
   font-size: .65rem; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--navy); background: #eef4fa;
+  padding: .28rem .5rem; text-align: center;
+}
+
+.nota-row[data-kind='examen'] .nota-row__kind {
+  background: #f6eef0; color: var(--crimson);
+}
+
+.nota-row[data-kind='periodo'] .nota-row__kind {
+  background: #eef1f5; color: var(--muted);
+}
+
+.nota-row__body {
+  display: flex; flex-direction: column; gap: .15rem; min-width: 0;
 }
 
 .nota-row__title {
@@ -198,6 +211,15 @@
 
 .nota-row__score span {
   font-size: .75rem; font-style: italic; color: var(--muted);
+}
+
+.nota-row__pending {
+  font-size: .72rem !important;
+  font-weight: 700;
+  font-style: normal !important;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted) !important;
 }
 
 .notas-pct--high { color: #1a6b4a !important; }
@@ -252,6 +274,16 @@
   }
   .notas-page__export { margin-left: 0; }
   .notas-page__body { padding: 1.15rem 1rem 1.75rem; }
+  .nota-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'kind score'
+      'body body';
+    gap: .4rem .75rem;
+  }
+  .nota-row__kind { grid-area: kind; justify-self: start; }
+  .nota-row__body { grid-area: body; }
+  .nota-row__score { grid-area: score; }
 }
 
 @media (prefers-reduced-motion: reduce) {

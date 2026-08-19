@@ -264,70 +264,88 @@
       }
 
       @if (activeTab() === 'notas') {
-        <section class="gradebook">
+        <section class="ledger">
           <header class="mod-head">
             <div>
               <p class="mod-head__kicker">Libro de notas</p>
               <h2 class="mod-head__title">Calificaciones del curso</h2>
-              <p class="mod-head__meta">Bimestres y tareas calificadas. Promedio {{ gradesCourseAverage() }}.</p>
+              <p class="mod-head__meta">
+                Bimestres, exámenes y tareas. Promedio {{ gradesCourseAverage() }}
+                @if (exams().length) {
+                  · {{ exams().length }} {{ exams().length === 1 ? 'examen' : 'exámenes' }}
+                }
+              </p>
             </div>
           </header>
 
-          @if (gradePeriods().length) {
-            <div class="gradebook__wrap">
-              <table class="gradebook__table">
-                <thead>
-                  <tr>
-                    @for (period of gradePeriods(); track period.id) {
-                      <th class="gradebook__center">
-                        <span class="gradebook__period">{{ period.name }}</span>
-                        <span class="gradebook__period-name">Bimestre</span>
-                      </th>
-                    }
-                    <th class="gradebook__center">Promedio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    @for (period of gradePeriods(); track period.id) {
-                      <td class="gradebook__center gradebook__avg">{{ periodScore(period.id) }}</td>
-                    }
-                    <td class="gradebook__center gradebook__avg">{{ gradesCourseAverage() }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          }
+          <div class="marks" aria-label="Notas por bimestre">
+            @for (m of bimestreMarks(); track m.id) {
+              <article class="mark-card">
+                <span class="mark-card__roman">{{ m.roman }}</span>
+                <span class="mark-card__score" [class.is-empty]="m.score === '—'">{{ m.score }}</span>
+                <span class="mark-card__label">{{ m.title }}</span>
+              </article>
+            }
+            <article class="mark-card mark-card--avg">
+              <span class="mark-card__roman">Prom.</span>
+              <span class="mark-card__score" [class.is-empty]="gradesCourseAverage() === '—'">{{ gradesCourseAverage() }}</span>
+              <span class="mark-card__label">Promedio del curso</span>
+            </article>
+          </div>
 
-          @if (courseGradeRows().length === 0 && !gradePeriods().length) {
+          @if (examsLoading() && courseGradeRows().length === 0) {
+            <p class="feed__empty">Cargando calificaciones…</p>
+          } @else if (courseGradeRows().length === 0) {
             <p class="feed__empty">Sin calificaciones registradas aún.</p>
-          } @else if (courseGradeRows().length) {
-            <ul class="feed__list">
+          } @else {
+            <ul class="eval-list">
               @for (row of courseGradeRows(); track row.id) {
                 <li>
                   @if (row.kind === 'task' && row.taskId) {
-                    <a [routerLink]="['/tareas', row.taskId]" class="feed-row">
-                      <span class="feed-row__body">
-                        <span class="feed-row__kicker">Tarea</span>
-                        <span class="feed-row__title">{{ row.label }}</span>
-                        <span class="feed-row__meta">{{ row.dateLabel }}</span>
+                    <a [routerLink]="['/tareas', row.taskId]" class="eval-row" [attr.data-kind]="row.kind" [attr.data-tone]="scoreTone(row)">
+                      <span class="eval-row__kind">{{ gradeKindLabel(row.kind) }}</span>
+                      <span class="eval-row__body">
+                        <span class="eval-row__title">{{ row.label }}</span>
+                        <span class="eval-row__meta">
+                          {{ row.dateLabel }}
+                          · Máx. {{ row.maxPoints }}
+                        </span>
                       </span>
-                      <span class="feed-row__side">
-                        <strong>{{ row.scoreDisplay }}</strong>
-                        @if (row.pctDisplay !== '—') {
-                          <span>{{ row.pctDisplay }}</span>
+                      <span class="eval-row__score">
+                        @if (gradeRowPending(row)) {
+                          <span class="eval-row__pending">Sin calificar</span>
+                        } @else {
+                          <strong>{{ row.scoreDisplay }}</strong>
+                          <span>{{ row.pctDisplay !== '—' ? row.pctDisplay : 'de ' + row.maxPoints }}</span>
                         }
                       </span>
                     </a>
                   } @else {
-                    <div class="feed-row feed-row--static">
-                      <span class="feed-row__body">
-                        <span class="feed-row__kicker">Bimestre</span>
-                        <span class="feed-row__title">{{ row.label }}</span>
-                        <span class="feed-row__meta">{{ row.dateLabel }}</span>
+                    <div class="eval-row eval-row--static" [attr.data-kind]="row.kind" [attr.data-tone]="scoreTone(row)">
+                      <span class="eval-row__kind">{{ gradeKindLabel(row.kind) }}</span>
+                      <span class="eval-row__body">
+                        <span class="eval-row__title">{{ row.label }}</span>
+                        <span class="eval-row__meta">
+                          {{ row.dateLabel }}
+                          @if (row.kind === 'exam') {
+                            · Máx. {{ row.maxPoints }}
+                          }
+                          @if (row.notes) {
+                            · {{ row.notes }}
+                          }
+                        </span>
                       </span>
-                      <span class="feed-row__side">
-                        <strong>{{ row.scoreDisplay }}</strong>
+                      <span class="eval-row__score">
+                        @if (gradeRowPending(row)) {
+                          <span class="eval-row__pending">Sin calificar</span>
+                        } @else {
+                          <strong>{{ row.scoreDisplay }}</strong>
+                          @if (row.pctDisplay !== '—') {
+                            <span>{{ row.pctDisplay }}</span>
+                          } @else if (row.maxPoints !== '—') {
+                            <span>de {{ row.maxPoints }}</span>
+                          }
+                        }
                       </span>
                     </div>
                   }

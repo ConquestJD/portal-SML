@@ -68,6 +68,18 @@ export interface StudentMaterial {
   files: StudentMaterialFile[];
 }
 
+export interface StudentExam {
+  id: string;
+  title: string;
+  examDate: string;
+  maxScore: number;
+  periodId?: string | null;
+  period?: { id: string; name: string; order?: number } | null;
+  score?: number | null;
+  notes?: string | null;
+  course?: { name: string };
+}
+
 export interface StudentTask {
   id: string;
   title: string;
@@ -102,7 +114,7 @@ export interface StudentGrade {
   score: number;
   notes?: string;
   course?: { name: string };
-  period?: { id: string; name: string };
+  period?: { id: string; name: string; order?: number };
   createdAt?: string;
   teacherAssignmentId?: string;
 }
@@ -234,6 +246,35 @@ export class StudentService {
     };
   }
 
+  private normalizeStudentExam(raw: StudentExam | Record<string, unknown>): StudentExam {
+    const e = raw as Record<string, unknown>;
+    const scoreRaw = e['score'];
+    const score =
+      scoreRaw == null || scoreRaw === ''
+        ? null
+        : Number.isFinite(Number(scoreRaw))
+          ? Number(scoreRaw)
+          : null;
+    const max = Number(e['maxScore']);
+    const dateVal = e['examDate'];
+    let examDate = '';
+    if (dateVal != null) {
+      const d = new Date(dateVal as string);
+      examDate = Number.isNaN(d.getTime()) ? String(dateVal) : d.toISOString();
+    }
+    return {
+      id: String(e['id'] ?? ''),
+      title: String(e['title'] ?? 'Examen'),
+      examDate,
+      maxScore: Number.isFinite(max) && max > 0 ? max : 20,
+      periodId: e['periodId'] != null ? String(e['periodId']) : null,
+      period: (e['period'] as StudentExam['period']) ?? null,
+      score,
+      notes: e['notes'] != null ? String(e['notes']) : null,
+      course: (e['course'] as StudentExam['course']) ?? undefined,
+    };
+  }
+
   private normalizeCourse(raw: StudentCourse | Record<string, unknown>): StudentCourse {
     const c = raw as Record<string, unknown>;
     const course = (c['course'] as StudentCourse['course']) ?? { id: String(c['id'] ?? ''), name: '—' };
@@ -307,6 +348,16 @@ export class StudentService {
       map((list) =>
         (Array.isArray(list) ? list : []).map((g) => this.normalizeStudentGrade(g as StudentGrade)),
       ),
+    );
+  }
+  getCourseExams(courseId: string): Observable<StudentExam[]> {
+    return this.get<StudentExam[]>(`/student/courses/${courseId}/exams`).pipe(
+      map((list) => (Array.isArray(list) ? list : []).map((e) => this.normalizeStudentExam(e))),
+    );
+  }
+  getExams(): Observable<StudentExam[]> {
+    return this.get<StudentExam[]>('/student/exams').pipe(
+      map((list) => (Array.isArray(list) ? list : []).map((e) => this.normalizeStudentExam(e))),
     );
   }
   getMaterialDownloadUrl(courseId: string, fileId: string): string {

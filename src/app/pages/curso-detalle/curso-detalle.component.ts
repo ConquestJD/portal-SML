@@ -12,6 +12,7 @@ import {
   StudentAttendance,
   StudentMaterial,
   StudentPeriod,
+  StudentExam,
 } from '../../services/student.service';
 import { AnnouncementService, Announcement } from '../../services/announcement.service';
 import { isMaterialFolder, materialFolderTitle } from '../../services/teacher.service';
@@ -46,14 +47,22 @@ interface MaterialBin {
 
 export type CourseGradeRow = {
   id: string;
-  kind: 'period' | 'task';
+  kind: 'period' | 'task' | 'exam';
   taskId?: string;
   label: string;
   dateLabel: string;
   maxPoints: string;
   scoreDisplay: string;
   pctDisplay: string;
+  notes?: string | null;
 };
+
+interface BimestreMark {
+  id: string;
+  roman: string;
+  title: string;
+  score: string;
+}
 
 @Component({
   selector: 'app-curso-detalle',
@@ -76,6 +85,8 @@ export class CursoDetalleComponent implements OnInit {
   materialExpanded = signal<Record<string, boolean>>({});
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
+  exams = signal<StudentExam[]>([]);
+  examsLoading = signal(false);
   attendance = signal<StudentAttendance[]>([]);
   attendanceSummary = signal<Record<string, number>>({});
   attendanceLoading = signal(false);
@@ -196,14 +207,36 @@ export class CursoDetalleComponent implements OnInit {
   });
 
   gradePeriods = computed(() => {
-    const map = new Map<string, { id: string; name: string }>();
+    const map = new Map<string, { id: string; name: string; order: number }>();
+    for (const p of this.periods()) {
+      map.set(p.id, { id: p.id, name: (p.name ?? '').trim() || 'Bimestre', order: p.order ?? 99 });
+    }
     for (const g of this.grades()) {
       const id = g.period?.id;
-      const name = (g.period?.name ?? '').trim();
-      if (!id) continue;
-      if (!map.has(id)) map.set(id, { id, name: name || 'Bimestre' });
+      if (!id || map.has(id)) continue;
+      map.set(id, { id, name: (g.period?.name ?? '').trim() || 'Bimestre', order: g.period?.order ?? 99 });
     }
-    return [...map.values()];
+    for (const e of this.exams()) {
+      const id = e.period?.id ?? e.periodId;
+      if (!id || map.has(id)) continue;
+      map.set(id, { id, name: (e.period?.name ?? '').trim() || 'Bimestre', order: e.period?.order ?? 99 });
+    }
+    return [...map.values()].sort((a, b) => a.order - b.order).slice(0, 4);
+  });
+
+  bimestreMarks = computed((): BimestreMark[] => {
+    const roman = ['I', 'II', 'III', 'IV'];
+    const titles = ['I Bimestre', 'II Bimestre', 'III Bimestre', 'IV Bimestre'];
+    const periods = this.gradePeriods();
+    return titles.map((title, i) => {
+      const period = periods[i];
+      return {
+        id: period?.id ?? `_ph-${i}`,
+        roman: roman[i],
+        title: period?.name || title,
+        score: period ? this.periodScore(period.id) : '—',
+      };
+    });
   });
 
   courseGradeRows = computed((): CourseGradeRow[] => {
@@ -221,6 +254,7 @@ export class CursoDetalleComponent implements OnInit {
           maxPoints: '20',
           scoreDisplay: g.score != null ? String(g.score) : '—',
           pctDisplay: '—',
+          notes: null,
         },
       });
     }
@@ -256,6 +290,35 @@ export class CursoDetalleComponent implements OnInit {
           maxPoints: String(max),
           scoreDisplay: hasScore ? String(sub.score) : '—',
           pctDisplay: pct,
+          notes: sub.feedback?.trim() || null,
+        },
+      });
+    }
+
+    for (const exam of this.exams()) {
+      const d = exam.examDate ? new Date(exam.examDate) : null;
+      const ts = d && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+      const dateLabel =
+        d && !Number.isNaN(d.getTime())
+          ? d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+          : '—';
+      const max = exam.maxScore || 20;
+      const hasScore = exam.score != null && Number.isFinite(Number(exam.score));
+      const pct =
+        hasScore && max > 0
+          ? `${Math.round((Number(exam.score) / max) * 1000) / 10}%`
+          : '—';
+      withTs.push({
+        ts,
+        row: {
+          id: `exam-${exam.id}`,
+          kind: 'exam',
+          label: exam.title,
+          dateLabel: exam.period?.name ? `${dateLabel} · ${exam.period.name}` : dateLabel,
+          maxPoints: String(max),
+          scoreDisplay: hasScore ? String(exam.score) : '—',
+          pctDisplay: pct,
+          notes: exam.notes?.trim() || null,
         },
       });
     }
@@ -301,6 +364,7 @@ export class CursoDetalleComponent implements OnInit {
     if (tab === 'notas') {
       this.loadGrades();
       this.loadTasks();
+      this.loadExams();
     }
     if (tab === 'material') this.loadMaterials();
     if (tab === 'asistencia') this.loadAttendance();
@@ -339,6 +403,20 @@ export class CursoDetalleComponent implements OnInit {
   loadGrades() {
     this.studentService.getCourseGrades(this.courseId()).subscribe({
       next: (data) => this.grades.set(data)
+    });
+  }
+
+  loadExams() {
+    this.examsLoading.set(true);
+    this.studentService.getCourseExams(this.courseId()).subscribe({
+      next: (data) => {
+        this.exams.set(data);
+        this.examsLoading.set(false);
+      },
+      error: () => {
+        this.exams.set([]);
+        this.examsLoading.set(false);
+      },
     });
   }
 
@@ -605,9 +683,38 @@ export class CursoDetalleComponent implements OnInit {
       const sc = t.submission?.score;
       if (sc != null && Number.isFinite(Number(sc))) nums.push(Number(sc));
     }
+    for (const e of this.exams()) {
+      if (e.score != null && Number.isFinite(Number(e.score))) nums.push(Number(e.score));
+    }
     if (!nums.length) return '—';
     const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
     return String(Math.round(avg * 20) / 20);
+  }
+
+  gradeKindLabel(kind: CourseGradeRow['kind']): string {
+    if (kind === 'exam') return 'Examen';
+    if (kind === 'task') return 'Tarea';
+    return 'Bimestre';
+  }
+
+  gradeRowPending(row: CourseGradeRow): boolean {
+    return row.scoreDisplay === '—';
+  }
+
+  scoreTone(row: CourseGradeRow): string {
+    if (this.gradeRowPending(row)) return 'pending';
+    let pct = NaN;
+    if (row.pctDisplay !== '—') {
+      pct = parseFloat(String(row.pctDisplay).replace('%', '').replace(',', '.'));
+    } else {
+      const sc = Number(row.scoreDisplay);
+      const max = Number(row.maxPoints) || 20;
+      if (Number.isFinite(sc) && max > 0) pct = (sc / max) * 100;
+    }
+    if (!Number.isFinite(pct)) return '';
+    if (pct >= 70) return 'high';
+    if (pct >= 55) return 'mid';
+    return 'low';
   }
 
   periodScore(periodId: string): string {

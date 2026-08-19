@@ -1,10 +1,10 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { StudentService, StudentGrade, StudentTask } from '../../services/student.service';
+import { catchError, forkJoin, of } from 'rxjs';
+import { StudentService, StudentExam, StudentGrade, StudentTask } from '../../services/student.service';
 
-export type NotaRowKind = 'periodo' | 'tarea';
+export type NotaRowKind = 'periodo' | 'tarea' | 'examen';
 
 export interface NotaRow {
   id: string;
@@ -16,6 +16,7 @@ export interface NotaRow {
   maxLabel: string;
   pctLabel: string;
   taskId?: string;
+  notes?: string | null;
 }
 
 export interface NotaCourseBlock {
@@ -38,6 +39,7 @@ export class NotasComponent implements OnInit {
   error = signal('');
   grades = signal<StudentGrade[]>([]);
   tasks = signal<StudentTask[]>([]);
+  exams = signal<StudentExam[]>([]);
 
   /** Bloques por curso + filas ordenadas */
   courseBlocks = computed((): NotaCourseBlock[] => {
@@ -99,6 +101,34 @@ export class NotasComponent implements OnInit {
         maxLabel: String(max),
         pctLabel: pct,
         taskId: t.id,
+        notes: sub.feedback?.trim() || null,
+      });
+    }
+
+    for (const exam of this.exams()) {
+      const courseName = exam.course?.name?.trim() || 'Curso';
+      const max = exam.maxScore || 20;
+      const hasScore = exam.score != null && Number.isFinite(Number(exam.score));
+      const pct =
+        hasScore && max > 0
+          ? `${Math.round((Number(exam.score) / max) * 1000) / 10}%`
+          : '—';
+      const d = exam.examDate ? new Date(exam.examDate) : null;
+      const dateLabel =
+        d && !Number.isNaN(d.getTime())
+          ? d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
+          : '—';
+      const periodBit = exam.period?.name?.trim() ? ` · ${exam.period.name}` : '';
+      push(courseName, {
+        id: `e-${exam.id}`,
+        kind: 'examen',
+        courseName,
+        label: exam.title,
+        dateLabel: `${dateLabel}${periodBit}`,
+        scoreLabel: hasScore ? String(exam.score) : '—',
+        maxLabel: String(max),
+        pctLabel: pct,
+        notes: exam.notes?.trim() || null,
       });
     }
 
@@ -146,6 +176,9 @@ export class NotasComponent implements OnInit {
       const sc = t.submission?.score;
       if (sc != null && Number.isFinite(Number(sc))) nums.push(Number(sc));
     }
+    for (const e of this.exams()) {
+      if (e.score != null && Number.isFinite(Number(e.score))) nums.push(Number(e.score));
+    }
     if (!nums.length) return null;
     const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
     return String(Math.round(avg * 20) / 20);
@@ -156,10 +189,12 @@ export class NotasComponent implements OnInit {
     forkJoin({
       grades: this.studentService.getGrades({}),
       tasks: this.studentService.getTasks({}),
+      exams: this.studentService.getExams().pipe(catchError(() => of([] as StudentExam[]))),
     }).subscribe({
-      next: ({ grades, tasks }) => {
+      next: ({ grades, tasks, exams }) => {
         this.grades.set(grades);
         this.tasks.set(tasks);
+        this.exams.set(exams);
         this.loading.set(false);
       },
       error: () => {
@@ -175,6 +210,16 @@ export class NotasComponent implements OnInit {
 
   isTaskRow(row: NotaRow): boolean {
     return row.kind === 'tarea' && !!row.taskId;
+  }
+
+  kindLabel(kind: NotaRowKind): string {
+    if (kind === 'examen') return 'Examen';
+    if (kind === 'tarea') return 'Tarea';
+    return 'Bimestre';
+  }
+
+  isPending(row: NotaRow): boolean {
+    return row.scoreLabel === '—';
   }
 
   pctClass(row: NotaRow): Record<string, boolean> {
