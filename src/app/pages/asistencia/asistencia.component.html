@@ -73,10 +73,25 @@
       @if (countStatus('ABSENT') > 3) {
         <section class="pulse" aria-label="Aviso">
           <div class="pulse__item">
-            <span class="pulse__n">!</span>
+            <span class="pulse__n">{{ countStatus('ABSENT') }}</span>
             <span class="pulse__l">Más de 3 faltas en este listado. Consulta con tutoría si necesitas regularizar.</span>
           </div>
         </section>
+      }
+
+      @if (totalSessions() > 0) {
+        <div class="mix" aria-hidden="true">
+          <span class="mix__seg mix__seg--ok" [style.flex-grow]="attendanceBar().present.n"></span>
+          <span class="mix__seg mix__seg--late" [style.flex-grow]="attendanceBar().late.n"></span>
+          <span class="mix__seg mix__seg--just" [style.flex-grow]="attendanceBar().justified.n"></span>
+          <span class="mix__seg mix__seg--abs" [style.flex-grow]="attendanceBar().absent.n"></span>
+        </div>
+        <p class="mix-legend">
+          {{ countStatus('PRESENT') }} presente ·
+          {{ countStatus('LATE') }} tardanza ·
+          {{ countStatus('JUSTIFIED') }} justificada ·
+          {{ countStatus('ABSENT') }} falta
+        </p>
       }
 
       <section class="feed" aria-label="Registros">
@@ -88,22 +103,31 @@
         @if (attendanceRecords().length === 0) {
           <p class="feed__empty">Sin registros con estos filtros</p>
         } @else {
-          <ul class="feed__list">
-            @for (record of attendanceRecords(); track record.id) {
-              <li>
-                <div class="asis-row" [attr.data-status]="(record.status || '').toUpperCase()">
-                  <span class="asis-row__body">
-                    <span class="asis-row__date">{{ formatDay(record.date) }}</span>
-                    <span class="asis-row__course">{{ courseLabel(record) }}</span>
-                    @if (record.notes?.trim()) {
-                      <span class="asis-row__notes">{{ record.notes }}</span>
-                    }
-                  </span>
-                  <span class="asis-row__status">{{ statusLabel(record.status) }}</span>
-                </div>
-              </li>
-            }
-          </ul>
+          @for (group of recordsByMonth(); track group.key) {
+            <div class="roll-month">
+              <h3 class="roll-month__title">{{ group.label }}</h3>
+              <ul class="feed__list">
+                @for (record of group.items; track record.id) {
+                  <li>
+                    <article class="asis-row" [attr.data-status]="(record.status || '').toUpperCase()">
+                      <time class="asis-row__when" [attr.datetime]="record.date || null">
+                        <span class="asis-row__day">{{ sessionDay(record.date) }}</span>
+                        <span class="asis-row__month">{{ sessionMonth(record.date) }}</span>
+                      </time>
+                      <span class="asis-row__body">
+                        <span class="asis-row__date">{{ formatDay(record.date) }}</span>
+                        <span class="asis-row__course">{{ courseLabel(record) }}</span>
+                        @if (record.notes?.trim()) {
+                          <span class="asis-row__notes">{{ record.notes }}</span>
+                        }
+                      </span>
+                      <span class="asis-row__status">{{ statusLabel(record.status) }}</span>
+                    </article>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
         }
       </section>
     }

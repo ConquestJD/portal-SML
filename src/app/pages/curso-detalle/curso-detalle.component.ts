@@ -21,6 +21,7 @@ import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course
 type TabType = 'material' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
 type TaskFilter = 'all' | 'pending' | 'done';
 type TaskKind = 'pendiente' | 'vencida' | 'entregada' | 'calificada';
+type AnnFilter = 'all' | 'unread' | 'urgent';
 
 interface MaterialBinFile {
   id: string;
@@ -64,6 +65,12 @@ interface BimestreMark {
   score: string;
 }
 
+interface AttendanceMonthGroup {
+  key: string;
+  label: string;
+  items: StudentAttendance[];
+}
+
 @Component({
   selector: 'app-curso-detalle',
   standalone: true,
@@ -75,6 +82,7 @@ export class CursoDetalleComponent implements OnInit {
   courseId = signal('');
   activeTab = signal<TabType>('material');
   taskFilter = signal<TaskFilter>('all');
+  annFilter = signal<AnnFilter>('all');
   loading = signal(true);
   error = signal('');
 
@@ -204,6 +212,63 @@ export class CursoDetalleComponent implements OnInit {
     const total = present + late + justified + absent;
     if (!total) return '—';
     return `${Math.round(((present + late + justified) / total) * 100)}`;
+  });
+
+  attendanceTotal = computed(() => {
+    const s = this.attendanceSummary();
+    return (s['PRESENT'] ?? 0) + (s['LATE'] ?? 0) + (s['JUSTIFIED'] ?? 0) + (s['ABSENT'] ?? 0);
+  });
+
+  attendanceBar = computed(() => {
+    const total = this.attendanceTotal();
+    const s = this.attendanceSummary();
+    const seg = (key: string) => {
+      const n = s[key] ?? 0;
+      return { n, pct: total ? (n / total) * 100 : 0 };
+    };
+    return {
+      present: seg('PRESENT'),
+      late: seg('LATE'),
+      justified: seg('JUSTIFIED'),
+      absent: seg('ABSENT'),
+    };
+  });
+
+  attendanceByMonth = computed((): AttendanceMonthGroup[] => {
+    const map = new Map<string, StudentAttendance[]>();
+    for (const row of this.attendance()) {
+      const d = this.parseDay(row.date);
+      const key = d
+        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        : 'sin-fecha';
+      const list = map.get(key) ?? [];
+      list.push(row);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => ({
+        key,
+        label: this.monthHeading(key, items[0]?.date),
+        items,
+      }));
+  });
+
+  unreadAnnouncementsCount = computed(() =>
+    this.announcements().filter((a) => !a.isRead).length,
+  );
+
+  urgentAnnouncementsCount = computed(() =>
+    this.announcements().filter((a) => this.isUrgentAnnouncement(a)).length,
+  );
+
+  filteredAnnouncements = computed(() => {
+    const f = this.annFilter();
+    return this.announcements().filter((a) => {
+      if (f === 'unread') return !a.isRead;
+      if (f === 'urgent') return this.isUrgentAnnouncement(a);
+      return true;
+    });
   });
 
   gradePeriods = computed(() => {
@@ -732,10 +797,65 @@ export class CursoDetalleComponent implements OnInit {
     return status || '—';
   }
 
+  attendanceCount(key: string): number {
+    return this.attendanceSummary()[key] ?? 0;
+  }
+
+  private parseDay(raw?: string): Date | null {
+    if (!raw) return null;
+    const iso = /^\d{4}-\d{2}-\d{2}/.test(raw) ? `${raw.slice(0, 10)}T12:00:00` : raw;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  private monthHeading(key: string, sample?: string): string {
+    if (key === 'sin-fecha') return 'Sin fecha';
+    const d = this.parseDay(sample) ?? this.parseDay(`${key}-01`);
+    if (!d) return key;
+    const label = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  sessionDay(raw?: string): string {
+    const d = this.parseDay(raw);
+    return d ? String(d.getDate()) : '—';
+  }
+
+  sessionMonth(raw?: string): string {
+    const d = this.parseDay(raw);
+    if (!d) return '';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
   formatSessionDate(raw: string): string {
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return raw;
+    const d = this.parseDay(raw);
+    if (!d) return raw;
     return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  isUrgentAnnouncement(a: Announcement): boolean {
+    return !!(a.urgent || (a.priority || '').toUpperCase() === 'HIGH' || (a.type || '').toUpperCase() === 'URGENT');
+  }
+
+  announcementTypeLabel(a: Announcement): string {
+    const t = (a.type || '').toUpperCase();
+    if (t === 'GENERAL') return 'General';
+    if (t === 'ACADEMIC') return 'Académico';
+    if (t === 'EVENT') return 'Evento';
+    if (t === 'URGENT') return 'Aviso';
+    return this.announcementPriorityLabel(a.priority);
+  }
+
+  announcementExcerpt(a: Announcement, max = 160): string {
+    const raw = a.fullContent || a.content || '';
+    const t = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    if (t.length <= max) return t;
+    return `${t.slice(0, max).trim()}…`;
+  }
+
+  announcementAttachmentCount(a: Announcement): number {
+    return a.attachmentCount ?? a.attachments?.length ?? 0;
   }
 
   announcementPriorityLabel(priority?: string): string {
@@ -743,13 +863,6 @@ export class CursoDetalleComponent implements OnInit {
     if (p === 'HIGH' || p === 'URGENT') return 'Urgente';
     if (p === 'NORMAL' || p === 'MEDIUM') return 'Normal';
     return 'Aviso';
-  }
-
-  formatAnnouncementDate(raw?: string): string {
-    if (!raw) return '';
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
   }
 
   authorName(a: Announcement): string {

@@ -357,14 +357,14 @@
       }
 
       @if (activeTab() === 'asistencia') {
-        <section class="journal">
+        <section class="roll">
           <header class="mod-head">
             <div>
               <p class="mod-head__kicker">Bitácora</p>
               <h2 class="mod-head__title">Tu asistencia</h2>
               <p class="mod-head__meta">
                 @if (attendancePercent() !== '—') {
-                  Asistencia efectiva {{ attendancePercent() }}%.
+                  Asistencia efectiva {{ attendancePercent() }}% · {{ attendanceTotal() }} {{ attendanceTotal() === 1 ? 'sesión' : 'sesiones' }}.
                 } @else {
                   Sesiones registradas en este curso.
                 }
@@ -375,37 +375,90 @@
           @if (attendanceLoading()) {
             <p class="feed__empty">Cargando historial…</p>
           } @else if (attendance().length === 0) {
-            <section class="feed">
-              <p class="feed__empty">Aún no hay sesiones registradas en este curso.</p>
-            </section>
+            <p class="feed__empty">Aún no hay sesiones registradas en este curso.</p>
           } @else {
-            <ol class="journal__list">
-              @for (row of attendance(); track row.id) {
-                <li class="journal__item">
-                  <time class="journal__date" [attr.datetime]="row.date">{{ formatSessionDate(row.date) }}</time>
-                  <div class="journal__chips">
-                    <span
-                      class="journal__chip"
-                      [class.journal__chip--ok]="row.status === 'PRESENT'"
-                      [class.journal__chip--warn]="row.status === 'ABSENT'"
-                    >{{ attendanceStatusLabel(row.status) }}</span>
-                    @if (row.notes) {
-                      <span class="journal__chip">{{ row.notes }}</span>
-                    }
-                  </div>
-                </li>
-              }
-            </ol>
+            <div class="marks marks--4" aria-label="Resumen de asistencia">
+              <article class="mark-card">
+                <span class="mark-card__roman">Efectiva</span>
+                <span class="mark-card__score">{{ attendancePercent() }}%</span>
+                <span class="mark-card__label">Presente, tardanza y justificada</span>
+              </article>
+              <article class="mark-card mark-card--ok">
+                <span class="mark-card__roman">Presente</span>
+                <span class="mark-card__score">{{ attendanceCount('PRESENT') }}</span>
+                <span class="mark-card__label">Sesiones a tiempo</span>
+              </article>
+              <article class="mark-card mark-card--late">
+                <span class="mark-card__roman">Tardanza</span>
+                <span class="mark-card__score">{{ attendanceCount('LATE') }}</span>
+                <span class="mark-card__label">Llegadas tarde</span>
+              </article>
+              <article class="mark-card mark-card--avg">
+                <span class="mark-card__roman">Faltas</span>
+                <span class="mark-card__score" [class.is-empty]="attendanceCount('ABSENT') === 0">{{ attendanceCount('ABSENT') }}</span>
+                <span class="mark-card__label">{{ attendanceCount('JUSTIFIED') }} justificadas</span>
+              </article>
+            </div>
+
+            @if (attendanceTotal() > 0) {
+              <div class="mix" aria-hidden="true">
+                <span class="mix__seg mix__seg--ok" [style.flex-grow]="attendanceBar().present.n"></span>
+                <span class="mix__seg mix__seg--late" [style.flex-grow]="attendanceBar().late.n"></span>
+                <span class="mix__seg mix__seg--just" [style.flex-grow]="attendanceBar().justified.n"></span>
+                <span class="mix__seg mix__seg--abs" [style.flex-grow]="attendanceBar().absent.n"></span>
+              </div>
+            }
+
+            @if (attendanceCount('ABSENT') > 3) {
+              <section class="pulse" aria-label="Aviso">
+                <div class="pulse__item">
+                  <span class="pulse__n">{{ attendanceCount('ABSENT') }}</span>
+                  <span class="pulse__l">Faltas en este curso. Consulta con tutoría si necesitas regularizar.</span>
+                </div>
+              </section>
+            }
+
+            @for (group of attendanceByMonth(); track group.key) {
+              <section class="roll-month">
+                <h3 class="roll-month__title">{{ group.label }}</h3>
+                <ul class="brief__list">
+                  @for (row of group.items; track row.id) {
+                    <li>
+                      <article class="brief-card" [attr.data-status]="(row.status || '').toUpperCase()">
+                        <time class="brief-card__when" [attr.datetime]="row.date || null">
+                          <span class="brief-card__day">{{ sessionDay(row.date) }}</span>
+                          <span class="brief-card__month">{{ sessionMonth(row.date) }}</span>
+                        </time>
+                        <span class="brief-card__body">
+                          <span class="brief-card__kicker">{{ formatSessionDate(row.date) }}</span>
+                          <span class="brief-card__title">{{ attendanceStatusLabel(row.status) }}</span>
+                          @if (row.notes?.trim()) {
+                            <span class="brief-card__meta">{{ row.notes }}</span>
+                          }
+                        </span>
+                        <span class="brief-card__mark">{{ attendanceStatusLabel(row.status) }}</span>
+                      </article>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
         </section>
       }
 
       @if (activeTab() === 'comunicados') {
-        <section class="bulletin-board">
+        <section class="clips">
           <header class="mod-head">
             <div>
               <p class="mod-head__kicker">Boletín</p>
               <h2 class="mod-head__title">Comunicados del curso</h2>
+              <p class="mod-head__meta">
+                {{ announcements().length }} {{ announcements().length === 1 ? 'aviso' : 'avisos' }}
+                @if (unreadAnnouncementsCount() > 0) {
+                  · {{ unreadAnnouncementsCount() }} sin leer
+                }
+              </p>
             </div>
             <a routerLink="/comunicados" class="prof-link">Ver todos</a>
           </header>
@@ -417,32 +470,73 @@
           @if (announcementsLoading()) {
             <p class="feed__empty">Cargando comunicados…</p>
           } @else if (announcements().length === 0) {
-            <section class="feed">
-              <p class="feed__empty">Aún no hay comunicados en este curso.</p>
-            </section>
+            <p class="feed__empty">Aún no hay comunicados en este curso.</p>
           } @else {
-            <ul class="bulletin-list">
-              @for (a of announcements(); track a.id) {
-                <li>
-                  <article class="bulletin" [class.bulletin--urgent]="a.urgent || a.priority === 'HIGH'">
-                    <p class="bulletin__kicker">
-                      {{ formatAnnouncementDate(a.publishedAt ?? a.date) }}
-                      @if (authorName(a)) {
-                        · {{ authorName(a) }}
-                      }
-                      · {{ announcementPriorityLabel(a.priority) }}
-                    </p>
-                    <h3 class="bulletin__title">
-                      <a [routerLink]="['/comunicados', a.id]">{{ a.title }}</a>
-                    </h3>
-                    <div class="bulletin__body">{{ a.fullContent || a.content }}</div>
-                    <div class="bulletin__actions">
-                      <a [routerLink]="['/comunicados', a.id]" class="prof-link">Leer</a>
-                    </div>
-                  </article>
-                </li>
-              }
-            </ul>
+            @if (unreadAnnouncementsCount() > 0 || urgentAnnouncementsCount() > 0) {
+              <div class="marks marks--3" aria-label="Resumen de comunicados">
+                <article class="mark-card">
+                  <span class="mark-card__roman">Total</span>
+                  <span class="mark-card__score">{{ announcements().length }}</span>
+                  <span class="mark-card__label">Publicados en este curso</span>
+                </article>
+                <article class="mark-card">
+                  <span class="mark-card__roman">Sin leer</span>
+                  <span class="mark-card__score" [class.is-empty]="unreadAnnouncementsCount() === 0">{{ unreadAnnouncementsCount() }}</span>
+                  <span class="mark-card__label">Pendientes de lectura</span>
+                </article>
+                <article class="mark-card mark-card--avg">
+                  <span class="mark-card__roman">Urgentes</span>
+                  <span class="mark-card__score" [class.is-empty]="urgentAnnouncementsCount() === 0">{{ urgentAnnouncementsCount() }}</span>
+                  <span class="mark-card__label">Prioridad alta</span>
+                </article>
+              </div>
+            }
+
+            <div class="toolbar">
+              <nav class="prof-tabs prof-tabs--inline" aria-label="Filtro de comunicados">
+                <button type="button" class="prof-tabs__btn" [class.active]="annFilter() === 'all'" (click)="annFilter.set('all')">Todos</button>
+                <button type="button" class="prof-tabs__btn" [class.active]="annFilter() === 'unread'" (click)="annFilter.set('unread')">Sin leer</button>
+                <button type="button" class="prof-tabs__btn" [class.active]="annFilter() === 'urgent'" (click)="annFilter.set('urgent')">Urgentes</button>
+              </nav>
+            </div>
+
+            @if (filteredAnnouncements().length === 0) {
+              <p class="feed__empty">No hay comunicados en este filtro.</p>
+            } @else {
+              <ul class="clip-list">
+                @for (a of filteredAnnouncements(); track a.id) {
+                  <li>
+                    <a
+                      [routerLink]="['/comunicados', a.id]"
+                      class="clip"
+                      [class.clip--urgent]="isUrgentAnnouncement(a)"
+                      [class.clip--unread]="!a.isRead"
+                    >
+                      <time class="clip__when" [attr.datetime]="a.publishedAt || a.date || null">
+                        <span class="clip__day">{{ sessionDay(a.publishedAt ?? a.date) }}</span>
+                        <span class="clip__month">{{ sessionMonth(a.publishedAt ?? a.date) }}</span>
+                      </time>
+                      <span class="clip__body">
+                        <span class="clip__kicker">
+                          {{ announcementTypeLabel(a) }}
+                          @if (isUrgentAnnouncement(a)) { · Urgente }
+                          @if (authorName(a)) { · {{ authorName(a) }} }
+                          @if (announcementAttachmentCount(a) > 0) {
+                            · {{ announcementAttachmentCount(a) }} {{ announcementAttachmentCount(a) === 1 ? 'adjunto' : 'adjuntos' }}
+                          }
+                        </span>
+                        <span class="clip__title">{{ a.title }}</span>
+                        @if (announcementExcerpt(a); as excerpt) {
+                          <span class="clip__excerpt">{{ excerpt }}</span>
+                        }
+                      </span>
+                      <span class="clip__mark">{{ a.isRead ? 'Leído' : 'Nuevo' }}</span>
+                      <span class="clip__cta">Leer</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
           }
         </section>
       }

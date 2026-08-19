@@ -3,6 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService, StudentAttendance, StudentCourse } from '../../services/student.service';
 
+interface AttendanceMonthGroup {
+  key: string;
+  label: string;
+  items: StudentAttendance[];
+}
+
 @Component({
   selector: 'app-asistencia',
   standalone: true,
@@ -31,6 +37,41 @@ export class AsistenciaComponent implements OnInit {
     if (!total) return 0;
     const ok = (s['PRESENT'] ?? 0) + (s['JUSTIFIED'] ?? 0);
     return Math.round((ok / total) * 100);
+  });
+
+  attendanceBar = computed(() => {
+    const total = this.totalSessions();
+    const s = this.summary();
+    const seg = (key: string) => {
+      const n = s[key] ?? 0;
+      return { n, pct: total ? (n / total) * 100 : 0 };
+    };
+    return {
+      present: seg('PRESENT'),
+      late: seg('LATE'),
+      justified: seg('JUSTIFIED'),
+      absent: seg('ABSENT'),
+    };
+  });
+
+  recordsByMonth = computed((): AttendanceMonthGroup[] => {
+    const map = new Map<string, StudentAttendance[]>();
+    for (const row of this.attendanceRecords()) {
+      const d = this.parseDay(row.date);
+      const key = d
+        ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        : 'sin-fecha';
+      const list = map.get(key) ?? [];
+      list.push(row);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => ({
+        key,
+        label: this.monthHeading(key, items[0]?.date),
+        items,
+      }));
   });
 
   constructor(private studentService: StudentService) {}
@@ -72,17 +113,43 @@ export class AsistenciaComponent implements OnInit {
     return this.summary()[key] ?? 0;
   }
 
+  private parseDay(dateStr?: string): Date | null {
+    if (!dateStr) return null;
+    const iso = /^\d{4}-\d{2}-\d{2}/.test(dateStr)
+      ? `${dateStr.slice(0, 10)}T12:00:00`
+      : dateStr;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  private monthHeading(key: string, sample?: string): string {
+    if (key === 'sin-fecha') return 'Sin fecha';
+    const d = this.parseDay(sample) ?? this.parseDay(`${key}-01`);
+    if (!d) return key;
+    const label = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  sessionDay(dateStr: string): string {
+    const d = this.parseDay(dateStr);
+    return d ? String(d.getDate()) : '—';
+  }
+
+  sessionMonth(dateStr: string): string {
+    const d = this.parseDay(dateStr);
+    if (!d) return '';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
   formatDay(dateStr: string): string {
-    if (!dateStr) return '—';
-    const d = new Date(`${dateStr}T12:00:00`);
-    return Number.isNaN(d.getTime())
-      ? dateStr
-      : d.toLocaleDateString('es-PE', {
-          weekday: 'short',
+    const d = this.parseDay(dateStr);
+    return d
+      ? d.toLocaleDateString('es-PE', {
+          weekday: 'long',
           day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        });
+          month: 'long',
+        })
+      : dateStr || '—';
   }
 
   courseLabel(rec: StudentAttendance): string {
@@ -96,23 +163,5 @@ export class AsistenciaComponent implements OnInit {
     if (u === 'LATE') return 'Tardanza';
     if (u === 'JUSTIFIED') return 'Justificado';
     return status || '—';
-  }
-
-  rowStatusClass(status: string): string {
-    const u = (status || '').toUpperCase();
-    if (u === 'PRESENT') return 'row-present';
-    if (u === 'ABSENT') return 'row-absent';
-    if (u === 'LATE') return 'row-late';
-    if (u === 'JUSTIFIED') return 'row-justified';
-    return '';
-  }
-
-  badgeClass(status: string): string {
-    const u = (status || '').toUpperCase();
-    if (u === 'PRESENT') return 'badge-success';
-    if (u === 'ABSENT') return 'badge-error';
-    if (u === 'LATE') return 'badge-warning';
-    if (u === 'JUSTIFIED') return 'badge-info';
-    return '';
   }
 }

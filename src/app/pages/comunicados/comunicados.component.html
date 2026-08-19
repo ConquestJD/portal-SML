@@ -42,35 +42,53 @@
       </section>
 
       <section class="feed" aria-label="Listado">
-        @if (announcements().length === 0) {
-          <p class="feed__empty">Sin comunicados para mostrar</p>
+        <div class="toolbar">
+          <nav class="tabs" aria-label="Filtro de comunicados">
+            <button type="button" class="tabs__btn" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todos</button>
+            <button type="button" class="tabs__btn" [class.active]="filter() === 'unread'" (click)="filter.set('unread')">Sin leer</button>
+            <button type="button" class="tabs__btn" [class.active]="filter() === 'urgent'" (click)="filter.set('urgent')">Urgentes</button>
+          </nav>
+        </div>
+
+        @if (filteredAnnouncements().length === 0) {
+          <p class="feed__empty">
+            @if (announcements().length === 0) {
+              Sin comunicados para mostrar
+            } @else {
+              No hay comunicados en este filtro
+            }
+          </p>
         } @else {
-          <ul class="feed__list">
-            @for (a of announcements(); track a.id) {
+          <ul class="clip-list">
+            @for (a of filteredAnnouncements(); track a.id) {
               <li>
-                <article class="com-row" [attr.data-urgent]="isUrgent(a) || null" [attr.data-unread]="!a.isRead || null">
-                  <a [routerLink]="detailCommands(a.id)" class="com-row__link">
-                    <span class="com-row__body">
-                      <span class="com-row__meta">
+                <article class="clip" [class.clip--urgent]="isUrgent(a)" [class.clip--unread]="!a.isRead">
+                  <a [routerLink]="detailCommands(a.id)" class="clip__link">
+                    <time class="clip__when" [attr.datetime]="datetimeAttr(a)">
+                      <span class="clip__day">{{ sessionDay(a) }}</span>
+                      <span class="clip__month">{{ sessionMonth(a) }}</span>
+                    </time>
+                    <span class="clip__body">
+                      <span class="clip__kicker">
                         {{ typeLabel(a.type) }}
                         @if (isUrgent(a)) { · Urgente }
-                        · {{ formatDate(a) }}
-                      </span>
-                      <span class="com-row__title">{{ a.title }}</span>
-                      <span class="com-row__excerpt">{{ excerpt(a.content) }}</span>
-                      <span class="com-row__author">
-                        {{ a.author?.name || '—' }}
-                        @if ((a.attachmentCount ?? a.attachments?.length ?? 0) > 0) {
-                          · {{ a.attachmentCount ?? a.attachments.length }} adjunto(s)
+                        @if (a.course) { · {{ a.course }} }
+                        @if (attachmentCount(a) > 0) {
+                          · {{ attachmentCount(a) }} {{ attachmentCount(a) === 1 ? 'adjunto' : 'adjuntos' }}
                         }
                       </span>
+                      <span class="clip__title">{{ a.title }}</span>
+                      @if (excerpt(a.content); as text) {
+                        <span class="clip__excerpt">{{ text }}</span>
+                      }
+                      <span class="clip__author">{{ a.author?.name || '—' }} · {{ formatDate(a) }}</span>
                     </span>
-                    <span class="com-row__status" [class.com-row__status--unread]="!a.isRead">
+                    <span class="clip__status" [class.clip__status--unread]="!a.isRead">
                       {{ a.isRead ? 'Leído' : 'Nuevo' }}
                     </span>
                   </a>
                   @if (!a.isRead) {
-                    <button type="button" class="com-row__mark" (click)="markAsRead(a.id, $event)">
+                    <button type="button" class="clip__mark" (click)="markAsRead(a.id, $event)">
                       Marcar leído
                     </button>
                   }

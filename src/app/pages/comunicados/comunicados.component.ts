@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AnnouncementService, Announcement } from '../../services/announcement.service';
 
+export type ComFilter = 'all' | 'unread' | 'urgent';
+
 @Component({
   selector: 'app-comunicados',
   standalone: true,
@@ -17,12 +19,22 @@ export class ComunicadosComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   announcements = signal<Announcement[]>([]);
+  filter = signal<ComFilter>('all');
 
   unreadCount = computed(() => this.announcements().filter((a) => !a.isRead).length);
 
   urgentCount = computed(() =>
-    this.announcements().filter((a) => (a.priority || '').toUpperCase() === 'HIGH').length,
+    this.announcements().filter((a) => this.isUrgent(a)).length,
   );
+
+  filteredAnnouncements = computed(() => {
+    const f = this.filter();
+    return this.announcements().filter((a) => {
+      if (f === 'unread') return !a.isRead;
+      if (f === 'urgent') return this.isUrgent(a);
+      return true;
+    });
+  });
 
   ngOnInit() {
     this.load();
@@ -93,12 +105,38 @@ export class ComunicadosComponent implements OnInit {
   }
 
   isUrgent(a: Announcement): boolean {
-    return (a.priority || '').toUpperCase() === 'HIGH';
+    return !!(a.urgent || (a.priority || '').toUpperCase() === 'HIGH' || (a.type || '').toUpperCase() === 'URGENT');
   }
 
   excerpt(text: string, max = 180): string {
     const t = (text ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     if (t.length <= max) return t;
     return `${t.slice(0, max).trim()}…`;
+  }
+
+  sessionDay(a: Announcement): string {
+    const d = this.parseDay(a.date ?? a.publishedAt);
+    return d ? String(d.getDate()) : '—';
+  }
+
+  sessionMonth(a: Announcement): string {
+    const d = this.parseDay(a.date ?? a.publishedAt);
+    if (!d) return '';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
+  datetimeAttr(a: Announcement): string | null {
+    return a.publishedAt || a.date || null;
+  }
+
+  private parseDay(raw?: string): Date | null {
+    if (!raw) return null;
+    const iso = /^\d{4}-\d{2}-\d{2}/.test(raw) ? `${raw.slice(0, 10)}T12:00:00` : raw;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  attachmentCount(a: Announcement): number {
+    return a.attachmentCount ?? a.attachments?.length ?? 0;
   }
 }
