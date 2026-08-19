@@ -174,6 +174,22 @@ export interface Material {
   createdAt?: string;
 }
 
+/** Prefijo invisible: el material se muestra como carpeta, no como archivos sueltos. */
+const MATERIAL_FOLDER_MARK = '\u2060';
+
+export function isMaterialFolder(m: { title?: string }): boolean {
+  return (m.title ?? '').startsWith(MATERIAL_FOLDER_MARK);
+}
+
+export function materialFolderTitle(m: { title?: string }): string {
+  return (m.title ?? '').replace(/^\u2060+/, '').trim() || 'Carpeta';
+}
+
+export function encodeMaterialFolderTitle(name: string): string {
+  const t = name.trim();
+  return `${MATERIAL_FOLDER_MARK}${t || 'Carpeta'}`;
+}
+
 /** Comunicado publicado por el docente para un curso (asignación). */
 export interface TeacherCourseAnnouncement {
   id: string;

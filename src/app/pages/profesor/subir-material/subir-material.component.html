@@ -20,16 +20,27 @@
 
       <div class="compose__form">
         <div class="compose__main">
-          <label class="visually-hidden" for="title">Nombre (opcional)</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            class="compose__headline"
-            [ngModel]="title()"
-            (ngModelChange)="title.set($event)"
-            placeholder="Nombre opcional del material"
-          />
+          @if (publishKind() === 'folder') {
+            <label class="visually-hidden" for="title">Nombre de la carpeta</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              class="compose__headline"
+              [ngModel]="title()"
+              (ngModelChange)="title.set($event)"
+              placeholder="Nombre de la carpeta"
+              required
+            />
+          } @else {
+            <p class="compose__lead">
+              @if (isEditMode()) {
+                Archivos en {{ destLabel() }}
+              } @else {
+                Los archivos se guardan en {{ destLabel() }}, sin crear una carpeta extra.
+              }
+            </p>
+          }
 
           <label class="visually-hidden" for="description">Nota</label>
           <textarea
@@ -152,7 +163,7 @@
 
         <aside class="compose__aside">
           <section class="rule">
-            <h2>Dónde se guarda</h2>
+            <h2>1. Dónde se guarda</h2>
             <div class="ways" role="radiogroup" aria-label="Destino del material">
               @for (period of periods(); track period.id) {
                 <label class="way" [class.is-on]="destId() === period.id">
@@ -162,16 +173,37 @@
               }
               <label class="way" [class.is-on]="destId() === 'suelto'">
                 <input type="radio" name="destino" value="suelto" [ngModel]="destId()" (ngModelChange)="destId.set($event)" />
-                <span class="way__name">Sin carpeta</span>
-                <span class="way__hint">Queda suelto, fuera de los bimestres</span>
+                <span class="way__name">Fuera de bimestres</span>
+                <span class="way__hint">No entra en las carpetas I–IV</span>
               </label>
             </div>
           </section>
 
           <section class="rule">
+            <h2>2. Cómo se publica</h2>
+            <div class="ways" role="radiogroup" aria-label="Tipo de publicación">
+              <label class="way" [class.is-on]="publishKind() === 'files'">
+                <input type="radio" name="publishKind" value="files" [ngModel]="publishKind()" (ngModelChange)="publishKind.set($event)" />
+                <span class="way__name">Solo archivos</span>
+                <span class="way__hint">Sin carpeta extra</span>
+              </label>
+              <label class="way" [class.is-on]="publishKind() === 'folder'">
+                <input type="radio" name="publishKind" value="folder" [ngModel]="publishKind()" (ngModelChange)="publishKind.set($event)" />
+                <span class="way__name">Carpeta nueva</span>
+                <span class="way__hint">Nombra la carpeta y sube archivos</span>
+              </label>
+            </div>
+            <p class="rule__hint">{{ kindHint() }}</p>
+          </section>
+
+          <section class="rule">
             <h2>Contenido</h2>
             <p class="rule__score">{{ fileCount() }}</p>
-            <p class="rule__hint">{{ fileCount() === 1 ? 'archivo' : 'archivos' }} · {{ destLabel() }}</p>
+            <p class="rule__hint">
+              {{ fileCount() === 1 ? 'archivo' : 'archivos' }}
+              · {{ publishKind() === 'folder' ? 'en carpeta' : 'sueltos' }}
+              · {{ destLabel() }}
+            </p>
           </section>
 
           @if (!isEditMode()) {
@@ -192,7 +224,7 @@
               <button
                 type="button"
                 class="prof-btn prof-btn--solid"
-                [disabled]="isSaving()"
+                [disabled]="!canSaveEdit() || isSaving()"
                 (click)="saveEdit()"
               >
                 {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
@@ -211,7 +243,16 @@
           </div>
 
           @if (!isEditMode() && !canSave()) {
-            <p class="compose__need">Agrega al menos un archivo o enlace.</p>
+            <p class="compose__need">
+              @if (publishKind() === 'folder' && !title().trim()) {
+                Falta el nombre de la carpeta.
+              } @else {
+                Agrega al menos un archivo o enlace.
+              }
+            </p>
+          }
+          @if (isEditMode() && !canSaveEdit()) {
+            <p class="compose__need">Falta el nombre de la carpeta.</p>
           }
         </aside>
       </div>

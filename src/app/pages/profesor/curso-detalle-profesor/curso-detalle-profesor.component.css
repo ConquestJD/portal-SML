@@ -565,6 +565,34 @@ button.pulse__item:hover { background: #ffe8eb; }
 
 .bin__body { padding: .25rem 1.15rem 1rem; }
 
+.archive__folders {
+  list-style: none;
+  margin: .45rem 0 .35rem;
+  padding: 0;
+}
+
+.nest {
+  margin: 0 0 .15rem;
+  padding: .15rem 0 .15rem .85rem;
+  border-left: 3px solid var(--line);
+}
+
+.nest.is-open { border-left-color: var(--navy); }
+
+.nest__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.nest__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
 .archive__files {
   list-style: none;
   margin: .35rem 0 0;

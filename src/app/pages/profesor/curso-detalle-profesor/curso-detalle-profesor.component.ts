@@ -16,6 +16,8 @@ import {
   AttendanceHistoryBucket,
   TeacherExam,
   filterTeacherRosterByCourseGrade,
+  isMaterialFolder,
+  materialFolderTitle,
 } from '../../../services/teacher.service';
 import { AnnouncementService } from '../../../services/announcement.service';
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
@@ -56,11 +58,18 @@ interface MaterialBinFile {
   mimeType?: string;
 }
 
+interface MaterialBinFolder {
+  id: string;
+  title: string;
+  files: MaterialBinFile[];
+}
+
 interface MaterialBin {
   id: string;
   title: string;
   kind: 'period' | 'loose' | 'placeholder';
   files: MaterialBinFile[];
+  folders: MaterialBinFolder[];
 }
 
 @Component({
@@ -168,7 +177,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   materialGroups = computed((): MaterialBin[] => {
     const materials = this.materials();
-    const flatten = (list: Material[]): MaterialBinFile[] =>
+    const toFiles = (list: Material[]): MaterialBinFile[] =>
       list.flatMap(m =>
         (m.files ?? []).map(f => ({
           id: f.id,
@@ -179,25 +188,40 @@ export class CursoDetalleProfesorComponent implements OnInit {
           mimeType: f.mimeType,
         })),
       );
+    const toFolders = (list: Material[]): MaterialBinFolder[] =>
+      list
+        .filter(isMaterialFolder)
+        .map(m => ({
+          id: m.id,
+          title: materialFolderTitle(m),
+          files: toFiles([m]),
+        }));
+    const split = (list: Material[]) => ({
+      folders: toFolders(list),
+      files: toFiles(list.filter(m => !isMaterialFolder(m))),
+    });
+    const inPeriod = (periodId: string) =>
+      materials.filter(m => (m.periodId ?? m.period?.id) === periodId);
     const periods = this.periods();
     const bins: MaterialBin[] = periods.length
       ? periods.map(p => ({
           id: p.id,
           title: p.name,
           kind: 'period' as const,
-          files: flatten(materials.filter(m => (m.periodId ?? m.period?.id) === p.id)),
+          ...split(inPeriod(p.id)),
         }))
       : ['I Bimestre', 'II Bimestre', 'III Bimestre', 'IV Bimestre'].map((title, i) => ({
           id: `_ph-${i}`,
           title,
           kind: 'placeholder' as const,
           files: [] as MaterialBinFile[],
+          folders: [] as MaterialBinFolder[],
         }));
     bins.push({
       id: '_loose',
-      title: 'Sin carpeta',
+      title: 'Fuera de bimestres',
       kind: 'loose',
-      files: flatten(materials.filter(m => !(m.periodId ?? m.period?.id))),
+      ...split(materials.filter(m => !(m.periodId ?? m.period?.id))),
     });
     return bins;
   });
@@ -469,6 +493,19 @@ export class CursoDetalleProfesorComponent implements OnInit {
   uploadDestParams(bin: MaterialBin): Record<string, string> {
     if (bin.kind === 'loose' || bin.kind === 'placeholder') return { destino: 'suelto' };
     return { destino: bin.id };
+  }
+
+  binIsEmpty(bin: MaterialBin): boolean {
+    return bin.files.length === 0 && bin.folders.length === 0;
+  }
+
+  binCountLabel(bin: MaterialBin): string {
+    const folders = bin.folders.length;
+    const files = bin.files.length + bin.folders.reduce((n, f) => n + f.files.length, 0);
+    const parts: string[] = [];
+    if (folders) parts.push(`${folders} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
+    parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    return parts.join(' · ');
   }
 
   toggleMaterialFolder(materialId: string) {

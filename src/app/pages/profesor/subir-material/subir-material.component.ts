@@ -2,7 +2,15 @@ import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AcademicPeriod, Material, TeacherCourse, TeacherService } from '../../../services/teacher.service';
+import {
+  AcademicPeriod,
+  Material,
+  TeacherCourse,
+  TeacherService,
+  encodeMaterialFolderTitle,
+  isMaterialFolder,
+  materialFolderTitle,
+} from '../../../services/teacher.service';
 
 interface MaterialLink {
   id: string;
@@ -42,12 +50,19 @@ export class SubirMaterialComponent implements OnInit {
   uploadingMoreFiles = signal(false);
   periods = signal<AcademicPeriod[]>([]);
   destId = signal('suelto');
+  /** Carpeta nueva dentro del destino, o archivos sueltos en esa carpeta. */
+  publishKind = signal<'folder' | 'files'>('files');
 
   pageTitle = computed(() => this.isEditMode() ? 'Editar material' : 'Subir material');
 
-  canSave = computed(() => this.selectedFiles().length > 0 || this.links().length > 0);
+  canSave = computed(() => {
+    const hasContent = this.selectedFiles().length > 0 || this.links().length > 0;
+    if (!hasContent) return false;
+    if (this.publishKind() === 'folder') return this.title().trim().length > 0;
+    return true;
+  });
 
-  canSaveEdit = computed(() => this.title().trim().length > 0);
+  canSaveEdit = computed(() => this.publishKind() !== 'folder' || this.title().trim().length > 0);
 
   fileCount = computed(() =>
     this.isEditMode()
@@ -206,7 +221,11 @@ export class SubirMaterialComponent implements OnInit {
       desc = desc ? `${desc}\n\n${block}` : block;
     }
     const fd = new FormData();
-    fd.append('title', this.title().trim() || this.selectedFiles()[0]?.name || 'Material');
+    const title =
+      this.publishKind() === 'folder'
+        ? encodeMaterialFolderTitle(this.title())
+        : (this.title().trim() || this.selectedFiles()[0]?.name || 'Material');
+    fd.append('title', title);
     if (desc) fd.append('description', desc);
     if (this.destId() && this.destId() !== 'suelto') fd.append('periodId', this.destId());
     for (const file of this.selectedFiles()) fd.append('files', file);
@@ -229,7 +248,10 @@ export class SubirMaterialComponent implements OnInit {
     this.error.set('');
     this.teacherService
       .updateMaterial(this.courseId(), this.materialId(), {
-        title: this.title().trim() || this.existingMaterial()?.title,
+        title:
+          this.publishKind() === 'folder'
+            ? encodeMaterialFolderTitle(this.title())
+            : (this.title().trim() || this.existingMaterial()?.title),
         description: this.description().trim() || undefined,
         periodId: this.destId() === 'suelto' ? null : this.destId(),
       })
@@ -263,7 +285,8 @@ export class SubirMaterialComponent implements OnInit {
         const mat = materials.find(m => m.id === mId);
         if (mat) {
           this.existingMaterial.set(mat);
-          this.title.set(mat.title);
+          this.publishKind.set(isMaterialFolder(mat) ? 'folder' : 'files');
+          this.title.set(isMaterialFolder(mat) ? materialFolderTitle(mat) : (mat.title ?? ''));
           this.description.set(mat.description ?? '');
           this.destId.set(mat.periodId ?? mat.period?.id ?? 'suelto');
         } else {
@@ -279,11 +302,27 @@ export class SubirMaterialComponent implements OnInit {
   }
 
   destLabel(): string {
-    if (!this.destId() || this.destId() === 'suelto') return 'Sin carpeta';
+    if (!this.destId() || this.destId() === 'suelto') return 'Fuera de bimestres';
     return this.periods().find(p => p.id === this.destId())?.name ?? 'Bimestre';
   }
 
+  kindHint(): string {
+    const dest = this.destLabel();
+    if (this.publishKind() === 'folder') {
+      return dest === 'Fuera de bimestres'
+        ? 'Se crea una carpeta fuera de los bimestres, con los archivos dentro.'
+        : `Se crea una carpeta dentro de ${dest}, con los archivos dentro.`;
+    }
+    return dest === 'Fuera de bimestres'
+      ? 'Los archivos quedan sueltos, fuera de los bimestres.'
+      : `Los archivos quedan dentro de ${dest}, sin una carpeta extra.`;
+  }
+
   private applyDestFromQuery(periods: AcademicPeriod[]) {
+    const modo = (this.route.snapshot.queryParamMap.get('modo') ?? '').toLowerCase();
+    if (modo === 'carpeta' || modo === 'folder') this.publishKind.set('folder');
+    else if (modo === 'archivos' || modo === 'files') this.publishKind.set('files');
+
     const raw = this.route.snapshot.queryParamMap.get('destino') ?? '';
     if (raw === 'suelto' || raw === 'none' || raw === '') {
       if (raw === 'suelto' || raw === 'none') {

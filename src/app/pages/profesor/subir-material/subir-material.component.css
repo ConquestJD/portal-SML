@@ -71,6 +71,16 @@
 
 .compose__headline::placeholder { color: rgba(0 51 102 / .35); }
 
+.compose__lead {
+  margin: 0 0 .15rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 600;
+  font-style: italic;
+  color: var(--navy);
+  line-height: 1.3;
+}
+
 .compose__prompt {
   width: 100%;
   margin-top: 1.1rem;
