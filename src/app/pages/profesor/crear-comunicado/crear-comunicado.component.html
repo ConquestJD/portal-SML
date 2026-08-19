@@ -1,192 +1,157 @@
-<div class="prof-page">
+<div class="prof-page compose">
 
-  <header class="prof-page__hero">
-    <img class="prof-page__hero-photo" src="/images/heroes/announcements.webp" alt="" decoding="async" />
-    <div class="prof-page__hero-veil"></div>
-    <div class="prof-page__hero-content">
-      <img src="/only-logo.png" alt="" class="prof-page__crest" />
-      <div>
-        <h1 class="prof-page__title">
-          @if (isEditMode()) {
-            Editar comunicado
-          } @else {
-            Nuevo comunicado
-          }
-        </h1>
-        @if (course()) {
-          <p class="prof-page__brand">{{ courseSubtitle() }}</p>
-        } @else {
-          <p class="prof-page__brand">Santa María Laura</p>
-        }
-      </div>
-      @if (course()) {
-        <div class="prof-page__hero-actions">
-          <button type="button" class="prof-btn prof-btn--ghost" (click)="cancel()">Volver al curso</button>
-        </div>
-      }
-    </div>
+  <header class="compose__mast">
+    <button type="button" class="compose__back" (click)="cancel()">← Comunicados del curso</button>
+    @if (courseSubtitle()) {
+      <p class="compose__kicker">{{ courseSubtitle() }}</p>
+    }
+    <h1 class="compose__title">{{ pageTitle() }}</h1>
   </header>
 
   <div class="prof-page__body">
 
     @if (loading()) {
-      <p class="feed__empty">Cargando curso…</p>
+      <p class="feed__empty">Cargando…</p>
     } @else if (error() && !course()) {
-      <section class="feed">
-        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
-        <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()">Volver</button>
-      </section>
-    } @else if (course()) {
+      <div class="prof-alert" role="alert">{{ error() }}</div>
+      <button type="button" class="prof-link" (click)="cancel()">Volver</button>
+    } @else {
 
       @if (error()) {
-        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
+        <div class="prof-alert" role="alert">{{ error() }}</div>
       }
 
-      <p class="com-hint">
-        @if (isEditMode()) {
-          Los cambios se aplican al guardar. Los archivos ya publicados se mantienen; puedes agregar más abajo.
-        } @else {
-          Se publica de inmediato. Lo verán los estudiantes de este curso y los padres vinculados a esos estudiantes en el portal.
-        }
-      </p>
+      <form (ngSubmit)="saveComunicado()" class="compose__form">
+        <div class="compose__main">
+          <label class="visually-hidden" for="title">Título</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            class="compose__headline"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            placeholder="Título del comunicado"
+            required
+          />
 
-      <form (ngSubmit)="saveComunicado()" class="com-form">
+          <label class="visually-hidden" for="content">Mensaje</label>
+          <textarea
+            id="content"
+            name="content"
+            class="compose__prompt"
+            rows="12"
+            [ngModel]="content()"
+            (ngModelChange)="content.set($event)"
+            placeholder="Escribe el mensaje. Lo verán los alumnos y los apoderados de este curso."
+            required
+          ></textarea>
 
-        <section class="feed com-section">
-          <div class="feed__head">
-            <h2>Contenido</h2>
-          </div>
-          <div class="com-field">
-            <label for="title" class="com-label">
-              Título <span class="com-required">*</span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              class="com-input"
-              [ngModel]="title()"
-              (ngModelChange)="title.set($event)"
-              placeholder="Ej: Recordatorio de evaluación"
-              required
-            />
-          </div>
-          <div class="com-field">
-            <label for="content" class="com-label">
-              Mensaje <span class="com-required">*</span>
-            </label>
-            <textarea
-              id="content"
-              name="content"
-              class="com-input"
-              rows="8"
-              [ngModel]="content()"
-              (ngModelChange)="content.set($event)"
-              placeholder="Escribe el comunicado…"
-              required
-            ></textarea>
-          </div>
-        </section>
-
-        <section class="feed com-section">
-          <div class="feed__head">
-            <h2>Prioridad</h2>
-          </div>
-          <div class="com-field">
-            <label for="priority" class="com-label">Nivel</label>
-            <select
-              id="priority"
-              name="priority"
-              class="com-input com-select"
-              [ngModel]="priority()"
-              (ngModelChange)="priority.set($event)"
+          <section class="refs">
+            <header class="refs__head">
+              <h2>Adjuntos</h2>
+              @if (remainingSlots() > 0) {
+                <span>Opcional · {{ remainingSlots() }} disponibles</span>
+              } @else {
+                <span>Límite de 5 archivos</span>
+              }
+            </header>
+            <div
+              class="refs__zone"
+              [class.is-over]="fileDragOver()"
+              [class.is-full]="remainingSlots() <= 0"
+              (dragover)="onFileDragOver($event)"
+              (dragenter)="onFileDragOver($event)"
+              (dragleave)="onFileDragLeave($event)"
+              (drop)="onFileDrop($event)"
             >
-              <option value="LOW">Normal</option>
-              <option value="MEDIUM">Importante</option>
-              <option value="HIGH">Urgente</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="feed com-section">
-          <div class="feed__head">
-            <h2>Adjuntos (opcional)</h2>
-          </div>
-
-          @if (isEditMode() && existingAttachments().length > 0) {
-            <p class="com-hint">Archivos actuales (puedes descargarlos):</p>
-            <ul class="com-att-list">
-              @for (att of existingAttachments(); track att.id) {
-                <li class="com-att-row">
-                  <span class="com-att-name">{{ att.name }}</span>
-                  <button type="button" class="prof-link" (click)="openExistingAttachment(att)">Descargar</button>
-                </li>
-              }
-            </ul>
-          }
-
-          <label class="com-upload">
-            <span class="prof-btn prof-btn--solid">Seleccionar archivos</span>
-            <input
-              type="file"
-              (change)="onFileSelected($event)"
-              multiple
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
-            />
-          </label>
-          <p class="com-hint">
-            @if (isEditMode()) {
-              Puedes agregar hasta {{ 5 - existingAttachments().length }} archivo(s) más (máx. 5 en total por comunicado). Máx. 20 MB c/u.
-            } @else {
-              Hasta 5 archivos. Máx. 20 MB c/u.
-            }
-          </p>
-
-          @if (selectedFiles().length > 0) {
-            <ul class="com-att-list">
-              @for (f of selectedFiles(); track fileKey(f)) {
-                <li class="com-att-row">
-                  <span class="com-att-info">
-                    <span class="com-att-name">{{ f.name }}</span>
-                    <span class="com-att-size">{{ formatFileSize(f.size) }}</span>
-                  </span>
-                  <button type="button" class="prof-link prof-link--danger" (click)="removeFile(f)" title="Quitar">Quitar</button>
-                </li>
-              }
-            </ul>
-          }
-        </section>
-
-        @if (title() || content()) {
-          <section class="feed com-section">
-            <div class="feed__head">
-              <h2>Vista previa</h2>
+              <input
+                type="file"
+                id="file-upload"
+                class="file-input"
+                multiple
+                (change)="onFileSelected($event)"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
+                [disabled]="remainingSlots() <= 0"
+              />
+              <label for="file-upload" class="refs__drop">
+                Arrastra archivos aquí o haz clic para elegirlos
+              </label>
             </div>
-            <div class="com-preview">
-              <div class="com-preview__head">
-                <h3 class="com-preview__title">{{ title() || 'Título' }}</h3>
-                <span class="com-badge" [ngClass]="priorityBadgeClass()">{{ priorityLabel() }}</span>
-              </div>
-              <p class="com-preview__meta">{{ courseSubtitle() }}</p>
-              <div class="com-preview__body"><p>{{ content() || '…' }}</p></div>
+
+            @if (isEditMode() && existingAttachments().length) {
+              <ul class="refs__list">
+                @for (att of existingAttachments(); track att.id) {
+                  <li>
+                    <span class="refs__name">{{ att.name }}</span>
+                    <span class="refs__size">Publicado</span>
+                    <button type="button" class="prof-link" (click)="openExistingAttachment(att)">Abrir</button>
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (selectedFiles().length) {
+              <ul class="refs__list">
+                @for (f of selectedFiles(); track fileKey(f)) {
+                  <li>
+                    <span class="refs__name">{{ f.name }}</span>
+                    <span class="refs__size">{{ formatFileSize(f.size) }}</span>
+                    <button type="button" class="prof-link prof-link--danger" (click)="removeFile(f)">Quitar</button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+
+        <aside class="compose__aside">
+          <section class="rule">
+            <h2>Prioridad</h2>
+            <div class="ways" role="radiogroup" aria-label="Prioridad">
+              <label class="way" [class.is-on]="priority() === 'LOW'">
+                <input type="radio" name="priority" value="LOW" [ngModel]="priority()" (ngModelChange)="priority.set($event)" />
+                <span class="way__name">Normal</span>
+              </label>
+              <label class="way" [class.is-on]="priority() === 'MEDIUM'">
+                <input type="radio" name="priority" value="MEDIUM" [ngModel]="priority()" (ngModelChange)="priority.set($event)" />
+                <span class="way__name">Importante</span>
+              </label>
+              <label class="way" [class.is-on]="priority() === 'HIGH'">
+                <input type="radio" name="priority" value="HIGH" [ngModel]="priority()" (ngModelChange)="priority.set($event)" />
+                <span class="way__name">Urgente</span>
+                <span class="way__hint">Se destaca en el boletín</span>
+              </label>
             </div>
           </section>
-        }
 
-        <div class="com-actions">
-          <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()" [disabled]="saving()">Cancelar</button>
-          <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || saving()">
-            @if (saving()) {
-              {{ isEditMode() ? 'Guardando…' : 'Publicando…' }}
-            } @else {
-              @if (isEditMode()) {
-                Guardar cambios
-              } @else {
-                Publicar comunicado
-              }
-            }
-          </button>
-        </div>
+          <section class="rule">
+            <h2>Quién lo ve</h2>
+            <p class="rule__hint">Estudiantes de este curso y sus apoderados. Se publica de inmediato.</p>
+          </section>
+
+          @if (title() || content()) {
+            <section class="rule rule--preview">
+              <h2>Así se verá</h2>
+              <p class="preview__kicker">
+                <span class="preview__badge" [class.is-urgent]="priority() === 'HIGH'">{{ priorityLabel() }}</span>
+              </p>
+              <p class="preview__title">{{ title() || 'Título' }}</p>
+              <p class="preview__body">{{ content() || '…' }}</p>
+            </section>
+          }
+
+          <div class="compose__actions">
+            <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || saving()">
+              {{ saving() ? (isEditMode() ? 'Guardando…' : 'Publicando…') : (isEditMode() ? 'Guardar cambios' : 'Publicar comunicado') }}
+            </button>
+            <button type="button" class="prof-link" (click)="cancel()" [disabled]="saving()">Cancelar</button>
+          </div>
+
+          @if (!canSave()) {
+            <p class="compose__need">Faltan el título o el mensaje.</p>
+          }
+        </aside>
       </form>
     }
   </div>

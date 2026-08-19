@@ -42,13 +42,18 @@ export class CrearComunicadoComponent implements OnInit {
   existingAttachments = signal<AnnouncementAttachment[]>([]);
   loadedType = signal<string>('GENERAL');
   loadedTargetRoles = signal<string[]>([]);
+  fileDragOver = signal(false);
+
+  pageTitle = computed(() => this.isEditMode() ? 'Editar comunicado' : 'Nuevo comunicado');
+  canSave = computed(() => this.title().trim().length > 0 && this.content().trim().length > 0);
+  remainingSlots = computed(() => Math.max(0, 5 - this.existingAttachments().length - this.selectedFiles().length));
 
   courseSubtitle = computed(() => {
     const c = this.course();
     if (!c) return '';
     const name = c.course?.name ?? c.name ?? '';
     const g = this.courseGradeLabel();
-    return g ? `${name} — ${g}` : name;
+    return g ? `${name} · ${g}` : name;
   });
 
   ngOnInit() {
@@ -124,10 +129,6 @@ export class CrearComunicadoComponent implements OnInit {
     });
   }
 
-  canSave(): boolean {
-    return this.title().trim().length > 0 && this.content().trim().length > 0;
-  }
-
   fileKey(f: File): string {
     return `${f.name}-${f.size}-${f.lastModified}`;
   }
@@ -140,12 +141,53 @@ export class CrearComunicadoComponent implements OnInit {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    const added = Array.from(input.files ?? []);
-    const existing = this.existingAttachments().length;
-    const maxNew = Math.max(0, 5 - existing);
-    const merged = [...this.selectedFiles(), ...added].slice(0, maxNew);
-    this.selectedFiles.set(merged);
+    this.addFiles(Array.from(input.files ?? []));
     input.value = '';
+  }
+
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.fileDragOver.set(true);
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const zone = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && zone.contains(next)) return;
+    this.fileDragOver.set(false);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.fileDragOver.set(false);
+    this.addFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  private addFiles(incoming: File[]) {
+    const allowed = this.filterAcceptedFiles(incoming);
+    if (!allowed.length) return;
+    const maxNew = Math.max(0, 5 - this.existingAttachments().length);
+    const current = this.selectedFiles();
+    const seen = new Set(current.map(f => this.fileKey(f)));
+    const next = [...current];
+    for (const f of allowed) {
+      const k = this.fileKey(f);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      next.push(f);
+      if (next.length >= maxNew) break;
+    }
+    this.selectedFiles.set(next.slice(0, maxNew));
+  }
+
+  private filterAcceptedFiles(files: File[]): File[] {
+    const ok = /\.(pdf|docx?|pptx?|xlsx?|jpe?g|png|zip)$/i;
+    return files.filter(f => ok.test(f.name) && f.size <= 20 * 1024 * 1024);
   }
 
   removeFile(file: File) {
