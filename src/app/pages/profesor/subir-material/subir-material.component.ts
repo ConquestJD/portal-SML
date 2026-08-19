@@ -1,28 +1,13 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { TeacherService, Material, TeacherCourse } from '../../../services/teacher.service';
 
-/** Ítem dentro de una carpeta (solo archivos o enlaces; sin subcarpetas). */
-export interface FolderItem {
+interface MaterialLink {
   id: string;
   name: string;
-  type: string;
-  size: number;
-  file?: File;
-  isLink: boolean;
-  url?: string;
-}
-
-/** Carpeta de primer nivel: agrupa archivos (y enlaces opcionales en descripción). */
-export interface MaterialFolder {
-  id: string;
-  name: string;
-  description: string;
-  materials: FolderItem[];
-  expanded: ReturnType<typeof signal<boolean>>;
+  url: string;
 }
 
 function randomId(prefix: string): string {
@@ -43,24 +28,33 @@ export class SubirMaterialComponent implements OnInit {
   isLoading = signal(true);
   isSaving = signal(false);
   error = signal('');
-  success = signal('');
+  courseLabel = signal('');
 
-  course = signal<{ name: string; grade: string; section: string } | null>(null);
-  newUnitName = signal('');
-  newUnitDescription = signal('');
-  units = signal<MaterialFolder[]>([]);
+  title = signal('');
+  description = signal('');
+  selectedFiles = signal<File[]>([]);
+  links = signal<MaterialLink[]>([]);
+  linkName = signal('');
+  linkUrl = signal('');
+  fileDragOver = signal(false);
 
-  formData = signal({ title: '', description: '' });
   existingMaterial = signal<Material | null>(null);
   uploadingMoreFiles = signal(false);
 
+  pageTitle = computed(() => this.isEditMode() ? 'Editar material' : 'Subir material');
+
   canSave = computed(() => {
-    const list = this.units();
-    if (!list.length) return false;
-    return list.every((u) => u.materials.length > 0);
+    if (!this.title().trim()) return false;
+    return this.selectedFiles().length > 0 || this.links().length > 0;
   });
 
-  canSaveEdit = computed(() => this.formData().title.trim().length > 0);
+  canSaveEdit = computed(() => this.title().trim().length > 0);
+
+  fileCount = computed(() =>
+    this.isEditMode()
+      ? (this.existingMaterial()?.files?.length ?? 0)
+      : this.selectedFiles().length,
+  );
 
   constructor(
     private route: ActivatedRoute,
@@ -75,12 +69,10 @@ export class SubirMaterialComponent implements OnInit {
 
     this.teacherService.getCourse(cId).subscribe({
       next: (tc: TeacherCourse) => {
-        const grade = [tc.course?.grade, tc.course?.level].filter(Boolean).join(' · ');
-        this.course.set({
-          name: tc.course?.name ?? '—',
-          grade,
-          section: (tc.section?.name ?? '').trim(),
-        });
+        const name = tc.course?.name ?? '';
+        const grade = (tc.course?.grade ?? '').trim();
+        const level = (tc.course?.level ?? '').trim();
+        this.courseLabel.set([name, [grade, level].filter(Boolean).join(' · ')].filter(Boolean).join(' · '));
 
         if (mId && mId !== 'nuevo') {
           this.materialId.set(mId);
@@ -91,116 +83,10 @@ export class SubirMaterialComponent implements OnInit {
         }
       },
       error: () => {
-        this.error.set('No se pudo cargar el curso');
+        this.error.set('No se pudo cargar el curso.');
         this.isLoading.set(false);
       },
     });
-  }
-
-  private loadMaterialForEdit(mId: string) {
-    this.teacherService.getMaterials(this.courseId()).subscribe({
-      next: (materials) => {
-        const mat = materials.find((m) => m.id === mId);
-        if (mat) {
-          this.existingMaterial.set(mat);
-          this.formData.set({ title: mat.title, description: mat.description ?? '' });
-        } else {
-          this.error.set('Material no encontrado');
-        }
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.error.set('No se pudieron cargar los materiales');
-        this.isLoading.set(false);
-      },
-    });
-  }
-
-  addUnit() {
-    const name = this.newUnitName().trim();
-    if (!name) return;
-    const folder: MaterialFolder = {
-      id: randomId('folder'),
-      name,
-      description: this.newUnitDescription().trim(),
-      materials: [],
-      expanded: signal(true),
-    };
-    this.units.update((list) => [...list, folder]);
-    this.newUnitName.set('');
-    this.newUnitDescription.set('');
-  }
-
-  removeUnit(unitId: string) {
-    this.units.update((list) => list.filter((u) => u.id !== unitId));
-  }
-
-  toggleUnit(unitId: string) {
-    this.units.update((list) =>
-      list.map((u) => {
-        if (u.id !== unitId) return u;
-        u.expanded.update((v) => !v);
-        return u;
-      }),
-    );
-  }
-
-  onFileSelected(event: Event, unitId: string) {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    input.value = '';
-    for (const file of files) {
-      const item: FolderItem = {
-        id: randomId('file'),
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        size: file.size,
-        file,
-        isLink: false,
-      };
-      this.units.update((list) =>
-        list.map((u) => (u.id === unitId ? { ...u, materials: [...u.materials, item] } : u)),
-      );
-    }
-  }
-
-  addLinkFromInputs(unitId: string, nameInput: HTMLInputElement, urlInput: HTMLInputElement) {
-    this.addLink(unitId, nameInput.value, urlInput.value);
-    nameInput.value = '';
-    urlInput.value = '';
-  }
-
-  addLink(unitId: string, nameRaw: string, urlRaw: string) {
-    const name = nameRaw.trim();
-    const url = urlRaw.trim();
-    if (!name || !url) return;
-    try {
-      // Validación mínima de URL
-      new URL(url);
-    } catch {
-      this.error.set('URL inválida');
-      return;
-    }
-    this.error.set('');
-    const item: FolderItem = {
-      id: randomId('link'),
-      name,
-      type: 'text/uri-list',
-      size: 0,
-      isLink: true,
-      url,
-    };
-    this.units.update((list) =>
-      list.map((u) => (u.id === unitId ? { ...u, materials: [...u.materials, item] } : u)),
-    );
-  }
-
-  removeMaterial(unitId: string, materialId: string) {
-    this.units.update((list) =>
-      list.map((u) =>
-        u.id === unitId ? { ...u, materials: u.materials.filter((m) => m.id !== materialId) } : u,
-      ),
-    );
   }
 
   cancel() {
@@ -210,32 +96,117 @@ export class SubirMaterialComponent implements OnInit {
     });
   }
 
+  fileKey(f: File): string {
+    return `${f.name}-${f.size}-${f.lastModified}`;
+  }
+
+  formatFileSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  mimeTypeLabel(nameOrMime: string): string {
+    const t = (nameOrMime ?? '').toLowerCase();
+    if (t.includes('pdf') || t.endsWith('.pdf')) return 'PDF';
+    if (t.includes('word') || t.includes('document') || /\.docx?$/.test(t)) return 'Documento';
+    if (t.includes('sheet') || t.includes('excel') || /\.xlsx?$/.test(t)) return 'Hoja';
+    if (t.includes('presentation') || t.includes('powerpoint') || /\.pptx?$/.test(t)) return 'Presentación';
+    if (t.includes('image') || /\.(jpe?g|png|gif|webp)$/.test(t)) return 'Imagen';
+    if (t.includes('video') || /\.(mp4|mov|webm)$/.test(t)) return 'Video';
+    if (t.includes('audio') || /\.(mp3|wav)$/.test(t)) return 'Audio';
+    return 'Archivo';
+  }
+
+  editFileLabel(f: { name?: string; filename?: string }): string {
+    return (f.filename ?? f.name ?? '').trim() || 'Archivo';
+  }
+
+  onFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (this.isEditMode()) {
+      this.appendEditFiles(files);
+    } else {
+      this.addFiles(files);
+    }
+  }
+
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.fileDragOver.set(true);
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const zone = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && zone.contains(next)) return;
+    this.fileDragOver.set(false);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.fileDragOver.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (this.isEditMode()) {
+      this.appendEditFiles(files);
+    } else {
+      this.addFiles(files);
+    }
+  }
+
+  removeFile(file: File) {
+    const k = this.fileKey(file);
+    this.selectedFiles.set(this.selectedFiles().filter(f => this.fileKey(f) !== k));
+  }
+
+  addLink() {
+    const name = this.linkName().trim();
+    const url = this.linkUrl().trim();
+    if (!name || !url) return;
+    try {
+      new URL(url);
+    } catch {
+      this.error.set('La dirección del enlace no es válida.');
+      return;
+    }
+    this.error.set('');
+    this.links.update(list => [...list, { id: randomId('link'), name, url }]);
+    this.linkName.set('');
+    this.linkUrl.set('');
+  }
+
+  removeLink(id: string) {
+    this.links.update(list => list.filter(l => l.id !== id));
+  }
+
   saveMaterial() {
-    if (!this.canSave()) return;
+    if (!this.canSave() || this.isSaving()) return;
     this.isSaving.set(true);
     this.error.set('');
     const cid = this.courseId();
+    const links = this.links();
+    let desc = this.description().trim();
+    if (links.length) {
+      const block = links.map(l => `Enlace: ${l.name} — ${l.url}`).join('\n');
+      desc = desc ? `${desc}\n\n${block}` : block;
+    }
+    const fd = new FormData();
+    fd.append('title', this.title().trim());
+    if (desc) fd.append('description', desc);
+    for (const file of this.selectedFiles()) fd.append('files', file);
 
-    const requests = this.units().map((folder) => {
-      const files = folder.materials.filter((m) => !m.isLink && m.file);
-      const links = folder.materials.filter((m) => m.isLink);
-      let desc = folder.description.trim();
-      if (links.length) {
-        const linkBlock = links.map((l) => `Enlace: ${l.name} — ${l.url}`).join('\n');
-        desc = desc ? `${desc}\n\n${linkBlock}` : linkBlock;
-      }
-      const fd = new FormData();
-      fd.append('title', folder.name);
-      if (desc) fd.append('description', desc);
-      files.forEach((m) => fd.append('files', m.file!));
-
-      return this.teacherService.createMaterial(cid, fd);
-    });
-
-    forkJoin(requests).subscribe({
+    this.teacherService.createMaterial(cid, fd).subscribe({
       next: () => {
         this.isSaving.set(false);
-        void this.router.navigate(['/profesor/cursos', cid], { queryParams: { tab: 'material' } });
+        this.cancel();
       },
       error: (err: unknown) => {
         this.isSaving.set(false);
@@ -245,24 +216,18 @@ export class SubirMaterialComponent implements OnInit {
   }
 
   saveEdit() {
-    if (!this.canSaveEdit()) return;
+    if (!this.canSaveEdit() || this.isSaving()) return;
     this.isSaving.set(true);
     this.error.set('');
-    const d = this.formData();
     this.teacherService
       .updateMaterial(this.courseId(), this.materialId(), {
-        title: d.title.trim(),
-        description: d.description.trim() || undefined,
+        title: this.title().trim(),
+        description: this.description().trim() || undefined,
       })
       .subscribe({
-        next: (updated) => {
+        next: () => {
           this.isSaving.set(false);
-          this.existingMaterial.update((m) =>
-            m ? { ...m, title: updated.title, description: updated.description } : m,
-          );
-          void this.router.navigate(['/profesor/cursos', this.courseId()], {
-            queryParams: { tab: 'material' },
-          });
+          this.cancel();
         },
         error: (err: unknown) => {
           this.error.set(this.extractHttpError(err));
@@ -271,17 +236,63 @@ export class SubirMaterialComponent implements OnInit {
       });
   }
 
-  onEditFilesSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    input.value = '';
-    if (!files.length) return;
+  removeEditFile(fileId: string) {
+    if (!confirm('¿Quitar este archivo de la carpeta?')) return;
+    const mid = this.materialId();
+    const cid = this.courseId();
+    if (!mid || !cid) return;
+    this.error.set('');
+    this.teacherService.deleteMaterialFile(cid, mid, fileId).subscribe({
+      next: () => this.refreshEditMaterialFiles(),
+      error: (err: unknown) => this.error.set(this.extractHttpError(err)),
+    });
+  }
+
+  private loadMaterialForEdit(mId: string) {
+    this.teacherService.getMaterials(this.courseId()).subscribe({
+      next: (materials) => {
+        const mat = materials.find(m => m.id === mId);
+        if (mat) {
+          this.existingMaterial.set(mat);
+          this.title.set(mat.title);
+          this.description.set(mat.description ?? '');
+        } else {
+          this.error.set('No se encontró este material.');
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.error.set('No se pudieron cargar los materiales.');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private addFiles(incoming: File[]) {
+    const allowed = this.filterAcceptedFiles(incoming);
+    if (!allowed.length) return;
+    const current = this.selectedFiles();
+    const seen = new Set(current.map(f => this.fileKey(f)));
+    const next = [...current];
+    for (const f of allowed) {
+      const k = this.fileKey(f);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      next.push(f);
+      if (next.length >= 10) break;
+    }
+    this.selectedFiles.set(next.slice(0, 10));
+  }
+
+  private appendEditFiles(files: File[]) {
+    const allowed = this.filterAcceptedFiles(files);
+    if (!allowed.length) return;
     const mid = this.materialId();
     const cid = this.courseId();
     if (!mid || !cid) return;
     this.uploadingMoreFiles.set(true);
     this.error.set('');
-    this.teacherService.appendMaterialFiles(cid, mid, files).subscribe({
+    this.teacherService.appendMaterialFiles(cid, mid, allowed).subscribe({
       next: (mat) => {
         this.existingMaterial.set(mat);
         this.uploadingMoreFiles.set(false);
@@ -293,30 +304,19 @@ export class SubirMaterialComponent implements OnInit {
     });
   }
 
-  removeEditFile(fileId: string) {
-    if (!confirm('¿Eliminar este archivo de la carpeta?')) return;
-    const mid = this.materialId();
-    const cid = this.courseId();
-    if (!mid || !cid) return;
-    this.error.set('');
-    this.teacherService.deleteMaterialFile(cid, mid, fileId).subscribe({
-      next: () => this.refreshEditMaterialFiles(),
-      error: (err: unknown) => this.error.set(this.extractHttpError(err)),
-    });
-  }
-
   private refreshEditMaterialFiles() {
     this.teacherService.getMaterials(this.courseId()).subscribe({
       next: (list) => {
-        const mat = list.find((m) => m.id === this.materialId());
+        const mat = list.find(m => m.id === this.materialId());
         if (mat) this.existingMaterial.set(mat);
       },
       error: () => this.error.set('No se pudo actualizar la lista de archivos.'),
     });
   }
 
-  editFileLabel(f: { name?: string; filename?: string }): string {
-    return (f.filename ?? f.name ?? '').trim() || 'Archivo';
+  private filterAcceptedFiles(files: File[]): File[] {
+    const ok = /\.(pdf|docx?|pptx?|xlsx?|jpe?g|png|gif|webp|mp4|mp3|wav)$/i;
+    return files.filter(f => ok.test(f.name));
   }
 
   private extractHttpError(err: unknown): string {
@@ -331,34 +331,10 @@ export class SubirMaterialComponent implements OnInit {
       (typeof e?.error?.message === 'string' ? e.error.message : '') ||
       (typeof e?.message === 'string' ? e.message : '');
     const msg = raw.trim();
-    if (!msg) return 'Error al guardar';
+    if (!msg) return 'No se pudo guardar el material.';
     if (/^[a-f0-9]{32,64}$/i.test(msg)) {
-      return 'El servidor rechazó la petición (referencia interna). Revisa los archivos adjuntos o inténtalo de nuevo. Si persiste, contacta a soporte.';
+      return 'El servidor rechazó los archivos. Prueba con menos archivos o un tamaño menor.';
     }
     return msg;
-  }
-
-  getFileTypeIcon(type: string): string {
-    const t = (type ?? '').toLowerCase();
-    if (t === 'text/uri-list' || t.includes('link')) return 'fa-link';
-    if (t.includes('pdf')) return 'fa-file-pdf';
-    if (t.includes('word') || t.includes('document')) return 'fa-file-word';
-    if (t.includes('sheet') || t.includes('excel')) return 'fa-file-excel';
-    if (t.includes('presentation') || t.includes('powerpoint')) return 'fa-file-powerpoint';
-    if (t.startsWith('image/')) return 'fa-file-image';
-    if (t.startsWith('video/')) return 'fa-file-video';
-    if (t.startsWith('audio/')) return 'fa-file-audio';
-    return 'fa-file';
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes <= 0) return '—';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  updateFormField(field: 'title' | 'description', value: string) {
-    this.formData.update((d) => ({ ...d, [field]: value }));
   }
 }

@@ -1,280 +1,204 @@
-<div class="prof-page">
+<div class="prof-page compose">
 
-  <header class="prof-page__hero">
-    <img class="prof-page__hero-photo" src="/images/heroes/courses.webp" alt="" decoding="async" />
-    <div class="prof-page__hero-veil"></div>
-    <div class="prof-page__hero-content">
-      <img src="/only-logo.png" alt="" class="prof-page__crest" />
-      <div>
-        <h1 class="prof-page__title">
-          @if (isEditMode()) {
-            Editar material
-          } @else {
-            Subir material
-          }
-        </h1>
-        @if (course(); as hdr) {
-          <p class="prof-page__brand">{{ hdr.name }} — {{ hdr.grade }} {{ hdr.section }}</p>
-        } @else {
-          <p class="prof-page__brand">Santa María Laura</p>
-        }
-      </div>
-      <div class="prof-page__hero-actions">
-        <button type="button" class="prof-btn prof-btn--ghost" (click)="cancel()">Volver al curso</button>
-      </div>
-    </div>
+  <header class="compose__mast">
+    <button type="button" class="compose__back" (click)="cancel()">← Material del curso</button>
+    @if (courseLabel()) {
+      <p class="compose__kicker">{{ courseLabel() }}</p>
+    }
+    <h1 class="compose__title">{{ pageTitle() }}</h1>
   </header>
 
   <div class="prof-page__body">
 
     @if (isLoading()) {
-      <p class="feed__empty">Cargando información del curso…</p>
+      <p class="feed__empty">Cargando…</p>
     } @else {
 
       @if (error()) {
-        <div class="prof-alert" role="alert">
-          <p>{{ error() }}</p>
-        </div>
+        <div class="prof-alert" role="alert">{{ error() }}</div>
       }
 
-      @if (isEditMode()) {
-        <section class="feed mat-panel">
-          <div class="feed__head">
-            <h2>Editar carpeta de material</h2>
-          </div>
-          <p class="mat-hint">
-            Puedes cambiar el título y la descripción (botón «Guardar cambios»). Los archivos se añaden o quitan al momento con las acciones de abajo.
-          </p>
+      <div class="compose__form">
+        <div class="compose__main">
+          <label class="visually-hidden" for="title">Título de la carpeta</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            class="compose__headline"
+            [ngModel]="title()"
+            (ngModelChange)="title.set($event)"
+            placeholder="Título de la carpeta"
+            required
+          />
 
-          <div class="mat-field">
-            <label class="mat-label" for="edit-mat-title">Título</label>
-            <input
-              id="edit-mat-title"
-              type="text"
-              class="mat-input"
-              [ngModel]="formData().title"
-              (ngModelChange)="updateFormField('title', $event)"
-            />
-          </div>
-          <div class="mat-field">
-            <label class="mat-label" for="edit-mat-desc">Descripción</label>
-            <textarea
-              id="edit-mat-desc"
-              class="mat-input"
-              rows="4"
-              [ngModel]="formData().description"
-              (ngModelChange)="updateFormField('description', $event)"
-            ></textarea>
-          </div>
+          <label class="visually-hidden" for="description">Descripción</label>
+          <textarea
+            id="description"
+            name="description"
+            class="compose__prompt"
+            rows="5"
+            [ngModel]="description()"
+            (ngModelChange)="description.set($event)"
+            placeholder="Descripción opcional: de qué trata este material y cuándo usarlo."
+          ></textarea>
 
-          @if (existingMaterial(); as em) {
-            <div class="mat-files">
-              <h3 class="mat-subtitle">Archivos en esta carpeta</h3>
-              @if (!em.files?.length) {
-                <p class="feed__empty">Aún no hay archivos. Usa «Añadir archivos» para subirlos.</p>
+          <section class="refs">
+            <header class="refs__head">
+              <h2>Archivos</h2>
+              <span>{{ isEditMode() ? 'Se suben al momento' : 'Hasta 10 archivos' }}</span>
+            </header>
+            <div
+              class="refs__zone"
+              [class.is-over]="fileDragOver()"
+              [class.is-busy]="uploadingMoreFiles()"
+              (dragover)="onFileDragOver($event)"
+              (dragenter)="onFileDragOver($event)"
+              (dragleave)="onFileDragLeave($event)"
+              (drop)="onFileDrop($event)"
+            >
+              <input
+                type="file"
+                id="file-upload"
+                class="file-input"
+                multiple
+                (change)="onFilesSelected($event)"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mp3,.wav"
+                [disabled]="uploadingMoreFiles()"
+              />
+              <label for="file-upload" class="refs__drop">
+                @if (uploadingMoreFiles()) {
+                  Subiendo archivos…
+                } @else {
+                  Arrastra archivos aquí o haz clic para elegirlos
+                }
+              </label>
+            </div>
+
+            @if (isEditMode()) {
+              @if (existingMaterial()?.files?.length) {
+                <ul class="refs__list">
+                  @for (f of existingMaterial()!.files; track f.id) {
+                    <li>
+                      <span class="refs__name">{{ editFileLabel(f) }}</span>
+                      <span class="refs__size">{{ mimeTypeLabel(f.mimeType ?? editFileLabel(f)) }} · {{ formatFileSize(f.size) }}</span>
+                      <button type="button" class="prof-link prof-link--danger" (click)="removeEditFile(f.id)">Quitar</button>
+                    </li>
+                  }
+                </ul>
               } @else {
-                <ul class="mat-file-list">
-                  @for (f of em.files; track f.id) {
-                    <li class="mat-file-row">
-                      <span class="mat-file-name">{{ editFileLabel(f) }}</span>
-                      <button
-                        type="button"
-                        class="prof-link prof-link--danger"
-                        (click)="removeEditFile(f.id)"
-                        [disabled]="uploadingMoreFiles()"
-                      >
-                        Quitar
-                      </button>
+                <p class="refs__empty">Esta carpeta aún no tiene archivos.</p>
+              }
+            } @else if (selectedFiles().length) {
+              <ul class="refs__list">
+                @for (f of selectedFiles(); track fileKey(f)) {
+                  <li>
+                    <span class="refs__name">{{ f.name }}</span>
+                    <span class="refs__size">{{ mimeTypeLabel(f.name) }} · {{ formatFileSize(f.size) }}</span>
+                    <button type="button" class="prof-link prof-link--danger" (click)="removeFile(f)">Quitar</button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          @if (!isEditMode()) {
+            <section class="refs refs--links">
+              <header class="refs__head">
+                <h2>Enlaces</h2>
+                <span>Opcional</span>
+              </header>
+              <div class="link-row">
+                <label class="visually-hidden" for="linkName">Nombre del enlace</label>
+                <input
+                  id="linkName"
+                  type="text"
+                  class="rule__input"
+                  [ngModel]="linkName()"
+                  (ngModelChange)="linkName.set($event)"
+                  placeholder="Nombre"
+                />
+                <label class="visually-hidden" for="linkUrl">Dirección</label>
+                <input
+                  id="linkUrl"
+                  type="url"
+                  class="rule__input"
+                  [ngModel]="linkUrl()"
+                  (ngModelChange)="linkUrl.set($event)"
+                  placeholder="https://…"
+                />
+                <button
+                  type="button"
+                  class="prof-link"
+                  (click)="addLink()"
+                  [disabled]="!linkName().trim() || !linkUrl().trim()"
+                >
+                  Agregar
+                </button>
+              </div>
+              @if (links().length) {
+                <ul class="refs__list">
+                  @for (link of links(); track link.id) {
+                    <li>
+                      <span class="refs__name">{{ link.name }}</span>
+                      <span class="refs__size">{{ link.url }}</span>
+                      <button type="button" class="prof-link prof-link--danger" (click)="removeLink(link.id)">Quitar</button>
                     </li>
                   }
                 </ul>
               }
-              <label class="mat-upload">
-                <span class="prof-btn prof-btn--outline">Añadir archivos</span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3"
-                  (change)="onEditFilesSelected($event)"
-                  [disabled]="uploadingMoreFiles()"
-                />
-              </label>
-              @if (uploadingMoreFiles()) {
-                <p class="feed__empty">Subiendo archivos…</p>
-              }
-            </div>
-          }
-
-          <div class="mat-actions">
-            <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()">Cancelar</button>
-            <button
-              type="button"
-              class="prof-btn prof-btn--solid"
-              (click)="saveEdit()"
-              [disabled]="!canSaveEdit() || isSaving()"
-            >
-              @if (isSaving()) {
-                Guardando…
-              } @else {
-                Guardar cambios
-              }
-            </button>
-          </div>
-        </section>
-      } @else {
-
-        <section class="feed mat-panel">
-          <div class="feed__head">
-            <h2>Carpetas de material</h2>
-          </div>
-          <p class="mat-hint">Cada carpeta es un bloque publicado en el curso (archivos y enlaces). No hay subcarpetas.</p>
-          <div class="mat-add-grid">
-            <div class="mat-field">
-              <label class="mat-label">Nombre de la carpeta</label>
-              <input
-                type="text"
-                class="mat-input"
-                [ngModel]="newUnitName()"
-                (ngModelChange)="newUnitName.set($event)"
-                placeholder="Ej: Unidad 1 — Álgebra básica"
-              />
-            </div>
-            <div class="mat-field">
-              <label class="mat-label">Descripción (opcional)</label>
-              <textarea
-                class="mat-input"
-                rows="2"
-                [ngModel]="newUnitDescription()"
-                (ngModelChange)="newUnitDescription.set($event)"
-                placeholder="Breve descripción del contenido…"
-              ></textarea>
-            </div>
-            <button
-              type="button"
-              class="prof-btn prof-btn--solid mat-add-btn"
-              (click)="addUnit()"
-              [disabled]="!newUnitName().trim()"
-            >
-              Agregar carpeta
-            </button>
-          </div>
-        </section>
-
-        @if (units().length === 0) {
-          <section class="feed">
-            <p class="feed__empty">No hay carpetas. Crea una carpeta y agrega archivos antes de guardar.</p>
-          </section>
-        } @else {
-          @for (unit of units(); track unit.id) {
-            <section class="feed mat-unit">
-              <button type="button" class="mat-unit__head" (click)="toggleUnit(unit.id)">
-                <span class="mat-unit__mark">{{ $index + 1 }}</span>
-                <span class="mat-unit__info">
-                  <span class="mat-unit__title">{{ unit.name }}</span>
-                  @if (unit.description) {
-                    <span class="mat-unit__desc">{{ unit.description }}</span>
-                  }
-                  <span class="mat-unit__meta">{{ unit.materials.length }} material(es)</span>
-                </span>
-                <span class="mat-unit__toggle" [class.mat-unit__toggle--open]="unit.expanded()">▾</span>
-                <button
-                  type="button"
-                  class="prof-link prof-link--danger mat-unit__remove"
-                  (click)="removeUnit(unit.id); $event.stopPropagation()"
-                  title="Eliminar carpeta"
-                >
-                  Eliminar
-                </button>
-              </button>
-
-              @if (unit.expanded()) {
-                <div class="mat-unit__body">
-                  <div class="mat-upload-block">
-                    <h4 class="mat-subtitle">Agregar a esta carpeta</h4>
-                    <label class="mat-upload">
-                      <span class="prof-btn prof-btn--solid">Subir archivo</span>
-                      <input
-                        type="file"
-                        (change)="onFileSelected($event, unit.id)"
-                        multiple
-                        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.mp4,.mp3"
-                      />
-                    </label>
-                    <p class="mat-hint">PDF, Word, PowerPoint, Excel, imágenes, videos</p>
-
-                    <div class="mat-link-row">
-                      <input type="text" class="mat-input" #linkNameInput placeholder="Nombre del enlace" />
-                      <input type="url" class="mat-input" #linkUrlInput placeholder="https://…" />
-                      <button
-                        type="button"
-                        class="prof-btn prof-btn--outline"
-                        (click)="addLinkFromInputs(unit.id, linkNameInput, linkUrlInput)"
-                      >
-                        Agregar enlace
-                      </button>
-                    </div>
-                  </div>
-
-                  @if (unit.materials.length === 0) {
-                    <p class="feed__empty">Esta carpeta está vacía. Sube archivos o agrega enlaces.</p>
-                  } @else {
-                    <h4 class="mat-subtitle">Contenido ({{ unit.materials.length }})</h4>
-                    <ul class="mat-items">
-                      @for (material of unit.materials; track material.id) {
-                        <li class="mat-item">
-                          <span class="mat-item__icon" [class.mat-item__icon--link]="material.isLink">
-                            <i class="fas" [ngClass]="getFileTypeIcon(material.type)"></i>
-                          </span>
-                          <span class="mat-item__info">
-                            <span class="mat-item__name">{{ material.name }}</span>
-                            <span class="mat-item__meta">
-                              @if (material.isLink) {
-                                Enlace — {{ material.url }}
-                              } @else {
-                                {{ material.type.split('/')[1]?.toUpperCase() || 'Archivo' }} · {{ formatFileSize(material.size) }}
-                              }
-                            </span>
-                          </span>
-                          <button
-                            type="button"
-                            class="prof-link prof-link--danger"
-                            (click)="removeMaterial(unit.id, material.id)"
-                            title="Eliminar material"
-                          >
-                            Quitar
-                          </button>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </div>
-              }
             </section>
           }
-        }
-
-        @if (!canSave() && units().length > 0) {
-          <div class="prof-alert prof-alert--warn" role="status">
-            <p>Cada carpeta debe tener al menos un archivo o enlace antes de guardar.</p>
-          </div>
-        }
-
-        <div class="mat-actions mat-actions--sticky">
-          <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()">Cancelar</button>
-          <button
-            type="button"
-            class="prof-btn prof-btn--solid"
-            (click)="saveMaterial()"
-            [disabled]="!canSave() || isSaving()"
-          >
-            @if (isSaving()) {
-              Guardando…
-            } @else {
-              Guardar material
-            }
-          </button>
         </div>
-      }
+
+        <aside class="compose__aside">
+          <section class="rule">
+            <h2>Contenido</h2>
+            <p class="rule__score">{{ fileCount() }}</p>
+            <p class="rule__hint">{{ fileCount() === 1 ? 'archivo' : 'archivos' }} en esta carpeta.</p>
+          </section>
+
+          @if (!isEditMode()) {
+            <section class="rule">
+              <h2>Enlaces</h2>
+              <p class="rule__score">{{ links().length }}</p>
+              <p class="rule__hint">Quedan en la descripción de la carpeta.</p>
+            </section>
+          }
+
+          <section class="rule">
+            <h2>Formatos</h2>
+            <p class="rule__hint">PDF, Word, PowerPoint, Excel, imágenes, audio y video.</p>
+          </section>
+
+          <div class="compose__actions">
+            @if (isEditMode()) {
+              <button
+                type="button"
+                class="prof-btn prof-btn--solid"
+                [disabled]="!canSaveEdit() || isSaving()"
+                (click)="saveEdit()"
+              >
+                {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="prof-btn prof-btn--solid"
+                [disabled]="!canSave() || isSaving()"
+                (click)="saveMaterial()"
+              >
+                {{ isSaving() ? 'Publicando…' : 'Publicar carpeta' }}
+              </button>
+            }
+            <button type="button" class="prof-link" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          </div>
+
+          @if (!isEditMode() && !canSave()) {
+            <p class="compose__need">Faltan el título y al menos un archivo o enlace.</p>
+          }
+        </aside>
+      </div>
     }
   </div>
 </div>
