@@ -1,77 +1,243 @@
 @import '../_shared/profesor-editorial.css';
 
-.prof-btn--outline {
-  background: transparent;
-  color: var(--navy);
-  border: 1px solid var(--line);
+.dossier__mast {
+  padding: 1.35rem 1.75rem 1.5rem;
+  background: var(--navy-deep);
+  color: #fff;
 }
 
-.prof-btn--outline:hover { border-color: var(--navy); background: #eef1f5; }
-
-.ficha-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.ficha-panel { height: 100%; }
-
-.ficha-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: .75rem;
-  padding: .55rem 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.ficha-row:last-of-type { border-bottom: none; }
-
-.ficha-row__label {
-  font-size: .85rem;
-  color: var(--muted);
-}
-
-.ficha-row__value {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.ficha-hint {
-  margin: .65rem 0 0;
+.dossier__back {
+  display: inline-block;
+  margin-bottom: 1.1rem;
+  color: rgba(255 255 255 / .75);
+  text-decoration: none;
   font-size: .82rem;
-  color: var(--muted);
-  line-height: 1.5;
-  font-family: var(--font-display);
-  font-style: italic;
+  font-weight: 600;
+  letter-spacing: .04em;
 }
 
-.ficha-contact { display: flex; flex-direction: column; }
+.dossier__back:hover { color: #fff; }
 
-.ficha-contact__row {
+.dossier__who {
   display: flex;
-  flex-direction: column;
-  gap: .15rem;
-  padding: .55rem 0;
-  border-bottom: 1px solid var(--line);
+  align-items: center;
+  gap: 1.15rem;
 }
 
-.ficha-contact__row:last-child { border-bottom: none; }
+.dossier__mark {
+  width: 4rem;
+  height: 4rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--crimson);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+}
 
-.ficha-contact__label {
+.dossier__kicker {
+  margin: 0 0 .25rem;
   font-size: .68rem;
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .55);
+}
+
+.dossier__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.dossier__code {
+  margin: .3rem 0 0;
+  font-size: .85rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .7);
+}
+
+.mod-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: .75rem;
+  border-bottom: 3px solid var(--navy);
+}
+
+.mod-head__kicker {
+  margin: 0 0 .15rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.ficha-contact__val {
-  font-size: .88rem;
-  color: var(--ink);
-  word-break: break-word;
+.mod-head__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
 }
 
-@media (max-width: 1024px) {
-  .ficha-grid { grid-template-columns: 1fr; }
+.dossier__split {
+  display: grid;
+  grid-template-columns: 1.4fr .9fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ledger,
+.presence,
+.family {
+  background: var(--surface);
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.ledger__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ledger__table th,
+.ledger__table td {
+  padding: .7rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ledger__table th {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ledger__table tbody tr:last-child td { border-bottom: none; }
+
+.ledger__num {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: right;
+  width: 4.5rem;
+}
+
+.ledger__table th.ledger__num { font-size: .68rem; }
+
+.ledger__notes {
+  font-size: .85rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.presence__summary {
+  margin: 0 0 .75rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.presence__bar {
+  display: flex;
+  height: .55rem;
+  overflow: hidden;
+  background: #eef1f5;
+  margin-bottom: 1rem;
+}
+
+.presence__seg { min-width: 0; }
+.presence__seg--ok { background: #1a6b4a; }
+.presence__seg--late { background: #c9a227; }
+.presence__seg--abs { background: var(--crimson); }
+.presence__seg--just { background: #5c6b7e; }
+
+.presence__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  font-size: .85rem;
+  color: var(--ink);
+}
+
+.presence__legend li {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.dot {
+  width: .65rem;
+  height: .65rem;
+  flex-shrink: 0;
+}
+
+.dot--ok { background: #1a6b4a; }
+.dot--late { background: #c9a227; }
+.dot--abs { background: var(--crimson); }
+.dot--just { background: #5c6b7e; }
+
+.family__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.family__person {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.family__role {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.family__person strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.family__person span,
+.family__link {
+  font-size: .88rem;
+  color: var(--ink);
+}
+
+.family__link {
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.family__link:hover { color: var(--crimson); }
+
+@media (max-width: 900px) {
+  .dossier__mast { padding: 1.15rem 1.15rem 1.25rem; }
+  .dossier__split,
+  .family__grid { grid-template-columns: 1fr; }
 }

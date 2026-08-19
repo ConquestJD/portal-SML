@@ -1,147 +1,148 @@
-<div class="prof-page">
+<div class="prof-page dossier">
 
-  <header class="prof-page__hero">
-    <img class="prof-page__hero-photo" src="/images/heroes/students.webp" alt="" decoding="async" />
-    <div class="prof-page__hero-veil"></div>
-    <div class="prof-page__hero-content">
-      <img src="/only-logo.png" alt="" class="prof-page__crest" />
-      <div>
-        @if (studentData()) {
-          <h1 class="prof-page__title">{{ student().name }}</h1>
-          <p class="prof-page__brand">
-            {{ course().name }} — {{ course().section }}
-            @if (student().code) {
-              · Código {{ student().code }}
-            }
-          </p>
-        } @else {
-          <h1 class="prof-page__title">Ficha del alumno</h1>
-          <p class="prof-page__brand">Santa María Laura</p>
-        }
-      </div>
-      <div class="prof-page__hero-actions">
-        <a
-          [routerLink]="['/profesor/cursos', courseId()]"
-          [queryParams]="{ tab: 'estudiantes' }"
-          class="prof-btn prof-btn--ghost"
-        >
-          Volver al curso
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <div class="prof-page__body">
-
-    @if (loading()) {
+  @if (loading()) {
+    <div class="prof-page__body">
       <p class="feed__empty">Cargando ficha…</p>
-    } @else if (error()) {
-      <section class="feed">
-        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
-        <a
-          [routerLink]="['/profesor/cursos', courseId()]"
-          [queryParams]="{ tab: 'estudiantes' }"
-          class="prof-btn prof-btn--outline"
-        >
-          Volver a estudiantes
-        </a>
+    </div>
+  } @else if (error()) {
+    <div class="prof-page__body">
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+      </div>
+      <a
+        [routerLink]="['/profesor/cursos', courseId()]"
+        [queryParams]="{ tab: 'estudiantes' }"
+        class="prof-link"
+      >
+        Volver a estudiantes
+      </a>
+    </div>
+  } @else if (studentData()) {
+
+    <header class="dossier__mast">
+      <a
+        [routerLink]="['/profesor/cursos', courseId()]"
+        [queryParams]="{ tab: 'estudiantes' }"
+        class="dossier__back"
+      >
+        ← Estudiantes
+      </a>
+      <div class="dossier__who">
+        <span class="dossier__mark">{{ studentInitials() }}</span>
+        <div>
+          <p class="dossier__kicker">{{ courseContext() }}</p>
+          <h1 class="dossier__name">{{ student().name }}</h1>
+          @if (student().code) {
+            <p class="dossier__code">{{ student().code }}</p>
+          }
+        </div>
+      </div>
+    </header>
+
+    <div class="prof-page__body">
+
+      <section class="metrics metrics--3" aria-label="Resumen del alumno">
+        <div class="metric">
+          <span class="metric__n">{{ academicData().average }}</span>
+          <span class="metric__l">Promedio</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n">{{ attendanceLabel() }}</span>
+          <span class="metric__l">Asistencia</span>
+        </div>
+        <div class="metric" [class.metric--alert]="(academicData().totalAbsences ?? 0) > 0">
+          <span class="metric__n">{{ metricOrDash(academicData().totalAbsences) }}</span>
+          <span class="metric__l">Faltas</span>
+        </div>
       </section>
-    } @else if (studentData()) {
 
-      @if (hasAttendanceRecords()) {
-        <section class="metrics metrics--3" aria-label="Resumen académico">
-          <div class="metric">
-            <span class="metric__n">{{ academicData().average }}</span>
-            <span class="metric__l">Promedio períodos</span>
-          </div>
-          <div class="metric">
-            <span class="metric__n">{{ attendanceLabel() }}</span>
-            <span class="metric__l">Asistencia</span>
-          </div>
-          <div class="metric">
-            <span class="metric__n">{{ metricOrDash(academicData().totalSessions) }}</span>
-            <span class="metric__l">Sesiones marcadas</span>
-          </div>
-        </section>
-      } @else {
-        <section class="metrics metrics--2" aria-label="Resumen académico">
-          <div class="metric">
-            <span class="metric__n">{{ academicData().average }}</span>
-            <span class="metric__l">Promedio períodos</span>
-          </div>
-          <div class="metric">
-            <span class="metric__n">{{ attendanceLabel() }}</span>
-            <span class="metric__l">Asistencia</span>
-          </div>
-        </section>
-      }
-
-      <div class="ficha-grid">
-        <section class="feed ficha-panel">
-          <div class="feed__head">
-            <h2>Rendimiento</h2>
-          </div>
-          <div class="ficha-row">
-            <span class="ficha-row__label">Promedio general (notas de período)</span>
-            <span class="ficha-row__value">{{ academicData().average }}</span>
-          </div>
-          <p class="ficha-hint">Promedio de las calificaciones registradas en este curso para el alumno.</p>
-        </section>
-
-        <section class="feed ficha-panel">
-          <div class="feed__head">
-            <h2>Asistencia</h2>
-          </div>
-          <div class="ficha-row">
-            <span class="ficha-row__label">Porcentaje</span>
-            <span class="ficha-row__value">{{ attendanceLabel() }}</span>
-          </div>
-          @if (hasAttendanceRecords()) {
-            <div class="ficha-row">
-              <span class="ficha-row__label">Sesiones registradas</span>
-              <span class="ficha-row__value">{{ academicData().totalSessions }}</span>
+      <div class="dossier__split">
+        <section class="ledger" aria-labelledby="grades-title">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Calificaciones</p>
+              <h2 id="grades-title" class="mod-head__title">Notas de periodo</h2>
             </div>
-            <div class="ficha-row">
-              <span class="ficha-row__label">Faltas</span>
-              <span class="ficha-row__value">{{ metricOrDash(academicData().totalAbsences) }}</span>
-            </div>
-            <div class="ficha-row">
-              <span class="ficha-row__label">Tardanzas</span>
-              <span class="ficha-row__value">{{ metricOrDash(academicData().totalLates) }}</span>
-            </div>
-            <div class="ficha-row">
-              <span class="ficha-row__label">Justificadas</span>
-              <span class="ficha-row__value">{{ metricOrDash(academicData().totalJustified) }}</span>
-            </div>
+          </header>
+          @if (periodGrades().length === 0) {
+            <p class="feed__empty">Aún no hay notas de periodo para este alumno en el curso.</p>
           } @else {
-            <p class="ficha-hint">Aún no hay registros de asistencia para este alumno en este curso.</p>
+            <table class="ledger__table">
+              <thead>
+                <tr>
+                  <th>Periodo</th>
+                  <th class="ledger__num">Nota</th>
+                  <th>Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of periodGrades(); track row.periodName) {
+                  <tr>
+                    <td>{{ row.periodName }}</td>
+                    <td class="ledger__num">{{ row.score }}</td>
+                    <td class="ledger__notes">{{ row.notes || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
         </section>
 
-        <section class="feed ficha-panel">
-          <div class="feed__head">
-            <h2>Contacto</h2>
-          </div>
-          <div class="ficha-contact">
-            <div class="ficha-contact__row">
-              <span class="ficha-contact__label">Email estudiante</span>
-              <span class="ficha-contact__val">{{ student().email || '—' }}</span>
+        <section class="presence" aria-labelledby="att-title">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Asistencia</p>
+              <h2 id="att-title" class="mod-head__title">En este curso</h2>
             </div>
-            <div class="ficha-contact__row">
-              <span class="ficha-contact__label">Apoderado / tutor</span>
-              <span class="ficha-contact__val">{{ student().tutor }}</span>
+          </header>
+          @if (!hasAttendanceRecords()) {
+            <p class="feed__empty">Aún no hay sesiones marcadas para este alumno.</p>
+          } @else {
+            <p class="presence__summary">
+              {{ academicData().totalSessions }}
+              {{ academicData().totalSessions === 1 ? 'sesión registrada' : 'sesiones registradas' }}
+            </p>
+            <div class="presence__bar" aria-hidden="true">
+              <span class="presence__seg presence__seg--ok" [style.flex]="academicData().present ?? 0"></span>
+              <span class="presence__seg presence__seg--late" [style.flex]="academicData().totalLates ?? 0"></span>
+              <span class="presence__seg presence__seg--abs" [style.flex]="academicData().totalAbsences ?? 0"></span>
+              <span class="presence__seg presence__seg--just" [style.flex]="academicData().totalJustified ?? 0"></span>
             </div>
-            <div class="ficha-contact__row">
-              <span class="ficha-contact__label">Email apoderado</span>
-              <span class="ficha-contact__val">{{ student().tutorEmail }}</span>
-            </div>
-            <div class="ficha-contact__row">
-              <span class="ficha-contact__label">Teléfono apoderado</span>
-              <span class="ficha-contact__val">{{ student().tutorPhone }}</span>
-            </div>
-          </div>
+            <ul class="presence__legend">
+              <li><span class="dot dot--ok"></span>{{ metricOrDash(academicData().present) }} presentes</li>
+              <li><span class="dot dot--late"></span>{{ metricOrDash(academicData().totalLates) }} tardanzas</li>
+              <li><span class="dot dot--abs"></span>{{ metricOrDash(academicData().totalAbsences) }} faltas</li>
+              <li><span class="dot dot--just"></span>{{ metricOrDash(academicData().totalJustified) }} justificadas</li>
+            </ul>
+          }
         </section>
       </div>
-    }
-  </div>
+
+      <section class="family" aria-labelledby="family-title">
+        <header class="mod-head">
+          <div>
+            <p class="mod-head__kicker">Familia</p>
+            <h2 id="family-title" class="mod-head__title">Contacto</h2>
+          </div>
+        </header>
+        <div class="family__grid">
+          <div class="family__person">
+            <span class="family__role">Alumno</span>
+            <strong>{{ student().name }}</strong>
+            @if (studentMail()) {
+              <a class="family__link" [href]="'mailto:' + studentMail()">{{ student().email }}</a>
+            } @else {
+              <span>{{ student().email || '—' }}</span>
+            }
+          </div>
+          <div class="family__person">
+            <span class="family__role">Apoderado</span>
+            <strong>{{ student().tutor }}</strong>
+            <span>{{ student().tutorEmail }}</span>
+            <span>{{ student().tutorPhone }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
 </div>

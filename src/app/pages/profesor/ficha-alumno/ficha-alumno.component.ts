@@ -5,6 +5,12 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { GradeEntry, TeacherCourse, TeacherService } from '../../../services/teacher.service';
 
+export interface ProfesorFichaGradeRow {
+  periodName: string;
+  score: number;
+  notes?: string;
+}
+
 export interface ProfesorFichaAlumnoView {
   student: {
     name: string;
@@ -26,7 +32,9 @@ export interface ProfesorFichaAlumnoView {
     totalAbsences: number | null;
     totalLates: number | null;
     totalJustified: number | null;
+    present: number | null;
   };
+  periodGrades: ProfesorFichaGradeRow[];
 }
 
 @Component({
@@ -58,6 +66,25 @@ export class FichaAlumnoComponent implements OnInit {
   });
 
   hasAttendanceRecords = computed(() => (this.academicData().totalSessions ?? 0) > 0);
+
+  periodGrades = computed(() => this.studentData()?.periodGrades ?? []);
+
+  studentInitials = computed(() => {
+    const parts = (this.student().name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '·';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  });
+
+  courseContext = computed(() => {
+    const c = this.course();
+    return [c.name, c.section].filter(s => s && s !== '—').join(' · ');
+  });
+
+  studentMail = computed(() => {
+    const email = (this.student().email ?? '').trim();
+    return email.includes('@') ? email : '';
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -199,17 +226,26 @@ export class FichaAlumnoComponent implements OnInit {
     const sectionLine = [gradeLbl, levelLbl].filter(Boolean).join(' · ') || '—';
 
     const studentGrades = grades.filter((g) => (g.student?.id ?? '') === studentId);
+    const periodGrades = studentGrades
+      .slice()
+      .sort((a, b) => (a.period?.order ?? 0) - (b.period?.order ?? 0))
+      .map((g) => ({
+        periodName: (g.period?.name ?? '').trim() || 'Periodo',
+        score: Number(g.score),
+        notes: (g.notes ?? '').trim() || undefined,
+      }));
     const avg =
-      studentGrades.length > 0
+      periodGrades.length > 0
         ? Math.round(
-            (studentGrades.reduce((s, g) => s + Number(g.score), 0) /
-              studentGrades.length) *
-              10,
+            (periodGrades.reduce((s, g) => s + g.score, 0) / periodGrades.length) * 10,
           ) / 10
         : '—';
 
     const primary = this.pickPrimaryParent(st);
     const att = this.readAttendanceSummary(st);
+    const accounted = (att.absent ?? 0) + (att.late ?? 0) + (att.justified ?? 0);
+    const present =
+      att.totalSessions > 0 ? Math.max(0, att.totalSessions - accounted) : null;
 
     return {
       student: {
@@ -232,7 +268,9 @@ export class FichaAlumnoComponent implements OnInit {
         totalAbsences: att.absent,
         totalLates: att.late,
         totalJustified: att.justified,
+        present,
       },
+      periodGrades,
     };
   }
 
