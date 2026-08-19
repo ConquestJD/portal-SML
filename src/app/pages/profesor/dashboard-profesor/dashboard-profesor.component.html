@@ -21,90 +21,178 @@
       <img class="prof-dash__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
       <div class="prof-dash__hero-veil"></div>
       <div class="prof-dash__hero-content">
-        <img src="/only-logo.png" alt="" class="prof-dash__crest" />
-        <div>
-          <h1 class="prof-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
-          <p class="prof-dash__brand">Santa María Laura</p>
+        <div class="prof-dash__welcome">
+          <img src="/only-logo.png" alt="" class="prof-dash__crest" />
+          <div>
+            <p class="prof-dash__kicker">Docente · Santa María Laura</p>
+            <h1 class="prof-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
+            <p class="prof-dash__brand">{{ censusLine() }}</p>
+          </div>
+        </div>
+        <div class="prof-dash__date" aria-label="Fecha de hoy">
+          <span class="prof-dash__date-week">{{ weekdayLabel() }}</span>
+          <span class="prof-dash__date-day">{{ dayNumber() }}</span>
+          <span class="prof-dash__date-month">{{ monthYearLabel() }}</span>
         </div>
       </div>
     </header>
 
     <div class="prof-dash__body">
 
-      <section class="metrics" aria-label="Resumen">
-        <a routerLink="/profesor/cursos" class="metric">
-          <span class="metric__n">{{ totalCourses() }}</span>
-          <span class="metric__l">Cursos</span>
-        </a>
-        <a routerLink="/profesor/cursos" class="metric">
-          <span class="metric__n">{{ totalStudents() }}</span>
-          <span class="metric__l">Estudiantes</span>
-        </a>
-        <a routerLink="/profesor/actividad" class="metric">
-          <span class="metric__n">{{ pendingGrading() }}</span>
-          <span class="metric__l">Por calificar</span>
-        </a>
-        <a routerLink="/profesor/cursos" class="metric">
-          <span class="metric__n">{{ attendancePending() }}</span>
-          <span class="metric__l">Asistencias</span>
-        </a>
+      <section class="census" aria-labelledby="census-title">
+        <div class="census__head">
+          <h2 id="census-title">Tu cátedra</h2>
+          <p>{{ censusLine() }}</p>
+        </div>
+        <div class="metrics">
+          <a routerLink="/profesor/cursos" class="metric">
+            <span class="metric__kicker">Aula</span>
+            <span class="metric__n">{{ totalCourses() }}</span>
+            <span class="metric__l">Cursos</span>
+          </a>
+          <a routerLink="/profesor/cursos" class="metric">
+            <span class="metric__kicker">Nómina</span>
+            <span class="metric__n">{{ totalStudents() }}</span>
+            <span class="metric__l">Estudiantes</span>
+          </a>
+          <a routerLink="/profesor/actividad" class="metric" [class.metric--alert]="pendingGrading() > 0">
+            <span class="metric__kicker">Mesa</span>
+            <span class="metric__n">{{ pendingGrading() }}</span>
+            <span class="metric__l">Por calificar</span>
+          </a>
+          <a routerLink="/profesor/cursos" class="metric" [class.metric--alert]="attendancePending() > 0">
+            <span class="metric__kicker">Pase</span>
+            <span class="metric__n">{{ attendancePending() }}</span>
+            <span class="metric__l">Asistencias</span>
+          </a>
+        </div>
       </section>
 
-      @if (hasAttention()) {
-        <section class="pulse" aria-label="Pendientes">
-          @if (pendingGrading() > 0) {
-            <a routerLink="/profesor/actividad" class="pulse__item">
-              <span class="pulse__n">{{ pendingGrading() }}</span>
-              <span class="pulse__l">Tareas por calificar</span>
-            </a>
-          }
-          @if (attendancePending() > 0) {
-            <a routerLink="/profesor/cursos" class="pulse__item">
-              <span class="pulse__n">{{ attendancePending() }}</span>
-              <span class="pulse__l">Asistencias pendientes</span>
-            </a>
-          }
-        </section>
-      }
-
-      <div class="prof-dash__split">
-        <section class="feed" aria-labelledby="courses-title">
-          <div class="feed__head">
-            <h2 id="courses-title">Mis cursos</h2>
-            @if (!coursesLoading() && teacherCourses().length > 0) {
-              <a routerLink="/profesor/cursos">Ver todos</a>
+      <section class="desk" aria-labelledby="desk-title">
+        <h2 id="desk-title">Hoy en el aula</h2>
+        @if (hasAttention()) {
+          <div class="pulse">
+            @if (pendingGrading() > 0) {
+              <a routerLink="/profesor/actividad" class="pulse__item">
+                <span class="pulse__n">{{ pendingGrading() }}</span>
+                <span class="pulse__copy">
+                  <span class="pulse__l">Tareas por calificar</span>
+                  <span class="pulse__hint">Revisa las entregas recientes</span>
+                </span>
+              </a>
+            }
+            @if (attendancePending() > 0) {
+              <a routerLink="/profesor/cursos" class="pulse__item">
+                <span class="pulse__n">{{ attendancePending() }}</span>
+                <span class="pulse__copy">
+                  <span class="pulse__l">Asistencias pendientes</span>
+                  <span class="pulse__hint">Pase del día en tus cursos</span>
+                </span>
+              </a>
+            }
+            @if (unreadComunicados() > 0) {
+              <a routerLink="/profesor/comunicados" class="pulse__item">
+                <span class="pulse__n">{{ unreadComunicados() }}</span>
+                <span class="pulse__copy">
+                  <span class="pulse__l">Comunicados sin leer</span>
+                  <span class="pulse__hint">Mural del aula</span>
+                </span>
+              </a>
             }
           </div>
+        } @else {
+          <p class="desk__ok">Sin pendientes de mesa. El aula está al día.</p>
+        }
+      </section>
 
-          @if (coursesLoading()) {
-            <p class="feed__empty">Cargando cursos…</p>
-          } @else if (teacherCourses().length === 0) {
-            <p class="feed__empty">Sin cursos asignados aún</p>
-          } @else {
-            <ul class="course-list">
-              @for (c of teacherCourses(); track c.id) {
-                <li>
-                  <a [routerLink]="courseLink(c)" class="course-row">
-                    <span class="course-row__mark" [style.background]="courseColor(c)">{{ courseInitial(c) }}</span>
-                    <span class="course-row__body">
-                      <span class="course-row__name">{{ c.course?.name || 'Curso' }}</span>
+      <section class="directory" aria-labelledby="dir-title">
+        <div class="directory__head">
+          <h2 id="dir-title">El trabajo de hoy</h2>
+          <p>Entrar a cada área del aula</p>
+        </div>
+        <nav class="directory__grid" aria-label="Áreas del aula">
+          @for (item of directory; track item.link) {
+            <a [routerLink]="item.link" class="dir-card">
+              <img [src]="item.photo" alt="" decoding="async" />
+              <span class="dir-card__veil"></span>
+              <span class="dir-card__copy">
+                <span class="dir-card__hint">{{ item.hint }}</span>
+                <span class="dir-card__label">{{ item.label }}</span>
+              </span>
+            </a>
+          }
+        </nav>
+      </section>
+
+      <section class="atelier" aria-labelledby="courses-title">
+        <div class="atelier__head">
+          <h2 id="courses-title">Mis cursos</h2>
+          @if (teacherCourses().length > 0) {
+            <a routerLink="/profesor/cursos">Ver todos</a>
+          }
+        </div>
+        @if (teacherCourses().length === 0) {
+          <p class="feed__empty">Sin cursos asignados aún</p>
+        } @else {
+          <ul class="course-grid">
+            @for (c of previewCourses(); track c.id) {
+              <li>
+                <a [routerLink]="courseLink(c)" class="course-card">
+                  <span class="course-card__band" [style.background]="courseColor(c)"></span>
+                  <span class="course-card__body">
+                    <span class="course-card__mark" [style.background]="courseColor(c)">{{ courseInitial(c) }}</span>
+                    <span class="course-card__copy">
                       @if (courseSubtitle(c)) {
-                        <span class="course-row__meta">{{ courseSubtitle(c) }}</span>
+                        <span class="course-card__kicker">{{ courseSubtitle(c) }}</span>
                       }
+                      <span class="course-card__name">{{ c.course?.name || 'Curso' }}</span>
+                      <span class="course-card__meta">{{ rosterLabel(c) }}</span>
                     </span>
-                    <span class="course-row__count">{{ rosterStudentCount(c) }} est.</span>
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <div class="prof-dash__split">
+        <section class="feed" aria-labelledby="feed-title">
+          <div class="feed__head">
+            <h2 id="feed-title">Actividad reciente</h2>
+            <a routerLink="/profesor/actividad">Ver toda</a>
+          </div>
+          @if (previewActivity().length === 0) {
+            <p class="feed__empty">El aula está en silencio. Las entregas y publicaciones aparecerán aquí.</p>
+          } @else {
+            <ul class="feed__list">
+              @for (item of previewActivity(); track item.id) {
+                <li>
+                  <a [routerLink]="activityLink(item)" class="feed__link">
+                    <span class="feed__kicker">{{ kindLabel(item.kind) }} · {{ item.courseName }}</span>
+                    <span class="feed__title">{{ item.headline }}</span>
+                    @if (item.detail) {
+                      <span class="feed__excerpt">{{ item.detail }}</span>
+                    }
                   </a>
+                  <time>{{ activityTime(item.at) }}</time>
                 </li>
               }
             </ul>
           }
         </section>
 
-        <nav class="shortcuts" aria-label="Accesos">
-          @for (s of shortcuts; track s.link) {
-            <a [routerLink]="s.link">{{ s.label }}</a>
-          }
-        </nav>
+        <section class="actions" aria-labelledby="actions-title">
+          <h2 id="actions-title">Hacer ahora</h2>
+          <nav class="actions__list">
+            @for (a of actions; track a.link) {
+              <a [routerLink]="a.link" class="actions__item">
+                <span class="actions__label">{{ a.label }}</span>
+                <span class="actions__hint">{{ a.hint }}</span>
+              </a>
+            }
+          </nav>
+        </section>
       </div>
     </div>
   }
