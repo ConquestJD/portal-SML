@@ -124,10 +124,25 @@ export interface AttendanceEntry {
   student?: { id: string; studentCode: string; user: { firstName: string; lastName: string } };
 }
 
+/** Fila de `GET .../attendance/history` (Prisma groupBy date + status). */
+export interface AttendanceHistoryBucket {
+  date: string;
+  status: string;
+  _count: { status?: number } | number;
+}
+
+export interface AcademicPeriod {
+  id: string;
+  name: string;
+  order?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface GradeEntry {
   id: string; score: number; notes?: string;
   student: { id: string; studentCode: string; user: { firstName: string; lastName: string } };
-  period?: { id: string; name: string };
+  period?: { id: string; name: string; order?: number };
 }
 
 export interface Material {
@@ -516,11 +531,14 @@ export class TeacherService {
       `${this.url}/teacher/courses/${courseId}/attendance`, { records }
     ).pipe(map(r => r.data));
   }
-  getAttendanceHistory(courseId: string): Observable<unknown[]> {
-    return this.get<unknown[]>(`/teacher/courses/${courseId}/attendance/history`);
+  getAttendanceHistory(courseId: string): Observable<AttendanceHistoryBucket[]> {
+    return this.get<AttendanceHistoryBucket[]>(`/teacher/courses/${courseId}/attendance/history`);
   }
 
   // ─── GRADES ───────────────────────────────────────────────────────────────
+  getCoursePeriods(courseId: string): Observable<AcademicPeriod[]> {
+    return this.get<AcademicPeriod[]>(`/teacher/courses/${courseId}/periods`);
+  }
   getGrades(courseId: string): Observable<GradeEntry[]> {
     return this.get<GradeEntry[]>(`/teacher/courses/${courseId}/grades`);
   }
