@@ -153,8 +153,17 @@ export interface StudentAttendance {
 }
 
 export interface StudentProfile {
-  id: string; studentCode: string; birthDate?: string; gender?: string;
-  address?: string; bloodType?: string; medicalNotes?: string;
+  id: string;
+  studentCode: string;
+  dni?: string | null;
+  grade?: string | null;
+  level?: string | null;
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  bloodType?: string;
+  medicalNotes?: string;
+  status?: string;
   user: { id: string; email: string; firstName: string; lastName: string; phone?: string; avatarUrl?: string };
   enrollments?: unknown[];
 }

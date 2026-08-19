@@ -1,98 +1,160 @@
-<div class="perfil-page">
+<div class="prof-page">
 
   @if (loading()) {
-    <div class="perfil-page__loading" aria-busy="true">
-      <div class="skel skel--hero"></div>
-      <div class="skel-body"><div class="skel skel--block"></div></div>
-    </div>
+    <p class="feed__empty perfil-load">Cargando perfil…</p>
   } @else if (error()) {
-    <div class="perfil-page__error" role="alert">
-      <p>{{ error() }}</p>
+    <div class="prof-page__body">
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="prof-btn prof-btn--solid" (click)="reload()">Reintentar</button>
+      </div>
     </div>
   } @else {
 
-    <header class="perfil-page__hero">
-      <img class="perfil-page__hero-photo" src="/images/heroes/profile.webp" alt="" decoding="async" />
-      <div class="perfil-page__hero-veil"></div>
-      <div class="perfil-page__hero-content">
-        <div class="perfil-page__avatar-wrap">
-          @if (studentData().photo) {
-            <img [src]="studentData().photo" [alt]="studentData().fullName" class="perfil-page__avatar" />
-          } @else {
-            <span class="perfil-page__avatar perfil-page__avatar--initials">{{ initials() }}</span>
-          }
-        </div>
+    <header class="prof-page__hero">
+      <img class="prof-page__hero-photo" src="/images/heroes/profile.webp" alt="" decoding="async" />
+      <div class="prof-page__hero-veil"></div>
+      <div class="prof-page__hero-content">
+        <img src="/only-logo.png" alt="" class="prof-page__crest" />
         <div>
-          <h1 class="perfil-page__title">{{ studentData().fullName }}</h1>
-          <p class="perfil-page__brand">
-            {{ studentData().code || 'Estudiante' }}
-            @if (studentData().grade) { · {{ studentData().grade }} }
-            @if (studentData().section) { {{ studentData().section }} }
-          </p>
+          <h1 class="prof-page__title">Mi perfil</h1>
+          <p class="prof-page__brand">Santa María Laura</p>
         </div>
       </div>
     </header>
 
-    <div class="perfil-page__body">
+    <div class="prof-page__body">
 
-      <nav class="tabs" aria-label="Secciones del perfil">
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'personal'" (click)="setTab('personal')">Personal</button>
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'academico'" (click)="setTab('academico')">Académico</button>
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'foto'" (click)="setTab('foto')">Foto</button>
-      </nav>
+      <section class="ficha" aria-label="Identidad">
+        <button
+          type="button"
+          class="ficha__portrait"
+          [class.is-over]="photoDragOver()"
+          [disabled]="uploading()"
+          (click)="browsePhoto($event)"
+          (dragover)="onPhotoDragOver($event)"
+          (dragenter)="onPhotoDragOver($event)"
+          (dragleave)="onPhotoDragLeave($event)"
+          (drop)="onPhotoDrop($event)"
+        >
+          @if (photoUrl() && !photoBroken()) {
+            <img [src]="photoUrl()" [alt]="fullName()" (error)="onPhotoError()" />
+          } @else {
+            <span>{{ initials() }}</span>
+          }
+          <em>{{ uploading() ? 'Subiendo…' : 'Cambiar foto' }}</em>
+        </button>
+        <input #photoInput type="file" class="visually-hidden" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" />
+        <div class="ficha__who">
+          <h2 class="ficha__name">{{ fullName() || 'Estudiante' }}</h2>
+          <p class="ficha__code">{{ profile()?.studentCode || 'Sin código' }}</p>
+          @if (gradeLine()) {
+            <p class="ficha__meta">{{ gradeLine() }}</p>
+          }
+          <p class="ficha__mail">{{ profile()?.user?.email }}</p>
+        </div>
+      </section>
+
+      <section class="metrics metrics--3" aria-label="Resumen">
+        <div class="metric">
+          <span class="metric__n metric__n--sm">{{ profile()?.studentCode || '—' }}</span>
+          <span class="metric__l">Código</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n metric__n--sm">{{ gradeLine() || '—' }}</span>
+          <span class="metric__l">Grado</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n metric__n--sm">{{ academicYear() || '—' }}</span>
+          <span class="metric__l">Año lectivo</span>
+        </div>
+      </section>
 
       @if (uploadSuccess()) {
-        <p class="alert alert--ok">{{ uploadSuccess() }}</p>
+        <div class="prof-alert prof-alert--ok" role="status"><p>{{ uploadSuccess() }}</p></div>
+      }
+      @if (uploadError()) {
+        <div class="prof-alert" role="alert"><p>{{ uploadError() }}</p></div>
       }
 
-      @if (activeTab() === 'personal') {
-        <section class="feed">
-          <div class="feed__head"><h2>Datos personales</h2></div>
-          <ul class="data-list">
-            <li><span class="data-list__l">Nombre</span><span class="data-list__v">{{ studentData().fullName || '—' }}</span></li>
-            <li><span class="data-list__l">Email</span><span class="data-list__v">{{ studentData().email || '—' }}</span></li>
-            <li><span class="data-list__l">Teléfono</span><span class="data-list__v">{{ studentData().phone || '—' }}</span></li>
-            <li><span class="data-list__l">Fecha de nacimiento</span><span class="data-list__v">{{ formatDate(studentData().birthDate) }}</span></li>
-            <li><span class="data-list__l">Dirección</span><span class="data-list__v">{{ studentData().address || '—' }}</span></li>
-            <li><span class="data-list__l">Género</span><span class="data-list__v">{{ studentData().gender || '—' }}</span></li>
-            <li><span class="data-list__l">Grupo sanguíneo</span><span class="data-list__v">{{ studentData().bloodType || '—' }}</span></li>
-            <li><span class="data-list__l">Notas médicas</span><span class="data-list__v">{{ studentData().medicalNotes || '—' }}</span></li>
-          </ul>
-        </section>
-      }
+      <div class="perfil-split">
 
-      @if (activeTab() === 'academico') {
-        <section class="feed">
-          <div class="feed__head"><h2>Datos académicos</h2></div>
-          <ul class="data-list">
-            <li><span class="data-list__l">Código</span><span class="data-list__v">{{ studentData().code || '—' }}</span></li>
-            <li><span class="data-list__l">Grado</span><span class="data-list__v">{{ studentData().grade || '—' }}</span></li>
-            <li><span class="data-list__l">Sección</span><span class="data-list__v">{{ studentData().section || '—' }}</span></li>
-            <li><span class="data-list__l">Año académico</span><span class="data-list__v">{{ academicData().academicYear || '—' }}</span></li>
-            <li><span class="data-list__l">Estado</span><span class="data-list__v">{{ academicData().status || '—' }}</span></li>
-          </ul>
-        </section>
-      }
-
-      @if (activeTab() === 'foto') {
-        <section class="feed">
-          <div class="feed__head"><h2>Foto de perfil</h2></div>
-          <div class="photo-panel">
-            @if (studentData().photo) {
-              <img [src]="studentData().photo" alt="" class="photo-panel__preview" />
-            } @else {
-              <span class="photo-panel__preview photo-panel__preview--empty">{{ initials() }}</span>
-            }
-            <div class="photo-panel__actions">
-              <label class="photo-panel__btn">
-                <input type="file" (change)="onPhotoSelected($event)" hidden />
-                Subir nueva foto
-              </label>
-              <p class="photo-panel__hint">JPG, PNG o WebP · máx. 2 MB</p>
+        <section class="sheet">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Ficha</p>
+              <h2 class="mod-head__title">Datos personales</h2>
             </div>
-          </div>
+          </header>
+          <dl class="facts">
+            <div>
+              <dt>Nombre</dt>
+              <dd>{{ fullName() || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Correo</dt>
+              <dd>{{ profile()?.user?.email || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Teléfono</dt>
+              <dd>{{ profile()?.user?.phone || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Nacimiento</dt>
+              <dd>{{ formatDate(profile()?.birthDate) }}</dd>
+            </div>
+            <div>
+              <dt>Dirección</dt>
+              <dd>{{ profile()?.address || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Género</dt>
+              <dd>{{ formatGender(profile()?.gender) }}</dd>
+            </div>
+            <div>
+              <dt>Grupo sanguíneo</dt>
+              <dd>{{ profile()?.bloodType || '—' }}</dd>
+            </div>
+          </dl>
+
+          @if (profile()?.medicalNotes?.trim()) {
+            <h3 class="sheet__sub">Notas médicas</h3>
+            <p class="sheet__note">{{ profile()!.medicalNotes }}</p>
+          }
         </section>
-      }
+
+        <aside class="side">
+          <section class="side__block">
+            <h2>Datos académicos</h2>
+            <dl class="facts facts--stack">
+              <div>
+                <dt>Código</dt>
+                <dd>{{ profile()?.studentCode || '—' }}</dd>
+              </div>
+              <div>
+                <dt>Grado</dt>
+                <dd>{{ gradeLine() || '—' }}</dd>
+              </div>
+              <div>
+                <dt>Año lectivo</dt>
+                <dd>{{ academicYear() || '—' }}</dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd>{{ enrollmentStatus() }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="side__block">
+            <h2>Foto de perfil</h2>
+            <p class="side__hint">Haz clic en el retrato o arrastra una imagen. JPG, PNG o WebP · máx. 2 MB.</p>
+            <button type="button" class="prof-btn prof-btn--solid" (click)="browsePhoto($event)" [disabled]="uploading()">
+              {{ uploading() ? 'Subiendo…' : 'Elegir foto' }}
+            </button>
+          </section>
+        </aside>
+      </div>
     </div>
   }
 </div>
