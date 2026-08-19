@@ -326,19 +326,15 @@ export class CursoDetalleComponent implements OnInit {
 
     for (const t of this.tasks()) {
       const sub = t.submission;
-      if (!sub) continue;
-      const st = (sub.status || '').toUpperCase();
-      const hasScore = sub.score != null && Number.isFinite(Number(sub.score));
-      if (st !== 'GRADED' && !hasScore) continue;
-
+      const st = (sub?.status || '').toUpperCase();
+      const hasScore = sub?.score != null && Number.isFinite(Number(sub.score));
       const max = t.maxScore ?? 20;
-      const scNum = hasScore ? Number(sub.score) : NaN;
+      const scNum = hasScore ? Number(sub!.score) : NaN;
       const pct =
         hasScore && max > 0 && Number.isFinite(scNum)
           ? `${Math.round((scNum / max) * 1000) / 10}%`
           : '—';
-
-      const dateRaw = sub.gradedAt ?? sub.submittedAt ?? t.dueDate;
+      const dateRaw = sub?.gradedAt ?? sub?.submittedAt ?? t.dueDate;
       const d = dateRaw ? new Date(dateRaw) : null;
       const dateLabel =
         d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('es-PE') : '—';
@@ -353,9 +349,9 @@ export class CursoDetalleComponent implements OnInit {
           label: t.title,
           dateLabel,
           maxPoints: String(max),
-          scoreDisplay: hasScore ? String(sub.score) : '—',
+          scoreDisplay: hasScore ? String(sub!.score) : '—',
           pctDisplay: pct,
-          notes: sub.feedback?.trim() || null,
+          notes: sub?.feedback?.trim() || (st === 'SUBMITTED' || st === 'LATE' ? 'Entregada' : null),
         },
       });
     }

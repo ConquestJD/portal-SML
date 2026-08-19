@@ -122,6 +122,24 @@
   letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
 }
 
+.tabs {
+  display: inline-flex;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 1.15rem;
+}
+
+.tabs__btn {
+  border: none; background: transparent;
+  padding: .55rem .9rem; font: inherit; font-size: .82rem; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+}
+
+.tabs__btn.active {
+  color: var(--navy);
+  border-bottom: 2px solid var(--navy);
+  margin-bottom: -2px;
+}
+
 .feed {
   background: var(--surface);
   padding: 1.1rem 1.25rem 1rem;

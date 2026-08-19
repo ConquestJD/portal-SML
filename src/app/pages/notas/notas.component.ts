@@ -5,6 +5,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { StudentService, StudentExam, StudentGrade, StudentTask } from '../../services/student.service';
 
 export type NotaRowKind = 'periodo' | 'tarea' | 'examen';
+export type NotaFilter = 'all' | 'tarea' | 'examen' | 'periodo';
 
 export interface NotaRow {
   id: string;
@@ -16,6 +17,7 @@ export interface NotaRow {
   maxLabel: string;
   pctLabel: string;
   taskId?: string;
+  taskAssignmentId?: string;
   notes?: string | null;
 }
 
@@ -40,6 +42,7 @@ export class NotasComponent implements OnInit {
   grades = signal<StudentGrade[]>([]);
   tasks = signal<StudentTask[]>([]);
   exams = signal<StudentExam[]>([]);
+  filter = signal<NotaFilter>('all');
 
   /** Bloques por curso + filas ordenadas */
   courseBlocks = computed((): NotaCourseBlock[] => {
@@ -74,19 +77,16 @@ export class NotasComponent implements OnInit {
 
     for (const t of this.tasks()) {
       const sub = t.submission;
-      if (!sub) continue;
-      const st = (sub.status || '').toUpperCase();
-      const hasScore = sub.score != null && Number.isFinite(Number(sub.score));
-      if (st !== 'GRADED' && !hasScore) continue;
-
+      const st = (sub?.status || '').toUpperCase();
+      const hasScore = sub?.score != null && Number.isFinite(Number(sub.score));
       const courseName = t.course?.name?.trim() || 'Curso';
       const max = t.maxScore ?? 20;
-      const scNum = hasScore ? Number(sub.score) : NaN;
+      const scNum = hasScore ? Number(sub!.score) : NaN;
       const pct =
         hasScore && max > 0 && Number.isFinite(scNum)
           ? `${Math.round((scNum / max) * 1000) / 10}%`
           : '—';
-      const dateRaw = sub.gradedAt ?? sub.submittedAt ?? t.dueDate;
+      const dateRaw = sub?.gradedAt ?? sub?.submittedAt ?? t.dueDate;
       const d = dateRaw ? new Date(dateRaw) : null;
       const dateLabel =
         d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('es-PE') : '—';
@@ -97,11 +97,12 @@ export class NotasComponent implements OnInit {
         courseName,
         label: t.title,
         dateLabel,
-        scoreLabel: hasScore ? String(sub.score) : '—',
+        scoreLabel: hasScore ? String(sub!.score) : '—',
         maxLabel: String(max),
         pctLabel: pct,
         taskId: t.id,
-        notes: sub.feedback?.trim() || null,
+        taskAssignmentId: t.teacherAssignmentId,
+        notes: sub?.feedback?.trim() || (st === 'SUBMITTED' || st === 'LATE' ? 'Entregada' : null),
       });
     }
 
@@ -134,7 +135,9 @@ export class NotasComponent implements OnInit {
 
     const blocks: NotaCourseBlock[] = [];
     for (const [courseName, rows] of map.entries()) {
-      rows.sort((a, b) => {
+      const visible = rows.filter((r) => this.filter() === 'all' || r.kind === this.filter());
+      if (!visible.length) continue;
+      visible.sort((a, b) => {
         const tsa = (() => {
           const d = new Date(a.dateLabel);
           return Number.isNaN(d.getTime()) ? 0 : d.getTime();
@@ -147,7 +150,7 @@ export class NotasComponent implements OnInit {
       });
 
       const nums: number[] = [];
-      for (const r of rows) {
+      for (const r of visible) {
         if (r.scoreLabel !== '—' && Number.isFinite(Number(r.scoreLabel)))
           nums.push(Number(r.scoreLabel));
       }
@@ -157,14 +160,14 @@ export class NotasComponent implements OnInit {
         average = String(Math.round(avg * 20) / 20);
       }
 
-      blocks.push({ courseName, rows, average });
+      blocks.push({ courseName, rows: visible, average });
     }
 
     return blocks.sort((a, b) => a.courseName.localeCompare(b.courseName, 'es'));
   });
 
-  totalEvaluations = computed(() =>
-    this.courseBlocks().reduce((acc, b) => acc + b.rows.length, 0),
+  totalEvaluations = computed(
+    () => this.grades().length + this.tasks().length + this.exams().length,
   );
 
   overallAverage = computed(() => {
@@ -187,8 +190,8 @@ export class NotasComponent implements OnInit {
   ngOnInit() {
     this.loading.set(true);
     forkJoin({
-      grades: this.studentService.getGrades({}),
-      tasks: this.studentService.getTasks({}),
+      grades: this.studentService.getGrades({}).pipe(catchError(() => of([] as StudentGrade[]))),
+      tasks: this.studentService.getTasks({}).pipe(catchError(() => of([] as StudentTask[]))),
       exams: this.studentService.getExams().pipe(catchError(() => of([] as StudentExam[]))),
     }).subscribe({
       next: ({ grades, tasks, exams }) => {
@@ -210,6 +213,13 @@ export class NotasComponent implements OnInit {
 
   isTaskRow(row: NotaRow): boolean {
     return row.kind === 'tarea' && !!row.taskId;
+  }
+
+  taskLink(row: NotaRow): string[] {
+    if (row.taskAssignmentId && row.taskId) {
+      return ['/cursos', row.taskAssignmentId, 'tareas', row.taskId];
+    }
+    return ['/tareas', row.taskId!];
   }
 
   kindLabel(kind: NotaRowKind): string {

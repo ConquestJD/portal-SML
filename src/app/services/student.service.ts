@@ -93,6 +93,7 @@ export interface StudentTask {
   deliveryType?: string;
   course?: { name: string };
   teacherName?: string;
+  teacherAssignmentId?: string;
   unit?: { id?: string; title?: string; number?: number } | null;
   submission?: {
     id: string;
@@ -183,10 +184,12 @@ export class StudentService {
     let submission: StudentTask['submission'] | undefined;
     if (subRaw && typeof subRaw === 'object') {
       const s = subRaw as Record<string, unknown>;
+      const score = num(s['score']);
       submission = {
         ...(subRaw as StudentTask['submission']),
         content: (s['content'] as string | null | undefined) ?? undefined,
         submitCount: num(s['submitCount']),
+        score,
         attachments: mapTaskFiles(s['attachments']),
       };
     }
@@ -199,6 +202,7 @@ export class StudentService {
 
     const ta = t['teacherAssignment'] as
       | {
+          id?: string;
           course?: { name?: string };
           teacher?: { user?: { firstName?: string; lastName?: string } };
         }
@@ -215,6 +219,10 @@ export class StudentService {
     const maxSubmissions = num(t['maxSubmissions']) ?? 1;
 
     const unit = t['unit'] as StudentTask['unit'];
+    const assignmentId =
+      typeof t['teacherAssignmentId'] === 'string'
+        ? t['teacherAssignmentId']
+        : ta?.id;
 
     return {
       ...(t as unknown as StudentTask),
@@ -223,6 +231,7 @@ export class StudentService {
       submission,
       course,
       teacherName,
+      teacherAssignmentId: assignmentId,
       unit: unit ?? undefined,
       attachments: mapTaskFiles(t['attachments']),
     };

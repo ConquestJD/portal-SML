@@ -44,6 +44,17 @@
         </div>
       </section>
 
+      <nav class="tabs" aria-label="Filtro de notas">
+        <button type="button" class="tabs__btn" [class.active]="filter() === 'all'" (click)="filter.set('all')">Todas</button>
+        <button type="button" class="tabs__btn" [class.active]="filter() === 'tarea'" (click)="filter.set('tarea')">Tareas</button>
+        <button type="button" class="tabs__btn" [class.active]="filter() === 'examen'" (click)="filter.set('examen')">Exámenes</button>
+        <button type="button" class="tabs__btn" [class.active]="filter() === 'periodo'" (click)="filter.set('periodo')">Bimestres</button>
+      </nav>
+
+      @if (courseBlocks().length === 0) {
+        <p class="feed__empty">No hay registros en este filtro</p>
+      }
+
       @for (block of courseBlocks(); track block.courseName) {
         <section class="feed" aria-labelledby="notas-{{ $index }}">
           <div class="feed__head">
@@ -56,7 +67,7 @@
             @for (row of block.rows; track row.id) {
               <li>
                 @if (isTaskRow(row) && row.taskId) {
-                  <a [routerLink]="['/tareas', row.taskId]" class="nota-row" [attr.data-kind]="row.kind">
+                  <a [routerLink]="taskLink(row)" class="nota-row" [attr.data-kind]="row.kind">
                     <span class="nota-row__kind">{{ kindLabel(row.kind) }}</span>
                     <span class="nota-row__body">
                       <span class="nota-row__title">{{ row.label }}</span>
@@ -64,6 +75,9 @@
                         {{ row.dateLabel }}
                         @if (row.maxLabel !== '—') {
                           · Máx. {{ row.maxLabel }}
+                        }
+                        @if (row.notes) {
+                          · {{ row.notes }}
                         }
                       </span>
                     </span>
