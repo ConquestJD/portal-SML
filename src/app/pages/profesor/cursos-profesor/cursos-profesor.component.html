@@ -14,152 +14,214 @@
 
   <div class="prof-page__body">
 
+    <section class="metrics" aria-label="Resumen">
+      <div class="metric">
+        <span class="metric__n">{{ courses().length }}</span>
+        <span class="metric__l">Cursos</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ rosterCountsLoading() ? '…' : totalStudents() }}</span>
+        <span class="metric__l">Estudiantes</span>
+      </div>
+      <div class="metric" [class.metric--alert]="pendingTotal() > 0">
+        <span class="metric__n">{{ pendingTotal() }}</span>
+        <span class="metric__l">Por calificar</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ availableGrades().length }}</span>
+        <span class="metric__l">Grados</span>
+      </div>
+    </section>
+
+    @if (pendingTotal() > 0 && !loading()) {
+      <section class="pulse" aria-label="Pendientes">
+        <a routerLink="/profesor/tareas" class="pulse__item">
+          <span class="pulse__n">{{ pendingTotal() }}</span>
+          <span class="pulse__l">Tareas por calificar en tus cursos</span>
+        </a>
+      </section>
+    }
+
     <div class="toolbar">
       <label class="search">
         <span class="visually-hidden">Buscar curso</span>
         <input
           type="search"
-          placeholder="Buscar curso por nombre, código o grado…"
+          placeholder="Materia, código o grado…"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
       </label>
+      <select
+        [ngModel]="filterGrade()"
+        (ngModelChange)="filterGrade.set($event)"
+        name="filterGrade"
+        aria-label="Grado"
+      >
+        <option value="">Grado</option>
+        @for (g of availableGrades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+      @if (hasActiveFilters()) {
+        <button type="button" class="prof-link" (click)="resetFilters()">Limpiar</button>
+      }
       <div class="view-toggle" role="group" aria-label="Tipo de vista">
-        <button type="button" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')">Cuadrícula</button>
+        <button type="button" [class.active]="viewMode() === 'catalog'" (click)="viewMode.set('catalog')">Catálogo</button>
         <button type="button" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')">Lista</button>
       </div>
     </div>
+
+    @if (hasActiveFilters() && !loading() && courses().length > 0) {
+      <p class="roster-count">{{ filteredCourses().length }} de {{ courses().length }}</p>
+    }
 
     @if (loading()) {
       <p class="feed__empty">Cargando tus cursos…</p>
     } @else if (error()) {
       <div class="prof-alert" role="alert">
         <p>{{ error() }}</p>
+        <button type="button" class="prof-link" (click)="load()">Reintentar</button>
       </div>
     } @else if (courses().length === 0) {
       <section class="feed">
-        <p class="feed__empty">No tienes cursos asignados. Cuando la administración te vincule a uno o más cursos aparecerán aquí.</p>
+        <p class="feed__empty">No tienes cursos asignados. Cuando la administración te vincule a uno aparecerán aquí.</p>
       </section>
     } @else if (filteredCourses().length === 0) {
       <section class="feed">
-        <p class="feed__empty">No encontramos cursos con esos criterios. Intenta otra búsqueda.</p>
+        <p class="feed__empty">No hay cursos con esos criterios.</p>
       </section>
-    } @else if (viewMode() === 'grid') {
-      <div class="tc-grid">
-        @for (course of filteredCourses(); track course.id) {
-          <a [routerLink]="['/profesor/cursos', course.id]"
-             class="tc-card"
-             [style.--course-accent]="getCourseColor(course)">
-            <div class="tc-card__accent"></div>
-
-            <div class="tc-card__head">
-              <div class="tc-card__logo">
-                <span>{{ getCourseInitial(course) }}</span>
-              </div>
-              <div class="tc-card__head-right">
-                @if (course.code) {
-                  <span class="tc-code">{{ course.code }}</span>
+    } @else if (viewMode() === 'catalog') {
+      <div class="roster" aria-label="Catálogo de cursos">
+        @for (group of groupedCourses(); track group.grade) {
+          <section class="roster-group">
+            <header class="roster-group__head">
+              <div>
+                @if (group.level) {
+                  <p class="roster-group__kicker">{{ levelLabel(group.level) }}</p>
                 }
-                <span class="tc-badge" [class]="getStatusBadge(course).cls">
-                  {{ getStatusBadge(course).label }}
-                </span>
+                <h2 class="roster-group__title">{{ group.grade }}</h2>
               </div>
-            </div>
+              <span class="roster-group__n">{{ group.courses.length }}</span>
+            </header>
 
-            <h3 class="tc-card__title">{{ getCourseName(course) }}</h3>
-
-            <div class="tc-card__chips">
-              @if (course.course?.grade) {
-                <span class="tc-chip tc-chip--grade">{{ course.course.grade }}</span>
+            <div class="tc-grid">
+              @for (course of group.courses; track course.id) {
+                <a
+                  [routerLink]="['/profesor/cursos', course.id]"
+                  class="tc-card"
+                  [style.--course-accent]="getCourseColor(course)"
+                >
+                  <div class="tc-card__media">
+                    <img
+                      class="tc-card__img"
+                      [src]="coverUrl(course)"
+                      [alt]="coverAlt(course)"
+                      loading="lazy"
+                    />
+                    <div class="tc-card__veil"></div>
+                    @if (getCourseCode(course)) {
+                      <span class="tc-card__code">{{ getCourseCode(course) }}</span>
+                    }
+                    @if ((course.pendingGrading ?? 0) > 0) {
+                      <span class="tc-card__pending">{{ course.pendingGrading }} por calificar</span>
+                    }
+                  </div>
+                  <div class="tc-card__body">
+                    <h3 class="tc-card__title">{{ getCourseName(course) }}</h3>
+                    <div class="day-strip" aria-label="Días de clase">
+                      @for (day of weekDays; track day; let i = $index) {
+                        <span
+                          class="day-strip__cell"
+                          [class.is-on]="dayHasClass(course, day)"
+                          [title]="day">{{ weekDayShort[i] }}</span>
+                      }
+                    </div>
+                    <p class="tc-card__meta">
+                      @if (hoursLabel(course)) { {{ hoursLabel(course) }} · }
+                      {{ formatScheduleHint(course) }}
+                    </p>
+                    <div class="tc-card__metrics">
+                      <div class="tc-stat">
+                        <span class="tc-stat__value">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</span>
+                        <span class="tc-stat__label">Estudiantes</span>
+                      </div>
+                      <div class="tc-stat" [class.tc-stat--alert]="(course.pendingGrading ?? 0) > 0">
+                        <span class="tc-stat__value">{{ course.pendingGrading ?? 0 }}</span>
+                        <span class="tc-stat__label">Pendientes</span>
+                      </div>
+                      <div class="tc-stat">
+                        <span class="tc-stat__value">{{ course.averageGrade ?? '—' }}</span>
+                        <span class="tc-stat__label">Promedio</span>
+                      </div>
+                    </div>
+                  </div>
+                </a>
               }
-              @if (course.course?.level) {
-                <span class="tc-chip tc-chip--level">{{ course.course.level }}</span>
-              }
-              @if (course.course?.hours) {
-                <span class="tc-chip tc-chip--hours">{{ course.course.hours }}h</span>
-              }
             </div>
-
-            @if (course.course?.schedule?.length) {
-              <p class="tc-card__schedule">{{ formatScheduleHint(course) }}</p>
-            }
-
-            <div class="tc-card__metrics">
-              <div class="tc-stat">
-                <span class="tc-stat__value">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</span>
-                <span class="tc-stat__label">Estudiantes</span>
-              </div>
-              <div class="tc-stat">
-                <span class="tc-stat__value">{{ course.pendingGrading ?? 0 }}</span>
-                <span class="tc-stat__label">Pendientes</span>
-              </div>
-              <div class="tc-stat">
-                <span class="tc-stat__value">{{ course.averageGrade ?? '—' }}</span>
-                <span class="tc-stat__label">Promedio</span>
-              </div>
-            </div>
-
-            <span class="tc-card__cta">Abrir curso</span>
-          </a>
+          </section>
         }
       </div>
     } @else {
-      <section class="feed" aria-label="Lista de cursos">
-        <div class="tc-table-wrap">
-          <table class="tc-table">
-            <thead>
-              <tr>
-                <th>Curso</th>
-                <th>Grado · Nivel</th>
-                <th>Horario</th>
-                <th class="tc-table__center">Estudiantes</th>
-                <th class="tc-table__center">Pendientes</th>
-                <th class="tc-table__center">Promedio</th>
-                <th>Estado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (course of filteredCourses(); track course.id) {
-                <tr>
-                  <td>
-                    <div class="tc-table-course">
-                      <span class="tc-table-course__logo" [style.background]="getCourseColor(course)">
-                        {{ getCourseInitial(course) }}
-                      </span>
-                      <div>
-                        <strong>{{ getCourseName(course) }}</strong>
-                        @if (course.code) {
-                          <span class="tc-code">{{ course.code }}</span>
+      <div class="roster" aria-label="Lista de cursos">
+        @for (group of groupedCourses(); track group.grade) {
+          <section class="roster-group">
+            <header class="roster-group__head">
+              <div>
+                @if (group.level) {
+                  <p class="roster-group__kicker">{{ levelLabel(group.level) }}</p>
+                }
+                <h2 class="roster-group__title">{{ group.grade }}</h2>
+              </div>
+              <span class="roster-group__n">{{ group.courses.length }}</span>
+            </header>
+            <div class="tc-table-wrap">
+              <table class="tc-table">
+                <thead>
+                  <tr>
+                    <th>Materia</th>
+                    <th>Horario</th>
+                    <th class="tc-table__center">Estudiantes</th>
+                    <th class="tc-table__center">Pendientes</th>
+                    <th class="tc-table__center">Promedio</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (course of group.courses; track course.id) {
+                    <tr>
+                      <td>
+                        <div class="tc-table-course">
+                          <span class="tc-table-course__swatch" [style.background]="getCourseColor(course)"></span>
+                          <div>
+                            <strong>{{ getCourseName(course) }}</strong>
+                            @if (getCourseCode(course)) {
+                              <span class="tc-code">{{ getCourseCode(course) }}</span>
+                            }
+                          </div>
+                        </div>
+                      </td>
+                      <td class="tc-table__muted">{{ formatScheduleHint(course) }}</td>
+                      <td class="tc-table__center">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</td>
+                      <td class="tc-table__center">
+                        @if ((course.pendingGrading ?? 0) > 0) {
+                          <span class="tc-badge tc-badge--warn">{{ course.pendingGrading }}</span>
+                        } @else {
+                          <span class="tc-badge tc-badge--ok">0</span>
                         }
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ getGradeLabel(course) }}</td>
-                  <td class="tc-table__muted">{{ formatScheduleHint(course) }}</td>
-                  <td class="tc-table__center">{{ rosterCountsLoading() ? '…' : getStudentCount(course) }}</td>
-                  <td class="tc-table__center">
-                    @if ((course.pendingGrading ?? 0) > 0) {
-                      <span class="tc-badge tc-badge--warn">{{ course.pendingGrading }}</span>
-                    } @else {
-                      <span class="tc-badge tc-badge--ok">0</span>
-                    }
-                  </td>
-                  <td class="tc-table__center">{{ course.averageGrade ?? '—' }}</td>
-                  <td>
-                    <span class="tc-badge" [class]="getStatusBadge(course).cls">
-                      {{ getStatusBadge(course).label }}
-                    </span>
-                  </td>
-                  <td class="tc-table__end">
-                    <a [routerLink]="['/profesor/cursos', course.id]" class="prof-link">Abrir</a>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
+                      </td>
+                      <td class="tc-table__center">{{ course.averageGrade ?? '—' }}</td>
+                      <td class="tc-table__end">
+                        <a [routerLink]="['/profesor/cursos', course.id]" class="prof-link">Abrir</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      </div>
     }
   </div>
 </div>

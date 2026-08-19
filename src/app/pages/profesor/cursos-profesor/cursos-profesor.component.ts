@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TeacherService, TeacherCourse } from '../../../services/teacher.service';
+import { courseCoverAlt, resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
+
+interface GradeGroup {
+  grade: string;
+  level: string;
+  courses: TeacherCourse[];
+}
 
 @Component({
   selector: 'app-cursos-profesor',
@@ -15,29 +22,84 @@ export class CursosProfesorComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   searchQuery = signal('');
-  filterPeriod = signal('');
-  viewMode = signal<'grid' | 'list'>('grid');
+  filterGrade = signal('');
+  viewMode = signal<'catalog' | 'list'>('catalog');
   courses = signal<TeacherCourse[]>([]);
-  /** Conteos reales desde GET /teacher/courses/:id/students (el API a menudo devuelve students: 0). */
   rosterCounts = signal<Record<string, number>>({});
   rosterCountsLoading = signal(false);
 
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
+
+  private readonly gradeOrder = [
+    '3 años', '4 años', '5 años',
+    '1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria',
+    '1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria',
+  ];
+
   filteredCourses = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
-    let list = this.courses();
-    if (q) {
-      list = list.filter(c =>
+    const grade = this.filterGrade();
+    return this.courses().filter(c => {
+      if (grade && (c.course?.grade ?? '') !== grade) return false;
+      if (!q) return true;
+      return (
         (c.course?.name ?? '').toLowerCase().includes(q) ||
         (c.course?.code ?? '').toLowerCase().includes(q) ||
-        (c.course?.grade ?? '').toLowerCase().includes(q)
+        (c.course?.grade ?? '').toLowerCase().includes(q) ||
+        (c.course?.level ?? '').toLowerCase().includes(q)
       );
-    }
-    return list;
+    });
   });
+
+  groupedCourses = computed((): GradeGroup[] => {
+    const groups = new Map<string, TeacherCourse[]>();
+    for (const c of this.filteredCourses()) {
+      const key = (c.course?.grade ?? '').trim() || 'Sin grado';
+      const list = groups.get(key) ?? [];
+      list.push(c);
+      groups.set(key, list);
+    }
+    return Array.from(groups.keys())
+      .sort((a, b) => this.compareGrades(a, b))
+      .map(grade => {
+        const courses = (groups.get(grade) ?? [])
+          .slice()
+          .sort((a, b) => this.getCourseName(a).localeCompare(this.getCourseName(b), 'es'));
+        return {
+          grade,
+          level: courses.find(c => !!c.course?.level)?.course?.level ?? '',
+          courses,
+        };
+      });
+  });
+
+  availableGrades = computed(() => {
+    const grades = new Set(
+      this.courses().map(c => (c.course?.grade ?? '').trim()).filter(Boolean),
+    );
+    return Array.from(grades).sort((a, b) => this.compareGrades(a, b));
+  });
+
+  totalStudents = computed(() =>
+    this.courses().reduce((sum, c) => sum + this.getStudentCount(c), 0),
+  );
+
+  pendingTotal = computed(() =>
+    this.courses().reduce((sum, c) => sum + (c.pendingGrading ?? 0), 0),
+  );
+
+  hasActiveFilters = computed(() => !!this.searchQuery().trim() || !!this.filterGrade());
 
   constructor(private teacherService: TeacherService) {}
 
   ngOnInit() {
+    this.load();
+  }
+
+  load() {
+    this.loading.set(true);
+    this.error.set('');
     this.teacherService.getCourses().subscribe({
       next: (data) => {
         this.courses.set(data);
@@ -54,46 +116,46 @@ export class CursosProfesorComponent implements OnInit {
           },
         });
       },
-      error: () => { this.error.set('Error al cargar cursos'); this.loading.set(false); }
+      error: () => {
+        this.error.set('No se pudieron cargar tus cursos.');
+        this.loading.set(false);
+      },
     });
   }
 
-  /** Estudiantes mostrados en card/tabla (conteo por API de roster). */
+  resetFilters() {
+    this.searchQuery.set('');
+    this.filterGrade.set('');
+  }
+
   getStudentCount(c: TeacherCourse): number {
     const n = this.rosterCounts()[c.id];
     if (n !== undefined) return n;
     return c.students ?? c.studentsCount ?? 0;
   }
 
-  getCourseName(c: TeacherCourse): string { return c.course?.name ?? ''; }
-
-  /**
-   * Devuelve "Grado · Nivel" del curso (p. ej. "3 años · Inicial").
-   * El sistema usa "un grado = un curso", por eso no se muestra la sección.
-   */
-  getGradeLabel(c: TeacherCourse): string {
-    const grade = (c.course?.grade ?? '').trim();
-    const level = (c.course?.level ?? '').trim();
-    return [grade, level].filter(Boolean).join(' · ') || '—';
+  getCourseName(c: TeacherCourse): string {
+    return c.course?.name ?? 'Curso';
   }
 
-  getCourseInitial(c: TeacherCourse): string {
-    const name = (c.course?.name ?? '').trim();
-    return name ? name.charAt(0).toUpperCase() : '·';
+  getCourseCode(c: TeacherCourse): string {
+    return (c.code || c.course?.code || '').trim();
   }
 
-  /** Color de acento del curso, con fallback al primario del tema. */
   getCourseColor(c: TeacherCourse): string {
     return (c.course?.color || '').trim() || '#003366';
   }
 
-  /** Texto y clase para la insignia de estado. */
-  getStatusBadge(c: TeacherCourse): { label: string; cls: string } {
-    switch (c.status) {
-      case 'archived': return { label: 'Archivado', cls: 'badge-secondary' };
-      case 'finished': return { label: 'Finalizado', cls: 'badge-info' };
-      default: return { label: 'Activo', cls: 'badge-success' };
-    }
+  coverUrl(c: TeacherCourse): string {
+    return resolveCourseCoverUrl({ name: this.getCourseName(c) });
+  }
+
+  coverAlt(c: TeacherCourse): string {
+    return courseCoverAlt(this.getCourseName(c));
+  }
+
+  dayHasClass(c: TeacherCourse, day: string): boolean {
+    return (c.course?.schedule ?? []).some(s => s.day === day);
   }
 
   formatScheduleHint(c: TeacherCourse): string {
@@ -101,12 +163,32 @@ export class CursosProfesorComponent implements OnInit {
     if (!sched?.length) return 'Sin horario';
     return sched
       .slice(0, 3)
-      .map(s => `${s.day ?? ''} ${s.startTime ?? ''}-${s.endTime ?? ''}`.trim())
+      .map(s => `${(s.day ?? '').slice(0, 3)} ${s.startTime ?? ''}–${s.endTime ?? ''}`.trim())
       .filter(Boolean)
       .join(' · ');
   }
 
-  onSearch() { /* computed handles filtering */ }
-  clearSearch() { this.searchQuery.set(''); }
-  toggleView() { this.viewMode.set(this.viewMode() === 'grid' ? 'list' : 'grid'); }
+  hoursLabel(c: TeacherCourse): string {
+    const hours = c.course?.hours;
+    return hours ? `${hours} h` : '';
+  }
+
+  levelLabel(level: string): string {
+    const map: Record<string, string> = {
+      inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria',
+      Inicial: 'Inicial', Primaria: 'Primaria', Secundaria: 'Secundaria',
+    };
+    return map[level] || level;
+  }
+
+  private compareGrades(a: string, b: string): number {
+    if (a === 'Sin grado') return 1;
+    if (b === 'Sin grado') return -1;
+    const ia = this.gradeOrder.indexOf(a);
+    const ib = this.gradeOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b, 'es');
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  }
 }

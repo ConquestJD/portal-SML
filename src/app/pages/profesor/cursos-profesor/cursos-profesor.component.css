@@ -1,123 +1,193 @@
 @import '../_shared/profesor-editorial.css';
 
-/* ── Course grid cards ─────────────────────────────── */
+a.pulse__item {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.pulse__item:hover { background: #ffe8eb; }
+
+.toolbar { justify-content: flex-start; }
+
+.view-toggle { margin-left: auto; }
+
+.roster-count {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.roster-group {
+  background: var(--surface);
+  box-shadow: 0 1px 0 rgba(20 32 51 / .04);
+}
+
+.roster-group__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem .85rem;
+  border-bottom: 3px solid var(--navy);
+}
+
+.roster-group__kicker {
+  margin: 0 0 .15rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.roster-group__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.15;
+}
+
+.roster-group__n {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+}
+
+/* ── Catalog cards ─────────────────────────────────── */
 .tc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
 }
 
 .tc-card {
   --course-accent: #003366;
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: .85rem;
-  padding: 1.25rem 1.25rem 1.1rem;
   background: var(--surface);
   text-decoration: none;
   color: inherit;
+}
+
+.tc-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
-  transition: transform .2s var(--ease);
+  background: var(--navy-deep);
 }
 
-.tc-card:hover {
-  transform: translateY(-2px);
+.tc-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.02);
+  transition: transform .5s var(--ease);
 }
 
-.tc-card:hover .tc-card__title { color: var(--crimson); }
+.tc-card:hover .tc-card__img { transform: scale(1.07); }
 
-.tc-card__accent {
+.tc-card__veil {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--course-accent);
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0 21 40 / .72) 0%, transparent 55%);
+  pointer-events: none;
 }
 
-.tc-card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: .75rem;
-}
-
-.tc-card__logo {
-  width: 2.75rem; height: 2.75rem;
-  display: grid; place-items: center;
-  background: var(--course-accent);
+.tc-card__code {
+  position: absolute;
+  left: .9rem;
+  bottom: .75rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
   color: #fff;
-  font-family: var(--font-display);
-  font-size: 1.15rem; font-weight: 600;
-  flex-shrink: 0;
 }
 
-.tc-card__head-right {
+.tc-card__pending {
+  position: absolute;
+  top: .7rem;
+  right: .7rem;
+  padding: .28rem .55rem;
+  background: var(--crimson);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tc-card__body {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: .35rem;
+  gap: .45rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-bottom: 3px solid var(--course-accent);
 }
-
-.tc-code {
-  font-size: .68rem; font-weight: 600;
-  letter-spacing: .04em; text-transform: uppercase;
-  color: var(--muted);
-}
-
-.tc-badge {
-  display: inline-block;
-  padding: .2rem .55rem;
-  font-size: .65rem; font-weight: 700;
-  letter-spacing: .04em; text-transform: uppercase;
-}
-
-.tc-badge.badge-success,
-.tc-badge--ok { background: #f0faf4; color: #1a6b4a; }
-
-.tc-badge.badge-warning,
-.tc-badge--warn { background: #fff8e8; color: #9a6b12; }
-
-.tc-badge.badge-secondary { background: #eef1f5; color: var(--muted); }
-
-.tc-badge.badge-info { background: #eef4fa; color: var(--navy); }
 
 .tc-card__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.15rem; font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--navy);
   transition: color .15s var(--ease);
 }
 
-.tc-card__chips {
-  display: flex; flex-wrap: wrap; gap: .35rem;
+.tc-card:hover .tc-card__title { color: var(--crimson); }
+
+.day-strip {
+  display: flex;
+  gap: .2rem;
 }
 
-.tc-chip {
-  padding: .25rem .55rem;
-  font-size: .68rem; font-weight: 600;
-  background: #eef1f5; color: var(--muted);
-}
-
-.tc-chip--grade { background: color-mix(in srgb, var(--course-accent) 12%, #fff); color: var(--course-accent); }
-
-.tc-chip--level { background: #ecfdf5; color: #047857; }
-
-.tc-chip--hours { background: #fff7ed; color: #c2410c; }
-
-.tc-card__schedule {
-  margin: 0;
-  padding: .55rem .65rem;
+.day-strip__cell {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
   background: #eef1f5;
-  font-size: .78rem; color: var(--muted);
-  font-family: var(--font-display); font-style: italic;
+}
+
+.day-strip__cell.is-on {
+  background: var(--course-accent);
+  color: #fff;
+}
+
+.tc-card__meta {
+  margin: 0;
+  font-size: .75rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
 }
 
 .tc-card__metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: .5rem;
-  padding-top: .65rem;
+  padding-top: .55rem;
+  margin-top: .15rem;
   border-top: 1px solid var(--line);
 }
 
@@ -125,22 +195,21 @@
 
 .tc-stat__value {
   font-family: var(--font-display);
-  font-size: 1.25rem; font-weight: 600;
-  color: var(--navy); line-height: 1;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
 }
 
 .tc-stat__label {
-  font-size: .62rem; font-weight: 600;
-  letter-spacing: .06em; text-transform: uppercase;
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.tc-card__cta {
-  margin-top: .25rem;
-  font-size: .72rem; font-weight: 700;
-  letter-spacing: .04em; text-transform: uppercase;
-  color: var(--navy);
-}
+.tc-stat--alert .tc-stat__value { color: var(--crimson); }
 
 /* ── List table ────────────────────────────────────── */
 .tc-table-wrap { overflow-x: auto; }
@@ -153,43 +222,78 @@
 
 .tc-table th,
 .tc-table td {
-  padding: .75rem 1rem;
+  padding: .8rem 1.15rem;
   text-align: left;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 
 .tc-table th {
-  font-size: .68rem; font-weight: 700;
-  letter-spacing: .06em; text-transform: uppercase;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   color: var(--muted);
+  background: #f7f8fa;
 }
 
 .tc-table tbody tr:last-child td { border-bottom: none; }
-
 .tc-table tbody tr:hover { background: #f8f9fb; }
 
 .tc-table__center { text-align: center; }
-
 .tc-table__end { text-align: right; }
+.tc-table__muted {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
 
-.tc-table__muted { color: var(--muted); font-family: var(--font-display); font-style: italic; }
+.tc-table-course {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
 
-.tc-table-course { display: flex; align-items: center; gap: .65rem; }
-
-.tc-table-course__logo {
-  width: 2rem; height: 2rem;
-  display: grid; place-items: center;
-  color: #fff;
-  font-family: var(--font-display); font-weight: 600;
+.tc-table-course__swatch {
+  width: .45rem;
+  height: 2rem;
   flex-shrink: 0;
 }
 
 .tc-table-course strong { display: block; color: var(--ink); }
 
-.tc-table-course .tc-code { display: block; margin-top: .15rem; }
+.tc-code {
+  display: block;
+  margin-top: .15rem;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tc-badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.tc-badge--ok { background: #f0faf4; color: #1a6b4a; }
+.tc-badge--warn { background: #fff8e8; color: #9a6b12; }
+
+@media (max-width: 1100px) {
+  .tc-grid { grid-template-columns: 1fr 1fr; }
+}
 
 @media (max-width: 768px) {
+  .view-toggle { margin-left: 0; width: 100%; }
   .tc-grid { grid-template-columns: 1fr; }
-  .tc-table { min-width: 42rem; }
+  .tc-table { min-width: 40rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-card__img { transition: none; }
 }
