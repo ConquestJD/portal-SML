@@ -522,74 +522,61 @@ button.pulse__item:hover { background: #ffe8eb; }
 .journal__chip--warn { background: #fff5f6; color: var(--crimson); }
 
 /* ── Material: archivo ─────────────────────────────── */
-.archive__unit { margin-bottom: 1.25rem; }
-
-.archive__unit-title {
-  margin: 0 0 .55rem;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.archive__folder {
+.bin {
   background: var(--surface);
   margin-bottom: 1px;
-  box-shadow: 0 1px 0 rgba(20 32 51 / .04);
 }
 
-.archive__head {
+.bin__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: .95rem 1.15rem;
+  padding: .85rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.bin__toggle {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-.archive__head:hover,
-.archive__head:focus-visible { background: #f7f9fc; }
-
-.archive__title {
-  margin: 0 0 .15rem;
+.bin__title {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--navy);
 }
 
-.archive__meta {
-  margin: 0;
-  font-size: .78rem;
+.bin__count {
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--muted);
-  font-family: var(--font-display);
-  font-style: italic;
 }
 
-.archive__actions {
-  display: flex;
-  gap: .65rem;
-  flex-shrink: 0;
-}
-
-.archive__body {
-  padding: 0 1.15rem 1rem;
-  border-top: 1px solid var(--line);
-}
+.bin__body { padding: .25rem 1.15rem 1rem; }
 
 .archive__files {
   list-style: none;
-  margin: .65rem 0 0;
+  margin: .35rem 0 0;
   padding: 0;
 }
 
 .archive__file {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: .75rem;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  gap: .65rem;
   align-items: center;
-  padding: .5rem 0;
+  padding: .55rem 0;
   border-bottom: 1px solid var(--line);
   font-size: .85rem;
 }
@@ -622,6 +609,14 @@ a.archive__file-name:hover { color: var(--crimson); }
   color: var(--muted);
   font-family: var(--font-display);
   font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .archive__file {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .archive__file-type,
+  .archive__file-size { display: none; }
 }
 
 /* ── Comunicados: boletín ──────────────────────────── */

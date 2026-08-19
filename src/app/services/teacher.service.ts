@@ -169,6 +169,8 @@ export interface Material {
   id: string; title: string; description?: string;
   files: { id: string; name: string; filename?: string; url?: string; size?: number; mimeType?: string }[];
   unit?: { id: string; title?: string; name?: string };
+  periodId?: string | null;
+  period?: { id: string; name: string; order?: number } | null;
   createdAt?: string;
 }
 
@@ -626,7 +628,7 @@ export class TeacherService {
       `${this.url}/teacher/courses/${courseId}/materials`, formData
     ).pipe(map(r => r.data));
   }
-  updateMaterial(courseId: string, materialId: string, dto: { title?: string; description?: string }): Observable<Material> {
+  updateMaterial(courseId: string, materialId: string, dto: { title?: string; description?: string; periodId?: string | null }): Observable<Material> {
     return this.http.put<{ success: boolean; data: Material }>(
       `${this.url}/teacher/courses/${courseId}/materials/${materialId}`, dto
     ).pipe(map(r => r.data));

@@ -47,10 +47,20 @@ interface AttendanceSession {
   total: number;
 }
 
-interface MaterialUnitGroup {
+interface MaterialBinFile {
+  id: string;
+  materialId: string;
+  name: string;
+  url?: string;
+  size?: number;
+  mimeType?: string;
+}
+
+interface MaterialBin {
   id: string;
   title: string;
-  folders: Material[];
+  kind: 'period' | 'loose' | 'placeholder';
+  files: MaterialBinFile[];
 }
 
 @Component({
@@ -156,20 +166,40 @@ export class CursoDetalleProfesorComponent implements OnInit {
     return Array.from(byDate.values()).sort((a, b) => b.date.localeCompare(a.date));
   });
 
-  materialGroups = computed((): MaterialUnitGroup[] => {
-    const groups = new Map<string, MaterialUnitGroup>();
-    for (const folder of this.materials()) {
-      const id = folder.unit?.id ?? '_none';
-      const title = (folder.unit?.name ?? folder.unit?.title ?? '').trim() || 'Sin unidad';
-      const group = groups.get(id) ?? { id, title, folders: [] };
-      group.folders.push(folder);
-      groups.set(id, group);
-    }
-    return Array.from(groups.values()).sort((a, b) => {
-      if (a.id === '_none') return 1;
-      if (b.id === '_none') return -1;
-      return a.title.localeCompare(b.title, 'es');
+  materialGroups = computed((): MaterialBin[] => {
+    const materials = this.materials();
+    const flatten = (list: Material[]): MaterialBinFile[] =>
+      list.flatMap(m =>
+        (m.files ?? []).map(f => ({
+          id: f.id,
+          materialId: m.id,
+          name: (f.filename ?? f.name ?? '').trim() || 'Archivo',
+          url: f.url,
+          size: f.size,
+          mimeType: f.mimeType,
+        })),
+      );
+    const periods = this.periods();
+    const bins: MaterialBin[] = periods.length
+      ? periods.map(p => ({
+          id: p.id,
+          title: p.name,
+          kind: 'period' as const,
+          files: flatten(materials.filter(m => (m.periodId ?? m.period?.id) === p.id)),
+        }))
+      : ['I Bimestre', 'II Bimestre', 'III Bimestre', 'IV Bimestre'].map((title, i) => ({
+          id: `_ph-${i}`,
+          title,
+          kind: 'placeholder' as const,
+          files: [],
+        }));
+    bins.push({
+      id: '_loose',
+      title: 'Sin carpeta',
+      kind: 'loose',
+      files: flatten(materials.filter(m => !(m.periodId ?? m.period?.id))),
     });
+    return bins;
   });
 
   gradebookRows = computed(() => {
@@ -388,13 +418,18 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   loadMaterials() {
-    this.teacherService.getMaterials(this.apiTeacherAssignmentId()).subscribe({
-      next: (data) => {
-        const list = data ?? [];
-        this.materials.set(list);
-        if (list.length && !Object.keys(this.materialExpanded()).length) {
-          this.materialExpanded.set({ [list[0].id]: true });
-        }
+    const aid = this.apiTeacherAssignmentId();
+    if (!aid) return;
+    forkJoin({
+      materials: this.teacherService.getMaterials(aid),
+      periods: this.teacherService.getCoursePeriods(aid),
+    }).subscribe({
+      next: ({ materials, periods }) => {
+        this.materials.set(materials ?? []);
+        if (periods?.length) this.periods.set(periods);
+        const open: Record<string, boolean> = {};
+        for (const bin of this.materialGroups()) open[bin.id] = true;
+        this.materialExpanded.set(open);
       },
     });
   }
@@ -418,10 +453,22 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   deleteMaterial(materialId: string) {
-    if (!confirm('¿Eliminar esta carpeta de material?')) return;
+    if (!confirm('¿Eliminar este material y sus archivos?')) return;
     this.teacherService.deleteMaterial(this.apiTeacherAssignmentId(), materialId).subscribe({
       next: () => this.loadMaterials()
     });
+  }
+
+  deleteMaterialFile(materialId: string, fileId: string) {
+    if (!confirm('¿Quitar este archivo?')) return;
+    this.teacherService.deleteMaterialFile(this.apiTeacherAssignmentId(), materialId, fileId).subscribe({
+      next: () => this.loadMaterials(),
+    });
+  }
+
+  uploadDestParams(bin: MaterialBin): Record<string, string> {
+    if (bin.kind === 'loose' || bin.kind === 'placeholder') return { destino: 'suelto' };
+    return { destino: bin.id };
   }
 
   toggleMaterialFolder(materialId: string) {

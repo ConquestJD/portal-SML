@@ -2,7 +2,7 @@ import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TeacherService, Material, TeacherCourse } from '../../../services/teacher.service';
+import { AcademicPeriod, Material, TeacherCourse, TeacherService } from '../../../services/teacher.service';
 
 interface MaterialLink {
   id: string;
@@ -40,13 +40,12 @@ export class SubirMaterialComponent implements OnInit {
 
   existingMaterial = signal<Material | null>(null);
   uploadingMoreFiles = signal(false);
+  periods = signal<AcademicPeriod[]>([]);
+  destId = signal('suelto');
 
   pageTitle = computed(() => this.isEditMode() ? 'Editar material' : 'Subir material');
 
-  canSave = computed(() => {
-    if (!this.title().trim()) return false;
-    return this.selectedFiles().length > 0 || this.links().length > 0;
-  });
+  canSave = computed(() => this.selectedFiles().length > 0 || this.links().length > 0);
 
   canSaveEdit = computed(() => this.title().trim().length > 0);
 
@@ -73,6 +72,14 @@ export class SubirMaterialComponent implements OnInit {
         const grade = (tc.course?.grade ?? '').trim();
         const level = (tc.course?.level ?? '').trim();
         this.courseLabel.set([name, [grade, level].filter(Boolean).join(' · ')].filter(Boolean).join(' · '));
+
+        this.teacherService.getCoursePeriods(cId).subscribe({
+          next: (periods) => {
+            this.periods.set(periods ?? []);
+            this.applyDestFromQuery(periods ?? []);
+          },
+          error: () => this.applyDestFromQuery([]),
+        });
 
         if (mId && mId !== 'nuevo') {
           this.materialId.set(mId);
@@ -199,8 +206,9 @@ export class SubirMaterialComponent implements OnInit {
       desc = desc ? `${desc}\n\n${block}` : block;
     }
     const fd = new FormData();
-    fd.append('title', this.title().trim());
+    fd.append('title', this.title().trim() || this.selectedFiles()[0]?.name || 'Material');
     if (desc) fd.append('description', desc);
+    if (this.destId() && this.destId() !== 'suelto') fd.append('periodId', this.destId());
     for (const file of this.selectedFiles()) fd.append('files', file);
 
     this.teacherService.createMaterial(cid, fd).subscribe({
@@ -221,8 +229,9 @@ export class SubirMaterialComponent implements OnInit {
     this.error.set('');
     this.teacherService
       .updateMaterial(this.courseId(), this.materialId(), {
-        title: this.title().trim(),
+        title: this.title().trim() || this.existingMaterial()?.title,
         description: this.description().trim() || undefined,
+        periodId: this.destId() === 'suelto' ? null : this.destId(),
       })
       .subscribe({
         next: () => {
@@ -256,6 +265,7 @@ export class SubirMaterialComponent implements OnInit {
           this.existingMaterial.set(mat);
           this.title.set(mat.title);
           this.description.set(mat.description ?? '');
+          this.destId.set(mat.periodId ?? mat.period?.id ?? 'suelto');
         } else {
           this.error.set('No se encontró este material.');
         }
@@ -266,6 +276,32 @@ export class SubirMaterialComponent implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  destLabel(): string {
+    if (!this.destId() || this.destId() === 'suelto') return 'Sin carpeta';
+    return this.periods().find(p => p.id === this.destId())?.name ?? 'Bimestre';
+  }
+
+  private applyDestFromQuery(periods: AcademicPeriod[]) {
+    const raw = this.route.snapshot.queryParamMap.get('destino') ?? '';
+    if (raw === 'suelto' || raw === 'none' || raw === '') {
+      if (raw === 'suelto' || raw === 'none') {
+        this.destId.set('suelto');
+        return;
+      }
+    } else if (periods.some(p => p.id === raw)) {
+      this.destId.set(raw);
+      return;
+    }
+    if (this.isEditMode()) return;
+    const now = Date.now();
+    const current = periods.find(p => {
+      const a = p.startDate ? new Date(p.startDate).getTime() : NaN;
+      const b = p.endDate ? new Date(p.endDate).getTime() : NaN;
+      return Number.isFinite(a) && Number.isFinite(b) && now >= a && now <= b;
+    });
+    this.destId.set(current?.id ?? periods[0]?.id ?? 'suelto');
   }
 
   private addFiles(incoming: File[]) {

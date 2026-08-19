@@ -406,71 +406,62 @@
             <div>
               <p class="mod-head__kicker">Archivo</p>
               <h2 class="mod-head__title">Material del curso</h2>
+              <p class="mod-head__meta">Cuatro carpetas de bimestre, fijas. También puedes dejar archivos sueltos, sin carpeta.</p>
             </div>
             <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', 'nuevo']" class="prof-btn prof-btn--solid prof-btn--sm">
               Subir material
             </a>
           </header>
 
-          @if (materials().length === 0) {
-            <section class="feed">
-              <p class="feed__empty">No hay materiales publicados.</p>
-              <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', 'nuevo']" class="prof-link">Subir el primero</a>
-            </section>
-          } @else {
-            @for (group of materialGroups(); track group.id) {
-              <section class="archive__unit">
-                <h3 class="archive__unit-title">{{ group.title }}</h3>
-                @for (m of group.folders; track m.id) {
-                  <article class="archive__folder" [class.is-open]="isMaterialFolderOpen(m.id)">
-                    <div
-                      class="archive__head"
-                      (click)="toggleMaterialFolder(m.id)"
-                      (keydown.enter)="toggleMaterialFolder(m.id)"
-                      (keydown.space)="$event.preventDefault(); toggleMaterialFolder(m.id)"
-                      tabindex="0"
-                      role="button"
-                      [attr.aria-expanded]="isMaterialFolderOpen(m.id)"
-                    >
-                      <div>
-                        <h4 class="archive__title">{{ m.title }}</h4>
-                        <p class="archive__meta">
-                          {{ m.files?.length || 0 }} {{ (m.files?.length || 0) === 1 ? 'archivo' : 'archivos' }}
-                          @if (m.createdAt) {
-                            · {{ formatAnnouncementDate(m.createdAt) }}
-                          }
-                        </p>
-                      </div>
-                      <div class="archive__actions" (click)="$event.stopPropagation()">
-                        <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', m.id]" class="prof-link">Editar</a>
-                        <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterial(m.id)">Eliminar</button>
-                      </div>
-                    </div>
-                    @if (isMaterialFolderOpen(m.id)) {
-                      <div class="archive__body">
-                        @if (m.files?.length) {
-                          <ul class="archive__files">
-                            @for (f of m.files; track f.id) {
-                              <li class="archive__file">
-                                @if (f.url) {
-                                  <a [href]="f.url" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ materialFileLabel(f) }}</a>
-                                } @else {
-                                  <span class="archive__file-name">{{ materialFileLabel(f) }}</span>
-                                }
-                                <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                                <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                              </li>
-                            }
-                          </ul>
-                        } @else {
-                          <p class="archive__empty">Esta carpeta no tiene archivos. Edítala para subir contenido.</p>
-                        }
-                      </div>
-                    }
-                  </article>
+          @for (bin of materialGroups(); track bin.id) {
+            <section class="bin" [class.is-open]="isMaterialFolderOpen(bin.id)">
+              <header class="bin__head">
+                <button type="button" class="bin__toggle" (click)="toggleMaterialFolder(bin.id)">
+                  <span class="bin__title">{{ bin.title }}</span>
+                  <span class="bin__count">{{ bin.files.length }} {{ bin.files.length === 1 ? 'archivo' : 'archivos' }}</span>
+                </button>
+                @if (bin.kind !== 'placeholder') {
+                  <a
+                    [routerLink]="['/profesor/cursos', courseId(), 'materiales', 'nuevo']"
+                    [queryParams]="uploadDestParams(bin)"
+                    class="prof-link"
+                  >
+                    Subir aquí
+                  </a>
                 }
-              </section>
-            }
+              </header>
+              @if (isMaterialFolderOpen(bin.id)) {
+                <div class="bin__body">
+                  @if (bin.kind === 'placeholder') {
+                    <p class="archive__empty">Esta carpeta se activa cuando el año lectivo tenga bimestres.</p>
+                  } @else if (bin.files.length === 0) {
+                    <p class="archive__empty">
+                      @if (bin.kind === 'loose') {
+                        Archivos que no van en un bimestre aparecen aquí.
+                      } @else {
+                        Aún no hay archivos en este bimestre.
+                      }
+                    </p>
+                  } @else {
+                    <ul class="archive__files">
+                      @for (f of bin.files; track f.id) {
+                        <li class="archive__file">
+                          @if (f.url) {
+                            <a [href]="f.url" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ f.name }}</a>
+                          } @else {
+                            <span class="archive__file-name">{{ f.name }}</span>
+                          }
+                          <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                          <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                          <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', f.materialId]" class="prof-link">Editar</a>
+                          <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterialFile(f.materialId, f.id)">Quitar</button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </section>
           }
         </section>
       }

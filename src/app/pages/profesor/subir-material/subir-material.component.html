@@ -20,7 +20,7 @@
 
       <div class="compose__form">
         <div class="compose__main">
-          <label class="visually-hidden" for="title">Título de la carpeta</label>
+          <label class="visually-hidden" for="title">Nombre (opcional)</label>
           <input
             type="text"
             id="title"
@@ -28,19 +28,18 @@
             class="compose__headline"
             [ngModel]="title()"
             (ngModelChange)="title.set($event)"
-            placeholder="Título de la carpeta"
-            required
+            placeholder="Nombre opcional del material"
           />
 
-          <label class="visually-hidden" for="description">Descripción</label>
+          <label class="visually-hidden" for="description">Nota</label>
           <textarea
             id="description"
             name="description"
             class="compose__prompt"
-            rows="5"
+            rows="4"
             [ngModel]="description()"
             (ngModelChange)="description.set($event)"
-            placeholder="Descripción opcional: de qué trata este material y cuándo usarlo."
+            placeholder="Nota opcional para los alumnos."
           ></textarea>
 
           <section class="refs">
@@ -153,16 +152,33 @@
 
         <aside class="compose__aside">
           <section class="rule">
+            <h2>Dónde se guarda</h2>
+            <div class="ways" role="radiogroup" aria-label="Destino del material">
+              @for (period of periods(); track period.id) {
+                <label class="way" [class.is-on]="destId() === period.id">
+                  <input type="radio" name="destino" [value]="period.id" [ngModel]="destId()" (ngModelChange)="destId.set($event)" />
+                  <span class="way__name">{{ period.name }}</span>
+                </label>
+              }
+              <label class="way" [class.is-on]="destId() === 'suelto'">
+                <input type="radio" name="destino" value="suelto" [ngModel]="destId()" (ngModelChange)="destId.set($event)" />
+                <span class="way__name">Sin carpeta</span>
+                <span class="way__hint">Queda suelto, fuera de los bimestres</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="rule">
             <h2>Contenido</h2>
             <p class="rule__score">{{ fileCount() }}</p>
-            <p class="rule__hint">{{ fileCount() === 1 ? 'archivo' : 'archivos' }} en esta carpeta.</p>
+            <p class="rule__hint">{{ fileCount() === 1 ? 'archivo' : 'archivos' }} · {{ destLabel() }}</p>
           </section>
 
           @if (!isEditMode()) {
             <section class="rule">
               <h2>Enlaces</h2>
               <p class="rule__score">{{ links().length }}</p>
-              <p class="rule__hint">Quedan en la descripción de la carpeta.</p>
+              <p class="rule__hint">Opcional.</p>
             </section>
           }
 
@@ -176,7 +192,7 @@
               <button
                 type="button"
                 class="prof-btn prof-btn--solid"
-                [disabled]="!canSaveEdit() || isSaving()"
+                [disabled]="isSaving()"
                 (click)="saveEdit()"
               >
                 {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
@@ -188,14 +204,14 @@
                 [disabled]="!canSave() || isSaving()"
                 (click)="saveMaterial()"
               >
-                {{ isSaving() ? 'Publicando…' : 'Publicar carpeta' }}
+                {{ isSaving() ? 'Publicando…' : 'Publicar' }}
               </button>
             }
             <button type="button" class="prof-link" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
           </div>
 
           @if (!isEditMode() && !canSave()) {
-            <p class="compose__need">Faltan el título y al menos un archivo o enlace.</p>
+            <p class="compose__need">Agrega al menos un archivo o enlace.</p>
           }
         </aside>
       </div>
