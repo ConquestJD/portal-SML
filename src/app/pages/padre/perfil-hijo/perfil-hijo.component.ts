@@ -7,13 +7,18 @@ import { ParentService, Child } from '../../../services/parent.service';
 
 export interface ChildProfileVm {
   name: string;
-  grade: string;
-  section: string;
+  gradeLine: string;
   code: string;
   status: string;
   academicYear: string;
   enrollmentDate: string | Date | null;
   photo?: string;
+  email?: string;
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  bloodType?: string;
+  medicalNotes?: string;
   academicSummary: {
     overallAverage: number | null;
     completedTasks: number;
@@ -138,16 +143,23 @@ export class PerfilHijoComponent implements OnInit {
       SUSPENDED: 'Suspendido',
     };
     const st = detail.status ?? 'ACTIVE';
+    const grade = (detail.grade ?? en?.section?.grade ?? '').trim();
+    const level = (detail.level ?? en?.section?.level ?? '').trim();
 
     return {
       name: detail.name ?? `${detail.user.firstName} ${detail.user.lastName}`,
-      grade: detail.grade ?? en?.section?.grade ?? '—',
-      section: detail.section ?? en?.section?.name ?? '—',
+      gradeLine: [grade, level].filter(Boolean).join(' · ') || '—',
       code: detail.code ?? detail.studentCode,
       status: statusMap[st] ?? st,
       academicYear: en?.academicYear?.name ?? '—',
       enrollmentDate: en?.enrolledAt ?? null,
       photo: detail.photo,
+      email: detail.user?.email,
+      birthDate: detail.birthDate,
+      gender: detail.gender,
+      address: detail.address,
+      bloodType: detail.bloodType,
+      medicalNotes: detail.medicalNotes,
       academicSummary: {
         overallAverage,
         completedTasks,
@@ -176,7 +188,9 @@ export class PerfilHijoComponent implements OnInit {
   }
 
   getChildGrade(child: Child): string {
-    return child.grade ?? child.enrollments?.[0]?.section?.grade ?? '';
+    const grade = (child.grade ?? child.enrollments?.[0]?.section?.grade ?? '').trim();
+    const level = (child.level ?? child.enrollments?.[0]?.section?.level ?? '').trim();
+    return [grade, level].filter(Boolean).join(' · ');
   }
 
   getChildCode(child: Child): string {
@@ -187,6 +201,28 @@ export class PerfilHijoComponent implements OnInit {
     const fn = child.user?.firstName?.charAt(0) ?? '';
     const ln = child.user?.lastName?.charAt(0) ?? '';
     return (fn + ln).toUpperCase() || '?';
+  }
+
+  profileInitials(profile: ChildProfileVm): string {
+    const parts = profile.name.split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return parts.slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  }
+
+  formatDate(raw?: string | Date | null): string {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime())
+      ? String(raw)
+      : d.toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  formatGender(raw?: string): string {
+    const v = (raw ?? '').trim().toUpperCase();
+    if (!v) return '—';
+    if (['M', 'MALE', 'MASCULINO', 'HOMBRE'].includes(v)) return 'Masculino';
+    if (['F', 'FEMALE', 'FEMENINO', 'MUJER'].includes(v)) return 'Femenino';
+    return raw!.trim();
   }
 
   averageBarWidth(avg: number | null): number {

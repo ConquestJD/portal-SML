@@ -53,13 +53,7 @@
       <div class="padre-page__hero-content">
         <img src="/only-logo.png" alt="" class="padre-page__crest" />
         <div>
-          <h1 class="padre-page__title">
-            @if (childProfile(); as profile) {
-              {{ profile.name }}
-            } @else {
-              Perfil del hijo
-            }
-          </h1>
+          <h1 class="padre-page__title">Perfil del hijo</h1>
           <p class="padre-page__brand">Santa María Laura</p>
         </div>
       </div>
@@ -95,20 +89,30 @@
       }
 
       @if (childProfile(); as profile) {
-        <div class="profile-meta">
-          <span class="profile-meta__badge" [class.profile-meta__badge--active]="profile.status === 'Activo'">{{ profile.status }}</span>
-          <span class="profile-meta__badge">Año {{ profile.academicYear }}</span>
-          <span class="profile-meta__text">{{ profile.grade }} · {{ profile.section }} · {{ profile.code }}</span>
-        </div>
+        <section class="ficha" aria-label="Identidad">
+          <div class="ficha__portrait">
+            @if (profile.photo) {
+              <img [src]="profile.photo" [alt]="profile.name" />
+            } @else {
+              <span>{{ profileInitials(profile) }}</span>
+            }
+          </div>
+          <div class="ficha__who">
+            <h2 class="ficha__name">{{ profile.name }}</h2>
+            <p class="ficha__code">{{ profile.code }}</p>
+            <p class="ficha__meta">{{ profile.gradeLine }}</p>
+            <p class="ficha__status">{{ profile.status }} · {{ profile.academicYear }}</p>
+          </div>
+        </section>
 
-        <section class="metrics" aria-label="Estadísticas">
+        <section class="metrics" aria-label="Resumen">
           <div class="metric">
             <span class="metric__n">{{ profile.academicSummary.overallAverage ?? '—' }}</span>
-            <span class="metric__l">Promedio general</span>
+            <span class="metric__l">Promedio</span>
           </div>
-          <div class="metric">
-            <span class="metric__n">{{ profile.academicSummary.completedTasks }}/{{ profile.academicSummary.totalTasks }}</span>
-            <span class="metric__l">Tareas completadas</span>
+          <div class="metric" [class.metric--alert]="profile.academicSummary.pendingTasks > 0">
+            <span class="metric__n">{{ profile.academicSummary.pendingTasks }}</span>
+            <span class="metric__l">Tareas pendientes</span>
           </div>
           <div class="metric">
             <span class="metric__n">{{ profile.academicSummary.attendancePercentage }}%</span>
@@ -127,38 +131,76 @@
         </nav>
 
         @if (activeTab() === 'resumen') {
-          <div class="profile-panels">
-            <section class="feed">
-              <div class="feed__head"><h2>Información básica</h2></div>
-              <dl class="info-dl">
-                <div><dt>Nombre</dt><dd>{{ profile.name }}</dd></div>
-                <div><dt>Código</dt><dd>{{ profile.code }}</dd></div>
-                <div><dt>Grado</dt><dd>{{ profile.grade }}</dd></div>
-                <div><dt>Sección</dt><dd>{{ profile.section }}</dd></div>
-                <div><dt>Año académico</dt><dd>{{ profile.academicYear }}</dd></div>
-                <div><dt>Matrícula</dt><dd>{{ profile.enrollmentDate | date:'dd/MM/yyyy' }}</dd></div>
+          <div class="perfil-split">
+            <section class="sheet">
+              <header class="mod-head">
+                <div>
+                  <p class="mod-head__kicker">Ficha</p>
+                  <h2 class="mod-head__title">Datos del estudiante</h2>
+                </div>
+              </header>
+              <dl class="facts">
+                <div>
+                  <dt>Nombre</dt>
+                  <dd>{{ profile.name }}</dd>
+                </div>
+                <div>
+                  <dt>Código</dt>
+                  <dd>{{ profile.code }}</dd>
+                </div>
+                <div>
+                  <dt>Grado</dt>
+                  <dd>{{ profile.gradeLine }}</dd>
+                </div>
+                <div>
+                  <dt>Año lectivo</dt>
+                  <dd>{{ profile.academicYear }}</dd>
+                </div>
+                <div>
+                  <dt>Matrícula</dt>
+                  <dd>{{ formatDate(profile.enrollmentDate) }}</dd>
+                </div>
+                <div>
+                  <dt>Nacimiento</dt>
+                  <dd>{{ formatDate(profile.birthDate) }}</dd>
+                </div>
+                <div>
+                  <dt>Género</dt>
+                  <dd>{{ formatGender(profile.gender) }}</dd>
+                </div>
+                @if (profile.bloodType) {
+                  <div>
+                    <dt>Grupo sanguíneo</dt>
+                    <dd>{{ profile.bloodType }}</dd>
+                  </div>
+                }
               </dl>
+              @if (profile.medicalNotes?.trim()) {
+                <h3 class="sheet__sub">Notas médicas</h3>
+                <p class="sheet__note">{{ profile.medicalNotes }}</p>
+              }
             </section>
 
-            <section class="feed">
-              <div class="feed__head"><h2>Resumen académico</h2></div>
-              <dl class="info-dl">
-                <div><dt>Promedio general</dt><dd class="info-dl__highlight">{{ profile.academicSummary.overallAverage ?? '—' }}</dd></div>
-                <div><dt>Cursos</dt><dd>{{ profile.academicSummary.totalCourses }}</dd></div>
-                <div><dt>Tareas totales</dt><dd>{{ profile.academicSummary.totalTasks }}</dd></div>
-                <div><dt>Completadas</dt><dd class="info-dl__ok">{{ profile.academicSummary.completedTasks }}</dd></div>
-                <div><dt>Pendientes</dt><dd class="info-dl__warn">{{ profile.academicSummary.pendingTasks }}</dd></div>
-                <div><dt>Asistencia</dt><dd>{{ profile.academicSummary.attendancePercentage }}%</dd></div>
-                <div><dt>Faltas</dt><dd class="info-dl__danger">{{ profile.academicSummary.totalAbsences }}</dd></div>
-                <div><dt>Tardanzas</dt><dd class="info-dl__warn">{{ profile.academicSummary.totalLates }}</dd></div>
-              </dl>
-            </section>
-
-            <nav class="shortcuts" aria-label="Acciones rápidas">
-              <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}">Cursos</a>
-              <a [routerLink]="['/padre/comunicados']">Comunicados</a>
-              <a [routerLink]="['/padre/mensajeria']">Mensajería</a>
-            </nav>
+            <aside class="side">
+              <section class="side__block">
+                <h2>Accesos</h2>
+                <ul class="side__list">
+                  <li>
+                    <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}">Cursos</a>
+                  </li>
+                  <li>
+                    <a [routerLink]="['/padre/comunicados']">Comunicados</a>
+                  </li>
+                  <li>
+                    <a [routerLink]="['/padre/mensajeria']">Mensajería</a>
+                  </li>
+                </ul>
+              </section>
+              <section class="side__block">
+                <h2>Estado</h2>
+                <p class="side__hint">{{ profile.status }} · {{ profile.academicYear }}</p>
+              </section>
+            </aside>
           </div>
         }
 
@@ -209,7 +251,7 @@
         @if (activeTab() === 'contacto') {
           <div class="profile-panels profile-panels--2">
             <section class="feed">
-              <div class="feed__head"><h2>Tutor de sección</h2></div>
+              <div class="feed__head"><h2>Tutor</h2></div>
               <p class="contact-name">{{ profile.tutor.name }}</p>
               @if (profile.tutor.email) {
                 <a [href]="'mailto:' + profile.tutor.email" class="contact-link">{{ profile.tutor.email }}</a>

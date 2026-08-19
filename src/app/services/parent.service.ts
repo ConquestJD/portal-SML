@@ -20,9 +20,15 @@ export interface Child {
   code?: string;
   name?: string;
   grade?: string;
+  level?: string;
   section?: string;
   photo?: string;
   status?: string;
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  bloodType?: string;
+  medicalNotes?: string;
   user: {
     firstName: string;
     lastName: string;
@@ -32,7 +38,7 @@ export interface Child {
   };
   enrollments?: {
     enrolledAt?: string;
-    section: { name: string; grade: string };
+    section: { name: string; grade: string; level?: string };
     academicYear: { name: string };
   }[];
 }
@@ -42,8 +48,10 @@ interface StudentParentListRow {
   student: {
     id: string;
     studentCode: string;
+    grade?: string | null;
+    level?: string | null;
     user: { firstName: string; lastName: string; avatarUrl?: string | null };
-    enrollments?: { section: { name: string; grade: string }; academicYear: { name: string } }[];
+    enrollments?: { section: { name: string; grade: string; level?: string }; academicYear: { name: string } }[];
   };
 }
 
@@ -91,6 +99,8 @@ export class ParentService {
       id: s.id,
       studentCode: s.studentCode,
       parentRecordId,
+      grade: s.grade ?? undefined,
+      level: s.level ?? undefined,
       user: {
         firstName: s.user.firstName,
         lastName: s.user.lastName,
@@ -102,13 +112,19 @@ export class ParentService {
 
   private normalizeChild(c: Child): Child {
     const enrollment = c.enrollments?.[0];
+    const raw = c as Child & { birthDate?: string; gender?: string; address?: string; bloodType?: string; medicalNotes?: string };
     return {
       ...c,
       name: c.name ?? `${c.user.firstName} ${c.user.lastName}`,
       code: c.code ?? c.studentCode,
       grade: c.grade ?? enrollment?.section?.grade ?? '',
-      section: c.section ?? enrollment?.section?.name ?? '',
-      photo: c.photo ?? c.user.avatarUrl ?? undefined
+      level: c.level ?? enrollment?.section?.level ?? '',
+      photo: c.photo ?? c.user.avatarUrl ?? undefined,
+      birthDate: raw.birthDate,
+      gender: raw.gender,
+      address: raw.address,
+      bloodType: raw.bloodType,
+      medicalNotes: raw.medicalNotes,
     };
   }
 
