@@ -161,7 +161,11 @@ export class CursoDetalleComponent implements OnInit {
   });
 
   bimestreBins = computed(() => this.materialGroups().filter(b => b.kind !== 'loose'));
-  looseBin = computed(() => this.materialGroups().find(b => b.kind === 'loose') ?? null);
+  looseFiles = computed((): MaterialBinFile[] => {
+    const loose = this.materialGroups().find(b => b.kind === 'loose');
+    if (!loose) return [];
+    return [...loose.folders.flatMap(f => f.files), ...loose.files];
+  });
 
   filteredTasks = computed(() => {
     const list = this.tasks();

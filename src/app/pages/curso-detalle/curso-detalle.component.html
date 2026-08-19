@@ -76,7 +76,7 @@
             <div>
               <p class="mod-head__kicker">Archivo</p>
               <h2 class="mod-head__title">Material del curso</h2>
-              <p class="mod-head__meta">Cuatro carpetas de bimestre, iguales a las del aula docente. El material suelto queda aparte.</p>
+              <p class="mod-head__meta">Cuatro carpetas de bimestre. Lo demás se lista como archivos sueltos.</p>
             </div>
           </header>
 
@@ -162,69 +162,24 @@
               }
             </div>
 
-            @if (looseBin(); as loose) {
-              <article class="folder folder--loose" [class.is-open]="isMaterialFolderOpen(loose.id)">
-                <button type="button" class="folder__tab" (click)="toggleMaterialFolder(loose.id)">
-                  <span class="folder__roman folder__roman--dot">·</span>
-                  <span class="folder__copy">
-                    <span class="folder__name">{{ loose.title }}</span>
-                    <span class="folder__count">{{ binCountLabel(loose) }}</span>
-                  </span>
-                  <span class="folder__chev" aria-hidden="true">{{ isMaterialFolderOpen(loose.id) ? '−' : '+' }}</span>
-                </button>
-                @if (isMaterialFolderOpen(loose.id)) {
-                  <div class="folder__drawer">
-                    @if (binIsEmpty(loose)) {
-                      <p class="archive__empty">El material que no va en un bimestre aparece aquí.</p>
-                    } @else {
-                      @if (loose.folders.length) {
-                        <ul class="archive__folders">
-                          @for (folder of loose.folders; track folder.id) {
-                            <li class="nest" [class.is-open]="isMaterialFolderOpen(folder.id)">
-                              <header class="nest__head">
-                                <button type="button" class="bin__toggle" (click)="toggleMaterialFolder(folder.id)">
-                                  <span class="nest__title">{{ folder.title }}</span>
-                                  <span class="bin__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
-                                </button>
-                              </header>
-                              @if (isMaterialFolderOpen(folder.id)) {
-                                @if (folder.files.length) {
-                                  <ul class="archive__files">
-                                    @for (f of folder.files; track f.id) {
-                                      <li class="archive__file">
-                                        <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
-                                        <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                                        <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                                        <span></span>
-                                        <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
-                                      </li>
-                                    }
-                                  </ul>
-                                } @else {
-                                  <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
-                                }
-                              }
-                            </li>
-                          }
-                        </ul>
-                      }
-                      @if (loose.files.length) {
-                        <ul class="archive__files">
-                          @for (f of loose.files; track f.id) {
-                            <li class="archive__file">
-                              <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
-                              <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                              <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                              <span></span>
-                              <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
-                            </li>
-                          }
-                        </ul>
-                      }
-                    }
-                  </div>
-                }
-              </article>
+            @if (looseFiles().length) {
+              <section class="loose" aria-label="Archivos sueltos">
+                <header class="loose__head">
+                  <h3>Archivos sueltos</h3>
+                  <span>{{ looseFiles().length }} {{ looseFiles().length === 1 ? 'archivo' : 'archivos' }}</span>
+                </header>
+                <ul class="archive__files">
+                  @for (f of looseFiles(); track f.id) {
+                    <li class="archive__file">
+                      <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                      <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                      <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                      <span></span>
+                      <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
+                    </li>
+                  }
+                </ul>
+              </section>
             }
           }
         </section>

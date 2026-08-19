@@ -40,10 +40,10 @@
 
 /* ── Estante de bimestres ──────────────────────────── */
 .shelf {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .75rem;
-  margin-bottom: .75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  margin-bottom: .85rem;
 }
 
 .folder {
@@ -64,15 +64,6 @@
 .folder.is-empty .folder__roman,
 .folder.is-placeholder .folder__roman {
   opacity: .45;
-}
-
-.folder--loose {
-  border-bottom-color: var(--line);
-  background: var(--surface);
-}
-
-.folder--loose.is-open {
-  background: var(--surface);
 }
 
 .folder__tab {
@@ -103,12 +94,6 @@
 }
 
 .folder:nth-child(4) .folder__roman { background: var(--crimson); }
-
-.folder__roman--dot {
-  background: #5c6b7e;
-  font-size: 1.6rem;
-  line-height: .5;
-}
 
 .folder__copy {
   flex: 1;
@@ -153,8 +138,39 @@
   margin-top: .35rem;
 }
 
+.loose {
+  background: var(--surface);
+  padding: 1.05rem 1.15rem 1.1rem;
+}
+
+.loose__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .35rem;
+  padding-bottom: .55rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.loose__head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.loose__head span {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 @media (max-width: 700px) {
   .shelf {
-    grid-template-columns: 1fr;
+    gap: .45rem;
   }
 }
