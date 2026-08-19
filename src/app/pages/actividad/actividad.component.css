@@ -1,0 +1,43 @@
+@import '../profesor/actividad-profesor/actividad-profesor.component.css';
+
+.stream__item[data-kind='graded'] .stream__dot,
+.stream__item[data-kind='period-grade'] .stream__dot,
+.stream__item[data-kind='exam-grade'] .stream__dot {
+  background: #1a6b4a;
+}
+
+.stream__item[data-kind='graded'] .stream__kind,
+.stream__item[data-kind='period-grade'] .stream__kind,
+.stream__item[data-kind='exam-grade'] .stream__kind {
+  color: #1a6b4a;
+}
+
+.stream__reveal {
+  margin-top: .75rem;
+}
+
+div.stream__card { cursor: default; }
+div.stream__card:hover { box-shadow: inset 3px 0 0 #1a6b4a; }
+
+.stream__score {
+  margin: .75rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.stream__go {
+  display: inline-block;
+  margin-top: .7rem;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.stream__go:hover { color: var(--crimson); }

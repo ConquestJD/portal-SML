@@ -23,7 +23,8 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Principal',
       items: [
-        { label: 'Dashboard', icon: 'fas fa-home', path: '/dashboard', exact: true }
+        { label: 'Dashboard', icon: 'fas fa-home', path: '/dashboard', exact: true },
+        { label: 'Actividad', icon: 'fas fa-history', path: '/actividad', exact: false }
       ]
     },
     {
@@ -208,7 +209,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (role === 'estudiante') {
       return (
         this.navBadges.studentTareas() +
-        this.navBadges.studentNotas() +
+        this.navBadges.studentActividad() +
         this.navBadges.studentComunicados()
       );
     }

@@ -6,8 +6,8 @@ import { DashboardService } from './dashboard.service';
 import { AnnouncementService } from './announcement.service';
 import { StudentService } from './student.service';
 
-/** Marca de tiempo de la última visita a Notas (alumno); notas nuevas son posteriores. */
-const LS_NOTAS_SEEN = 'sml_nav_estudiante_notas_seen';
+/** Última visita a Actividad (alumno); novedades posteriores alimentan el badge. */
+const LS_ACTIVIDAD_SEEN = 'sml_nav_estudiante_actividad_seen';
 
 @Injectable({ providedIn: 'root' })
 export class NavBadgesService {
@@ -24,8 +24,8 @@ export class NavBadgesService {
 
   /** Tareas publicadas pendientes de entregar (según dashboard alumno). */
   readonly studentTareas = signal(0);
-  /** Calificaciones de período o de tarea publicadas después de la última visita a Notas. */
-  readonly studentNotas = signal(0);
+  /** Novedades en la línea de tiempo posteriores a la última visita a Actividad. */
+  readonly studentActividad = signal(0);
   readonly studentComunicados = signal(0);
 
   constructor() {
@@ -36,16 +36,10 @@ export class NavBadgesService {
 
   /** Ajusta "visto" según ruta y recalcula contadores. */
   private onNavigation(fullUrl: string) {
-    const [path, query = ''] = fullUrl.split('#')[0].split('?');
-    const tab = new URLSearchParams(query).get('tab');
-    const onCourseNotas =
-      /^\/cursos\/[^/]+$/.test(path) && (tab === 'notas' || tab === 'calificaciones');
-    if (
-      this.auth.userRole() === 'estudiante' &&
-      (onCourseNotas || path === '/notas' || path.startsWith('/notas/'))
-    ) {
+    const path = fullUrl.split('#')[0].split('?')[0];
+    if (this.auth.userRole() === 'estudiante' && (path === '/actividad' || path.startsWith('/actividad/'))) {
       try {
-        localStorage.setItem(LS_NOTAS_SEEN, new Date().toISOString());
+        localStorage.setItem(LS_ACTIVIDAD_SEEN, new Date().toISOString());
       } catch {
         /* ignore */
       }
@@ -57,7 +51,7 @@ export class NavBadgesService {
     this.teacherTareas.set(0);
     this.teacherComunicados.set(0);
     this.studentTareas.set(0);
-    this.studentNotas.set(0);
+    this.studentActividad.set(0);
     this.studentComunicados.set(0);
   }
 
@@ -91,12 +85,11 @@ export class NavBadgesService {
   private loadStudent() {
     let sinceTs = 0;
     try {
-      const raw = localStorage.getItem(LS_NOTAS_SEEN);
+      const raw = localStorage.getItem(LS_ACTIVIDAD_SEEN);
       if (raw) {
         const d = new Date(raw);
         if (!Number.isNaN(d.getTime())) sinceTs = d.getTime();
       } else {
-        // Primera vez: no marcar notas antiguas; solo novedades después de esta sesión.
         sinceTs = Date.now();
       }
     } catch {
@@ -106,29 +99,21 @@ export class NavBadgesService {
     forkJoin({
       dash: this.dashboard.getStudentDashboard(),
       ann: this.announcements.getAnnouncements({ read: false, page: 1, pageSize: 1 }),
-      grades: this.student.getGrades(),
-      tasks: this.student.getTasks({}),
+      activity: this.student.getActivity(),
     }).subscribe({
-      next: ({ dash, ann, grades, tasks }) => {
+      next: ({ dash, ann, activity }) => {
         this.studentTareas.set(Math.max(0, Number(dash.summary?.pendingTasks ?? 0)));
         this.studentComunicados.set(Math.max(0, Number(ann.meta?.total ?? 0)));
-
-        let notas = 0;
-        for (const g of grades) {
-          const t = g.createdAt ? new Date(g.createdAt).getTime() : 0;
-          if (t > sinceTs) notas++;
+        let n = 0;
+        for (const item of activity) {
+          const t = item.at ? new Date(item.at).getTime() : 0;
+          if (t > sinceTs) n++;
         }
-        for (const t of tasks) {
-          const sub = t.submission;
-          if (!sub || String(sub.status).toUpperCase() !== 'GRADED') continue;
-          const gt = sub.gradedAt ? new Date(sub.gradedAt).getTime() : 0;
-          if (gt > sinceTs) notas++;
-        }
-        this.studentNotas.set(notas);
+        this.studentActividad.set(n);
       },
       error: () => {
         this.studentTareas.set(0);
-        this.studentNotas.set(0);
+        this.studentActividad.set(0);
         this.studentComunicados.set(0);
       },
     });
@@ -147,6 +132,7 @@ export class NavBadgesService {
       if (path === '/profesor/comunicados') return this.teacherComunicados();
     }
     if (role === 'estudiante') {
+      if (path === '/actividad') return this.studentActividad();
       if (path === '/cursos') return this.studentTareas();
       if (path === '/comunicados') return this.studentComunicados();
     }

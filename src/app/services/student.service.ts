@@ -120,6 +120,33 @@ export interface StudentGrade {
   teacherAssignmentId?: string;
 }
 
+export type StudentActivityKind =
+  | 'task'
+  | 'material'
+  | 'announcement'
+  | 'exam'
+  | 'graded'
+  | 'period-grade'
+  | 'exam-grade';
+
+export interface StudentActivityItem {
+  id: string;
+  kind: StudentActivityKind;
+  at: string;
+  actor: string;
+  headline: string;
+  detail?: string;
+  courseId: string;
+  courseName: string;
+  courseMeta: string;
+  taskId?: string;
+  examId?: string;
+  materialId?: string;
+  announcementId?: string;
+  score?: number | null;
+  maxScore?: number;
+}
+
 export interface StudentAttendance {
   id: string; date: string; status: string; notes?: string;
   course?: { name: string };
@@ -320,6 +347,11 @@ export class StudentService {
   }
 
   // ─── COURSES ──────────────────────────────────────────────────────────────
+  getActivity(courseId?: string): Observable<StudentActivityItem[]> {
+    return this.get<StudentActivityItem[]>('/student/activity', buildParams({ courseId })).pipe(
+      map((list) => (Array.isArray(list) ? list : [])),
+    );
+  }
   getCourses(f: { search?: string; period?: string } = {}): Observable<StudentCourse[]> {
     return this.get<StudentCourse[]>('/student/courses', buildParams(f)).pipe(
       map((list) => (Array.isArray(list) ? list : []).map((c) => this.normalizeCourse(c as StudentCourse))),
