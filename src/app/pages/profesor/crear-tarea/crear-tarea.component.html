@@ -1,18 +1,11 @@
-<div class="prof-page">
+<div class="prof-page compose">
 
-  <header class="prof-page__hero">
-    <img class="prof-page__hero-photo" src="/images/heroes/tasks.webp" alt="" decoding="async" />
-    <div class="prof-page__hero-veil"></div>
-    <div class="prof-page__hero-content">
-      <img src="/only-logo.png" alt="" class="prof-page__crest" />
-      <div>
-        <h1 class="prof-page__title">{{ isEditMode() ? 'Editar tarea' : 'Crear nueva tarea' }}</h1>
-        <p class="prof-page__brand">Santa María Laura</p>
-      </div>
-      <div class="prof-page__hero-actions">
-        <button type="button" class="prof-btn prof-btn--ghost" (click)="cancel()">{{ backLabel() }}</button>
-      </div>
-    </div>
+  <header class="compose__mast">
+    <button type="button" class="compose__back" (click)="cancel()">{{ backLabel() }}</button>
+    @if (courseLabel()) {
+      <p class="compose__kicker">{{ courseLabel() }}</p>
+    }
+    <h1 class="compose__title">{{ pageTitle() }}</h1>
   </header>
 
   <div class="prof-page__body">
@@ -24,190 +17,134 @@
       <div class="prof-alert prof-alert--ok" role="status">{{ success() }}</div>
     }
 
-    <form (ngSubmit)="saveTask()" class="task-form">
-      <section class="feed form-section essential">
-        <div class="feed__head">
-          <h2>Información esencial</h2>
-          <span class="section-badge">Requerido</span>
-        </div>
+    <form (ngSubmit)="saveTask()" class="compose__form">
+      <div class="compose__main">
+        <label class="visually-hidden" for="title">Título de la tarea</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="compose__headline"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="Título de la tarea"
+          required
+        />
 
-        <div class="form-group">
-          <label for="title" class="form-label">
-            Título de la tarea
-            <span class="required">*</span>
-          </label>
+        <label class="visually-hidden" for="instructions">Instrucciones</label>
+        <textarea
+          id="instructions"
+          name="instructions"
+          class="compose__prompt"
+          rows="12"
+          [ngModel]="instructions()"
+          (ngModelChange)="instructions.set($event)"
+          placeholder="Instrucciones: qué deben hacer, cómo se entrega y cómo se evalúa."
+          required
+        ></textarea>
+
+        @if (!isEditMode()) {
+          <section class="refs">
+            <header class="refs__head">
+              <h2>Material de referencia</h2>
+              <span>Opcional · hasta 5 archivos</span>
+            </header>
+            <input
+              type="file"
+              id="file-upload"
+              class="file-input"
+              multiple
+              (change)="onFilesSelected($event)"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+            />
+            <label for="file-upload" class="refs__drop">Añadir archivos</label>
+            @if (selectedFiles().length > 0) {
+              <ul class="refs__list">
+                @for (f of selectedFiles(); track fileKey(f)) {
+                  <li>
+                    <span class="refs__name">{{ f.name }}</span>
+                    <span class="refs__size">{{ formatFileSize(f.size) }}</span>
+                    <button type="button" class="prof-link prof-link--danger" (click)="removeFile(f)">Quitar</button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      </div>
+
+      <aside class="compose__aside">
+        <section class="rule">
+          <h2>Plazo</h2>
+          <label class="visually-hidden" for="dueDate">Fecha y hora límite</label>
           <input
-            type="text"
-            id="title"
-            name="title"
-            class="form-input"
-            [ngModel]="title()"
-            (ngModelChange)="title.set($event)"
-            placeholder="Ej: Tarea 1 — Ecuaciones"
+            type="datetime-local"
+            id="dueDate"
+            name="dueDate"
+            class="rule__input"
+            [ngModel]="dueDate()"
+            (ngModelChange)="dueDate.set($event)"
             required
           />
-        </div>
+        </section>
 
-        <div class="form-group">
-          <label for="instructions" class="form-label">
-            Instrucciones para los estudiantes
-            <span class="required">*</span>
-          </label>
-          <textarea
-            id="instructions"
-            name="instructions"
-            class="form-input"
-            rows="8"
-            [ngModel]="instructions()"
-            (ngModelChange)="instructions.set($event)"
-            placeholder="Describe qué deben entregar y cómo se evaluará..."
-            required
-          ></textarea>
-        </div>
+        <section class="rule">
+          <h2>Calificación</h2>
+          <p class="rule__score">20</p>
+          <p class="rule__hint">Nota máxima del sistema.</p>
+        </section>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="dueDate" class="form-label">
-              Fecha y hora límite
-              <span class="required">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              id="dueDate"
-              name="dueDate"
-              class="form-input"
-              [ngModel]="dueDate()"
-              (ngModelChange)="dueDate.set($event)"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="points" class="form-label">Nota máxima</label>
-            <input
-              type="number"
-              id="points"
-              name="points"
-              class="form-input readonly-input"
-              [ngModel]="points()"
-              readonly
-              min="1"
-              max="20"
-            />
-            <p class="form-hint">Nota máxima fija en 20 puntos (sistema peruano).</p>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Tipo de entrega (referencia para el estudiante)</label>
-          <div class="delivery-type-options">
-            <label class="delivery-option" [class.active]="deliveryType() === 'archivo'">
+        <section class="rule">
+          <h2>Cómo se entrega</h2>
+          <div class="ways" role="radiogroup" aria-label="Tipo de entrega">
+            <label class="way" [class.is-on]="deliveryType() === 'archivo'">
               <input type="radio" name="deliveryType" value="archivo" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
-              <div class="option-content">
-                <span>Archivo</span>
-                <small>PDF, Word, imágenes…</small>
-              </div>
+              <span class="way__name">Archivo</span>
+              <span class="way__hint">PDF, Word, imágenes</span>
             </label>
-            <label class="delivery-option" [class.active]="deliveryType() === 'texto'">
+            <label class="way" [class.is-on]="deliveryType() === 'texto'">
               <input type="radio" name="deliveryType" value="texto" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
-              <div class="option-content">
-                <span>Texto en línea</span>
-              </div>
+              <span class="way__name">Texto en línea</span>
             </label>
-            <label class="delivery-option" [class.active]="deliveryType() === 'ambos'">
+            <label class="way" [class.is-on]="deliveryType() === 'ambos'">
               <input type="radio" name="deliveryType" value="ambos" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
-              <div class="option-content">
-                <span>Ambos</span>
-              </div>
+              <span class="way__name">Archivo y texto</span>
             </label>
-            <label class="delivery-option" [class.active]="deliveryType() === 'clase'">
+            <label class="way" [class.is-on]="deliveryType() === 'clase'">
               <input type="radio" name="deliveryType" value="clase" [ngModel]="deliveryType()" (ngModelChange)="deliveryType.set($event)" />
-              <div class="option-content">
-                <span>En clase</span>
-              </div>
+              <span class="way__name">En clase</span>
             </label>
           </div>
-        </div>
+        </section>
 
-        <div class="form-group">
-          <label for="maxSubmissions" class="form-label">Entregas permitidas en el portal</label>
+        <section class="rule">
+          <h2>Intentos en el portal</h2>
+          <label class="visually-hidden" for="maxSubmissions">Entregas permitidas</label>
           <input
             type="number"
             id="maxSubmissions"
             name="maxSubmissions"
-            class="form-input"
+            class="rule__input"
             min="1"
             max="20"
             step="1"
             [ngModel]="maxSubmissions()"
             (ngModelChange)="onMaxSubmissionsInput($event)"
           />
-          <p class="form-hint">
-            Veces que el estudiante puede enviar o actualizar su entrega (1–20). Por defecto 1: una sola entrega sin cambios.
-          </p>
-        </div>
-      </section>
-
-      @if (!isEditMode()) {
-        <section class="feed form-section">
-          <div class="feed__head">
-            <h2>Materiales de referencia</h2>
-            <span class="section-badge optional">Opcional</span>
-          </div>
-
-          <div class="form-group">
-            <div class="file-upload-area">
-              <input
-                type="file"
-                id="file-upload"
-                class="file-input"
-                multiple
-                (change)="onFilesSelected($event)"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
-              />
-              <label for="file-upload" class="file-upload-label">
-                <span>Haz clic para seleccionar archivos</span>
-                <small>PDF, Word, PowerPoint, imágenes. Hasta 5 archivos.</small>
-              </label>
-            </div>
-
-            @if (selectedFiles().length > 0) {
-              <div class="attachments-list">
-                @for (f of selectedFiles(); track fileKey(f)) {
-                  <div class="attachment-item">
-                    <div class="attachment-info">
-                      <span class="attachment-name">{{ f.name }}</span>
-                      <span class="attachment-size">{{ formatFileSize(f.size) }}</span>
-                    </div>
-                    <button type="button" class="btn-remove-attachment" (click)="removeFile(f)" title="Quitar archivo">
-                      Quitar
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
+          <p class="rule__hint">Veces que el alumno puede enviar o actualizar. 1 = una sola entrega.</p>
         </section>
-      }
 
-      <div class="form-actions">
-        <button type="button" class="prof-btn prof-btn--outline" (click)="cancel()" [disabled]="isSaving()">
-          Cancelar
-        </button>
-        <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || isSaving()">
-          @if (isSaving()) {
-            <span>Guardando…</span>
-          } @else {
-            <span>{{ isEditMode() ? 'Actualizar' : 'Crear' }} tarea</span>
-          }
-        </button>
-      </div>
-
-      @if (!canSave()) {
-        <div class="form-validation-hint">
-          <span>Completa título, instrucciones y fecha límite para guardar.</span>
+        <div class="compose__actions">
+          <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || isSaving()">
+            {{ isSaving() ? 'Guardando…' : (isEditMode() ? 'Guardar cambios' : 'Publicar tarea') }}
+          </button>
+          <button type="button" class="prof-link" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
         </div>
-      }
+
+        @if (!canSave()) {
+          <p class="compose__need">Faltan título, instrucciones o fecha límite.</p>
+        }
+      </aside>
     </form>
   </div>
 </div>

@@ -31,7 +31,9 @@ export class CrearTareaComponent implements OnInit {
   /** Cuántas veces el alumno puede enviar o actualizar su entrega (1–20). */
   maxSubmissions = signal(1);
 
-  backLabel = signal('Volver al curso');
+  backLabel = signal('Volver a tareas');
+  courseLabel = signal('');
+  returnToList = signal(false);
 
   canSave = computed(() => {
     const t = this.title().trim();
@@ -40,24 +42,37 @@ export class CrearTareaComponent implements OnInit {
     return !!t && !!i && !!d;
   });
 
+  pageTitle = computed(() => this.isEditMode() ? 'Editar tarea' : 'Nueva tarea');
+
   saveTask() { this.onSubmit(); }
 
   cancel() {
-    if (this.route.snapshot.queryParamMap.get('returnTo') === 'tareas') {
+    if (this.returnToList()) {
       void this.router.navigate(['/profesor/tareas']);
     } else {
-      history.back();
+      void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
     }
   }
 
   ngOnInit() {
-    if (this.route.snapshot.queryParamMap.get('returnTo') === 'tareas') {
-      this.backLabel.set('Volver a tareas');
-    }
+    const fromList = this.route.snapshot.queryParamMap.get('returnTo') === 'tareas';
+    this.returnToList.set(fromList);
+    this.backLabel.set(fromList ? '← Tareas' : '← Tareas del curso');
 
     const cId = this.route.snapshot.paramMap.get('courseId') ?? '';
     const tId = this.route.snapshot.paramMap.get('taskId') ?? '';
     this.courseId.set(cId);
+
+    if (cId) {
+      this.teacherService.getCourse(cId).subscribe({
+        next: (c) => {
+          const name = c.course?.name ?? '';
+          const grade = (c.course?.grade ?? '').trim();
+          const level = (c.course?.level ?? '').trim();
+          this.courseLabel.set([name, [grade, level].filter(Boolean).join(' · ')].filter(Boolean).join(' · '));
+        },
+      });
+    }
 
     if (tId && tId !== 'nueva') {
       this.taskId.set(tId);
@@ -125,10 +140,10 @@ export class CrearTareaComponent implements OnInit {
   }
 
   private afterSaveNavigate() {
-    if (this.route.snapshot.queryParamMap.get('returnTo') === 'tareas') {
+    if (this.returnToList()) {
       void this.router.navigate(['/profesor/tareas']);
     } else {
-      void this.router.navigate(['/profesor/cursos', this.courseId()]);
+      void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
     }
   }
 
