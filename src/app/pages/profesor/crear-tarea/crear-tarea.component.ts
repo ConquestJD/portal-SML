@@ -33,9 +33,8 @@ export class CrearTareaComponent implements OnInit {
   maxSubmissions = signal(1);
   fileDragOver = signal(false);
 
-  backLabel = signal('Volver a tareas');
+  backLabel = signal('← Tareas del curso');
   courseLabel = signal('');
-  returnToList = signal(false);
 
   canSave = computed(() => {
     const t = this.title().trim();
@@ -49,18 +48,10 @@ export class CrearTareaComponent implements OnInit {
   saveTask() { this.onSubmit(); }
 
   cancel() {
-    if (this.returnToList()) {
-      void this.router.navigate(['/profesor/tareas']);
-    } else {
-      void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
-    }
+    void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
   }
 
   ngOnInit() {
-    const fromList = this.route.snapshot.queryParamMap.get('returnTo') === 'tareas';
-    this.returnToList.set(fromList);
-    this.backLabel.set(fromList ? '← Tareas' : '← Tareas del curso');
-
     const cId = this.route.snapshot.paramMap.get('courseId') ?? '';
     const tId = this.route.snapshot.paramMap.get('taskId') ?? '';
     this.courseId.set(cId);
@@ -207,11 +198,7 @@ export class CrearTareaComponent implements OnInit {
   }
 
   private afterSaveNavigate() {
-    if (this.returnToList()) {
-      void this.router.navigate(['/profesor/tareas']);
-    } else {
-      void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
-    }
+    void this.router.navigate(['/profesor/cursos', this.courseId()], { queryParams: { tab: 'tareas' } });
   }
 
   private extractHttpError(err: unknown): string {

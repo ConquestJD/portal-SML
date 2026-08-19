@@ -59,10 +59,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Académico',
       items: [
-        { label: 'Cursos', icon: 'fas fa-book', path: '/profesor/cursos', exact: false },
-        { label: 'Tareas', icon: 'fas fa-tasks', path: '/profesor/tareas', exact: false },
-        { label: 'Notas', icon: 'fas fa-chart-line', path: '/profesor/notas', exact: false },
-        { label: 'Asistencia', icon: 'fas fa-calendar-check', path: '/profesor/asistencia', exact: false }
+        { label: 'Cursos', icon: 'fas fa-book', path: '/profesor/cursos', exact: false }
       ]
     },
     {

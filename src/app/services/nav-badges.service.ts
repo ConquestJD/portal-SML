@@ -137,7 +137,7 @@ export class NavBadgesService {
   badgeForPath(path: string): number {
     const role = this.auth.userRole();
     if (role === 'profesor') {
-      if (path === '/profesor/tareas') return this.teacherTareas();
+      if (path === '/profesor/cursos') return this.teacherTareas();
       if (path === '/profesor/comunicados') return this.teacherComunicados();
     }
     if (role === 'estudiante') {

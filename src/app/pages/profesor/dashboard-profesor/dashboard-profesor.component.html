@@ -40,11 +40,11 @@
           <span class="metric__n">{{ totalStudents() }}</span>
           <span class="metric__l">Estudiantes</span>
         </a>
-        <a routerLink="/profesor/tareas" class="metric">
+        <a routerLink="/profesor/cursos" class="metric">
           <span class="metric__n">{{ pendingGrading() }}</span>
           <span class="metric__l">Por calificar</span>
         </a>
-        <a routerLink="/profesor/asistencia" class="metric">
+        <a routerLink="/profesor/cursos" class="metric">
           <span class="metric__n">{{ attendancePending() }}</span>
           <span class="metric__l">Asistencias</span>
         </a>
@@ -53,13 +53,13 @@
       @if (hasAttention()) {
         <section class="pulse" aria-label="Pendientes">
           @if (pendingGrading() > 0) {
-            <a routerLink="/profesor/tareas" class="pulse__item">
+            <a routerLink="/profesor/cursos" class="pulse__item">
               <span class="pulse__n">{{ pendingGrading() }}</span>
               <span class="pulse__l">Tareas por calificar</span>
             </a>
           }
           @if (attendancePending() > 0) {
-            <a routerLink="/profesor/asistencia" class="pulse__item">
+            <a routerLink="/profesor/cursos" class="pulse__item">
               <span class="pulse__n">{{ attendancePending() }}</span>
               <span class="pulse__l">Asistencias pendientes</span>
             </a>

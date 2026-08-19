@@ -35,7 +35,7 @@
 
     @if (pendingTotal() > 0 && !loading()) {
       <section class="pulse" aria-label="Pendientes">
-        <a routerLink="/profesor/tareas" class="pulse__item">
+        <a routerLink="/profesor/cursos" class="pulse__item">
           <span class="pulse__n">{{ pendingTotal() }}</span>
           <span class="pulse__l">Tareas por calificar en tus cursos</span>
         </a>

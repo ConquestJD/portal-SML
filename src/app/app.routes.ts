@@ -125,15 +125,18 @@ export const routes: Routes = [
       },
       {
         path: 'profesor/tareas',
-        loadComponent: () => import('./pages/profesor/tareas-profesor/tareas-profesor.component').then(m => m.TareasProfesorComponent)
+        redirectTo: 'profesor/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'profesor/notas',
-        loadComponent: () => import('./pages/profesor/notas-profesor/notas-profesor.component').then(m => m.NotasProfesorComponent)
+        redirectTo: 'profesor/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'profesor/asistencia',
-        loadComponent: () => import('./pages/profesor/asistencia-profesor/asistencia-profesor.component').then(m => m.AsistenciaProfesorComponent)
+        redirectTo: 'profesor/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'profesor/comunicados',

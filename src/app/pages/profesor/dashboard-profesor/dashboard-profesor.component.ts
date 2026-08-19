@@ -34,10 +34,6 @@ export class DashboardProfesorComponent implements OnInit {
 
   shortcuts = [
     { label: 'Mis Cursos', link: '/profesor/cursos' },
-    { label: 'Tareas', link: '/profesor/tareas' },
-    { label: 'Calificaciones', link: '/profesor/notas' },
-    { label: 'Asistencia', link: '/profesor/asistencia' },
-    { label: 'Estudiantes', link: '/profesor/cursos' },
     { label: 'Comunicados', link: '/profesor/comunicados' },
   ];
 
