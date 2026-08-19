@@ -1,9 +1,10 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ParentService } from '../../../services/parent.service';
+import { ParentService, ParentMaterial, ParentPeriod } from '../../../services/parent.service';
+import { isMaterialFolder, materialFolderTitle } from '../../../services/teacher.service';
 
 type TabType = 'informacion' | 'materiales' | 'tareas';
 
@@ -33,6 +34,28 @@ export interface ParentCourseTaskRow {
   grade: number | null;
 }
 
+interface MaterialBinFile {
+  id: string;
+  name: string;
+  size?: number;
+  mimeType?: string;
+}
+
+interface MaterialBinFolder {
+  id: string;
+  title: string;
+  files: MaterialBinFile[];
+}
+
+interface MaterialBin {
+  id: string;
+  title: string;
+  roman: string;
+  kind: 'period' | 'loose' | 'placeholder';
+  files: MaterialBinFile[];
+  folders: MaterialBinFolder[];
+}
+
 @Component({
   selector: 'app-curso-detalle-padre',
   standalone: true,
@@ -53,11 +76,79 @@ export class CursoDetallePadreComponent implements OnInit {
   readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
 
   courseVm = signal<ParentCourseDetailVm | null>(null);
-  units = signal<Record<string, unknown>[]>([]);
+  periods = signal<ParentPeriod[]>([]);
+  materials = signal<ParentMaterial[]>([]);
+  materialExpanded = signal<Record<string, boolean>>({});
   tasks = signal<ParentCourseTaskRow[]>([]);
 
   /** ID tabla `Teacher` (para crear conversación). */
   teacherEntityId = '';
+
+  materialGroups = computed((): MaterialBin[] => {
+    const materials = this.materials();
+    const toFiles = (list: ParentMaterial[]): MaterialBinFile[] =>
+      list.flatMap((m) =>
+        (m.files ?? []).map((f) => ({
+          id: f.id,
+          name: (f.filename ?? f.name ?? '').trim() || 'Archivo',
+          size: f.size,
+          mimeType: f.mimeType,
+        })),
+      );
+    const toFolders = (list: ParentMaterial[]): MaterialBinFolder[] =>
+      list
+        .filter(isMaterialFolder)
+        .map((m) => ({
+          id: m.id,
+          title: materialFolderTitle(m),
+          files: toFiles([m]),
+        }));
+    const split = (list: ParentMaterial[]) => ({
+      folders: toFolders(list),
+      files: toFiles(list.filter((m) => !isMaterialFolder(m))),
+    });
+    const inPeriod = (periodId: string) =>
+      materials.filter((m) => (m.periodId ?? m.period?.id) === periodId);
+
+    const roman = ['I', 'II', 'III', 'IV'];
+    const fallbackTitles = ['I Bimestre', 'II Bimestre', 'III Bimestre', 'IV Bimestre'];
+    const periods = this.periods().slice(0, 4);
+    const bins: MaterialBin[] = fallbackTitles.map((title, i) => {
+      const period = periods[i];
+      if (!period) {
+        return {
+          id: `_ph-${i}`,
+          title,
+          roman: roman[i],
+          kind: 'placeholder' as const,
+          files: [] as MaterialBinFile[],
+          folders: [] as MaterialBinFolder[],
+        };
+      }
+      return {
+        id: period.id,
+        title: period.name || title,
+        roman: roman[i],
+        kind: 'period' as const,
+        ...split(inPeriod(period.id)),
+      };
+    });
+    bins.push({
+      id: '_loose',
+      title: 'Fuera de bimestres',
+      roman: '·',
+      kind: 'loose',
+      ...split(materials.filter((m) => !(m.periodId ?? m.period?.id))),
+    });
+    return bins;
+  });
+
+  bimestreBins = computed(() => this.materialGroups().filter((b) => b.kind !== 'loose'));
+  looseFiles = computed((): MaterialBinFile[] => {
+    const loose = this.materialGroups().find((b) => b.kind === 'loose');
+    if (!loose) return [];
+    return [...loose.folders.flatMap((f) => f.files), ...loose.files];
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -105,11 +196,11 @@ export class CursoDetallePadreComponent implements OnInit {
       course: this.parentService
         .getChildCourse(this.childId, this.courseId)
         .pipe(catchError(() => of(null))),
-      units: this.parentService
-        .getChildCourseUnits(this.childId, this.courseId)
-        .pipe(catchError(() => of([]))),
+      archive: this.parentService
+        .getChildCourseMaterials(this.childId, this.courseId)
+        .pipe(catchError(() => of({ periods: [], materials: [] }))),
     }).subscribe({
-      next: ({ course, units }) => {
+      next: ({ course, archive }) => {
         if (!course) {
           this.error.set('Error al cargar el curso');
           this.courseVm.set(null);
@@ -120,7 +211,8 @@ export class CursoDetallePadreComponent implements OnInit {
         const a = course as Record<string, unknown>;
         const teacher = (a['teacher'] as Record<string, unknown>) ?? {};
         this.teacherEntityId = String(teacher['id'] ?? '');
-        this.units.set(this.normalizeUnits(units as unknown[]));
+        this.periods.set(archive.periods ?? []);
+        this.materials.set(archive.materials ?? []);
         this.loading.set(false);
         if (this.activeTab() === 'tareas') this.loadTasks();
       },
@@ -150,36 +242,52 @@ export class CursoDetallePadreComponent implements OnInit {
     });
   }
 
-  toggleUnit(unitId: string) {
-    this.units.update((list) =>
-      list.map((u) =>
-        String(u['id']) === unitId ? { ...u, isExpanded: !Boolean(u['isExpanded']) } : u,
-      ),
+  toggleMaterialFolder(id: string) {
+    this.materialExpanded.update((rec) => ({ ...rec, [id]: !rec[id] }));
+  }
+
+  isMaterialFolderOpen(id: string): boolean {
+    return !!this.materialExpanded()[id];
+  }
+
+  binIsEmpty(bin: MaterialBin): boolean {
+    return !bin.folders.length && !bin.files.length;
+  }
+
+  binCountLabel(bin: MaterialBin): string {
+    const folders = bin.folders.length;
+    const files = bin.files.length + bin.folders.reduce((n, f) => n + f.files.length, 0);
+    if (!folders && !files) return 'Vacío';
+    const parts: string[] = [];
+    if (folders) parts.push(`${folders} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
+    parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    return parts.join(' · ');
+  }
+
+  formatMaterialFileSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  mimeTypeLabel(mime?: string): string {
+    if (!mime) return 'Archivo';
+    if (mime.includes('pdf')) return 'PDF';
+    if (mime.includes('image')) return 'Imagen';
+    if (mime.includes('word') || mime.includes('document')) return 'Documento';
+    if (mime.includes('sheet') || mime.includes('excel')) return 'Hoja';
+    if (mime.includes('video')) return 'Video';
+    if (mime.includes('audio')) return 'Audio';
+    if (mime.includes('zip') || mime.includes('compressed')) return 'Comprimido';
+    return mime.split('/')[1]?.toUpperCase() || 'Archivo';
+  }
+
+  downloadMaterial(file: MaterialBinFile) {
+    if (!file.id || !this.childId || !this.courseId) return;
+    window.open(
+      this.parentService.getChildCourseMaterialDownloadUrl(this.childId, this.courseId, file.id),
     );
-  }
-
-  getMaterialIcon(type: string): string {
-    const t = (type || '').toLowerCase();
-    if (t === 'pdf' || t.includes('pdf')) return 'fa-file-pdf';
-    if (t === 'video' || t.includes('video')) return 'fa-video';
-    if (t === 'imagen' || t.includes('image')) return 'fa-file-image';
-    if (t === 'link') return 'fa-link';
-    return 'fa-file';
-  }
-
-  downloadMaterial(material: Record<string, unknown>) {
-    const type = String(material['type'] ?? '');
-    if (type === 'Link') {
-      const url = (material['url'] as string) ?? '';
-      if (url) window.open(url, '_blank');
-      return;
-    }
-    const mid = material['id'];
-    if (mid != null && this.childId && this.courseId) {
-      window.open(
-        this.parentService.getChildCourseMaterialDownloadUrl(this.childId, this.courseId, String(mid)),
-      );
-    }
   }
 
   sendMessageToTeacher() {
@@ -194,21 +302,6 @@ export class CursoDetallePadreComponent implements OnInit {
 
   dayHasClass(c: ParentCourseDetailVm, day: string): boolean {
     return c.schedule.some((s) => this.normalizeDay(s.day) === day);
-  }
-
-  padUnitNumber(n: unknown): string {
-    const num = typeof n === 'number' ? n : Number(n);
-    if (!Number.isFinite(num)) return '—';
-    return String(num).padStart(2, '0');
-  }
-
-  materialTypeMark(type: unknown): string {
-    const t = String(type ?? '').toLowerCase();
-    if (t.includes('pdf')) return 'PDF';
-    if (t.includes('video')) return 'VID';
-    if (t.includes('link')) return 'URL';
-    if (t.includes('imagen') || t.includes('image')) return 'IMG';
-    return 'DOC';
   }
 
   taskStatusLabel(status: ParentCourseTaskRow['status']): string {
@@ -375,73 +468,6 @@ export class CursoDetallePadreComponent implements OnInit {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'short' });
-  }
-
-  private normalizeUnits(raw: unknown[]): Record<string, unknown>[] {
-    return (Array.isArray(raw) ? raw : []).map((u) => {
-      const x = u as Record<string, unknown>;
-      const materialsRaw = x['materials'];
-      const materials = Array.isArray(materialsRaw)
-        ? materialsRaw.map((m) => this.normalizeMaterial(m as Record<string, unknown>))
-        : [];
-      const numRaw = x['number'];
-      const num =
-        numRaw === null || numRaw === undefined
-          ? null
-          : typeof numRaw === 'number'
-            ? numRaw
-            : Number(numRaw);
-      return {
-        ...x,
-        isExpanded: x['isExpanded'] === true,
-        number: num !== null && Number.isFinite(num) ? num : null,
-        title: String(x['title'] ?? ''),
-        description: String(x['description'] ?? ''),
-        materials,
-      };
-    });
-  }
-
-  private normalizeMaterial(m: Record<string, unknown>): Record<string, unknown> {
-    const apiTypes = new Set(['PDF', 'Video', 'Imagen', 'Documento', 'Otro', 'Link']);
-    const dt = m['type'];
-    if (typeof dt === 'string' && apiTypes.has(dt)) {
-      return {
-        id: m['id'],
-        name: String(m['title'] ?? m['name'] ?? m['originalName'] ?? 'Material'),
-        type: dt,
-        size: typeof m['size'] === 'string' && m['size'].trim() ? m['size'] : this.kbFromSizeBytes(m['sizeBytes']),
-        date: String(m['date'] ?? m['createdAt'] ?? m['updatedAt'] ?? ''),
-        url: String((m['externalUrl'] ?? m['url'] ?? m['fileUrl'] ?? '') as string),
-      };
-    }
-
-    const mime = String(m['mimeType'] ?? '').toLowerCase();
-    const extType = String(m['type'] ?? '').toLowerCase();
-    let type = 'Documento';
-    if (mime.includes('pdf') || extType === 'pdf') type = 'PDF';
-    else if (mime.startsWith('video')) type = 'Video';
-    else if (mime.startsWith('image')) type = 'Imagen';
-
-    const externalUrl =
-      (m['externalUrl'] as string) ?? (m['url'] as string) ?? (m['fileUrl'] as string) ?? '';
-    if (externalUrl && /^https?:\/\//i.test(externalUrl)) type = 'Link';
-
-    const created = m['createdAt'] ?? m['updatedAt'] ?? '';
-
-    return {
-      id: m['id'],
-      name: String(m['title'] ?? m['name'] ?? m['originalName'] ?? 'Material'),
-      type,
-      size: this.kbFromSizeBytes(m['sizeBytes']),
-      date: created,
-      url: externalUrl,
-    };
-  }
-
-  private kbFromSizeBytes(sizeBytes: unknown): string {
-    if (typeof sizeBytes !== 'number' || sizeBytes <= 0) return '';
-    return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
   }
 
   private mapApiTask(t: Record<string, unknown>): ParentCourseTaskRow {

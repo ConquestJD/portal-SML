@@ -67,6 +67,28 @@ export interface ParentJustification {
   attachments?: { id: string; name: string; url?: string }[];
 }
 
+export interface ParentPeriod {
+  id: string;
+  name: string;
+  order: number;
+}
+
+export interface ParentMaterialFile {
+  id: string;
+  name: string;
+  filename?: string;
+  mimeType?: string;
+  size?: number;
+}
+
+export interface ParentMaterial {
+  id: string;
+  title: string;
+  periodId?: string | null;
+  period?: { id: string; name: string; order?: number } | null;
+  files: ParentMaterialFile[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ParentService {
   private readonly url = environment.apiUrl;
@@ -138,6 +160,24 @@ export class ParentService {
   getChildCourseUnits(childId: string, courseId: string): Observable<unknown[]> {
     return this.get<unknown[]>(`/parent/children/${childId}/courses/${courseId}/units`);
   }
+  getChildCourseMaterials(
+    childId: string,
+    courseId: string,
+  ): Observable<{ periods: ParentPeriod[]; materials: ParentMaterial[] }> {
+    return this.get<{ periods: ParentPeriod[]; materials: ParentMaterial[] }>(
+      `/parent/children/${childId}/courses/${courseId}/materials`,
+    ).pipe(
+      map((raw) => {
+        const data = raw ?? { periods: [], materials: [] };
+        return {
+          periods: Array.isArray(data.periods) ? data.periods : [],
+          materials: (Array.isArray(data.materials) ? data.materials : []).map((m) =>
+            this.normalizeMaterial(m),
+          ),
+        };
+      }),
+    );
+  }
   getChildCourseTasks(childId: string, courseId: string): Observable<unknown[]> {
     return this.get<unknown[]>(`/parent/children/${childId}/courses/${courseId}/tasks`);
   }
@@ -185,5 +225,23 @@ export class ParentService {
   }
   getReceiptUrl(childId: string, paymentId: string): string {
     return `${this.url}/parent/children/${childId}/payments/${paymentId}/receipt`;
+  }
+
+  private normalizeMaterial(raw: ParentMaterial | Record<string, unknown>): ParentMaterial {
+    const m = raw as Record<string, unknown>;
+    const filesRaw = Array.isArray(m['files']) ? (m['files'] as Record<string, unknown>[]) : [];
+    return {
+      id: String(m['id'] ?? ''),
+      title: String(m['title'] ?? ''),
+      periodId: m['periodId'] != null ? String(m['periodId']) : null,
+      period: (m['period'] as ParentMaterial['period']) ?? null,
+      files: filesRaw.map((f) => ({
+        id: String(f['id'] ?? ''),
+        name: String(f['filename'] ?? f['name'] ?? 'Archivo'),
+        filename: String(f['filename'] ?? f['name'] ?? 'Archivo'),
+        mimeType: f['mimeType'] != null ? String(f['mimeType']) : undefined,
+        size: typeof f['size'] === 'number' ? f['size'] : undefined,
+      })),
+    };
   }
 }

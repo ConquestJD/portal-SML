@@ -183,58 +183,117 @@
       }
 
       @if (activeTab() === 'materiales') {
-        <section class="feed">
-          <div class="feed__head">
-            <h2>Materiales del curso</h2>
-          </div>
-          <div class="units-list">
-            @for (unit of units(); track unit['id']) {
-              <div class="unit" [class.unit--open]="unit['isExpanded']">
-                <button type="button" class="unit__head" (click)="toggleUnit(String(unit['id']))">
-                  @if (unit['number'] !== null && unit['number'] !== undefined) {
-                    <span class="unit__num">{{ padUnitNumber(unit['number']) }}</span>
-                  } @else {
-                    <span class="unit__num unit__num--folder">§</span>
-                  }
-                  <span class="unit__body">
-                    <span class="unit__title">{{ unit['title'] }}</span>
-                    <span class="unit__desc">{{ unit['description'] }}</span>
+        <section class="archive">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Archivo</p>
+              <h2 class="mod-head__title">Material del curso</h2>
+              <p class="mod-head__meta">Cuatro carpetas de bimestre. Lo demás se lista como archivos sueltos.</p>
+            </div>
+          </header>
+
+          <div class="shelf" aria-label="Bimestres">
+            @for (bin of bimestreBins(); track bin.id) {
+              <article
+                class="folder"
+                [class.is-open]="isMaterialFolderOpen(bin.id)"
+                [class.is-empty]="binIsEmpty(bin)"
+                [class.is-placeholder]="bin.kind === 'placeholder'"
+              >
+                <button type="button" class="folder__tab" (click)="toggleMaterialFolder(bin.id)">
+                  <span class="folder__roman">{{ bin.roman }}</span>
+                  <span class="folder__copy">
+                    <span class="folder__name">{{ bin.title }}</span>
+                    <span class="folder__count">{{ binCountLabel(bin) }}</span>
                   </span>
-                  <span class="unit__toggle">{{ unit['isExpanded'] ? '−' : '+' }}</span>
+                  <span class="folder__chev" aria-hidden="true">{{ isMaterialFolderOpen(bin.id) ? '−' : '+' }}</span>
                 </button>
-                @if (unit['isExpanded']) {
-                  <div class="unit__materials">
-                    @if ($any(unit['materials'])?.length > 0) {
-                      <ul class="feed__list">
-                        @for (material of $any(unit['materials']); track material['id']) {
-                          <li>
-                            <div class="feed-row feed-row--static">
-                              <span class="feed-row__mark material-mark">{{ materialTypeMark(material['type']) }}</span>
-                              <span class="feed-row__body">
-                                <span class="feed-row__title">{{ material['name'] }}</span>
-                                <span class="feed-row__meta">
-                                  {{ material['type'] }}
-                                  @if (material['size']) { · {{ material['size'] }} }
-                                  @if (material['date']) { · {{ material['date'] | date: 'shortDate' }} }
-                                </span>
-                              </span>
-                              <span class="feed-row__actions">
-                                <button type="button" class="padre-btn padre-btn--solid" (click)="downloadMaterial(material)">
-                                  {{ material['type'] === 'Link' ? 'Abrir' : 'Descargar' }}
-                                </button>
-                              </span>
-                            </div>
-                          </li>
-                        }
-                      </ul>
+
+                @if (isMaterialFolderOpen(bin.id)) {
+                  <div class="folder__drawer">
+                    @if (bin.kind === 'placeholder') {
+                      <p class="archive__empty">Esta carpeta se activa cuando el año lectivo tenga bimestres.</p>
+                    } @else if (binIsEmpty(bin)) {
+                      <p class="archive__empty">Aún no hay archivos en este bimestre.</p>
                     } @else {
-                      <p class="feed__empty">No hay materiales en esta unidad.</p>
+                      @if (bin.folders.length) {
+                        <ul class="pockets">
+                          @for (folder of bin.folders; track folder.id) {
+                            <li class="pocket" [class.is-open]="isMaterialFolderOpen(folder.id)">
+                              <button type="button" class="pocket__tab" (click)="toggleMaterialFolder(folder.id)">
+                                <span class="pocket__glyph" aria-hidden="true">
+                                  <span class="pocket__glyph-tab"></span>
+                                  <span class="pocket__glyph-body"></span>
+                                </span>
+                                <span class="pocket__copy">
+                                  <span class="pocket__kicker">Carpeta</span>
+                                  <span class="pocket__title">{{ folder.title }}</span>
+                                  <span class="pocket__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
+                                </span>
+                                <span class="pocket__chev" aria-hidden="true">{{ isMaterialFolderOpen(folder.id) ? '−' : '+' }}</span>
+                              </button>
+                              @if (isMaterialFolderOpen(folder.id)) {
+                                <div class="pocket__drawer">
+                                  @if (folder.files.length) {
+                                    <ul class="archive__files">
+                                      @for (f of folder.files; track f.id) {
+                                        <li class="archive__file">
+                                          <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                                          <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                                          <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                                          <span></span>
+                                          <button type="button" class="padre-link" (click)="downloadMaterial(f)">Descargar</button>
+                                        </li>
+                                      }
+                                    </ul>
+                                  } @else {
+                                    <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
+                                  }
+                                </div>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
+                      @if (bin.files.length) {
+                        <ul class="archive__files">
+                          @for (f of bin.files; track f.id) {
+                            <li class="archive__file">
+                              <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                              <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                              <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                              <span></span>
+                              <button type="button" class="padre-link" (click)="downloadMaterial(f)">Descargar</button>
+                            </li>
+                          }
+                        </ul>
+                      }
                     }
                   </div>
                 }
-              </div>
+              </article>
             }
           </div>
+
+          @if (looseFiles().length) {
+            <section class="loose" aria-label="Archivos sueltos">
+              <header class="loose__head">
+                <h3>Archivos sueltos</h3>
+                <span>{{ looseFiles().length }} {{ looseFiles().length === 1 ? 'archivo' : 'archivos' }}</span>
+              </header>
+              <ul class="archive__files">
+                @for (f of looseFiles(); track f.id) {
+                  <li class="archive__file">
+                    <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                    <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                    <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                    <span></span>
+                    <button type="button" class="padre-link" (click)="downloadMaterial(f)">Descargar</button>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
         </section>
       }
 
