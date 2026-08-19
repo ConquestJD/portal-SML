@@ -145,6 +145,26 @@ export interface GradeEntry {
   period?: { id: string; name: string; order?: number };
 }
 
+export interface TeacherExam {
+  id: string;
+  title: string;
+  description?: string | null;
+  examDate: string;
+  maxScore: number;
+  periodId?: string | null;
+  period?: { id: string; name: string; order?: number } | null;
+  scoresCount?: number;
+  scores?: ExamScoreEntry[];
+}
+
+export interface ExamScoreEntry {
+  id: string;
+  studentId: string;
+  score: number;
+  notes?: string | null;
+  student?: { id: string; studentCode: string; user: { firstName: string; lastName: string } };
+}
+
 export interface Material {
   id: string; title: string; description?: string;
   files: { id: string; name: string; filename?: string; url?: string; size?: number; mimeType?: string }[];
@@ -550,6 +570,50 @@ export class TeacherService {
   updateGrade(courseId: string, gradeId: string, dto: { score?: number; notes?: string }): Observable<GradeEntry> {
     return this.http.put<{ success: boolean; data: GradeEntry }>(
       `${this.url}/teacher/courses/${courseId}/grades/${gradeId}`, dto
+    ).pipe(map(r => r.data));
+  }
+  saveGradesBulk(
+    courseId: string,
+    dto: { periodId: string; records: { studentId: string; score: number; notes?: string }[] },
+  ): Observable<GradeEntry[]> {
+    return this.http.post<{ success: boolean; data: GradeEntry[] }>(
+      `${this.url}/teacher/courses/${courseId}/grades/bulk`, dto
+    ).pipe(map(r => r.data));
+  }
+
+  // ─── EXAMS ────────────────────────────────────────────────────────────────
+  getExams(courseId: string): Observable<TeacherExam[]> {
+    return this.get<TeacherExam[]>(`/teacher/courses/${courseId}/exams`);
+  }
+  getExam(courseId: string, examId: string): Observable<TeacherExam> {
+    return this.get<TeacherExam>(`/teacher/courses/${courseId}/exams/${examId}`);
+  }
+  createExam(courseId: string, dto: {
+    title: string; description?: string; examDate: string; maxScore?: number; periodId?: string | null;
+  }): Observable<TeacherExam> {
+    return this.http.post<{ success: boolean; data: TeacherExam }>(
+      `${this.url}/teacher/courses/${courseId}/exams`, dto
+    ).pipe(map(r => r.data));
+  }
+  updateExam(courseId: string, examId: string, dto: {
+    title?: string; description?: string; examDate?: string; maxScore?: number; periodId?: string | null;
+  }): Observable<TeacherExam> {
+    return this.http.put<{ success: boolean; data: TeacherExam }>(
+      `${this.url}/teacher/courses/${courseId}/exams/${examId}`, dto
+    ).pipe(map(r => r.data));
+  }
+  deleteExam(courseId: string, examId: string): Observable<unknown> {
+    return this.http.delete<{ success: boolean; data: unknown }>(
+      `${this.url}/teacher/courses/${courseId}/exams/${examId}`
+    ).pipe(map(r => r.data));
+  }
+  saveExamScores(
+    courseId: string,
+    examId: string,
+    dto: { records: { studentId: string; score: number; notes?: string }[] },
+  ): Observable<TeacherExam> {
+    return this.http.post<{ success: boolean; data: TeacherExam }>(
+      `${this.url}/teacher/courses/${courseId}/exams/${examId}/scores`, dto
     ).pipe(map(r => r.data));
   }
 

@@ -1,0 +1,165 @@
+@import '../_shared/profesor-editorial.css';
+
+.compose__mast {
+  padding: 1.35rem 1.75rem 1.4rem;
+  background: var(--navy-deep);
+  color: #fff;
+}
+
+.compose__back {
+  display: inline-block;
+  margin-bottom: .85rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(255 255 255 / .75);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.compose__back:hover { color: #fff; }
+
+.compose__kicker {
+  margin: 0 0 .35rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .55);
+}
+
+.compose__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.compose__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(16rem, .85fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.compose__main,
+.compose__aside {
+  background: var(--surface);
+}
+
+.compose__main { padding: 1.35rem 1.4rem 1.5rem; }
+
+.compose__headline {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  padding: .35rem 0 .7rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  font-weight: 600;
+  color: var(--navy);
+  outline: none;
+}
+
+.compose__headline:focus { border-bottom-color: var(--navy); }
+
+.compose__headline::placeholder { color: rgba(0 51 102 / .35); }
+
+.compose__prompt {
+  width: 100%;
+  margin-top: 1.1rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-height: 14rem;
+  resize: vertical;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink);
+  outline: none;
+}
+
+.compose__prompt::placeholder { color: var(--muted); font-family: var(--font-display); font-style: italic; }
+
+.compose__aside {
+  padding: 1.15rem 1.2rem 1.25rem;
+  position: sticky;
+  top: 0;
+}
+
+.rule {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rule h2 {
+  margin: 0 0 .55rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rule__input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  padding: .45rem 0;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
+}
+
+.rule__input:focus { border-bottom-color: var(--navy); }
+
+.rule__input + .rule__input { margin-top: .55rem; }
+
+.rule__score {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.rule__hint {
+  margin: .4rem 0 0;
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.compose__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .65rem;
+  margin-top: .35rem;
+}
+
+.compose__need {
+  margin: .85rem 0 0;
+  font-size: .78rem;
+  color: #9a6b12;
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .compose__mast { padding: 1.15rem 1.15rem 1.25rem; }
+  .compose__form { grid-template-columns: 1fr; }
+  .compose__aside { position: static; }
+}

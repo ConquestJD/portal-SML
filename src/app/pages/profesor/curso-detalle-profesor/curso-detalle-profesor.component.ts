@@ -13,12 +13,13 @@ import {
   TeacherCourseAnnouncement,
   AcademicPeriod,
   AttendanceHistoryBucket,
+  TeacherExam,
   filterTeacherRosterByCourseGrade,
 } from '../../../services/teacher.service';
 import { AnnouncementService } from '../../../services/announcement.service';
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
 
-type TabType = 'estudiantes' | 'tareas' | 'notas' | 'asistencia' | 'material' | 'comunicados';
+type TabType = 'estudiantes' | 'tareas' | 'notas' | 'examenes' | 'asistencia' | 'material' | 'comunicados';
 type TaskFilter = 'all' | 'pending';
 
 interface CourseStudent {
@@ -74,6 +75,12 @@ export class CursoDetalleProfesorComponent implements OnInit {
   periods = signal<AcademicPeriod[]>([]);
   gradesLoading = signal(false);
   gradesError = signal('');
+  gradesSuccess = signal('');
+  selectedPeriodId = signal('');
+  draftScores = signal<Record<string, string>>({});
+  exams = signal<TeacherExam[]>([]);
+  examsLoading = signal(false);
+  examsError = signal('');
   attendance = signal<AttendanceHistoryBucket[]>([]);
   attendanceLoading = signal(false);
   materials = signal<Material[]>([]);
@@ -83,8 +90,6 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   materialExpanded = signal<Record<string, boolean>>({});
 
-  editingCell = signal<{ studentId: string; periodId: string } | null>(null);
-  editScore = signal('');
   gradeSaving = signal(false);
 
   readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -178,6 +183,42 @@ export class CursoDetalleProfesorComponent implements OnInit {
     });
   });
 
+  selectedPeriod = computed(() =>
+    this.periods().find(p => p.id === this.selectedPeriodId()) ?? null,
+  );
+
+  otherPeriods = computed(() =>
+    this.periods().filter(p => p.id !== this.selectedPeriodId()),
+  );
+
+  periodStats = computed(() => {
+    const periodId = this.selectedPeriodId();
+    const rows = this.gradebookRows();
+    if (!periodId) return { filled: 0, total: rows.length, average: null as number | null };
+    const scores = rows
+      .map(row => this.cellScore(row.student.id, periodId))
+      .filter((n): n is number => n != null);
+    const average = scores.length
+      ? Math.round((scores.reduce((s, n) => s + n, 0) / scores.length) * 10) / 10
+      : null;
+    return { filled: scores.length, total: rows.length, average };
+  });
+
+  gradebookDirty = computed(() => {
+    const periodId = this.selectedPeriodId();
+    if (!periodId) return false;
+    return Object.entries(this.draftScores()).some(([studentId, raw]) => {
+      const saved = this.cellScore(studentId, periodId);
+      const parsed = this.parseScore(raw);
+      if (raw.trim() === '') return false;
+      return parsed !== saved;
+    });
+  });
+
+  withAnnualAverage = computed(() =>
+    this.gradebookRows().filter(row => row.average != null).length,
+  );
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -208,7 +249,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
 
   private tabFromQuery(raw: string | null): TabType | null {
     if (!raw) return null;
-    const allowed: TabType[] = ['estudiantes', 'tareas', 'notas', 'asistencia', 'material', 'comunicados'];
+    const allowed: TabType[] = ['estudiantes', 'tareas', 'notas', 'examenes', 'asistencia', 'material', 'comunicados'];
     return allowed.includes(raw as TabType) ? (raw as TabType) : null;
   }
 
@@ -283,6 +324,9 @@ export class CursoDetalleProfesorComponent implements OnInit {
       case 'notas':
         this.loadGradebook();
         break;
+      case 'examenes':
+        this.loadExams();
+        break;
       case 'asistencia':
         this.loadAttendance();
         break;
@@ -316,6 +360,12 @@ export class CursoDetalleProfesorComponent implements OnInit {
       next: ({ grades, periods }) => {
         this.grades.set(grades ?? []);
         this.periods.set(periods ?? []);
+        const list = periods ?? [];
+        const currentId = this.selectedPeriodId();
+        if (!currentId || !list.some(p => p.id === currentId)) {
+          this.selectedPeriodId.set(this.pickCurrentPeriod(list)?.id ?? '');
+        }
+        this.draftScores.set({});
         this.gradesLoading.set(false);
       },
       error: () => {
@@ -503,51 +553,163 @@ export class CursoDetalleProfesorComponent implements OnInit {
     return g && Number.isFinite(g.score) ? g.score : null;
   }
 
-  isEditing(studentId: string, periodId: string): boolean {
-    const cell = this.editingCell();
-    return !!cell && cell.studentId === studentId && cell.periodId === periodId;
+  selectPeriod(periodId: string) {
+    if (periodId === this.selectedPeriodId()) return;
+    this.selectedPeriodId.set(periodId);
+    this.draftScores.set({});
+    this.gradesSuccess.set('');
+    this.gradesError.set('');
   }
 
-  startEdit(studentId: string, periodId: string) {
-    const current = this.cellScore(studentId, periodId);
-    this.editingCell.set({ studentId, periodId });
-    this.editScore.set(current == null ? '' : String(current));
-    setTimeout(() => {
-      const el = document.querySelector<HTMLInputElement>('.gradebook__input');
-      el?.focus();
-      el?.select();
-    });
+  periodInput(studentId: string): string {
+    const drafts = this.draftScores();
+    if (Object.prototype.hasOwnProperty.call(drafts, studentId)) return drafts[studentId];
+    const n = this.cellScore(studentId, this.selectedPeriodId());
+    return n == null ? '' : String(n);
   }
 
-  saveGradeCell(studentId: string, periodId: string) {
-    if (this.gradeSaving()) return;
-    const cell = this.editingCell();
-    if (!cell || cell.studentId !== studentId || cell.periodId !== periodId) return;
-    const raw = this.editScore().trim().replace(',', '.');
-    this.editingCell.set(null);
-    if (!raw) return;
-    const score = Number(raw);
-    if (!Number.isFinite(score) || score < 0 || score > 20) {
-      this.gradesError.set('La nota debe estar entre 0 y 20.');
+  setDraftScore(studentId: string, value: string | number) {
+    this.draftScores.update(d => ({ ...d, [studentId]: String(value ?? '') }));
+    this.gradesSuccess.set('');
+  }
+
+  isCurrentPeriod(period: AcademicPeriod): boolean {
+    const now = Date.now();
+    const start = period.startDate ? new Date(period.startDate).getTime() : NaN;
+    const end = period.endDate ? new Date(period.endDate).getTime() : NaN;
+    return Number.isFinite(start) && Number.isFinite(end) && now >= start && now <= end;
+  }
+
+  formatPeriodRange(period: AcademicPeriod | null): string {
+    if (!period?.startDate || !period?.endDate) return '';
+    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    const start = new Date(period.startDate);
+    const end = new Date(period.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '';
+    return `${start.toLocaleDateString('es-PE', opts)} — ${end.toLocaleDateString('es-PE', opts)}`;
+  }
+
+  savePeriodGrades() {
+    const periodId = this.selectedPeriodId();
+    const aid = this.apiTeacherAssignmentId();
+    if (!periodId || !aid || this.gradeSaving()) return;
+
+    const records: { studentId: string; score: number }[] = [];
+    for (const row of this.gradebookRows()) {
+      const raw = this.periodInput(row.student.id).trim();
+      if (!raw) continue;
+      const score = this.parseScore(raw);
+      if (score == null) {
+        this.gradesError.set('Hay notas fuera de rango. Usa valores de 0 a 20.');
+        return;
+      }
+      records.push({ studentId: row.student.id, score });
+    }
+    if (!records.length) {
+      this.gradesError.set('Escribe al menos una nota para guardar este bimestre.');
       return;
     }
-    const existing = this.findGrade(this.grades(), studentId, periodId);
-    const aid = this.apiTeacherAssignmentId();
+
     this.gradeSaving.set(true);
     this.gradesError.set('');
-    const req = existing
-      ? this.teacherService.updateGrade(aid, existing.id, { score })
-      : this.teacherService.createGrade(aid, { studentId, periodId, score });
-    req.subscribe({
-      next: () => {
+    this.gradesSuccess.set('');
+    this.teacherService.saveGradesBulk(aid, { periodId, records }).subscribe({
+      next: (grades) => {
+        this.grades.set(grades ?? []);
+        this.draftScores.set({});
         this.gradeSaving.set(false);
-        this.loadGradebook();
+        this.gradesSuccess.set('Notas del bimestre guardadas.');
       },
-      error: () => {
+      error: (err) => {
         this.gradeSaving.set(false);
-        this.gradesError.set('No se pudo guardar la nota.');
+        this.gradesError.set(this.extractHttpError(err, 'No se pudieron guardar las notas.'));
       },
     });
+  }
+
+  exportGradebookCsv() {
+    const rows = this.gradebookRows();
+    const periods = this.periods();
+    if (!rows.length || !periods.length) return;
+    const escape = (v: string | number) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const header = ['Código', 'Alumno', ...periods.map(p => p.name), 'Promedio'];
+    const lines = [
+      header.map(escape).join(','),
+      ...rows.map(row => {
+        const scores = periods.map(p => {
+          const n = this.cellScore(row.student.id, p.id);
+          return n == null ? '' : String(n);
+        });
+        return [
+          escape(row.student.code),
+          escape(row.student.name),
+          ...scores.map(escape),
+          escape(row.average ?? ''),
+        ].join(',');
+      }),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${this.getCourseName() || 'curso'}-notas.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadExams() {
+    const aid = this.apiTeacherAssignmentId();
+    if (!aid) return;
+    this.examsLoading.set(true);
+    this.examsError.set('');
+    this.teacherService.getExams(aid).subscribe({
+      next: (data) => {
+        this.exams.set(data ?? []);
+        this.examsLoading.set(false);
+      },
+      error: () => {
+        this.exams.set([]);
+        this.examsError.set('No se pudieron cargar los exámenes.');
+        this.examsLoading.set(false);
+      },
+    });
+  }
+
+  formatExamDate(iso?: string | null): string {
+    if (!iso) return 'Sin fecha';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  deleteExam(exam: TeacherExam) {
+    if (!confirm(`¿Eliminar el examen «${exam.title}»? Se perderán las notas registradas.`)) return;
+    this.examsError.set('');
+    this.teacherService.deleteExam(this.apiTeacherAssignmentId(), exam.id).subscribe({
+      next: () => this.loadExams(),
+      error: (err) => this.examsError.set(this.extractHttpError(err, 'No se pudo eliminar el examen.')),
+    });
+  }
+
+  private pickCurrentPeriod(periods: AcademicPeriod[]): AcademicPeriod | undefined {
+    return periods.find(p => this.isCurrentPeriod(p)) ?? periods[0];
+  }
+
+  private parseScore(raw: string): number | null {
+    const n = Number(String(raw).trim().replace(',', '.'));
+    if (!Number.isFinite(n) || n < 0 || n > 20) return null;
+    return Math.round(n * 10) / 10;
+  }
+
+  private extractHttpError(err: unknown, fallback: string): string {
+    const e = err as { error?: { message?: string | string[]; error?: { message?: string } }; message?: string };
+    const nested = e?.error?.error?.message;
+    const raw =
+      (typeof nested === 'string' && nested.trim() ? nested : '') ||
+      (Array.isArray(e?.error?.message) ? e.error!.message!.filter(Boolean).join('. ') : '') ||
+      (typeof e?.error?.message === 'string' ? e.error.message : '') ||
+      (typeof e?.message === 'string' ? e.message : '');
+    return raw.trim() || fallback;
   }
 
   formatSessionDate(date: string): string {

@@ -1,0 +1,93 @@
+<div class="prof-page compose">
+
+  <header class="compose__mast">
+    <button type="button" class="compose__back" (click)="cancel()">← Exámenes del curso</button>
+    @if (courseLabel()) {
+      <p class="compose__kicker">{{ courseLabel() }}</p>
+    }
+    <h1 class="compose__title">{{ exam()?.title || 'Calificar examen' }}</h1>
+  </header>
+
+  <div class="prof-page__body">
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando examen…</p>
+    } @else {
+
+      @if (error()) {
+        <div class="prof-alert" role="alert">{{ error() }}</div>
+      }
+      @if (success()) {
+        <div class="prof-alert prof-alert--ok" role="status">{{ success() }}</div>
+      }
+
+      @if (exam(); as current) {
+        <section class="metrics metrics--3" aria-label="Resumen del examen">
+          <div class="metric">
+            <span class="metric__n">{{ filledCount() }}/{{ students().length }}</span>
+            <span class="metric__l">Calificados</span>
+          </div>
+          <div class="metric">
+            <span class="metric__n">{{ average() ?? '—' }}</span>
+            <span class="metric__l">Promedio</span>
+          </div>
+          <div class="metric">
+            <span class="metric__n">{{ current.maxScore }}</span>
+            <span class="metric__l">Nota máxima</span>
+          </div>
+        </section>
+
+        @if (students().length === 0) {
+          <p class="feed__empty">Sin alumnos para calificar en este curso.</p>
+        } @else {
+          <section class="sheet">
+            <table class="sheet__table">
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th class="sheet__center">Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of students(); track student.id) {
+                  <tr>
+                    <td>
+                      <span class="sheet__name">{{ student.name }}</span>
+                      @if (student.code) {
+                        <span class="sheet__code">{{ student.code }}</span>
+                      }
+                    </td>
+                    <td class="sheet__center">
+                      <input
+                        class="sheet__input"
+                        type="number"
+                        min="0"
+                        [max]="current.maxScore"
+                        step="0.5"
+                        [ngModel]="periodInput(student.id)"
+                        (ngModelChange)="setDraftScore(student.id, $event)"
+                        [attr.aria-label]="'Nota de ' + student.name"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </section>
+
+          <div class="sheet__bar">
+            <p class="sheet__hint">Escala de 0 a {{ current.maxScore }}. Deja en blanco a quien aún no rinde.</p>
+            <button
+              type="button"
+              class="prof-btn prof-btn--solid"
+              [disabled]="saving() || !dirty()"
+              (click)="saveScores()"
+            >
+              {{ saving() ? 'Guardando…' : 'Guardar notas' }}
+            </button>
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

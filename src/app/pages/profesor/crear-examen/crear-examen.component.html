@@ -1,0 +1,104 @@
+<div class="prof-page compose">
+
+  <header class="compose__mast">
+    <button type="button" class="compose__back" (click)="cancel()">← Exámenes del curso</button>
+    @if (courseLabel()) {
+      <p class="compose__kicker">{{ courseLabel() }}</p>
+    }
+    <h1 class="compose__title">{{ pageTitle() }}</h1>
+  </header>
+
+  <div class="prof-page__body">
+
+    @if (error()) {
+      <div class="prof-alert" role="alert">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="saveExam()" class="compose__form">
+      <div class="compose__main">
+        <label class="visually-hidden" for="title">Título del examen</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="compose__headline"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="Título del examen"
+          required
+        />
+
+        <label class="visually-hidden" for="description">Indicaciones</label>
+        <textarea
+          id="description"
+          name="description"
+          class="compose__prompt"
+          rows="10"
+          [ngModel]="description()"
+          (ngModelChange)="description.set($event)"
+          placeholder="Indicaciones: temas, materiales permitidos y cómo se califica."
+        ></textarea>
+      </div>
+
+      <aside class="compose__aside">
+        <section class="rule">
+          <h2>Fecha</h2>
+          <label class="visually-hidden" for="examDate">Fecha</label>
+          <input
+            type="date"
+            id="examDate"
+            name="examDate"
+            class="rule__input"
+            [ngModel]="examDate()"
+            (ngModelChange)="examDate.set($event)"
+            required
+          />
+          <label class="visually-hidden" for="examTime">Hora</label>
+          <input
+            type="time"
+            id="examTime"
+            name="examTime"
+            class="rule__input"
+            [ngModel]="examTime()"
+            (ngModelChange)="examTime.set($event)"
+          />
+        </section>
+
+        <section class="rule">
+          <h2>Bimestre</h2>
+          <label class="visually-hidden" for="periodId">Bimestre</label>
+          <select
+            id="periodId"
+            name="periodId"
+            class="rule__input"
+            [ngModel]="periodId()"
+            (ngModelChange)="periodId.set($event)"
+          >
+            <option value="">Sin bimestre</option>
+            @for (period of periods(); track period.id) {
+              <option [value]="period.id">{{ period.name }}</option>
+            }
+          </select>
+          <p class="rule__hint">Opcional. Sirve para agrupar el examen con las notas de ese bimestre.</p>
+        </section>
+
+        <section class="rule">
+          <h2>Calificación</h2>
+          <p class="rule__score">20</p>
+          <p class="rule__hint">Nota máxima del sistema.</p>
+        </section>
+
+        <div class="compose__actions">
+          <button type="submit" class="prof-btn prof-btn--solid" [disabled]="!canSave() || isSaving()">
+            {{ isSaving() ? 'Guardando…' : (isEditMode() ? 'Guardar cambios' : 'Crear examen') }}
+          </button>
+          <button type="button" class="prof-link" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+        </div>
+
+        @if (!canSave()) {
+          <p class="compose__need">Faltan el título o la fecha.</p>
+        }
+      </aside>
+    </form>
+  </div>
+</div>

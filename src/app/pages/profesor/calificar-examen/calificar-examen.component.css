@@ -1,0 +1,115 @@
+@import '../_shared/profesor-editorial.css';
+
+.compose__mast {
+  padding: 1.35rem 1.75rem 1.4rem;
+  background: var(--navy-deep);
+  color: #fff;
+}
+
+.compose__back {
+  display: inline-block;
+  margin-bottom: .85rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(255 255 255 / .75);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.compose__back:hover { color: #fff; }
+
+.compose__kicker {
+  margin: 0 0 .35rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255 255 255 / .55);
+}
+
+.compose__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.sheet {
+  background: var(--surface);
+  padding: 0 1.15rem;
+}
+
+.sheet__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheet__table th,
+.sheet__table td {
+  padding: .7rem .35rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.sheet__table th {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+}
+
+.sheet__center { text-align: center; }
+
+.sheet__name { display: block; font-weight: 600; color: var(--ink); }
+
+.sheet__code {
+  display: block;
+  margin-top: .1rem;
+  font-size: .7rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sheet__input {
+  width: 4.6rem;
+  border: none;
+  border-bottom: 2px solid var(--navy);
+  background: transparent;
+  text-align: center;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+  outline: none;
+}
+
+.sheet__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.sheet__hint {
+  margin: 0;
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .compose__mast { padding: 1.15rem 1.15rem 1.25rem; }
+}

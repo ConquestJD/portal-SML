@@ -62,10 +62,11 @@
         </section>
       }
 
-      <nav class="prof-tabs" aria-label="Secciones del curso">
+      <nav class="prof-tabs" aria-label="Módulos del curso">
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'estudiantes'" (click)="setTab('estudiantes')">Estudiantes</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">Notas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'examenes'" (click)="setTab('examenes')">Exámenes</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">Asistencia</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">Material</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'comunicados'" (click)="setTab('comunicados')">Comunicados</button>
@@ -197,12 +198,21 @@
           <header class="mod-head">
             <div>
               <p class="mod-head__kicker">Libro de notas</p>
-              <h2 class="mod-head__title">Periodos del año</h2>
+              <h2 class="mod-head__title">{{ selectedPeriod()?.name || 'Bimestres' }}</h2>
+              @if (formatPeriodRange(selectedPeriod()); as range) {
+                <p class="mod-head__meta">{{ range }}</p>
+              }
             </div>
+            @if (periods().length && students().length) {
+              <button type="button" class="prof-link" (click)="exportGradebookCsv()">Exportar CSV</button>
+            }
           </header>
 
           @if (gradesError()) {
             <p class="prof-alert" role="alert">{{ gradesError() }}</p>
+          }
+          @if (gradesSuccess()) {
+            <p class="prof-alert prof-alert--ok" role="status">{{ gradesSuccess() }}</p>
           }
 
           @if (gradesLoading()) {
@@ -210,15 +220,47 @@
           } @else if (students().length === 0) {
             <p class="feed__empty">Sin alumnos para calificar en este curso.</p>
           } @else if (periods().length === 0) {
-            <p class="feed__empty">Este año lectivo aún no tiene periodos. Cuando administración los cree aparecerán como columnas.</p>
+            <p class="feed__empty">Este año lectivo aún no tiene bimestres. Cuando administración los cree podrás registrar las notas aquí.</p>
           } @else {
+            <nav class="prof-tabs prof-tabs--inline bim-nav" aria-label="Bimestres">
+              @for (period of periods(); track period.id) {
+                <button
+                  type="button"
+                  class="prof-tabs__btn"
+                  [class.active]="selectedPeriodId() === period.id"
+                  (click)="selectPeriod(period.id)"
+                >
+                  {{ period.name }}
+                  @if (isCurrentPeriod(period)) {
+                    <span class="bim-nav__now">Actual</span>
+                  }
+                </button>
+              }
+            </nav>
+
+            <section class="metrics metrics--3" aria-label="Resumen del bimestre">
+              <div class="metric">
+                <span class="metric__n">{{ periodStats().filled }}/{{ periodStats().total }}</span>
+                <span class="metric__l">Notas cargadas</span>
+              </div>
+              <div class="metric">
+                <span class="metric__n">{{ periodStats().average ?? '—' }}</span>
+                <span class="metric__l">Promedio del bimestre</span>
+              </div>
+              <div class="metric">
+                <span class="metric__n">{{ withAnnualAverage() }}</span>
+                <span class="metric__l">Con promedio anual</span>
+              </div>
+            </section>
+
             <div class="gradebook__wrap">
               <table class="gradebook__table">
                 <thead>
                   <tr>
                     <th>Alumno</th>
-                    @for (period of periods(); track period.id) {
-                      <th class="gradebook__center">{{ period.name }}</th>
+                    <th class="gradebook__center">Nota {{ selectedPeriod()?.name }}</th>
+                    @for (period of otherPeriods(); track period.id) {
+                      <th class="gradebook__center gradebook__muted">{{ period.name }}</th>
                     }
                     <th class="gradebook__center">Promedio</th>
                   </tr>
@@ -232,31 +274,20 @@
                           <span class="gradebook__code">{{ row.student.code }}</span>
                         }
                       </td>
-                      @for (period of periods(); track period.id) {
-                        <td class="gradebook__center">
-                          @if (isEditing(row.student.id, period.id)) {
-                            <input
-                              class="gradebook__input"
-                              type="number"
-                              min="0"
-                              max="20"
-                              step="0.5"
-                              [ngModel]="editScore()"
-                              (ngModelChange)="editScore.set('' + $event)"
-                              (keydown.enter)="saveGradeCell(row.student.id, period.id)"
-                              (blur)="saveGradeCell(row.student.id, period.id)"
-                            />
-                          } @else {
-                            <button
-                              type="button"
-                              class="gradebook__cell"
-                              [disabled]="gradeSaving()"
-                              (click)="startEdit(row.student.id, period.id)"
-                            >
-                              {{ cellScore(row.student.id, period.id) ?? '—' }}
-                            </button>
-                          }
-                        </td>
+                      <td class="gradebook__center">
+                        <input
+                          class="gradebook__input"
+                          type="number"
+                          min="0"
+                          max="20"
+                          step="0.5"
+                          [ngModel]="periodInput(row.student.id)"
+                          (ngModelChange)="setDraftScore(row.student.id, $event)"
+                          [attr.aria-label]="'Nota de ' + row.student.name"
+                        />
+                      </td>
+                      @for (period of otherPeriods(); track period.id) {
+                        <td class="gradebook__center gradebook__past">{{ cellScore(row.student.id, period.id) ?? '—' }}</td>
                       }
                       <td class="gradebook__center gradebook__avg">{{ row.average ?? '—' }}</td>
                     </tr>
@@ -264,9 +295,69 @@
                 </tbody>
               </table>
             </div>
-            <p class="gradebook__hint">Haz clic en una celda para registrar o cambiar la nota (0 a 20).</p>
+
+            <div class="gradebook__bar">
+              <p class="gradebook__hint">Escala vigesimal (0 a 20). Elige el bimestre, completa las notas y guarda.</p>
+              <button
+                type="button"
+                class="prof-btn prof-btn--solid prof-btn--sm"
+                [disabled]="gradeSaving() || !gradebookDirty()"
+                (click)="savePeriodGrades()"
+              >
+                {{ gradeSaving() ? 'Guardando…' : 'Guardar notas del bimestre' }}
+              </button>
+            </div>
           }
         </section>
+      }
+
+      @if (activeTab() === 'examenes') {
+        <div class="toolbar">
+          <span class="toolbar__spacer"></span>
+          <a [routerLink]="['/profesor/cursos', courseId(), 'examenes', 'nuevo']" class="prof-btn prof-btn--solid prof-btn--sm">Nuevo examen</a>
+        </div>
+
+        @if (examsError()) {
+          <p class="prof-alert" role="alert">{{ examsError() }}</p>
+        }
+
+        @if (examsLoading()) {
+          <p class="feed__empty">Cargando exámenes…</p>
+        } @else if (exams().length === 0) {
+          <section class="feed">
+            <p class="feed__empty">Aún no hay exámenes en este curso.</p>
+            <a [routerLink]="['/profesor/cursos', courseId(), 'examenes', 'nuevo']" class="prof-link">Crear el primero</a>
+          </section>
+        } @else {
+          <section class="feed" aria-label="Exámenes del curso">
+            <ul class="feed__list">
+              @for (exam of exams(); track exam.id) {
+                <li>
+                  <article class="task-item">
+                    <div class="task-item__main">
+                      <div class="task-item__head">
+                        <h2 class="task-item__title">{{ exam.title }}</h2>
+                        @if (exam.period?.name) {
+                          <span class="task-item__badge">{{ exam.period?.name }}</span>
+                        }
+                      </div>
+                      <p class="task-item__meta">
+                        {{ formatExamDate(exam.examDate) }}
+                        · Nota máxima {{ exam.maxScore }}
+                        · Calificados: {{ exam.scoresCount ?? 0 }} / {{ students().length || '—' }}
+                      </p>
+                    </div>
+                    <div class="feed-row__actions">
+                      <a [routerLink]="['/profesor/cursos', courseId(), 'examenes', exam.id, 'calificar']" class="prof-link">Calificar</a>
+                      <a [routerLink]="['/profesor/cursos', courseId(), 'examenes', exam.id]" class="prof-link">Editar</a>
+                      <button type="button" class="prof-link prof-link--danger" (click)="deleteExam(exam)">Eliminar</button>
+                    </div>
+                  </article>
+                </li>
+              }
+            </ul>
+          </section>
+        }
       }
 
       @if (activeTab() === 'asistencia') {
