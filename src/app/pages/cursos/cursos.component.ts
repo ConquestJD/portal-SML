@@ -16,18 +16,47 @@ export class CursosComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   searchQuery = signal('');
-  viewMode = signal<'grid' | 'list'>('grid');
+  viewMode = signal<'catalog' | 'list'>('catalog');
   courses = signal<StudentCourse[]>([]);
+
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
 
   filteredCourses = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.courses();
-    return this.courses().filter(c => {
-      const name = (c.name ?? c.course?.name ?? '').toLowerCase();
-      const code = (c.course?.code ?? c.code ?? '').toLowerCase();
-      return name.includes(q) || code.includes(q);
+    const list = [...this.courses()].sort((a, b) =>
+      this.getCourseName(a).localeCompare(this.getCourseName(b), 'es'),
+    );
+    if (!q) return list;
+    return list.filter(c => {
+      const name = this.getCourseName(c).toLowerCase();
+      const code = this.getCourseCode(c).toLowerCase();
+      const teacher = this.teacherName(c).toLowerCase();
+      return name.includes(q) || code.includes(q) || teacher.includes(q);
     });
   });
+
+  pendingTotal = computed(() =>
+    this.courses().reduce((sum, c) => sum + (c.pendingTasksCount ?? 0), 0),
+  );
+
+  overallAverage = computed(() => {
+    const nums = this.courses()
+      .map(c => c.averageScore ?? c.average)
+      .filter((n): n is number => n != null && Number.isFinite(Number(n)))
+      .map(Number);
+    if (!nums.length) return null;
+    return Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10;
+  });
+
+  teacherCount = computed(() => {
+    const names = new Set(
+      this.courses().map(c => this.teacherName(c)).filter(n => n && n !== '—'),
+    );
+    return names.size;
+  });
+
+  hasActiveFilters = computed(() => !!this.searchQuery().trim());
 
   constructor(private studentService: StudentService) {}
 
@@ -44,21 +73,59 @@ export class CursosComponent implements OnInit {
     });
   }
 
-  courseCoverUrl(c: StudentCourse): string {
+  resetFilters() {
+    this.searchQuery.set('');
+  }
+
+  getCourseName(c: StudentCourse): string {
+    return (c.name ?? c.course?.name ?? 'Curso').trim() || 'Curso';
+  }
+
+  getCourseCode(c: StudentCourse): string {
+    return (c.code || c.course?.code || '').trim();
+  }
+
+  getCourseColor(c: StudentCourse): string {
+    return (c.course?.color || '').trim() || '#003366';
+  }
+
+  teacherName(c: StudentCourse): string {
+    return (c.teacherName ?? '').trim() || '—';
+  }
+
+  coverUrl(c: StudentCourse): string {
     return resolveCourseCoverUrl({
-      name: c.name ?? c.course?.name,
+      name: this.getCourseName(c),
       imageUrl: c.course?.imageUrl,
     });
   }
 
-  courseCoverAlt(c: StudentCourse): string {
-    return courseCoverAlt(c.name ?? c.course?.name);
+  coverAlt(c: StudentCourse): string {
+    return courseCoverAlt(this.getCourseName(c));
   }
 
-  gradeLabel(c: StudentCourse): string {
-    const g = (c.section?.grade ?? c.gradeSection ?? '').trim();
-    const sec = (c.section?.name ?? '').trim();
-    if (g && sec) return `${g} · ${sec}`;
-    return g || sec || '—';
+  dayHasClass(c: StudentCourse, day: string): boolean {
+    return (c.course?.schedule ?? []).some(s => s.day === day);
+  }
+
+  formatScheduleHint(c: StudentCourse): string {
+    const sched = c.course?.schedule;
+    if (!sched?.length) return 'Sin horario';
+    return sched
+      .slice(0, 3)
+      .map(s => `${(s.day ?? '').slice(0, 3)} ${s.startTime ?? ''}–${s.endTime ?? ''}`.trim())
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  hoursLabel(c: StudentCourse): string {
+    const hours = c.course?.hours;
+    return hours ? `${hours} h` : '';
+  }
+
+  averageLabel(c: StudentCourse): string | number {
+    const n = c.averageScore ?? c.average;
+    if (n == null || !Number.isFinite(Number(n))) return '—';
+    return n;
   }
 }

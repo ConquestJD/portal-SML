@@ -12,9 +12,25 @@ function buildParams(f: Record<string, string | number | boolean | undefined>): 
   return p;
 }
 
+export interface StudentCourseScheduleSlot {
+  day?: string;
+  startTime?: string;
+  endTime?: string;
+}
+
 export interface StudentCourse {
   id: string; // TeacherAssignment ID
-  course: { id: string; name: string; code?: string; color?: string; imageUrl?: string };
+  course: {
+    id: string;
+    name: string;
+    code?: string;
+    color?: string;
+    imageUrl?: string;
+    grade?: string;
+    level?: string;
+    hours?: number;
+    schedule?: StudentCourseScheduleSlot[] | null;
+  };
   teacher: { user: { firstName: string; lastName: string; avatarUrl?: string } };
   section: { name: string; grade: string };
   academicYear: { name: string };

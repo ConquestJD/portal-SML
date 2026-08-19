@@ -1,177 +1,239 @@
-<div class="detalle">
+<div class="prof-page">
 
   @if (loading()) {
-    <div class="detalle__loading" aria-busy="true">
-      <div class="skel skel--hero"></div>
-      <div class="skel-body">
-        <div class="skel skel--line"></div>
-        <div class="skel skel--block"></div>
-      </div>
+    <div class="prof-page__body">
+      <p class="feed__empty">Cargando curso…</p>
     </div>
   } @else if (error()) {
-    <div class="detalle__error" role="alert">
-      <p>{{ error() }}</p>
-      <a routerLink="/cursos" class="detalle__retry">Volver a cursos</a>
+    <div class="prof-page__body">
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+        <a routerLink="/cursos" class="prof-link">Volver a cursos</a>
+      </div>
     </div>
   } @else {
 
-    <header class="detalle__hero">
-      <img class="detalle__hero-photo" [src]="coverUrl()" [alt]="coverAlt()" decoding="async" />
-      <div class="detalle__hero-veil"></div>
-      <div class="detalle__hero-top">
-        <a routerLink="/cursos" class="detalle__back">← Cursos</a>
-      </div>
-      <div class="detalle__hero-content">
-        <p class="detalle__code">{{ course()?.code ?? course()?.course?.code ?? 'Curso' }}</p>
-        <h1 class="detalle__title">{{ course()?.name ?? course()?.course?.name }}</h1>
-        <p class="detalle__brand">
-          @if (course()?.teacherName) {
-            {{ course()?.teacherName }}
-          }
-          @if (course()?.period || course()?.academicYear?.name) {
-            @if (course()?.teacherName) { · }
-            {{ course()?.period ?? course()?.academicYear?.name }}
-          }
-          @if (!course()?.teacherName && !(course()?.period || course()?.academicYear?.name)) {
-            Santa María Laura
-          }
-        </p>
+    <header class="course-hero">
+      <img class="course-hero__photo" [src]="coverUrl()" [alt]="coverAlt()" decoding="async" />
+      <div class="course-hero__veil"></div>
+      <div class="course-hero__content">
+        @if (courseCode()) {
+          <p class="course-hero__code">{{ courseCode() }}</p>
+        }
+        <h1 class="course-hero__title">{{ getCourseName() || 'Curso' }}</h1>
+        <p class="course-hero__meta">{{ heroMeta() }}</p>
+        @if (scheduleCount() > 0) {
+          <div class="day-strip day-strip--hero" aria-label="Días de clase">
+            @for (day of weekDays; track day; let i = $index) {
+              <span class="day-strip__cell" [class.is-on]="dayHasClass(day)" [title]="day">{{ weekDayShort[i] }}</span>
+            }
+          </div>
+        }
       </div>
     </header>
 
-    <div class="detalle__body">
+    <div class="prof-page__body">
 
       <section class="metrics" aria-label="Resumen del curso">
         <div class="metric">
-          <span class="metric__n">{{ course()?.average ?? course()?.averageScore ?? '—' }}</span>
+          <span class="metric__n">{{ course()?.average ?? course()?.averageScore ?? gradesCourseAverage() }}</span>
           <span class="metric__l">Promedio</span>
         </div>
         <div class="metric">
           <span class="metric__n">{{ tasks().length || '—' }}</span>
           <span class="metric__l">Tareas</span>
         </div>
-        <div class="metric">
-          <span class="metric__n">{{ units().length || '—' }}</span>
-          <span class="metric__l">Unidades</span>
-        </div>
-        <div class="metric metric--accent">
+        <div class="metric" [class.metric--alert]="pendingTasksCount() > 0">
           <span class="metric__n">{{ pendingTasksCount() }}</span>
           <span class="metric__l">Pendientes</span>
         </div>
+        <div class="metric">
+          <span class="metric__n">{{ scheduleCount() || '—' }}</span>
+          <span class="metric__l">Bloques</span>
+        </div>
       </section>
 
-      <nav class="tabs" aria-label="Secciones del curso">
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'contenido'" (click)="setTab('contenido')">Contenido</button>
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
-        <button type="button" class="tabs__btn" [class.active]="activeTab() === 'calificaciones'" (click)="setTab('calificaciones')">Calificaciones</button>
+      @if (pendingTasksCount() > 0) {
+        <section class="pulse" aria-label="Pendientes">
+          <button type="button" class="pulse__item" (click)="setTab('tareas')">
+            <span class="pulse__n">{{ pendingTasksCount() }}</span>
+            <span class="pulse__l">Tareas por entregar en este curso</span>
+          </button>
+        </section>
+      }
+
+      <nav class="prof-tabs" aria-label="Módulos del curso">
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">Material</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">Notas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">Asistencia</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'comunicados'" (click)="setTab('comunicados')">Comunicados</button>
       </nav>
 
-      <div class="panel">
+      @if (activeTab() === 'material') {
+        <section class="archive">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Archivo</p>
+              <h2 class="mod-head__title">Material del curso</h2>
+              <p class="mod-head__meta">Carpetas y archivos que publicó tu docente.</p>
+            </div>
+          </header>
 
-        @if (activeTab() === 'contenido') {
           @if (materialDownloadError()) {
-            <p class="alert" role="alert">{{ materialDownloadError() }}</p>
+            <p class="prof-alert" role="alert">{{ materialDownloadError() }}</p>
           }
-          <div class="panel__head">
-            <h2>Plan de estudios</h2>
-          </div>
-          @if (units().length === 0) {
-            <p class="panel__empty">Sin unidades publicadas aún</p>
-          } @else {
-            <ul class="unit-list">
-              @for (unit of units(); track unit.id) {
-                <li class="unit" [class.unit--open]="unit.isExpanded">
-                  <button type="button" class="unit__head" (click)="toggleUnit(unit.id)">
-                    <span class="unit__n">
-                      @if (unit.number != null) {
-                        {{ unit.number.toString().padStart(2, '0') }}
-                      } @else {
-                        —
-                      }
-                    </span>
-                    <span class="unit__text">
-                      <span class="unit__title">{{ unit.title }}</span>
-                      @if (unit.description) {
-                        <span class="unit__desc">{{ unit.description }}</span>
-                      }
-                    </span>
-                    <span class="unit__chev" aria-hidden="true">{{ unit.isExpanded ? '−' : '+' }}</span>
-                  </button>
-                  @if (unit.isExpanded) {
-                    <div class="unit__body">
-                      @if (unit.materials?.length) {
-                        <ul class="mat-list">
-                          @for (material of unit.materials; track material.id) {
-                            <li class="mat">
-                              <span class="mat__type">{{ material.type }}</span>
-                              <span class="mat__info">
-                                <span class="mat__name">{{ material.name }}</span>
-                                <span class="mat__meta">{{ material.size }} · {{ material.date }}</span>
-                              </span>
-                              <button type="button" class="mat__dl" (click)="downloadMaterial(material)">Descargar</button>
-                            </li>
-                          }
-                        </ul>
-                      } @else {
-                        <p class="panel__empty">Sin materiales en esta unidad</p>
-                      }
-                    </div>
-                  }
-                </li>
-              }
-            </ul>
-          }
-        }
 
-        @if (activeTab() === 'tareas') {
-          <div class="panel__head">
-            <h2>Tareas del curso</h2>
-          </div>
-          @if (tasks().length === 0) {
-            <p class="panel__empty">Aún no hay tareas en este curso</p>
+          @if (units().length === 0) {
+            <section class="feed">
+              <p class="feed__empty">Aún no hay material publicado en este curso.</p>
+            </section>
           } @else {
-            <ul class="feed-list">
-              @for (task of tasks(); track task.id) {
+            @for (unit of units(); track unit.id) {
+              <section class="bin" [class.is-open]="unit.isExpanded">
+                <header class="bin__head">
+                  <button type="button" class="bin__toggle" (click)="toggleUnit(unit.id)">
+                    <span class="bin__title">
+                      @if (unit.number != null) {
+                        {{ unit.number.toString().padStart(2, '0') }} ·
+                      }
+                      {{ unit.title }}
+                    </span>
+                    <span class="bin__count">{{ unitCountLabel(unit) }}</span>
+                  </button>
+                </header>
+                @if (unit.isExpanded) {
+                  <div class="bin__body">
+                    @if (unit.description) {
+                      <p class="archive__empty">{{ unit.description }}</p>
+                    }
+                    @if (unit.materials?.length) {
+                      <ul class="archive__files">
+                        @for (material of unit.materials; track material.id) {
+                          <li class="archive__file">
+                            <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(material)">
+                              {{ material.name }}
+                            </button>
+                            <span class="archive__file-type">{{ material.type }}</span>
+                            <span class="archive__file-size">{{ material.size }}</span>
+                            <span></span>
+                            <button type="button" class="prof-link" (click)="downloadMaterial(material)">Descargar</button>
+                          </li>
+                        }
+                      </ul>
+                    } @else {
+                      <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
+                    }
+                  </div>
+                }
+              </section>
+            }
+          }
+        </section>
+      }
+
+      @if (activeTab() === 'tareas') {
+        <div class="toolbar">
+          <nav class="prof-tabs prof-tabs--inline" aria-label="Filtro de tareas">
+            <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'all'" (click)="taskFilter.set('all')">Todas</button>
+            <button type="button" class="prof-tabs__btn" [class.active]="taskFilter() === 'pending'" (click)="taskFilter.set('pending')">Pendientes</button>
+          </nav>
+        </div>
+
+        @if (filteredTasks().length === 0) {
+          <section class="feed">
+            @if (tasks().length === 0) {
+              <p class="feed__empty">Aún no hay tareas en este curso.</p>
+            } @else {
+              <p class="feed__empty">No hay tareas pendientes.</p>
+            }
+          </section>
+        } @else {
+          <section class="feed" aria-label="Tareas del curso">
+            <ul class="feed__list">
+              @for (task of filteredTasks(); track task.id) {
                 <li>
-                  <a [routerLink]="['/tareas', task.id]" class="feed-row">
-                    <span class="feed-row__body">
-                      <span class="feed-row__title">{{ task.title }}</span>
-                      <span class="feed-row__meta">
-                        Entrega {{ task.dueDate ?? '—' }}
+                  <article class="task-item">
+                    <div class="task-item__main">
+                      <div class="task-item__head">
+                        <h2 class="task-item__title">
+                          <a [routerLink]="['/tareas', task.id]">{{ task.title }}</a>
+                        </h2>
+                        <span class="task-item__badge" [class.task-item__badge--closed]="taskIsDone(task)">
+                          {{ taskStatusLabel(task) }}
+                        </span>
+                      </div>
+                      <p class="task-item__meta">
+                        {{ formatDueDate(task.dueDate) }}
+                        · Nota máxima {{ task.maxScore }}
                         @if (task.submission?.score != null) {
                           · Nota {{ task.submission?.score }}
                         }
-                      </span>
-                    </span>
-                    <span class="feed-row__badge" [class.feed-row__badge--done]="taskIsDone(task)">
-                      {{ taskStatusLabel(task) }}
-                    </span>
-                  </a>
+                      </p>
+                    </div>
+                    <div class="feed-row__actions">
+                      <a [routerLink]="['/tareas', task.id]" class="prof-link">
+                        {{ taskIsDone(task) ? 'Ver entrega' : 'Entregar' }}
+                      </a>
+                    </div>
+                  </article>
                 </li>
               }
             </ul>
-          }
+          </section>
         }
+      }
 
-        @if (activeTab() === 'calificaciones') {
-          <div class="panel__head">
-            <h2>Calificaciones</h2>
-            <span class="panel__avg">Promedio {{ gradesCourseAverage() }}</span>
-          </div>
-          @if (courseGradeRows().length === 0) {
-            <p class="panel__empty">Sin calificaciones registradas aún</p>
-          } @else {
-            <ul class="feed-list">
+      @if (activeTab() === 'notas') {
+        <section class="gradebook">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Libro de notas</p>
+              <h2 class="mod-head__title">Calificaciones del curso</h2>
+              <p class="mod-head__meta">Bimestres y tareas calificadas. Promedio {{ gradesCourseAverage() }}.</p>
+            </div>
+          </header>
+
+          @if (gradePeriods().length) {
+            <div class="gradebook__wrap">
+              <table class="gradebook__table">
+                <thead>
+                  <tr>
+                    @for (period of gradePeriods(); track period.id) {
+                      <th class="gradebook__center">
+                        <span class="gradebook__period">{{ period.name }}</span>
+                        <span class="gradebook__period-name">Bimestre</span>
+                      </th>
+                    }
+                    <th class="gradebook__center">Promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    @for (period of gradePeriods(); track period.id) {
+                      <td class="gradebook__center gradebook__avg">{{ periodScore(period.id) }}</td>
+                    }
+                    <td class="gradebook__center gradebook__avg">{{ gradesCourseAverage() }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (courseGradeRows().length === 0 && !gradePeriods().length) {
+            <p class="feed__empty">Sin calificaciones registradas aún.</p>
+          } @else if (courseGradeRows().length) {
+            <ul class="feed__list">
               @for (row of courseGradeRows(); track row.id) {
                 <li>
                   @if (row.kind === 'task' && row.taskId) {
                     <a [routerLink]="['/tareas', row.taskId]" class="feed-row">
                       <span class="feed-row__body">
-                        <span class="feed-row__kicker">{{ row.kind === 'task' ? 'Tarea' : 'Período' }}</span>
+                        <span class="feed-row__kicker">Tarea</span>
                         <span class="feed-row__title">{{ row.label }}</span>
                         <span class="feed-row__meta">{{ row.dateLabel }}</span>
                       </span>
-                      <span class="feed-row__score">
+                      <span class="feed-row__side">
                         <strong>{{ row.scoreDisplay }}</strong>
                         @if (row.pctDisplay !== '—') {
                           <span>{{ row.pctDisplay }}</span>
@@ -181,11 +243,11 @@
                   } @else {
                     <div class="feed-row feed-row--static">
                       <span class="feed-row__body">
-                        <span class="feed-row__kicker">Período</span>
+                        <span class="feed-row__kicker">Bimestre</span>
                         <span class="feed-row__title">{{ row.label }}</span>
                         <span class="feed-row__meta">{{ row.dateLabel }}</span>
                       </span>
-                      <span class="feed-row__score">
+                      <span class="feed-row__side">
                         <strong>{{ row.scoreDisplay }}</strong>
                       </span>
                     </div>
@@ -194,9 +256,99 @@
               }
             </ul>
           }
-        }
+        </section>
+      }
 
-      </div>
+      @if (activeTab() === 'asistencia') {
+        <section class="journal">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Bitácora</p>
+              <h2 class="mod-head__title">Tu asistencia</h2>
+              <p class="mod-head__meta">
+                @if (attendancePercent() !== '—') {
+                  Asistencia efectiva {{ attendancePercent() }}%.
+                } @else {
+                  Sesiones registradas en este curso.
+                }
+              </p>
+            </div>
+          </header>
+
+          @if (attendanceLoading()) {
+            <p class="feed__empty">Cargando historial…</p>
+          } @else if (attendance().length === 0) {
+            <section class="feed">
+              <p class="feed__empty">Aún no hay sesiones registradas en este curso.</p>
+            </section>
+          } @else {
+            <ol class="journal__list">
+              @for (row of attendance(); track row.id) {
+                <li class="journal__item">
+                  <time class="journal__date" [attr.datetime]="row.date">{{ formatSessionDate(row.date) }}</time>
+                  <div class="journal__chips">
+                    <span
+                      class="journal__chip"
+                      [class.journal__chip--ok]="row.status === 'PRESENT'"
+                      [class.journal__chip--warn]="row.status === 'ABSENT'"
+                    >{{ attendanceStatusLabel(row.status) }}</span>
+                    @if (row.notes) {
+                      <span class="journal__chip">{{ row.notes }}</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      }
+
+      @if (activeTab() === 'comunicados') {
+        <section class="bulletin-board">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Boletín</p>
+              <h2 class="mod-head__title">Comunicados del curso</h2>
+            </div>
+            <a routerLink="/comunicados" class="prof-link">Ver todos</a>
+          </header>
+
+          @if (announcementsError()) {
+            <div class="prof-alert" role="alert">{{ announcementsError() }}</div>
+          }
+
+          @if (announcementsLoading()) {
+            <p class="feed__empty">Cargando comunicados…</p>
+          } @else if (announcements().length === 0) {
+            <section class="feed">
+              <p class="feed__empty">Aún no hay comunicados en este curso.</p>
+            </section>
+          } @else {
+            <ul class="bulletin-list">
+              @for (a of announcements(); track a.id) {
+                <li>
+                  <article class="bulletin" [class.bulletin--urgent]="a.urgent || a.priority === 'HIGH'">
+                    <p class="bulletin__kicker">
+                      {{ formatAnnouncementDate(a.publishedAt ?? a.date) }}
+                      @if (authorName(a)) {
+                        · {{ authorName(a) }}
+                      }
+                      · {{ announcementPriorityLabel(a.priority) }}
+                    </p>
+                    <h3 class="bulletin__title">
+                      <a [routerLink]="['/comunicados', a.id]">{{ a.title }}</a>
+                    </h3>
+                    <div class="bulletin__body">{{ a.fullContent || a.content }}</div>
+                    <div class="bulletin__actions">
+                      <a [routerLink]="['/comunicados', a.id]" class="prof-link">Leer</a>
+                    </div>
+                  </article>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
     </div>
   }
 </div>

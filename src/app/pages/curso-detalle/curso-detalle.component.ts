@@ -4,10 +4,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { StudentService, StudentCourse, StudentTask, StudentGrade } from '../../services/student.service';
+import {
+  StudentService,
+  StudentCourse,
+  StudentTask,
+  StudentGrade,
+  StudentAttendance,
+} from '../../services/student.service';
+import { AnnouncementService, Announcement } from '../../services/announcement.service';
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course-cover';
 
-type TabType = 'contenido' | 'tareas' | 'calificaciones' | 'comunicados' | 'mensajes' | 'foros' | 'compañeros';
+type TabType = 'material' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
+type TaskFilter = 'all' | 'pending';
 
 export type CourseUnitMaterial = {
   id: string;
@@ -26,7 +34,6 @@ export type CourseUnit = {
   materials?: CourseUnitMaterial[];
 };
 
-/** Fila unificada: notas de período + tareas calificadas */
 export type CourseGradeRow = {
   id: string;
   kind: 'period' | 'task';
@@ -47,7 +54,8 @@ export type CourseGradeRow = {
 })
 export class CursoDetalleComponent implements OnInit {
   courseId = signal('');
-  activeTab = signal<TabType>('contenido');
+  activeTab = signal<TabType>('material');
+  taskFilter = signal<TaskFilter>('all');
   loading = signal(true);
   error = signal('');
 
@@ -55,8 +63,16 @@ export class CursoDetalleComponent implements OnInit {
   units = signal<CourseUnit[]>([]);
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
-  /** Descarga de materiales del curso requiere token (no abrir URL en nueva pestaña). */
+  attendance = signal<StudentAttendance[]>([]);
+  attendanceSummary = signal<Record<string, number>>({});
+  attendanceLoading = signal(false);
+  announcements = signal<Announcement[]>([]);
+  announcementsLoading = signal(false);
+  announcementsError = signal('');
   materialDownloadError = signal('');
+
+  readonly weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  readonly weekDayShort = ['L', 'M', 'X', 'J', 'V', 'S'];
 
   coverUrl = computed(() => {
     const c = this.course();
@@ -72,6 +88,36 @@ export class CursoDetalleComponent implements OnInit {
     this.tasks().filter((t) => !this.taskIsDone(t)).length
   );
 
+  filteredTasks = computed(() => {
+    const list = this.tasks();
+    if (this.taskFilter() === 'pending') return list.filter(t => !this.taskIsDone(t));
+    return list;
+  });
+
+  scheduleCount = computed(() => this.course()?.course?.schedule?.length ?? 0);
+
+  attendancePercent = computed(() => {
+    const s = this.attendanceSummary();
+    const present = s['PRESENT'] ?? 0;
+    const late = s['LATE'] ?? 0;
+    const justified = s['JUSTIFIED'] ?? 0;
+    const absent = s['ABSENT'] ?? 0;
+    const total = present + late + justified + absent;
+    if (!total) return '—';
+    return `${Math.round(((present + late + justified) / total) * 100)}`;
+  });
+
+  gradePeriods = computed(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    for (const g of this.grades()) {
+      const id = g.period?.id;
+      const name = (g.period?.name ?? '').trim();
+      if (!id) continue;
+      if (!map.has(id)) map.set(id, { id, name: name || 'Bimestre' });
+    }
+    return [...map.values()];
+  });
+
   courseGradeRows = computed((): CourseGradeRow[] => {
     const withTs: { row: CourseGradeRow; ts: number }[] = [];
 
@@ -82,9 +128,9 @@ export class CursoDetalleComponent implements OnInit {
         row: {
           id: `grade-${g.id}`,
           kind: 'period',
-          label: g.period?.name?.trim() ? `Período: ${g.period.name}` : 'Calificación del período',
+          label: g.period?.name?.trim() ? g.period.name : 'Calificación del período',
           dateLabel: this.formatGradeDate(g),
-          maxPoints: '—',
+          maxPoints: '20',
           scoreDisplay: g.score != null ? String(g.score) : '—',
           pctDisplay: '—',
         },
@@ -136,6 +182,7 @@ export class CursoDetalleComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private studentService: StudentService,
+    private announcementService: AnnouncementService,
   ) {}
 
   ngOnInit() {
@@ -143,15 +190,8 @@ export class CursoDetalleComponent implements OnInit {
     this.courseId.set(id);
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const tab = this.tabFromQuery(params.get('tab')) ?? 'contenido';
-      if (tab !== this.activeTab()) {
-        this.activeTab.set(tab);
-        if (tab === 'tareas') this.loadTasks();
-        if (tab === 'calificaciones') {
-          this.loadGrades();
-          this.loadTasks();
-        }
-      }
+      const tab = this.tabFromQuery(params.get('tab')) ?? 'material';
+      if (tab !== this.activeTab()) this.applyTab(tab);
     });
 
     this.loadCourse();
@@ -161,14 +201,28 @@ export class CursoDetalleComponent implements OnInit {
 
   private tabFromQuery(raw: string | null): TabType | null {
     if (!raw) return null;
-    const allowed: TabType[] = ['contenido', 'tareas', 'calificaciones', 'comunicados', 'mensajes', 'foros', 'compañeros'];
+    if (raw === 'contenido') return 'material';
+    if (raw === 'calificaciones') return 'notas';
+    const allowed: TabType[] = ['material', 'tareas', 'notas', 'asistencia', 'comunicados'];
     return allowed.includes(raw as TabType) ? (raw as TabType) : null;
+  }
+
+  private applyTab(tab: TabType) {
+    this.activeTab.set(tab);
+    if (tab === 'tareas') this.loadTasks();
+    if (tab === 'notas') {
+      this.loadGrades();
+      this.loadTasks();
+    }
+    if (tab === 'material') this.loadUnits();
+    if (tab === 'asistencia') this.loadAttendance();
+    if (tab === 'comunicados') this.loadAnnouncements();
   }
 
   loadCourse() {
     this.studentService.getCourse(this.courseId()).subscribe({
       next: (data) => { this.course.set(data); this.loading.set(false); },
-      error: () => { this.error.set('Error al cargar el curso'); this.loading.set(false); }
+      error: () => { this.error.set('No se pudo cargar el curso.'); this.loading.set(false); }
     });
   }
 
@@ -176,15 +230,6 @@ export class CursoDetalleComponent implements OnInit {
     this.studentService.getCourseUnits(this.courseId()).subscribe({
       next: (data) => this.units.set((data as CourseUnit[]) ?? []),
     });
-  }
-
-  selectTab(tab: TabType) {
-    this.activeTab.set(tab);
-    if (tab === 'tareas') this.loadTasks();
-    if (tab === 'calificaciones') {
-      this.loadGrades();
-      this.loadTasks();
-    }
   }
 
   loadTasks() {
@@ -196,6 +241,40 @@ export class CursoDetalleComponent implements OnInit {
   loadGrades() {
     this.studentService.getCourseGrades(this.courseId()).subscribe({
       next: (data) => this.grades.set(data)
+    });
+  }
+
+  loadAttendance() {
+    this.attendanceLoading.set(true);
+    this.studentService.getAttendance({ courseId: this.courseId() }).subscribe({
+      next: (data) => {
+        this.attendance.set(data.records ?? []);
+        this.attendanceSummary.set(data.summary ?? {});
+        this.attendanceLoading.set(false);
+      },
+      error: () => {
+        this.attendance.set([]);
+        this.attendanceSummary.set({});
+        this.attendanceLoading.set(false);
+      },
+    });
+  }
+
+  loadAnnouncements() {
+    this.announcementsLoading.set(true);
+    this.announcementsError.set('');
+    this.announcementService.getAnnouncements({ pageSize: 40 }).subscribe({
+      next: ({ data }) => {
+        const id = this.courseId();
+        this.announcements.set(
+          (data ?? []).filter(a => a.courseId === id || a.teacherAssignmentId === id),
+        );
+        this.announcementsLoading.set(false);
+      },
+      error: () => {
+        this.announcementsError.set('No se pudieron cargar los comunicados.');
+        this.announcementsLoading.set(false);
+      },
     });
   }
 
@@ -261,27 +340,70 @@ export class CursoDetalleComponent implements OnInit {
     return 'No se pudo descargar el material. Si la sesión expiró, vuelve a iniciar sesión.';
   }
 
-  getCourseName(): string { return this.course()?.course.name ?? ''; }
+  getCourseName(): string {
+    return (this.course()?.course?.name ?? this.course()?.name ?? '').trim();
+  }
+
+  courseCode(): string {
+    return (this.course()?.code ?? this.course()?.course?.code ?? '').trim();
+  }
+
+  teacherName(): string {
+    return (this.course()?.teacherName ?? '').trim();
+  }
+
+  heroMeta(): string {
+    const c = this.course();
+    const grade = (c?.course?.grade ?? c?.section?.grade ?? '').trim();
+    const level = (c?.course?.level ?? '').trim();
+    const year = (c?.academicYear?.name ?? c?.period ?? '').trim();
+    return [this.teacherName(), [grade, level].filter(Boolean).join(' · '), year]
+      .filter(Boolean)
+      .join(' · ') || 'Santa María Laura';
+  }
+
+  dayHasClass(day: string): boolean {
+    return (this.course()?.course?.schedule ?? []).some(s => s.day === day);
+  }
 
   setTab(tab: TabType) {
-    this.selectTab(tab);
+    this.applyTab(tab);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { tab: tab === 'contenido' ? null : tab },
+      queryParams: { tab: tab === 'material' ? null : tab },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   }
 
+  toggleUnit(unitId: string) {
+    this.units.update((list) =>
+      list.map((u) => (u.id === unitId ? { ...u, isExpanded: !u.isExpanded } : u)),
+    );
+  }
+
+  unitCountLabel(unit: CourseUnit): string {
+    const n = unit.materials?.length ?? 0;
+    return n === 1 ? '1 archivo' : `${n} archivos`;
+  }
+
   taskStatusLabel(task: StudentTask): string {
     const st = (task.submission?.status ?? task.status ?? '').toUpperCase();
-    if (st === 'SUBMITTED' || st === 'GRADED') return 'Entregada';
+    if (st === 'GRADED') return 'Calificada';
+    if (st === 'SUBMITTED' || st === 'APPROVED') return 'Entregada';
     return 'Pendiente';
   }
 
   taskIsDone(task: StudentTask): boolean {
     const st = (task.submission?.status ?? task.status ?? '').toUpperCase();
     return st === 'SUBMITTED' || st === 'GRADED' || st === 'APPROVED';
+  }
+
+  formatDueDate(raw?: string): string {
+    if (!raw) return 'Sin fecha de entrega';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    return `Entrega ${d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}`;
   }
 
   formatGradeDate(g: StudentGrade): string {
@@ -304,9 +426,44 @@ export class CursoDetalleComponent implements OnInit {
     return String(Math.round(avg * 20) / 20);
   }
 
-  toggleUnit(unitId: string) {
-    this.units.update((list) =>
-      list.map((u) => (u.id === unitId ? { ...u, isExpanded: !u.isExpanded } : u)),
-    );
+  periodScore(periodId: string): string {
+    const g = this.grades().find(x => x.period?.id === periodId);
+    if (g?.score == null || !Number.isFinite(Number(g.score))) return '—';
+    return String(g.score);
+  }
+
+  attendanceStatusLabel(status: string): string {
+    const s = (status || '').toUpperCase();
+    if (s === 'PRESENT') return 'Presente';
+    if (s === 'LATE') return 'Tardanza';
+    if (s === 'JUSTIFIED') return 'Justificada';
+    if (s === 'ABSENT') return 'Falta';
+    return status || '—';
+  }
+
+  formatSessionDate(raw: string): string {
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  announcementPriorityLabel(priority?: string): string {
+    const p = (priority || '').toUpperCase();
+    if (p === 'HIGH' || p === 'URGENT') return 'Urgente';
+    if (p === 'NORMAL' || p === 'MEDIUM') return 'Normal';
+    return 'Aviso';
+  }
+
+  formatAnnouncementDate(raw?: string): string {
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  }
+
+  authorName(a: Announcement): string {
+    return `${a.author?.firstName ?? ''} ${a.author?.lastName ?? ''}`.trim()
+      || a.author?.name
+      || '';
   }
 }

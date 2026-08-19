@@ -15,7 +15,7 @@
   margin-left: 76px;
 }
 
-/* Aula del profesor: riel estrecho y el curso ocupa el lienzo */
+/* Aula abierta: riel estrecho y el curso ocupa el lienzo */
 :host.course-workspace .main-content {
   margin-left: 56px;
   padding: 0;

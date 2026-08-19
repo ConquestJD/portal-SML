@@ -297,7 +297,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
   
   closeCourse() {
-    void this.router.navigateByUrl('/profesor/cursos');
+    const home = this.userRole() === 'profesor' ? '/profesor/cursos' : '/cursos';
+    void this.router.navigateByUrl(home);
   }
 
   toggleSidebar() {
