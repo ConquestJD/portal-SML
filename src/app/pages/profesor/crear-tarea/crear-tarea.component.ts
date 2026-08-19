@@ -30,6 +30,7 @@ export class CrearTareaComponent implements OnInit {
   points = signal(20);
   /** Cuántas veces el alumno puede enviar o actualizar su entrega (1–20). */
   maxSubmissions = signal(1);
+  fileDragOver = signal(false);
 
   backLabel = signal('Volver a tareas');
   courseLabel = signal('');
@@ -86,7 +87,7 @@ export class CrearTareaComponent implements OnInit {
       next: (data) => {
         this.title.set(data.title);
         this.instructions.set(data.description ?? '');
-        this.dueDate.set(data.dueDate ? this.toDatetimeLocalValue(data.dueDate) : '');
+        this.dueDate.set(data.dueDate ? this.toDateValue(data.dueDate) : '');
         this.points.set(data.maxScore);
         const ms = Number(data.maxSubmissions);
         this.maxSubmissions.set(
@@ -101,12 +102,20 @@ export class CrearTareaComponent implements OnInit {
     });
   }
 
-  /** Convierte ISO u otros formatos del API a valor `datetime-local`. */
-  private toDatetimeLocalValue(iso: string): string {
+  /** Día del plazo (YYYY-MM-DD). La hora se fija a las 23:59 al guardar. */
+  private toDateValue(iso: string): string {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso.split('T')[0] ?? '';
+    if (Number.isNaN(d.getTime())) return (iso.split('T')[0] ?? '').slice(0, 10);
     const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  private dueDateToIso(dateValue: string): string | undefined {
+    const day = dateValue.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
+    const d = new Date(`${day}T23:59:00`);
+    if (Number.isNaN(d.getTime())) return undefined;
+    return d.toISOString();
   }
 
   fileKey(f: File): string {
@@ -121,13 +130,56 @@ export class CrearTareaComponent implements OnInit {
 
   onFilesSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    const added = Array.from(input.files ?? []);
-    const merged = [...this.selectedFiles(), ...added].slice(0, 5);
-    this.selectedFiles.set(merged);
+    this.addFiles(Array.from(input.files ?? []));
     input.value = '';
   }
 
   onFileSelected(event: Event) { this.onFilesSelected(event); }
+
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.fileDragOver.set(true);
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const zone = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && zone.contains(next)) return;
+    this.fileDragOver.set(false);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.fileDragOver.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    this.addFiles(files);
+  }
+
+  private addFiles(incoming: File[]) {
+    const allowed = this.filterAcceptedFiles(incoming);
+    if (!allowed.length) return;
+    const current = this.selectedFiles();
+    const seen = new Set(current.map(f => this.fileKey(f)));
+    const next = [...current];
+    for (const f of allowed) {
+      const k = this.fileKey(f);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      next.push(f);
+      if (next.length >= 5) break;
+    }
+    this.selectedFiles.set(next.slice(0, 5));
+  }
+
+  private filterAcceptedFiles(files: File[]): File[] {
+    const ok = /\.(pdf|docx?|pptx?|jpe?g|png)$/i;
+    return files.filter(f => ok.test(f.name));
+  }
 
   onMaxSubmissionsInput(raw: string | number) {
     const n = Math.floor(Number(raw));
@@ -173,11 +225,10 @@ export class CrearTareaComponent implements OnInit {
     this.success.set('');
 
     if (this.isEditMode()) {
-      const dueRaw = this.dueDate().trim();
       this.teacherService.updateTask(this.courseId(), this.taskId(), {
         title: this.title().trim(),
         description: this.instructions().trim(),
-        dueDate: dueRaw ? new Date(dueRaw).toISOString() : undefined,
+        dueDate: this.dueDateToIso(this.dueDate()),
         maxScore: this.points(),
         maxSubmissions: this.maxSubmissions(),
         deliveryType: this.deliveryType(),
@@ -195,8 +246,8 @@ export class CrearTareaComponent implements OnInit {
       const fd = new FormData();
       fd.append('title', this.title().trim());
       fd.append('description', this.instructions().trim());
-      const dueRaw = this.dueDate().trim();
-      if (dueRaw) fd.append('dueDate', new Date(dueRaw).toISOString());
+      const dueIso = this.dueDateToIso(this.dueDate());
+      if (dueIso) fd.append('dueDate', dueIso);
       fd.append('maxScore', String(this.points()));
       fd.append('maxSubmissions', String(this.maxSubmissions()));
       fd.append('deliveryType', this.deliveryType());

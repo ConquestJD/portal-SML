@@ -49,15 +49,26 @@
               <h2>Material de referencia</h2>
               <span>Opcional · hasta 5 archivos</span>
             </header>
-            <input
-              type="file"
-              id="file-upload"
-              class="file-input"
-              multiple
-              (change)="onFilesSelected($event)"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
-            />
-            <label for="file-upload" class="refs__drop">Añadir archivos</label>
+            <div
+              class="refs__zone"
+              [class.is-over]="fileDragOver()"
+              (dragover)="onFileDragOver($event)"
+              (dragenter)="onFileDragOver($event)"
+              (dragleave)="onFileDragLeave($event)"
+              (drop)="onFileDrop($event)"
+            >
+              <input
+                type="file"
+                id="file-upload"
+                class="file-input"
+                multiple
+                (change)="onFilesSelected($event)"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+              />
+              <label for="file-upload" class="refs__drop">
+                Arrastra archivos aquí o haz clic para elegirlos
+              </label>
+            </div>
             @if (selectedFiles().length > 0) {
               <ul class="refs__list">
                 @for (f of selectedFiles(); track fileKey(f)) {
@@ -76,9 +87,9 @@
       <aside class="compose__aside">
         <section class="rule">
           <h2>Plazo</h2>
-          <label class="visually-hidden" for="dueDate">Fecha y hora límite</label>
+          <label class="visually-hidden" for="dueDate">Fecha límite</label>
           <input
-            type="datetime-local"
+            type="date"
             id="dueDate"
             name="dueDate"
             class="rule__input"
@@ -86,6 +97,7 @@
             (ngModelChange)="dueDate.set($event)"
             required
           />
+          <p class="rule__hint">Cierra a las 11:59 p.m. de ese día.</p>
         </section>
 
         <section class="rule">

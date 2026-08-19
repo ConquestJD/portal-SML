@@ -121,18 +121,30 @@
   overflow: hidden;
 }
 
-.refs__drop {
-  display: inline-block;
-  font-size: .75rem;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--navy);
-  cursor: pointer;
-  border-bottom: 1px solid transparent;
+.refs__zone {
+  position: relative;
+  padding: 1.15rem 1rem;
+  border: 1px dashed var(--line);
+  background: #fafbfc;
+  text-align: center;
 }
 
-.refs__drop:hover { color: var(--crimson); border-bottom-color: var(--crimson); }
+.refs__zone.is-over {
+  border-color: var(--navy);
+  background: #eef4fa;
+}
+
+.refs__drop {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.refs__drop:hover { color: var(--crimson); }
 
 .refs__list {
   list-style: none;
