@@ -112,31 +112,39 @@
                         <p class="archive__empty">Aún no hay archivos en este bimestre.</p>
                       } @else {
                         @if (bin.folders.length) {
-                          <ul class="archive__folders">
+                          <ul class="pockets">
                             @for (folder of bin.folders; track folder.id) {
-                              <li class="nest" [class.is-open]="isMaterialFolderOpen(folder.id)">
-                                <header class="nest__head">
-                                  <button type="button" class="bin__toggle" (click)="toggleMaterialFolder(folder.id)">
-                                    <span class="nest__title">{{ folder.title }}</span>
-                                    <span class="bin__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
-                                  </button>
-                                </header>
+                              <li class="pocket" [class.is-open]="isMaterialFolderOpen(folder.id)">
+                                <button type="button" class="pocket__tab" (click)="toggleMaterialFolder(folder.id)">
+                                  <span class="pocket__glyph" aria-hidden="true">
+                                    <span class="pocket__glyph-tab"></span>
+                                    <span class="pocket__glyph-body"></span>
+                                  </span>
+                                  <span class="pocket__copy">
+                                    <span class="pocket__kicker">Carpeta</span>
+                                    <span class="pocket__title">{{ folder.title }}</span>
+                                    <span class="pocket__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
+                                  </span>
+                                  <span class="pocket__chev" aria-hidden="true">{{ isMaterialFolderOpen(folder.id) ? '−' : '+' }}</span>
+                                </button>
                                 @if (isMaterialFolderOpen(folder.id)) {
-                                  @if (folder.files.length) {
-                                    <ul class="archive__files">
-                                      @for (f of folder.files; track f.id) {
-                                        <li class="archive__file">
-                                          <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
-                                          <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                                          <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                                          <span></span>
-                                          <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
-                                        </li>
-                                      }
-                                    </ul>
-                                  } @else {
-                                    <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
-                                  }
+                                  <div class="pocket__drawer">
+                                    @if (folder.files.length) {
+                                      <ul class="archive__files">
+                                        @for (f of folder.files; track f.id) {
+                                          <li class="archive__file">
+                                            <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                                            <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                                            <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                                            <span></span>
+                                            <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
+                                          </li>
+                                        }
+                                      </ul>
+                                    } @else {
+                                      <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
+                                    }
+                                  </div>
                                 }
                               </li>
                             }

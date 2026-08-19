@@ -134,8 +134,126 @@
 }
 
 .folder .archive__files,
-.folder .archive__folders {
-  margin-top: .35rem;
+.folder .pockets {
+  margin-top: .55rem;
+}
+
+.pockets {
+  list-style: none;
+  margin: .55rem 0 .5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+
+.pocket {
+  background: #e9dfc8;
+  border-bottom: 2px solid var(--navy);
+}
+
+.pocket.is-open {
+  background: #f7f0e0;
+}
+
+.pocket__tab {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: .75rem .85rem;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pocket__glyph {
+  position: relative;
+  width: 1.85rem;
+  height: 1.45rem;
+  flex-shrink: 0;
+}
+
+.pocket__glyph-tab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: .72rem;
+  height: .42rem;
+  background: #c9b48a;
+  border-radius: .12rem .12rem 0 0;
+}
+
+.pocket__glyph-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.15rem;
+  background: #d4c09a;
+  border-radius: 0 .18rem .12rem .12rem;
+  box-shadow: inset 0 .12rem 0 #ead9b4;
+}
+
+.pocket.is-open .pocket__glyph-tab {
+  background: #003366;
+}
+
+.pocket.is-open .pocket__glyph-body {
+  background: #1a5a8a;
+  box-shadow: inset 0 .12rem 0 #4a7eab;
+}
+
+.pocket.is-open .pocket__kicker {
+  color: var(--navy);
+}
+
+.pocket__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .08rem;
+}
+
+.pocket__kicker {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8a7348;
+}
+
+.pocket.is-open .pocket__kicker {
+  color: var(--crimson);
+}
+
+.pocket__title {
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.pocket__count {
+  font-size: .7rem;
+  color: var(--muted);
+}
+
+.pocket__chev {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.pocket__drawer {
+  padding: 0 .85rem .85rem;
+  border-top: 1px dashed rgba(20 32 51 / .12);
 }
 
 .loose {
