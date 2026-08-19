@@ -29,8 +29,7 @@ export interface ChildProfileVm {
     totalAbsences: number;
     totalLates: number;
   };
-  tutor: { name: string; email: string; phone: string };
-  coordinator: { name: string; email: string; phone: string };
+  courses: { id: string; name: string; teacher: string }[];
 }
 
 @Component({
@@ -47,7 +46,7 @@ export class PerfilHijoComponent implements OnInit {
   children = signal<Child[]>([]);
   childDetail = signal<Child | null>(null);
   childProfile = signal<ChildProfileVm | null>(null);
-  activeTab = signal<'resumen' | 'academico' | 'contacto'>('resumen');
+  activeTab = signal<'resumen' | 'academico'>('resumen');
 
   selectedChild = computed(() => this.children().find((c) => c.id === this.selectedChildId()) ?? null);
 
@@ -71,7 +70,7 @@ export class PerfilHijoComponent implements OnInit {
     });
   }
 
-  setTab(tab: 'resumen' | 'academico' | 'contacto') {
+  setTab(tab: 'resumen' | 'academico') {
     this.activeTab.set(tab);
   }
 
@@ -128,13 +127,25 @@ export class PerfilHijoComponent implements OnInit {
         : null;
 
     const att = attendance as { status?: string }[];
-    const totalAbsences = att.filter((a) => a.status === 'ABSENT').length;
-    const totalLates = att.filter((a) => a.status === 'LATE').length;
+    const totalAbsences = att.filter((a) => String(a.status ?? '').toUpperCase() === 'ABSENT').length;
+    const totalLates = att.filter((a) => String(a.status ?? '').toUpperCase() === 'LATE').length;
     const totalRecords = att.length;
-    const attended = att.filter((a) => a.status !== 'ABSENT').length;
+    const attended = att.filter((a) => String(a.status ?? '').toUpperCase() !== 'ABSENT').length;
     const attendancePercentage = totalRecords > 0 ? Math.round((attended / totalRecords) * 100) : 0;
 
-    const totalCourses = Array.isArray(courses) ? courses.length : 0;
+    const courseRows = (Array.isArray(courses) ? courses : []).map((row) => {
+      const a = row as Record<string, unknown>;
+      const course = (a['course'] as Record<string, unknown>) ?? {};
+      const teacher = (a['teacher'] as Record<string, unknown>) ?? {};
+      const user = (teacher['user'] as Record<string, unknown>) ?? {};
+      const teacherName = `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim();
+      return {
+        id: String(a['id'] ?? ''),
+        name: String(course['name'] ?? 'Curso'),
+        teacher: teacherName || '—',
+      };
+    }).filter((row) => row.id);
+    const totalCourses = courseRows.length;
 
     const statusMap: Record<string, string> = {
       ACTIVE: 'Activo',
@@ -170,16 +181,7 @@ export class PerfilHijoComponent implements OnInit {
         totalAbsences,
         totalLates,
       },
-      tutor: {
-        name: 'Consultar en secretaría',
-        email: '',
-        phone: '',
-      },
-      coordinator: {
-        name: 'Consultar en secretaría',
-        email: '',
-        phone: '',
-      },
+      courses: courseRows,
     };
   }
 
@@ -228,5 +230,9 @@ export class PerfilHijoComponent implements OnInit {
   averageBarWidth(avg: number | null): number {
     if (avg == null || Number.isNaN(avg)) return 0;
     return Math.min(100, Math.max(0, (avg / 20) * 100));
+  }
+
+  courseInitial(name: string): string {
+    return (name?.trim().charAt(0) ?? '?').toUpperCase();
   }
 }

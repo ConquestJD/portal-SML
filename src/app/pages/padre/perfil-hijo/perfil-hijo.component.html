@@ -127,7 +127,6 @@
         <nav class="padre-tabs" aria-label="Secciones del perfil">
           <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'resumen'" (click)="setTab('resumen')">Resumen</button>
           <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'academico'" (click)="setTab('academico')">Académico</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="activeTab() === 'contacto'" (click)="setTab('contacto')">Contacto</button>
         </nav>
 
         @if (activeTab() === 'resumen') {
@@ -205,81 +204,91 @@
         }
 
         @if (activeTab() === 'academico') {
-          <div class="profile-panels">
-            <section class="feed">
-              <div class="feed__head"><h2>Rendimiento académico</h2></div>
-              <div class="perf-bar">
-                <div class="perf-bar__head">
-                  <span>Promedio general</span>
-                  <strong>{{ profile.academicSummary.overallAverage ?? '—' }}</strong>
+          <div class="perfil-split">
+            <section class="sheet">
+              <header class="mod-head">
+                <div>
+                  <p class="mod-head__kicker">Año lectivo</p>
+                  <h2 class="mod-head__title">Rendimiento</h2>
                 </div>
-                <div class="perf-bar__track">
-                  <div class="perf-bar__fill" [style.width.%]="averageBarWidth(profile.academicSummary.overallAverage)"></div>
+              </header>
+              <div class="perf">
+                <p class="perf__score">
+                  {{ profile.academicSummary.overallAverage ?? '—' }}
+                  <span>/ 20</span>
+                </p>
+                <div class="perf__track" aria-hidden="true">
+                  <div class="perf__fill" [style.width.%]="averageBarWidth(profile.academicSummary.overallAverage)"></div>
                 </div>
-                <p class="perf-bar__hint">Escala de 0 a 20</p>
+                <p class="perf__hint">Promedio de las notas publicadas.</p>
               </div>
+              <dl class="facts">
+                <div>
+                  <dt>Entregadas</dt>
+                  <dd>{{ profile.academicSummary.completedTasks }}</dd>
+                </div>
+                <div [class.is-alert]="profile.academicSummary.pendingTasks > 0">
+                  <dt>Pendientes</dt>
+                  <dd>{{ profile.academicSummary.pendingTasks }}</dd>
+                </div>
+                <div>
+                  <dt>Tareas en total</dt>
+                  <dd>{{ profile.academicSummary.totalTasks }}</dd>
+                </div>
+              </dl>
             </section>
 
-            <section class="metrics metrics--3">
-              <div class="metric">
-                <span class="metric__n">{{ profile.academicSummary.completedTasks }}</span>
-                <span class="metric__l">Completadas</span>
-              </div>
-              <div class="metric metric--alert">
-                <span class="metric__n">{{ profile.academicSummary.pendingTasks }}</span>
-                <span class="metric__l">Pendientes</span>
-              </div>
-              <div class="metric">
-                <span class="metric__n">{{ profile.academicSummary.totalTasks }}</span>
-                <span class="metric__l">Total tareas</span>
-              </div>
-            </section>
-
-            <section class="feed">
-              <div class="feed__head"><h2>Asistencia</h2></div>
-              <div class="attendance-panel">
-                <span class="attendance-panel__pct">{{ profile.academicSummary.attendancePercentage }}%</span>
-                <div class="attendance-panel__details">
-                  <span>Faltas: {{ profile.academicSummary.totalAbsences }}</span>
-                  <span>Tardanzas: {{ profile.academicSummary.totalLates }}</span>
-                </div>
-              </div>
-            </section>
+            <aside class="side">
+              <section class="side__block">
+                <h2>Asistencia</h2>
+                <p class="side__stat">{{ profile.academicSummary.attendancePercentage }}%</p>
+                <dl class="facts facts--stack">
+                  <div>
+                    <dt>Faltas</dt>
+                    <dd>{{ profile.academicSummary.totalAbsences }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tardanzas</dt>
+                    <dd>{{ profile.academicSummary.totalLates }}</dd>
+                  </div>
+                </dl>
+              </section>
+            </aside>
           </div>
-        }
 
-        @if (activeTab() === 'contacto') {
-          <div class="profile-panels profile-panels--2">
-            <section class="feed">
-              <div class="feed__head"><h2>Tutor</h2></div>
-              <p class="contact-name">{{ profile.tutor.name }}</p>
-              @if (profile.tutor.email) {
-                <a [href]="'mailto:' + profile.tutor.email" class="contact-link">{{ profile.tutor.email }}</a>
-              }
-              @if (profile.tutor.phone) {
-                <a [href]="'tel:' + profile.tutor.phone" class="contact-link">{{ profile.tutor.phone }}</a>
-              }
-              @if (!profile.tutor.email && !profile.tutor.phone) {
-                <p class="feed__empty">Los datos de contacto se facilitan en secretaría.</p>
-              }
-              <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'tutor', childId: selectedChildId()}" class="padre-btn padre-btn--solid contact-btn">Enviar mensaje</a>
-            </section>
-
-            <section class="feed">
-              <div class="feed__head"><h2>Coordinador</h2></div>
-              <p class="contact-name">{{ profile.coordinator.name }}</p>
-              @if (profile.coordinator.email) {
-                <a [href]="'mailto:' + profile.coordinator.email" class="contact-link">{{ profile.coordinator.email }}</a>
-              }
-              @if (profile.coordinator.phone) {
-                <a [href]="'tel:' + profile.coordinator.phone" class="contact-link">{{ profile.coordinator.phone }}</a>
-              }
-              @if (!profile.coordinator.email && !profile.coordinator.phone) {
-                <p class="feed__empty">Los datos de contacto se facilitan en secretaría.</p>
-              }
-              <a routerLink="/padre/mensajeria" [queryParams]="{contact: 'coordinator', childId: selectedChildId()}" class="padre-btn padre-btn--solid contact-btn">Enviar mensaje</a>
-            </section>
-          </div>
+          <section class="sheet sheet--courses">
+            <header class="mod-head">
+              <div>
+                <p class="mod-head__kicker">Aula</p>
+                <h2 class="mod-head__title">Cursos</h2>
+              </div>
+              <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}" class="padre-link">Ver todos</a>
+            </header>
+            @if (profile.courses.length === 0) {
+              <p class="feed__empty">
+                Aún no hay cursos.
+                <a [routerLink]="['/padre/cursos']" [queryParams]="{childId: selectedChildId()}" class="padre-link">Ver cursos</a>
+              </p>
+            } @else {
+              <ul class="course-rows">
+                @for (course of profile.courses; track course.id) {
+                  <li>
+                    <a
+                      [routerLink]="['/padre/cursos', course.id]"
+                      [queryParams]="{childId: selectedChildId()}"
+                      class="course-row"
+                    >
+                      <span class="course-row__mark">{{ courseInitial(course.name) }}</span>
+                      <span class="course-row__body">
+                        <span class="course-row__name">{{ course.name }}</span>
+                        <span class="course-row__meta">{{ course.teacher }}</span>
+                      </span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
         }
       }
     </div>
