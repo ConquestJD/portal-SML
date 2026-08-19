@@ -19,7 +19,7 @@
           } @else {
             <span>{{ initials() }}</span>
           }
-          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" />
+          <input type="file" (change)="onPhotoSelected($event)" />
           <em>Cambiar foto</em>
         </label>
         <div>

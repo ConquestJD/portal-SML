@@ -85,7 +85,7 @@
             }
             <div class="photo-panel__actions">
               <label class="photo-panel__btn">
-                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event)" hidden />
+                <input type="file" (change)="onPhotoSelected($event)" hidden />
                 Subir nueva foto
               </label>
               <p class="photo-panel__hint">JPG, PNG o WebP · máx. 2 MB</p>

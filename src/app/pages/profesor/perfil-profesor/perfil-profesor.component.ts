@@ -111,6 +111,17 @@ export class PerfilProfesorComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
+    const okName = /\.(jpe?g|png|webp)$/i.test(file.name);
+    const okType = /^image\/(jpeg|png|webp)$/i.test(file.type);
+    if (!okName && !okType) {
+      this.error.set('Usa una foto JPG, PNG o WebP.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      this.error.set('La foto no debe superar 8 MB.');
+      return;
+    }
+    this.error.set('');
     this.teacherService.uploadPhoto(file).subscribe({
       next: data => {
         const url =
