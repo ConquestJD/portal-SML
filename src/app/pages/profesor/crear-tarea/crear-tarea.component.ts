@@ -1,8 +1,9 @@
-import { Component, signal, computed, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TeacherService } from '../../../services/teacher.service';
+import { pickLocalFiles } from '../_utils/pick-local-files';
 
 @Component({
   selector: 'app-crear-tarea',
@@ -32,6 +33,8 @@ export class CrearTareaComponent implements OnInit {
   /** Cuántas veces el alumno puede enviar o actualizar su entrega (1–20). */
   maxSubmissions = signal(1);
   fileDragOver = signal(false);
+
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   backLabel = signal('← Tareas del curso');
   courseLabel = signal('');
@@ -138,6 +141,17 @@ export class CrearTareaComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     this.addFiles(Array.from(input.files ?? []));
     input.value = '';
+  }
+
+  async browseFiles(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const picked = await pickLocalFiles({ multiple: true, startIn: 'documents' });
+    if (picked === 'fallback') {
+      this.fileInput?.nativeElement.click();
+      return;
+    }
+    this.addFiles(picked);
   }
 
   onFileSelected(event: Event) { this.onFilesSelected(event); }

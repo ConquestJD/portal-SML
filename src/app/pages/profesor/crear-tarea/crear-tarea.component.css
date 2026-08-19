@@ -136,6 +136,10 @@
 
 .refs__drop {
   display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
   font-size: .82rem;
   font-weight: 600;
   color: var(--navy);

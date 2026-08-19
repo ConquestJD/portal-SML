@@ -68,6 +68,7 @@
               (drop)="onFileDrop($event)"
             >
               <input
+                #fileInput
                 type="file"
                 id="file-upload"
                 class="file-input"
@@ -75,13 +76,13 @@
                 (change)="onFilesSelected($event)"
                 [disabled]="uploadingMoreFiles()"
               />
-              <label for="file-upload" class="refs__drop">
+              <button type="button" class="refs__drop" (click)="browseFiles($event)" [disabled]="uploadingMoreFiles()">
                 @if (uploadingMoreFiles()) {
                   Subiendo archivos…
                 } @else {
-                  Arrastra archivos aquí o haz clic para elegirlos
+                  Elige archivos o arrástralos aquí
                 }
-              </label>
+              </button>
             </div>
 
             @if (isEditMode()) {

@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject, computed } from '@angular/core';
+import { Component, signal, OnInit, inject, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,6 +9,7 @@ import {
   AnnouncementService,
   AnnouncementAttachment,
 } from '../../../services/announcement.service';
+import { pickLocalFiles } from '../_utils/pick-local-files';
 
 @Component({
   selector: 'app-crear-comunicado',
@@ -43,6 +44,8 @@ export class CrearComunicadoComponent implements OnInit {
   loadedType = signal<string>('GENERAL');
   loadedTargetRoles = signal<string[]>([]);
   fileDragOver = signal(false);
+
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   pageTitle = computed(() => this.isEditMode() ? 'Editar comunicado' : 'Nuevo comunicado');
   canSave = computed(() => this.title().trim().length > 0 && this.content().trim().length > 0);
@@ -143,6 +146,18 @@ export class CrearComunicadoComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     this.addFiles(Array.from(input.files ?? []));
     input.value = '';
+  }
+
+  async browseFiles(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.remainingSlots() <= 0) return;
+    const picked = await pickLocalFiles({ multiple: true, startIn: 'documents' });
+    if (picked === 'fallback') {
+      this.fileInput?.nativeElement.click();
+      return;
+    }
+    this.addFiles(picked);
   }
 
   onFileDragOver(event: DragEvent) {

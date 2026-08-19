@@ -1,9 +1,11 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TeacherService, TeacherProfile } from '../../../services/teacher.service';
 import { AuthService } from '../../../services/auth.service';
+import { filesFromClipboard } from '../_utils/clipboard-files';
+import { pickLocalFiles } from '../_utils/pick-local-files';
 
 @Component({
   selector: 'app-perfil-profesor',
@@ -19,6 +21,9 @@ export class PerfilProfesorComponent implements OnInit {
   success = signal('');
   editing = signal(false);
   photoBroken = signal(false);
+  photoDragOver = signal(false);
+
+  @ViewChild('photoInput') photoInput?: ElementRef<HTMLInputElement>;
   readonly isLoading = this.loading;
   readonly isSaving = this.saving;
 
@@ -110,7 +115,54 @@ export class PerfilProfesorComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
+    if (file) this.takePhotoFile(file);
+  }
+
+  async browsePhoto(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const picked = await pickLocalFiles({ multiple: false, startIn: 'pictures' });
+    if (picked === 'fallback') {
+      this.photoInput?.nativeElement.click();
+      return;
+    }
+    const file = picked[0];
+    if (file) this.takePhotoFile(file);
+  }
+
+  onPhotoDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    this.photoDragOver.set(true);
+  }
+
+  onPhotoDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const zone = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget as Node | null;
+    if (next && zone.contains(next)) return;
+    this.photoDragOver.set(false);
+  }
+
+  onPhotoDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.photoDragOver.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) this.takePhotoFile(file);
+  }
+
+  @HostListener('paste', ['$event'])
+  onPaste(event: ClipboardEvent) {
+    const file = filesFromClipboard(event)[0];
     if (!file) return;
+    event.preventDefault();
+    this.takePhotoFile(file);
+  }
+
+  private takePhotoFile(file: File) {
     const okName = /\.(jpe?g|png|webp)$/i.test(file.name);
     const okType = /^image\/(jpeg|png|webp)$/i.test(file.type);
     if (!okName && !okType) {

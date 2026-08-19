@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import {
   isMaterialFolder,
   materialFolderTitle,
 } from '../../../services/teacher.service';
+import { pickLocalFiles } from '../_utils/pick-local-files';
 
 interface MaterialLink {
   id: string;
@@ -75,6 +76,8 @@ export class SubirMaterialComponent implements OnInit {
     private router: Router,
     private teacherService: TeacherService,
   ) {}
+
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   ngOnInit() {
     const cId = this.route.snapshot.paramMap.get('courseId') ?? '';
@@ -154,6 +157,19 @@ export class SubirMaterialComponent implements OnInit {
     } else {
       this.addFiles(files);
     }
+  }
+
+  async browseFiles(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.uploadingMoreFiles()) return;
+    const picked = await pickLocalFiles({ multiple: true, startIn: 'documents' });
+    if (picked === 'fallback') {
+      this.fileInput?.nativeElement.click();
+      return;
+    }
+    if (this.isEditMode()) this.appendEditFiles(picked);
+    else this.addFiles(picked);
   }
 
   onFileDragOver(event: DragEvent) {

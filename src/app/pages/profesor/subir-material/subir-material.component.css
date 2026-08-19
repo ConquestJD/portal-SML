@@ -152,6 +152,10 @@
 
 .refs__drop {
   display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
   font-size: .92rem;
   font-weight: 600;
   color: var(--navy);
@@ -159,6 +163,8 @@
   font-family: var(--font-display);
   font-style: italic;
 }
+
+.refs__drop:disabled { cursor: default; opacity: .7; }
 
 .refs__drop:hover { color: var(--crimson); }
 

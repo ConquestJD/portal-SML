@@ -58,15 +58,16 @@
               (drop)="onFileDrop($event)"
             >
               <input
+                #fileInput
                 type="file"
                 id="file-upload"
                 class="file-input"
                 multiple
                 (change)="onFilesSelected($event)"
               />
-              <label for="file-upload" class="refs__drop">
-                Arrastra archivos aquí o haz clic para elegirlos
-              </label>
+              <button type="button" class="refs__drop" (click)="browseFiles($event)">
+                Elige archivos o arrástralos aquí
+              </button>
             </div>
             @if (selectedFiles().length > 0) {
               <ul class="refs__list">

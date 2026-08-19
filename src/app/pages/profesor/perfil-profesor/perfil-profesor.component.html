@@ -13,21 +13,30 @@
     <header class="dossier__mast">
       <p class="dossier__kicker">Docente · Santa María Laura</p>
       <div class="dossier__who">
-        <label class="dossier__portrait">
+        <div
+          class="dossier__portrait"
+          [class.is-over]="photoDragOver()"
+          (click)="browsePhoto($event)"
+          (dragover)="onPhotoDragOver($event)"
+          (dragenter)="onPhotoDragOver($event)"
+          (dragleave)="onPhotoDragLeave($event)"
+          (drop)="onPhotoDrop($event)"
+        >
           @if (photoUrl() && !photoBroken()) {
             <img [src]="photoUrl()" [alt]="fullName()" (error)="onPhotoError()" />
           } @else {
             <span>{{ initials() }}</span>
           }
-          <input type="file" (change)="onPhotoSelected($event)" />
-          <em>Cambiar foto</em>
-        </label>
+          <em>Elegir o arrastrar foto</em>
+        </div>
         <div>
           <h1 class="dossier__name">{{ fullName() }}</h1>
           @if (profile()?.teacherCode) {
             <p class="dossier__code">{{ profile()?.teacherCode }}</p>
           }
           <p class="dossier__mail">{{ profile()?.user?.email }}</p>
+          <button type="button" class="dossier__browse" (click)="browsePhoto($event)">Examinar foto</button>
+          <input #photoInput type="file" class="visually-hidden" (change)="onPhotoSelected($event)" />
         </div>
       </div>
     </header>

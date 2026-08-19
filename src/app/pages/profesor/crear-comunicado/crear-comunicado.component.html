@@ -66,6 +66,7 @@
               (drop)="onFileDrop($event)"
             >
               <input
+                #fileInput
                 type="file"
                 id="file-upload"
                 class="file-input"
@@ -73,9 +74,9 @@
                 (change)="onFileSelected($event)"
                 [disabled]="remainingSlots() <= 0"
               />
-              <label for="file-upload" class="refs__drop">
-                Arrastra archivos aquí o haz clic para elegirlos
-              </label>
+              <button type="button" class="refs__drop" (click)="browseFiles($event)" [disabled]="remainingSlots() <= 0">
+                Elige archivos o arrástralos aquí
+              </button>
             </div>
 
             @if (isEditMode() && existingAttachments().length) {
