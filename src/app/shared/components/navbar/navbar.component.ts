@@ -53,7 +53,8 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Principal',
       items: [
-        { label: 'Dashboard', icon: 'fas fa-home', path: '/profesor/dashboard', exact: true }
+        { label: 'Dashboard', icon: 'fas fa-home', path: '/profesor/dashboard', exact: true },
+        { label: 'Actividad', icon: 'fas fa-history', path: '/profesor/actividad', exact: false }
       ]
     },
     {

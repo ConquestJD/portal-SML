@@ -1,0 +1,173 @@
+@import '../_shared/profesor-editorial.css';
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1.35rem;
+}
+
+.search--select select {
+  min-width: 16rem;
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  padding: .45rem 0;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
+}
+
+.search--select select:focus { border-bottom-color: var(--navy); }
+
+.stream { max-width: 46rem; }
+
+.stream__day { margin: 0 0 1.75rem; }
+
+.stream__date {
+  margin: 0 0 1rem 2.65rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stream__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.stream__list::before {
+  content: '';
+  position: absolute;
+  left: 1.05rem;
+  top: .35rem;
+  bottom: .35rem;
+  width: 2px;
+  background: var(--line);
+}
+
+.stream__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.15rem minmax(0, 1fr);
+  gap: .85rem;
+  align-items: start;
+  margin: 0 0 .85rem;
+}
+
+.stream__dot {
+  position: relative;
+  z-index: 1;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  box-shadow: 0 0 0 4px #eef1f5;
+}
+
+.stream__item[data-kind='late'] .stream__dot { background: var(--crimson); }
+.stream__item[data-kind='graded'] .stream__dot { background: #1a6b4a; }
+.stream__item[data-kind='task'] .stream__dot,
+.stream__item[data-kind='material'] .stream__dot,
+.stream__item[data-kind='announcement'] .stream__dot,
+.stream__item[data-kind='exam'] .stream__dot {
+  background: #fff;
+  border: 2px solid var(--navy);
+  color: transparent;
+}
+
+.stream__item[data-kind='task'] .stream__dot::after,
+.stream__item[data-kind='material'] .stream__dot::after,
+.stream__item[data-kind='announcement'] .stream__dot::after,
+.stream__item[data-kind='exam'] .stream__dot::after {
+  content: '';
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+  background: var(--navy);
+}
+
+.stream__card {
+  display: block;
+  padding: .9rem 1.05rem 1rem;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.stream__card:hover { box-shadow: inset 3px 0 0 var(--navy); }
+
+.stream__item[data-kind='late'] .stream__card:hover {
+  box-shadow: inset 3px 0 0 var(--crimson);
+}
+
+.stream__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .45rem .75rem;
+  margin-bottom: .35rem;
+}
+
+.stream__kind {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.stream__item[data-kind='late'] .stream__kind { color: var(--crimson); }
+
+.stream__course {
+  flex: 1;
+  min-width: 0;
+  font-size: .78rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stream__time {
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stream__headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--navy);
+}
+
+.stream__detail {
+  margin: .3rem 0 0;
+  font-size: .82rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .stream__date { margin-left: 2.4rem; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .search--select select { min-width: 0; width: 100%; }
+}

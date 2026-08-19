@@ -1,0 +1,100 @@
+<div class="prof-page">
+
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/heroes/tasks.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
+      <div>
+        <h1 class="prof-page__title">Actividad</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="prof-page__body">
+
+    <section class="metrics metrics--3" aria-label="Resumen">
+      <div class="metric" [class.metric--alert]="submissionCount() > 0">
+        <span class="metric__n">{{ submissionCount() }}</span>
+        <span class="metric__l">Entregas recientes</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ publishCount() }}</span>
+        <span class="metric__l">Publicaciones</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ items().length }}</span>
+        <span class="metric__l">En la línea de tiempo</span>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <nav class="prof-tabs" aria-label="Tipo de actividad">
+        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'todos'" (click)="filter.set('todos')">Todos</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'entregas'" (click)="filter.set('entregas')">Entregas</button>
+        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'publicaciones'" (click)="filter.set('publicaciones')">Publicaciones</button>
+      </nav>
+      <label class="search search--select">
+        <span class="visually-hidden">Filtrar por curso</span>
+        <select
+          [ngModel]="courseId()"
+          (ngModelChange)="onCourseChange($event)"
+          name="courseId"
+          aria-label="Curso"
+        >
+          <option value="">Todos los cursos</option>
+          @for (c of courses(); track c.id) {
+            <option [value]="c.id">{{ courseLabel(c) }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando actividad…</p>
+    } @else if (error()) {
+      <div class="prof-alert" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="prof-btn prof-btn--solid" (click)="load()">Reintentar</button>
+      </div>
+    } @else if (days().length === 0) {
+      <p class="feed__empty">Aún no hay movimiento en tus cursos. Cuando un alumno entregue una tarea o publiques material, aparecerá aquí.</p>
+    } @else {
+      <div class="stream" aria-label="Línea de tiempo">
+        @for (day of days(); track day.key) {
+          <section class="stream__day">
+            <h2 class="stream__date">{{ day.label }}</h2>
+            <ol class="stream__list">
+              @for (item of day.items; track item.id) {
+                <li class="stream__item" [attr.data-kind]="item.kind">
+                  <span class="stream__dot" aria-hidden="true">
+                    @if (item.kind === 'submission' || item.kind === 'late' || item.kind === 'graded') {
+                      {{ initials(item.actor) }}
+                    }
+                  </span>
+                  <a class="stream__card" [routerLink]="itemLink(item)">
+                    <div class="stream__meta">
+                      <span class="stream__kind">{{ kindLabel(item.kind) }}</span>
+                      <span class="stream__course">
+                        {{ item.courseName }}
+                        @if (item.courseMeta) {
+                          · {{ item.courseMeta }}
+                        }
+                      </span>
+                      <time class="stream__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
+                    </div>
+                    <p class="stream__headline">{{ item.headline }}</p>
+                    @if (item.detail) {
+                      <p class="stream__detail">{{ item.detail }}</p>
+                    }
+                  </a>
+                </li>
+              }
+            </ol>
+          </section>
+        }
+      </div>
+    }
+  </div>
+</div>

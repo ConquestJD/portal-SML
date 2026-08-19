@@ -205,6 +205,23 @@ export interface TeacherCourseAnnouncement {
   attachments?: { id: string; name: string; url?: string; size?: number; mimeType?: string }[];
 }
 
+export interface TeacherActivityItem {
+  id: string;
+  kind: 'submission' | 'late' | 'graded' | 'task' | 'material' | 'announcement' | 'exam';
+  at: string;
+  actor: string;
+  headline: string;
+  detail?: string;
+  courseId: string;
+  courseName: string;
+  courseMeta: string;
+  taskId?: string;
+  examId?: string;
+  materialId?: string;
+  announcementId?: string;
+  studentId?: string;
+}
+
 export interface TeacherProfile {
   id: string; teacherCode?: string; bio?: string;
   user: { id: string; email: string; firstName: string; lastName: string; phone?: string; avatarUrl?: string };
@@ -361,6 +378,10 @@ export class TeacherService {
   getCourses(f: { search?: string; period?: string } = {}): Observable<TeacherCourse[]> {
     return this.get<TeacherCourse[]>('/teacher/courses', buildParams(f))
       .pipe(map(list => list.map(c => this.normalizeCourse(c))));
+  }
+
+  getActivity(courseId?: string): Observable<TeacherActivityItem[]> {
+    return this.get<TeacherActivityItem[]>('/teacher/activity', buildParams({ courseId }));
   }
   getCourse(courseId: string): Observable<TeacherCourse> {
     return this.get<TeacherCourse>(`/teacher/courses/${courseId}`)

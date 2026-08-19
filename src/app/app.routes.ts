@@ -64,6 +64,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profesor/dashboard-profesor/dashboard-profesor.component').then(m => m.DashboardProfesorComponent)
       },
       {
+        path: 'profesor/actividad',
+        loadComponent: () => import('./pages/profesor/actividad-profesor/actividad-profesor.component').then(m => m.ActividadProfesorComponent)
+      },
+      {
         path: 'profesor/cursos',
         loadComponent: () => import('./pages/profesor/cursos-profesor/cursos-profesor.component').then(m => m.CursosProfesorComponent)
       },
