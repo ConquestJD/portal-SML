@@ -1,154 +1,123 @@
-<div class="cfg-page">
+<div class="prof-page">
 
-  <header class="cfg-page__hero">
-    <img class="cfg-page__hero-photo" src="/images/heroes/settings.webp" alt="" decoding="async" />
-    <div class="cfg-page__hero-veil"></div>
-    <div class="cfg-page__hero-content">
-      <img src="/only-logo.png" alt="" class="cfg-page__crest" />
+  <header class="prof-page__hero">
+    <img class="prof-page__hero-photo" src="/images/heroes/settings.webp" alt="" decoding="async" />
+    <div class="prof-page__hero-veil"></div>
+    <div class="prof-page__hero-content">
+      <img src="/only-logo.png" alt="" class="prof-page__crest" />
       <div>
-        <h1 class="cfg-page__title">Configuración</h1>
-        <p class="cfg-page__brand">Santa María Laura</p>
+        <h1 class="prof-page__title">Configuración</h1>
+        <p class="prof-page__brand">Santa María Laura</p>
       </div>
     </div>
   </header>
 
-  <div class="cfg-page__body">
+  <div class="prof-page__body">
 
-    <nav class="tabs" aria-label="Secciones">
-      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'cuenta'" (click)="setTab('cuenta')">Cuenta</button>
-      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'preferencias'" (click)="setTab('preferencias')">Preferencias</button>
-      <button type="button" class="tabs__btn" [class.active]="activeTab() === 'notificaciones'" (click)="setTab('notificaciones')">Notificaciones</button>
-    </nav>
+    @if (loading()) {
+      <p class="feed__empty">Cargando configuración…</p>
+    } @else {
 
-    @if (success()) {
-      <p class="alert alert--ok">{{ success() }}</p>
-    }
-    @if (error()) {
-      <p class="alert alert--error">{{ error() }}</p>
-    }
+      @if (success()) {
+        <div class="prof-alert prof-alert--ok" role="status"><p>{{ success() }}</p></div>
+      }
+      @if (error()) {
+        <div class="prof-alert" role="alert"><p>{{ error() }}</p></div>
+      }
 
-    @if (activeTab() === 'cuenta') {
-      <section class="feed">
-        <div class="feed__head"><h2>Cambio de contraseña</h2></div>
+      <div class="cfg-split">
 
-        @if (passwordSuccess()) {
-          <p class="alert alert--ok">{{ passwordSuccess() }}</p>
-        }
-        @if (passwordError()) {
-          <p class="alert alert--error">{{ passwordError() }}</p>
-        }
+        <section class="sheet">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Seguridad</p>
+              <h2 class="mod-head__title">Contraseña</h2>
+            </div>
+          </header>
 
-        <form class="form" (ngSubmit)="changePassword()">
-          <label class="field">
-            <span class="field__label">Contraseña actual</span>
-            <input
-              type="password"
-              [ngModel]="changePasswordForm().currentPassword"
-              (ngModelChange)="updatePwForm('currentPassword', $event)"
-              name="currentPassword"
-              required
-              autocomplete="current-password"
-            />
-          </label>
-          <label class="field">
-            <span class="field__label">Nueva contraseña</span>
-            <input
-              type="password"
-              [ngModel]="changePasswordForm().newPassword"
-              (ngModelChange)="updatePwForm('newPassword', $event)"
-              name="newPassword"
-              required
-              autocomplete="new-password"
-            />
-            <span class="field__hint">Mínimo 8 caracteres, con mayúscula y número</span>
-          </label>
-          <label class="field">
-            <span class="field__label">Confirmar nueva contraseña</span>
-            <input
-              type="password"
-              [ngModel]="changePasswordForm().confirmPassword"
-              (ngModelChange)="updatePwForm('confirmPassword', $event)"
-              name="confirmPassword"
-              required
-              autocomplete="new-password"
-            />
-          </label>
-          <button type="submit" class="cfg-btn cfg-btn--primary">Cambiar contraseña</button>
-        </form>
+          @if (passwordSuccess()) {
+            <div class="prof-alert prof-alert--ok" role="status"><p>{{ passwordSuccess() }}</p></div>
+          }
+          @if (passwordError()) {
+            <div class="prof-alert" role="alert"><p>{{ passwordError() }}</p></div>
+          }
 
-        <div class="feed__subhead">Cuenta</div>
-        <ul class="data-list">
-          <li>
-            <span class="data-list__l">Email</span>
-            <span class="data-list__v">{{ accountEmail() }}</span>
-          </li>
-          <li>
-            <span class="data-list__l">Usuario</span>
-            <span class="data-list__v">{{ accountName() }}</span>
-          </li>
-        </ul>
-      </section>
-    }
+          <form class="pass" (ngSubmit)="changePassword()">
+            <label class="field">
+              <span class="field__label">Contraseña actual</span>
+              <input
+                type="password"
+                [ngModel]="changePasswordForm().currentPassword"
+                (ngModelChange)="updatePwForm('currentPassword', $event)"
+                name="currentPassword"
+                autocomplete="current-password"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">Nueva contraseña</span>
+              <input
+                type="password"
+                [ngModel]="changePasswordForm().newPassword"
+                (ngModelChange)="updatePwForm('newPassword', $event)"
+                name="newPassword"
+                autocomplete="new-password"
+              />
+              <span class="field__hint">Mínimo 8 caracteres.</span>
+            </label>
+            <label class="field">
+              <span class="field__label">Confirmar</span>
+              <input
+                type="password"
+                [ngModel]="changePasswordForm().confirmPassword"
+                (ngModelChange)="updatePwForm('confirmPassword', $event)"
+                name="confirmPassword"
+                autocomplete="new-password"
+              />
+            </label>
+            <button type="submit" class="prof-btn prof-btn--solid" [disabled]="passwordSaving()">
+              {{ passwordSaving() ? 'Guardando…' : 'Cambiar contraseña' }}
+            </button>
+          </form>
+        </section>
 
-    @if (activeTab() === 'preferencias') {
-      <section class="feed">
-        <div class="feed__head"><h2>Preferencias</h2></div>
-        <form class="form" (ngSubmit)="saveSettings()">
-          <label class="field">
-            <span class="field__label">Idioma</span>
-            <select
-              [ngModel]="settings().language"
-              (ngModelChange)="updateSetting('language', $event)"
-              name="language"
-            >
-              <option value="es">Español</option>
-              <option value="en">English</option>
-            </select>
-          </label>
-          <label class="field">
-            <span class="field__label">Tema</span>
-            <select
-              [ngModel]="settings().theme"
-              (ngModelChange)="updateSetting('theme', $event)"
-              name="theme"
-            >
-              <option value="light">Claro</option>
-              <option value="dark">Oscuro</option>
-              <option value="auto">Automático</option>
-            </select>
-          </label>
-          <button type="submit" class="cfg-btn cfg-btn--primary" [disabled]="saving()">
-            {{ saving() ? 'Guardando…' : 'Guardar preferencias' }}
-          </button>
-        </form>
-      </section>
-    }
+        <aside class="side">
+          <section class="side__block">
+            <h2>Cuenta</h2>
+            <dl class="facts">
+              <div>
+                <dt>Nombre</dt>
+                <dd>{{ accountName() }}</dd>
+              </div>
+              <div>
+                <dt>Correo</dt>
+                <dd>{{ accountEmail() }}</dd>
+              </div>
+            </dl>
+          </section>
 
-    @if (activeTab() === 'notificaciones') {
-      <section class="feed">
-        <div class="feed__head"><h2>Notificaciones</h2></div>
-        <form class="form" (ngSubmit)="saveSettings()">
-          <label class="toggle-row">
-            <span class="toggle-row__text">
+          <section class="side__block">
+            <h2>Avisos</h2>
+            <p class="side__hint">Tareas, notas y comunicados del colegio.</p>
+            <label class="toggle-row">
               <span class="toggle-row__title">Recibir notificaciones</span>
-              <span class="toggle-row__hint">Avisos de tareas, notas y comunicados del colegio</span>
-            </span>
-            <input
-              type="checkbox"
-              class="toggle"
-              [checked]="!!settings().notifications"
-              (change)="updateSetting('notifications', $any($event.target).checked)"
-            />
-          </label>
-          <button type="submit" class="cfg-btn cfg-btn--primary" [disabled]="saving()">
-            {{ saving() ? 'Guardando…' : 'Guardar' }}
-          </button>
-        </form>
-      </section>
-    }
+              <input
+                type="checkbox"
+                class="toggle"
+                [checked]="notifications()"
+                (change)="notifications.set($any($event.target).checked)"
+              />
+            </label>
+            <button type="button" class="prof-btn prof-btn--solid" (click)="saveNotifications()" [disabled]="saving()">
+              {{ saving() ? 'Guardando…' : 'Guardar avisos' }}
+            </button>
+          </section>
 
-    <footer class="cfg-footer">
-      <button type="button" class="cfg-btn cfg-btn--danger" (click)="logout()">Cerrar sesión</button>
-    </footer>
+          <section class="side__block">
+            <h2>Sesión</h2>
+            <button type="button" class="cfg-logout" (click)="logout()">Cerrar sesión</button>
+          </section>
+        </aside>
+      </div>
+    }
   </div>
 </div>

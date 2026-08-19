@@ -1,10 +1,8 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StudentService, StudentSettings } from '../../services/student.service';
+import { StudentService } from '../../services/student.service';
 import { AuthService } from '../../services/auth.service';
-
-type ConfigTab = 'cuenta' | 'preferencias' | 'notificaciones';
 
 @Component({
   selector: 'app-configuracion',
@@ -16,11 +14,11 @@ type ConfigTab = 'cuenta' | 'preferencias' | 'notificaciones';
 export class ConfiguracionComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
+  passwordSaving = signal(false);
   error = signal('');
   success = signal('');
-  activeTab = signal<ConfigTab>('cuenta');
 
-  settings = signal<StudentSettings>({ notifications: true, language: 'es', theme: 'light' });
+  notifications = signal(true);
 
   changePasswordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
   passwordError = signal('');
@@ -37,28 +35,20 @@ export class ConfiguracionComponent implements OnInit {
   ngOnInit() {
     this.studentService.getSettings().subscribe({
       next: (data) => {
-        this.settings.set({
-          notifications: data?.notifications ?? true,
-          language: data?.language ?? 'es',
-          theme: data?.theme ?? 'light',
-        });
+        this.notifications.set(data?.notifications ?? true);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
   }
 
-  setTab(t: ConfigTab) {
-    this.activeTab.set(t);
-  }
-
-  saveSettings() {
+  saveNotifications() {
     this.saving.set(true);
     this.error.set('');
-    this.studentService.updateSettings(this.settings()).subscribe({
+    this.studentService.updateSettings({ notifications: this.notifications() }).subscribe({
       next: (data) => {
-        this.settings.set(data);
-        this.success.set('Configuración guardada');
+        this.notifications.set(data?.notifications ?? this.notifications());
+        this.success.set('Preferencias de avisos guardadas.');
         this.saving.set(false);
         setTimeout(() => this.success.set(''), 3000);
       },
@@ -71,28 +61,33 @@ export class ConfiguracionComponent implements OnInit {
 
   changePassword() {
     const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm();
-    if (!currentPassword || !newPassword) {
-      this.passwordError.set('Completa todos los campos');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      this.passwordError.set('Completa todos los campos.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      this.passwordError.set('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      this.passwordError.set('Las contraseñas no coinciden');
+      this.passwordError.set('Las contraseñas no coinciden.');
       return;
     }
     this.passwordError.set('');
     this.passwordSuccess.set('');
+    this.passwordSaving.set(true);
     this.authService.changePassword(currentPassword, newPassword).subscribe({
       next: () => {
-        this.passwordSuccess.set('Contraseña actualizada');
+        this.passwordSuccess.set('Contraseña actualizada.');
         this.changePasswordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        this.passwordSaving.set(false);
+        setTimeout(() => this.passwordSuccess.set(''), 3000);
       },
-      error: (err) =>
-        this.passwordError.set(err?.error?.error?.message ?? 'Error al cambiar contraseña'),
+      error: (err) => {
+        this.passwordError.set(err?.error?.error?.message ?? 'No se pudo cambiar la contraseña.');
+        this.passwordSaving.set(false);
+      },
     });
-  }
-
-  updateSetting(field: keyof StudentSettings, value: unknown) {
-    this.settings.update((s) => ({ ...s, [field]: value }));
   }
 
   updatePwForm(field: 'currentPassword' | 'newPassword' | 'confirmPassword', value: string) {
