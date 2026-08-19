@@ -10,29 +10,38 @@ import {
   StudentTask,
   StudentGrade,
   StudentAttendance,
+  StudentMaterial,
+  StudentPeriod,
 } from '../../services/student.service';
 import { AnnouncementService, Announcement } from '../../services/announcement.service';
+import { isMaterialFolder, materialFolderTitle } from '../../services/teacher.service';
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../shared/utils/course-cover';
 
 type TabType = 'material' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
 type TaskFilter = 'all' | 'pending';
 
-export type CourseUnitMaterial = {
+interface MaterialBinFile {
   id: string;
+  materialId: string;
   name: string;
-  type?: string;
-  size?: string;
-  date?: string;
-};
+  size?: number;
+  mimeType?: string;
+}
 
-export type CourseUnit = {
+interface MaterialBinFolder {
   id: string;
   title: string;
-  description?: string;
-  number?: number | null;
-  isExpanded?: boolean;
-  materials?: CourseUnitMaterial[];
-};
+  files: MaterialBinFile[];
+}
+
+interface MaterialBin {
+  id: string;
+  title: string;
+  roman: string;
+  kind: 'period' | 'loose' | 'placeholder';
+  files: MaterialBinFile[];
+  folders: MaterialBinFolder[];
+}
 
 export type CourseGradeRow = {
   id: string;
@@ -60,7 +69,10 @@ export class CursoDetalleComponent implements OnInit {
   error = signal('');
 
   course = signal<StudentCourse | null>(null);
-  units = signal<CourseUnit[]>([]);
+  materials = signal<StudentMaterial[]>([]);
+  periods = signal<StudentPeriod[]>([]);
+  materialsLoading = signal(false);
+  materialExpanded = signal<Record<string, boolean>>({});
   tasks = signal<StudentTask[]>([]);
   grades = signal<StudentGrade[]>([]);
   attendance = signal<StudentAttendance[]>([]);
@@ -87,6 +99,69 @@ export class CursoDetalleComponent implements OnInit {
   pendingTasksCount = computed(() =>
     this.tasks().filter((t) => !this.taskIsDone(t)).length
   );
+
+  materialGroups = computed((): MaterialBin[] => {
+    const materials = this.materials();
+    const toFiles = (list: StudentMaterial[]): MaterialBinFile[] =>
+      list.flatMap(m =>
+        (m.files ?? []).map(f => ({
+          id: f.id,
+          materialId: m.id,
+          name: (f.filename ?? f.name ?? '').trim() || 'Archivo',
+          size: f.size,
+          mimeType: f.mimeType,
+        })),
+      );
+    const toFolders = (list: StudentMaterial[]): MaterialBinFolder[] =>
+      list
+        .filter(isMaterialFolder)
+        .map(m => ({
+          id: m.id,
+          title: materialFolderTitle(m),
+          files: toFiles([m]),
+        }));
+    const split = (list: StudentMaterial[]) => ({
+      folders: toFolders(list),
+      files: toFiles(list.filter(m => !isMaterialFolder(m))),
+    });
+    const inPeriod = (periodId: string) =>
+      materials.filter(m => (m.periodId ?? m.period?.id) === periodId);
+
+    const roman = ['I', 'II', 'III', 'IV'];
+    const fallbackTitles = ['I Bimestre', 'II Bimestre', 'III Bimestre', 'IV Bimestre'];
+    const periods = this.periods().slice(0, 4);
+    const bins: MaterialBin[] = fallbackTitles.map((title, i) => {
+      const period = periods[i];
+      if (!period) {
+        return {
+          id: `_ph-${i}`,
+          title,
+          roman: roman[i],
+          kind: 'placeholder' as const,
+          files: [] as MaterialBinFile[],
+          folders: [] as MaterialBinFolder[],
+        };
+      }
+      return {
+        id: period.id,
+        title: period.name || title,
+        roman: roman[i],
+        kind: 'period' as const,
+        ...split(inPeriod(period.id)),
+      };
+    });
+    bins.push({
+      id: '_loose',
+      title: 'Fuera de bimestres',
+      roman: '·',
+      kind: 'loose',
+      ...split(materials.filter(m => !(m.periodId ?? m.period?.id))),
+    });
+    return bins;
+  });
+
+  bimestreBins = computed(() => this.materialGroups().filter(b => b.kind !== 'loose'));
+  looseBin = computed(() => this.materialGroups().find(b => b.kind === 'loose') ?? null);
 
   filteredTasks = computed(() => {
     const list = this.tasks();
@@ -195,7 +270,7 @@ export class CursoDetalleComponent implements OnInit {
     });
 
     this.loadCourse();
-    this.loadUnits();
+    this.loadMaterials();
     this.loadTasks();
   }
 
@@ -214,7 +289,7 @@ export class CursoDetalleComponent implements OnInit {
       this.loadGrades();
       this.loadTasks();
     }
-    if (tab === 'material') this.loadUnits();
+    if (tab === 'material') this.loadMaterials();
     if (tab === 'asistencia') this.loadAttendance();
     if (tab === 'comunicados') this.loadAnnouncements();
   }
@@ -226,9 +301,19 @@ export class CursoDetalleComponent implements OnInit {
     });
   }
 
-  loadUnits() {
-    this.studentService.getCourseUnits(this.courseId()).subscribe({
-      next: (data) => this.units.set((data as CourseUnit[]) ?? []),
+  loadMaterials() {
+    this.materialsLoading.set(true);
+    this.studentService.getCourseMaterials(this.courseId()).subscribe({
+      next: (data) => {
+        this.periods.set(data.periods ?? []);
+        this.materials.set(data.materials ?? []);
+        this.materialsLoading.set(false);
+      },
+      error: () => {
+        this.periods.set([]);
+        this.materials.set([]);
+        this.materialsLoading.set(false);
+      },
     });
   }
 
@@ -376,15 +461,45 @@ export class CursoDetalleComponent implements OnInit {
     });
   }
 
-  toggleUnit(unitId: string) {
-    this.units.update((list) =>
-      list.map((u) => (u.id === unitId ? { ...u, isExpanded: !u.isExpanded } : u)),
-    );
+  toggleMaterialFolder(id: string) {
+    this.materialExpanded.update((rec) => ({ ...rec, [id]: !rec[id] }));
   }
 
-  unitCountLabel(unit: CourseUnit): string {
-    const n = unit.materials?.length ?? 0;
-    return n === 1 ? '1 archivo' : `${n} archivos`;
+  isMaterialFolderOpen(id: string): boolean {
+    return !!this.materialExpanded()[id];
+  }
+
+  binIsEmpty(bin: MaterialBin): boolean {
+    return !bin.folders.length && !bin.files.length;
+  }
+
+  binCountLabel(bin: MaterialBin): string {
+    const folders = bin.folders.length;
+    const files = bin.files.length + bin.folders.reduce((n, f) => n + f.files.length, 0);
+    if (!folders && !files) return 'Vacío';
+    const parts: string[] = [];
+    if (folders) parts.push(`${folders} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
+    parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    return parts.join(' · ');
+  }
+
+  formatMaterialFileSize(bytes: number | undefined): string {
+    if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  mimeTypeLabel(mime?: string): string {
+    if (!mime) return 'Archivo';
+    if (mime.includes('pdf')) return 'PDF';
+    if (mime.includes('image')) return 'Imagen';
+    if (mime.includes('word') || mime.includes('document')) return 'Documento';
+    if (mime.includes('sheet') || mime.includes('excel')) return 'Hoja';
+    if (mime.includes('video')) return 'Video';
+    if (mime.includes('audio')) return 'Audio';
+    if (mime.includes('zip') || mime.includes('compressed')) return 'Comprimido';
+    return mime.split('/')[1]?.toUpperCase() || 'Archivo';
   }
 
   taskStatusLabel(task: StudentTask): string {

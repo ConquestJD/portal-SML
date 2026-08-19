@@ -46,6 +46,28 @@ export interface StudentCourse {
   gradeSection?: string;
 }
 
+export interface StudentPeriod {
+  id: string;
+  name: string;
+  order?: number;
+}
+
+export interface StudentMaterialFile {
+  id: string;
+  name?: string;
+  filename?: string;
+  mimeType?: string;
+  size?: number;
+}
+
+export interface StudentMaterial {
+  id: string;
+  title: string;
+  periodId?: string | null;
+  period?: { id: string; name: string; order?: number } | null;
+  files: StudentMaterialFile[];
+}
+
 export interface StudentTask {
   id: string;
   title: string;
@@ -194,6 +216,24 @@ export class StudentService {
     };
   }
 
+  private normalizeStudentMaterial(raw: StudentMaterial | Record<string, unknown>): StudentMaterial {
+    const m = raw as Record<string, unknown>;
+    const filesRaw = Array.isArray(m['files']) ? (m['files'] as Record<string, unknown>[]) : [];
+    return {
+      id: String(m['id'] ?? ''),
+      title: String(m['title'] ?? ''),
+      periodId: m['periodId'] != null ? String(m['periodId']) : null,
+      period: (m['period'] as StudentMaterial['period']) ?? null,
+      files: filesRaw.map((f) => ({
+        id: String(f['id'] ?? ''),
+        name: String(f['filename'] ?? f['name'] ?? 'Archivo'),
+        filename: String(f['filename'] ?? f['name'] ?? 'Archivo'),
+        mimeType: f['mimeType'] != null ? String(f['mimeType']) : undefined,
+        size: typeof f['size'] === 'number' ? f['size'] : undefined,
+      })),
+    };
+  }
+
   private normalizeCourse(raw: StudentCourse | Record<string, unknown>): StudentCourse {
     const c = raw as Record<string, unknown>;
     const course = (c['course'] as StudentCourse['course']) ?? { id: String(c['id'] ?? ''), name: '—' };
@@ -241,6 +281,21 @@ export class StudentService {
   }
   getCourseUnits(courseId: string): Observable<unknown[]> {
     return this.get<unknown[]>(`/student/courses/${courseId}/units`);
+  }
+  getCourseMaterials(courseId: string): Observable<{ periods: StudentPeriod[]; materials: StudentMaterial[] }> {
+    return this.get<{ periods: StudentPeriod[]; materials: StudentMaterial[] }>(
+      `/student/courses/${courseId}/materials`,
+    ).pipe(
+      map((raw) => {
+        const data = raw ?? { periods: [], materials: [] };
+        return {
+          periods: Array.isArray(data.periods) ? data.periods : [],
+          materials: (Array.isArray(data.materials) ? data.materials : []).map((m) =>
+            this.normalizeStudentMaterial(m as StudentMaterial),
+          ),
+        };
+      }),
+    );
   }
   getCourseTasks(courseId: string): Observable<StudentTask[]> {
     return this.get<StudentTask[]>(`/student/courses/${courseId}/tasks`).pipe(
