@@ -1,43 +1,223 @@
-@import '../profesor/actividad-profesor/actividad-profesor.component.css';
+@import '../profesor/_shared/profesor-editorial.css';
 
-.stream__item[data-kind='graded'] .stream__dot,
-.stream__item[data-kind='period-grade'] .stream__dot,
-.stream__item[data-kind='exam-grade'] .stream__dot {
-  background: #1a6b4a;
+.act-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem 1.25rem;
+  margin: 0 0 1.5rem;
 }
 
-.stream__item[data-kind='graded'] .stream__kind,
-.stream__item[data-kind='period-grade'] .stream__kind,
-.stream__item[data-kind='exam-grade'] .stream__kind {
-  color: #1a6b4a;
+.act-toolbar .view-toggle {
+  margin: 0;
 }
 
-.stream__reveal {
+.act-select select {
+  min-width: 16rem;
+  max-width: 22rem;
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  padding: .45rem 0;
+  font: inherit;
+  font-size: .9rem;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+}
+
+.act-select select:focus { border-bottom-color: var(--navy); }
+
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0 1.15rem;
+  border: 1.5px solid var(--navy);
+  background: #fff;
+  color: var(--navy);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.act-btn:hover {
+  background: var(--navy);
+  color: #fff;
+}
+
+.prof-alert .act-btn {
   margin-top: .75rem;
 }
 
-div.stream__card { cursor: default; }
-div.stream__card:hover { box-shadow: inset 3px 0 0 #1a6b4a; }
+.act-stream { max-width: 42rem; }
 
-.stream__score {
-  margin: .75rem 0 0;
+.act-day { margin: 0 0 1.85rem; }
+
+.act-day__title {
+  margin: 0 0 .85rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.act-day__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.act-day__list > li + li { margin-top: .75rem; }
+
+.act-card {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.05rem 1.15rem 1.1rem;
+  background: var(--surface);
+}
+
+.act-card__mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.act-card[data-kind='graded'] .act-card__mark,
+.act-card[data-kind='period-grade'] .act-card__mark,
+.act-card[data-kind='exam-grade'] .act-card__mark {
+  background: #1a6b4a;
+}
+
+.act-card__body { min-width: 0; }
+
+.act-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .7rem;
+  margin-bottom: .3rem;
+}
+
+.act-card__kind {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.act-card[data-kind='graded'] .act-card__kind,
+.act-card[data-kind='period-grade'] .act-card__kind,
+.act-card[data-kind='exam-grade'] .act-card__kind {
+  color: #1a6b4a;
+}
+
+.act-card__course {
+  flex: 1;
+  min-width: 0;
+  font-size: .78rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-card__time {
+  font-size: .72rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.act-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--navy);
+}
+
+.act-card__detail {
+  margin: .28rem 0 0;
+  font-size: .88rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.act-seal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1rem;
+  margin-top: .9rem;
+  padding: .85rem 1rem;
+  background: #f3f5f8;
+}
+
+.act-seal--open { background: #eef6f1; }
+
+.act-seal__hidden {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: .95rem;
+  color: var(--muted);
+}
+
+.act-seal__score {
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.85rem;
   font-weight: 600;
-  letter-spacing: .02em;
-  color: var(--navy);
   line-height: 1;
+  color: var(--navy);
 }
 
-.stream__go {
+.act-seal__score span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.act-open {
   display: inline-block;
-  margin-top: .7rem;
-  font-size: .78rem;
+  margin-top: .85rem;
+  font-size: .72rem;
   font-weight: 700;
-  letter-spacing: .06em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--navy);
   text-decoration: none;
+  border-bottom: 1px solid transparent;
 }
 
-.stream__go:hover { color: var(--crimson); }
+.act-open:hover {
+  color: var(--crimson);
+  border-bottom-color: var(--crimson);
+}
+
+@media (max-width: 700px) {
+  .act-toolbar { flex-direction: column; align-items: stretch; }
+  .act-select select { min-width: 0; max-width: none; width: 100%; }
+  .act-card { grid-template-columns: 2.15rem minmax(0, 1fr); gap: .8rem; padding: .9rem; }
+  .act-card__mark { width: 2.15rem; height: 2.15rem; font-size: .88rem; }
+  .act-seal { flex-direction: column; align-items: stretch; }
+  .act-btn { width: 100%; }
+}

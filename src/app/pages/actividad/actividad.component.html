@@ -29,13 +29,13 @@
       </div>
     </section>
 
-    <div class="toolbar">
-      <nav class="prof-tabs" aria-label="Tipo de actividad">
-        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'todos'" (click)="filter.set('todos')">Todos</button>
-        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'calificaciones'" (click)="filter.set('calificaciones')">Calificaciones</button>
-        <button type="button" class="prof-tabs__btn" [class.active]="filter() === 'aula'" (click)="filter.set('aula')">Aula</button>
-      </nav>
-      <label class="search search--select">
+    <div class="act-toolbar">
+      <div class="view-toggle" role="tablist" aria-label="Tipo de actividad">
+        <button type="button" [class.active]="filter() === 'todos'" (click)="filter.set('todos')">Todos</button>
+        <button type="button" [class.active]="filter() === 'calificaciones'" (click)="filter.set('calificaciones')">Calificaciones</button>
+        <button type="button" [class.active]="filter() === 'aula'" (click)="filter.set('aula')">Aula</button>
+      </div>
+      <label class="act-select">
         <span class="visually-hidden">Filtrar por curso</span>
         <select
           [ngModel]="courseId()"
@@ -56,65 +56,61 @@
     } @else if (error()) {
       <div class="prof-alert" role="alert">
         <p>{{ error() }}</p>
-        <button type="button" class="prof-btn prof-btn--solid" (click)="load()">Reintentar</button>
+        <button type="button" class="act-btn" (click)="load()">Reintentar</button>
       </div>
     } @else if (days().length === 0) {
       <p class="feed__empty">Aún no hay novedades. Cuando suban material, publiquen una tarea o califiquen, aparecerá aquí.</p>
     } @else {
-      <div class="stream" aria-label="Línea de tiempo">
+      <div class="act-stream" aria-label="Línea de tiempo">
         @for (day of days(); track day.key) {
-          <section class="stream__day">
-            <h2 class="stream__date">{{ day.label }}</h2>
-            <ol class="stream__list">
+          <section class="act-day">
+            <h2 class="act-day__title">{{ day.label }}</h2>
+            <ul class="act-day__list">
               @for (item of day.items; track item.id) {
-                <li class="stream__item" [attr.data-kind]="item.kind">
-                  <span class="stream__dot" aria-hidden="true"></span>
-                  @if (isGradeKind(item.kind)) {
-                    <div class="stream__card">
-                      <div class="stream__meta">
-                        <span class="stream__kind">{{ kindLabel(item.kind) }}</span>
-                        <span class="stream__course">
+                <li>
+                  <article class="act-card" [attr.data-kind]="item.kind">
+                    <span class="act-card__mark" aria-hidden="true">{{ kindMark(item.kind) }}</span>
+                    <div class="act-card__body">
+                      <header class="act-card__meta">
+                        <span class="act-card__kind">{{ kindLabel(item.kind) }}</span>
+                        <span class="act-card__course">
                           {{ item.courseName }}
                           @if (item.courseMeta) {
                             · {{ item.courseMeta }}
                           }
                         </span>
-                        <time class="stream__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
-                      </div>
-                      <p class="stream__headline">{{ item.headline }}</p>
+                        <time class="act-card__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
+                      </header>
+                      <h3 class="act-card__title">{{ item.headline }}</h3>
                       @if (item.detail) {
-                        <p class="stream__detail">{{ item.detail }}</p>
+                        <p class="act-card__detail">{{ item.detail }}</p>
                       }
-                      @if (isRevealed(item.id)) {
-                        <p class="stream__score">{{ scoreLabel(item) }}</p>
-                      } @else {
-                        <button type="button" class="prof-btn prof-btn--solid stream__reveal" (click)="reveal(item.id, $event)">
-                          Mostrar nota
-                        </button>
+
+                      @if (isGradeKind(item.kind)) {
+                        <div class="act-seal" [class.act-seal--open]="isRevealed(item.id)">
+                          @if (isRevealed(item.id)) {
+                            @let parts = scoreParts(item);
+                            <p class="act-seal__score">
+                              {{ parts.score }}
+                              <span>/ {{ parts.max }}</span>
+                            </p>
+                          } @else {
+                            <p class="act-seal__hidden">Nota oculta</p>
+                            <button type="button" class="act-btn" (click)="reveal(item.id, $event)">
+                              Mostrar nota
+                            </button>
+                          }
+                        </div>
                       }
-                      <a class="stream__go" [routerLink]="itemLink(item)" [queryParams]="itemQuery(item) || {}">Ver en el curso</a>
+
+                      <a class="act-open" [routerLink]="itemLink(item)" [queryParams]="itemQuery(item) || {}">
+                        {{ openLabel(item) }}
+                      </a>
                     </div>
-                  } @else {
-                    <a class="stream__card" [routerLink]="itemLink(item)" [queryParams]="itemQuery(item) || {}">
-                      <div class="stream__meta">
-                        <span class="stream__kind">{{ kindLabel(item.kind) }}</span>
-                        <span class="stream__course">
-                          {{ item.courseName }}
-                          @if (item.courseMeta) {
-                            · {{ item.courseMeta }}
-                          }
-                        </span>
-                        <time class="stream__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
-                      </div>
-                      <p class="stream__headline">{{ item.headline }}</p>
-                      @if (item.detail) {
-                        <p class="stream__detail">{{ item.detail }}</p>
-                      }
-                    </a>
-                  }
+                  </article>
                 </li>
               }
-            </ol>
+            </ul>
           </section>
         }
       </div>

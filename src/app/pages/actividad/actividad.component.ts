@@ -17,8 +17,6 @@ interface StreamDay {
   items: StudentActivityItem[];
 }
 
-const LS_REVEALED = 'sml_estudiante_notas_reveladas';
-
 @Component({
   selector: 'app-actividad',
   standalone: true,
@@ -64,7 +62,7 @@ export class ActividadComponent implements OnInit {
   constructor(private studentService: StudentService) {}
 
   ngOnInit() {
-    this.revealed.set(this.readRevealed());
+    this.revealed.set(new Set());
     this.studentService.getCourses().subscribe({
       next: (list) => this.courses.set(list),
     });
@@ -105,11 +103,6 @@ export class ActividadComponent implements OnInit {
     const next = new Set(this.revealed());
     next.add(id);
     this.revealed.set(next);
-    try {
-      localStorage.setItem(LS_REVEALED, JSON.stringify([...next]));
-    } catch {
-      /* ignore */
-    }
   }
 
   courseLabel(c: StudentCourse): string {
@@ -130,12 +123,29 @@ export class ActividadComponent implements OnInit {
     return 'Nota de examen';
   }
 
-  scoreLabel(item: StudentActivityItem): string {
-    if (item.score == null || !Number.isFinite(Number(item.score))) return 'Sin nota numérica';
-    const score = Number(item.score);
-    const max = item.maxScore != null && Number.isFinite(Number(item.maxScore)) ? Number(item.maxScore) : 20;
+  kindMark(kind: StudentActivityKind): string {
+    if (kind === 'task') return 'T';
+    if (kind === 'material') return 'M';
+    if (kind === 'announcement') return 'C';
+    if (kind === 'exam') return 'E';
+    return 'N';
+  }
+
+  scoreParts(item: StudentActivityItem): { score: string; max: string } {
+    const maxN = item.maxScore != null && Number.isFinite(Number(item.maxScore)) ? Number(item.maxScore) : 20;
     const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
-    return `${fmt(score)} / ${fmt(max)}`;
+    if (item.score == null || !Number.isFinite(Number(item.score))) {
+      return { score: '—', max: fmt(maxN) };
+    }
+    return { score: fmt(Number(item.score)), max: fmt(maxN) };
+  }
+
+  openLabel(item: StudentActivityItem): string {
+    if (item.kind === 'task' || item.kind === 'graded') return 'Ver tarea';
+    if (item.kind === 'material') return 'Ver material';
+    if (item.kind === 'announcement') return 'Ver comunicado';
+    if (item.kind === 'exam' || item.kind === 'exam-grade' || item.kind === 'period-grade') return 'Ver notas';
+    return 'Ir al curso';
   }
 
   itemLink(item: StudentActivityItem): string[] {
@@ -166,17 +176,6 @@ export class ActividadComponent implements OnInit {
     if (min < 1) return 'Ahora';
     if (min < 60) return `Hace ${min} min`;
     return d.toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' });
-  }
-
-  private readRevealed(): Set<string> {
-    try {
-      const raw = localStorage.getItem(LS_REVEALED);
-      if (!raw) return new Set();
-      const parsed = JSON.parse(raw);
-      return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-    } catch {
-      return new Set();
-    }
   }
 
   private dayKey(iso: string): string {
