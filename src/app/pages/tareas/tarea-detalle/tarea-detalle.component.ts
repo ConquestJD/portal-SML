@@ -75,7 +75,7 @@ export class TareaDetalleComponent implements OnInit {
       void this.router.navigate(['/cursos', courseId], { queryParams: { tab: 'tareas' } });
       return;
     }
-    void this.router.navigate(['/tareas']);
+    void this.router.navigate(['/cursos']);
   }
 
   formatDue(d?: string): string {

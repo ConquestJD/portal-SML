@@ -44,9 +44,6 @@ export class DashboardPadreComponent implements OnInit {
   readonly shortcuts = [
     { label: 'Perfil del hijo', link: '/padre/perfil-hijo' },
     { label: 'Cursos', link: '/padre/cursos' },
-    { label: 'Tareas', link: '/padre/tareas' },
-    { label: 'Notas', link: '/padre/notas' },
-    { label: 'Asistencia', link: '/padre/asistencia' },
     { label: 'Mensajería', link: '/padre/mensajeria' },
     { label: 'Pagos', link: '/padre/pagos' },
   ];

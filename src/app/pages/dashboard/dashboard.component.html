@@ -38,15 +38,15 @@
     <div class="stu-dash__body">
 
       <section class="metrics" aria-label="Resumen académico">
-        <a routerLink="/notas" class="metric">
+        <a routerLink="/cursos" class="metric">
           <span class="metric__n">{{ averageGrade() }}</span>
           <span class="metric__l">Promedio</span>
         </a>
-        <a routerLink="/tareas" class="metric">
+        <a routerLink="/cursos" class="metric">
           <span class="metric__n">{{ pendingTasks() }}</span>
           <span class="metric__l">Tareas</span>
         </a>
-        <a routerLink="/asistencia" class="metric">
+        <a routerLink="/cursos" class="metric">
           <span class="metric__n">{{ attendancePercentage }}%</span>
           <span class="metric__l">Asistencia</span>
         </a>
@@ -65,7 +65,7 @@
             </a>
           }
           @if (pendingTasks() > 0 && !heroBanner()) {
-            <a routerLink="/tareas" class="pulse__item">
+            <a routerLink="/cursos" class="pulse__item">
               <span class="pulse__n">{{ pendingTasks() }}</span>
               <span class="pulse__l">Tareas pendientes</span>
             </a>
@@ -159,7 +159,7 @@
         <section class="feed feed--side" aria-labelledby="eval-title">
           <div class="feed__head">
             <h2 id="eval-title">Próximas entregas</h2>
-            <a routerLink="/tareas">Ver todas</a>
+            <a routerLink="/cursos">Ver todas</a>
           </div>
           @if (upcomingEvaluationsList().length === 0) {
             <p class="feed__empty">Sin entregas próximas</p>

@@ -36,8 +36,14 @@ export class NavBadgesService {
 
   /** Ajusta "visto" según ruta y recalcula contadores. */
   private onNavigation(fullUrl: string) {
-    const path = fullUrl.split('?')[0];
-    if (this.auth.userRole() === 'estudiante' && (path === '/notas' || path.startsWith('/notas/'))) {
+    const [path, query = ''] = fullUrl.split('#')[0].split('?');
+    const tab = new URLSearchParams(query).get('tab');
+    const onCourseNotas =
+      /^\/cursos\/[^/]+$/.test(path) && (tab === 'notas' || tab === 'calificaciones');
+    if (
+      this.auth.userRole() === 'estudiante' &&
+      (onCourseNotas || path === '/notas' || path.startsWith('/notas/'))
+    ) {
       try {
         localStorage.setItem(LS_NOTAS_SEEN, new Date().toISOString());
       } catch {
@@ -141,8 +147,7 @@ export class NavBadgesService {
       if (path === '/profesor/comunicados') return this.teacherComunicados();
     }
     if (role === 'estudiante') {
-      if (path === '/tareas') return this.studentTareas();
-      if (path === '/notas') return this.studentNotas();
+      if (path === '/cursos') return this.studentTareas();
       if (path === '/comunicados') return this.studentComunicados();
     }
     return 0;

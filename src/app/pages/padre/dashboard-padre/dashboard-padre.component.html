@@ -112,7 +112,7 @@
           <span class="metric__n">{{ weekAttendance().percentage }}%</span>
           <span class="metric__l">Semana ({{ weekAttendance().present }}/{{ weekAttendance().total }})</span>
         </div>
-        <a routerLink="/padre/tareas" class="metric" [class.metric--alert]="pendingTasks() > 0">
+        <a routerLink="/padre/cursos" class="metric" [class.metric--alert]="pendingTasks() > 0">
           <span class="metric__n">{{ pendingTasks() }}</span>
           <span class="metric__l">Tareas pendientes</span>
         </a>

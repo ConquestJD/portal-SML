@@ -29,10 +29,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Académico',
       items: [
-        { label: 'Cursos', icon: 'fas fa-book', path: '/cursos', exact: false },
-        { label: 'Tareas', icon: 'fas fa-tasks', path: '/tareas', exact: false },
-        { label: 'Notas', icon: 'fas fa-chart-line', path: '/notas', exact: false },
-        { label: 'Asistencia', icon: 'fas fa-calendar-check', path: '/asistencia', exact: false }
+        { label: 'Cursos', icon: 'fas fa-book', path: '/cursos', exact: false }
       ]
     },
     {
@@ -125,10 +122,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Académico',
       items: [
-        { label: 'Cursos', icon: 'fas fa-book', path: '/padre/cursos', exact: false },
-        { label: 'Tareas', icon: 'fas fa-tasks', path: '/padre/tareas', exact: false },
-        { label: 'Notas', icon: 'fas fa-chart-line', path: '/padre/notas', exact: false },
-        { label: 'Asistencia', icon: 'fas fa-calendar-check', path: '/padre/asistencia', exact: false }
+        { label: 'Cursos', icon: 'fas fa-book', path: '/padre/cursos', exact: false }
       ]
     },
     {
@@ -303,7 +297,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       return;
     }
     if (/^\/tareas\/[^/]+/.test(path)) {
-      void this.router.navigateByUrl('/tareas');
+      void this.router.navigateByUrl('/cursos');
       return;
     }
     void this.router.navigateByUrl('/cursos');

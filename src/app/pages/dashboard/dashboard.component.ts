@@ -64,9 +64,6 @@ export class DashboardComponent implements OnInit {
 
   shortcuts = [
     { label: 'Mis Cursos', link: '/cursos' },
-    { label: 'Tareas', link: '/tareas' },
-    { label: 'Notas', link: '/notas' },
-    { label: 'Asistencia', link: '/asistencia' },
     { label: 'Comunicados', link: '/comunicados' },
     { label: 'Perfil', link: '/perfil' },
   ];

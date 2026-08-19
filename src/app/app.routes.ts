@@ -36,7 +36,8 @@ export const routes: Routes = [
       },
       {
         path: 'tareas',
-        loadComponent: () => import('./pages/tareas/tareas.component').then(m => m.TareasComponent)
+        redirectTo: 'cursos',
+        pathMatch: 'full'
       },
       {
         path: 'tareas/:id',
@@ -44,11 +45,13 @@ export const routes: Routes = [
       },
       {
         path: 'notas',
-        loadComponent: () => import('./pages/notas/notas.component').then(m => m.NotasComponent)
+        redirectTo: 'cursos',
+        pathMatch: 'full'
       },
       {
         path: 'asistencia',
-        loadComponent: () => import('./pages/asistencia/asistencia.component').then(m => m.AsistenciaComponent)
+        redirectTo: 'cursos',
+        pathMatch: 'full'
       },
       {
         path: 'comunicados',
@@ -293,15 +296,18 @@ export const routes: Routes = [
       },
       {
         path: 'padre/tareas',
-        loadComponent: () => import('./pages/padre/tareas-padre/tareas-padre.component').then(m => m.TareasPadreComponent)
+        redirectTo: 'padre/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'padre/notas',
-        loadComponent: () => import('./pages/padre/notas-padre/notas-padre.component').then(m => m.NotasPadreComponent)
+        redirectTo: 'padre/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'padre/asistencia',
-        loadComponent: () => import('./pages/padre/asistencia-padre/asistencia-padre.component').then(m => m.AsistenciaPadreComponent)
+        redirectTo: 'padre/cursos',
+        pathMatch: 'full'
       },
       {
         path: 'padre/justificaciones',

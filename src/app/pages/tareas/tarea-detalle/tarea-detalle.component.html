@@ -18,7 +18,7 @@
       <img class="tdet__hero-photo" src="/images/heroes/tasks.webp" alt="" decoding="async" />
       <div class="tdet__hero-veil"></div>
       <div class="tdet__hero-top">
-        <button type="button" class="tdet__back" (click)="goBack()">{{ courseId() ? '← Curso' : '← Tareas' }}</button>
+        <button type="button" class="tdet__back" (click)="goBack()">{{ courseId() ? '← Curso' : '← Cursos' }}</button>
         <span class="tdet__badge" [attr.data-status]="taskUiStatus()">{{ taskUiStatusLabel() }}</span>
       </div>
       <div class="tdet__hero-content">
