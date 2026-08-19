@@ -225,6 +225,10 @@ export interface TeacherActivityItem {
 export interface TeacherProfile {
   id: string; teacherCode?: string; bio?: string;
   user: { id: string; email: string; firstName: string; lastName: string; phone?: string; avatarUrl?: string };
+  assignments?: {
+    id: string;
+    course?: { name?: string; grade?: string; level?: string | null };
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })

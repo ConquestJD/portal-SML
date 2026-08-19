@@ -10,179 +10,164 @@ import { AuthService } from '../../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './perfil-profesor.component.html',
-  styleUrl: './perfil-profesor.component.css'
+  styleUrl: './perfil-profesor.component.css',
 })
 export class PerfilProfesorComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   saving = signal(false);
   success = signal('');
-  activeTab = signal('perfil');
   editing = signal(false);
+  photoBroken = signal(false);
   readonly isLoading = this.loading;
   readonly isSaving = this.saving;
 
   profile = signal<TeacherProfile | null>(null);
-  formData = signal({ bio: '', phone: '' });
-  editDraft = signal({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    birthDate: '',
-    hireDate: '',
-    bio: '',
-  });
+  phone = signal('');
+  bio = signal('');
 
   changePasswordForm = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
-
-  profileData = computed(() => {
-    const p = this.profile();
-    const fallbackPhoto = '/images/default-avatar.png';
-    if (!p) {
-      return {
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        birthDate: '',
-        hireDate: '',
-        bio: '',
-        photo: fallbackPhoto,
-      };
-    }
-    if (this.editing()) {
-      return { ...this.editDraft(), photo: p.user.avatarUrl ?? fallbackPhoto };
-    }
-    const fd = this.formData();
-    return {
-      name: `${p.user.firstName} ${p.user.lastName}`.trim(),
-      email: p.user.email ?? '',
-      phone: fd.phone || p.user.phone || '',
-      address: '—',
-      birthDate: '',
-      hireDate: '',
-      bio: fd.bio ?? p.bio ?? '',
-      photo: p.user.avatarUrl ?? fallbackPhoto,
-    };
-  });
-
-  isEditing = computed(() => this.editing());
-  passwordData = computed(() => this.changePasswordForm());
   passwordError = signal('');
   passwordSuccess = signal('');
 
-  constructor(private teacherService: TeacherService, private authService: AuthService) {}
+  fullName = computed(() => {
+    const p = this.profile();
+    if (!p) return '';
+    return `${p.user.firstName} ${p.user.lastName}`.trim();
+  });
+
+  initials = computed(() => {
+    const parts = this.fullName().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  });
+
+  photoUrl = computed(() => this.profile()?.user.avatarUrl || '');
+
+  courses = computed(() => {
+    const list = this.profile()?.assignments ?? [];
+    return list.map(a => {
+      const name = a.course?.name ?? 'Curso';
+      const meta = [a.course?.grade, a.course?.level].filter(Boolean).join(' · ');
+      return { id: a.id, label: meta ? `${name} · ${meta}` : name };
+    });
+  });
+
+  constructor(
+    private teacherService: TeacherService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.teacherService.getProfile().subscribe({
-      next: (data) => {
+      next: data => {
         this.profile.set(data);
-        this.formData.set({
-          bio: data.bio ?? '',
-          phone: data.user.phone ?? ''
-        });
+        this.phone.set(data.user.phone ?? '');
+        this.bio.set(data.bio ?? '');
+        this.photoBroken.set(false);
         this.loading.set(false);
       },
-      error: () => { this.error.set('Error al cargar perfil'); this.loading.set(false); }
+      error: () => {
+        this.error.set('No se pudo cargar el perfil.');
+        this.loading.set(false);
+      },
     });
-  }
-
-  setTab(tab: string) {
-    this.activeTab.set(tab);
   }
 
   startEditing() {
-    const pd = this.profileData();
-    this.editDraft.set({
-      name: pd.name,
-      email: pd.email,
-      phone: pd.phone,
-      address: pd.address,
-      birthDate: pd.birthDate,
-      hireDate: pd.hireDate,
-      bio: pd.bio,
-    });
     this.editing.set(true);
+    this.success.set('');
   }
 
   cancelEditing() {
     const p = this.profile();
-    if (p) {
-      this.formData.set({
-        bio: p.bio ?? '',
-        phone: p.user.phone ?? '',
-      });
-    }
+    this.phone.set(p?.user.phone ?? '');
+    this.bio.set(p?.bio ?? '');
     this.editing.set(false);
-  }
-
-  private patchDraft(
-    field: 'name' | 'email' | 'phone' | 'address' | 'birthDate' | 'hireDate' | 'bio',
-    value: string,
-  ) {
-    this.editDraft.update((d) => ({ ...d, [field]: value }));
-    if (field === 'phone') this.formData.update((f) => ({ ...f, phone: value }));
-    if (field === 'bio') this.formData.update((f) => ({ ...f, bio: value }));
-  }
-
-  updateName(value: string) { this.patchDraft('name', value); }
-  updateEmail(value: string) { this.patchDraft('email', value); }
-  updatePhone(value: string) { this.patchDraft('phone', value); }
-  updateAddress(value: string) { this.patchDraft('address', value); }
-  updateBirthDate(value: string) { this.patchDraft('birthDate', value); }
-  updateHireDate(value: string) { this.patchDraft('hireDate', value); }
-  updateBio(value: string) { this.patchDraft('bio', value); }
-
-  updateCurrentPassword(value: string) {
-    this.changePasswordForm.update((f) => ({ ...f, currentPassword: value }));
-  }
-
-  updateNewPassword(value: string) {
-    this.changePasswordForm.update((f) => ({ ...f, newPassword: value }));
-  }
-
-  updateConfirmPassword(value: string) {
-    this.changePasswordForm.update((f) => ({ ...f, confirmPassword: value }));
   }
 
   saveProfile() {
     this.saving.set(true);
     this.error.set('');
-    this.teacherService.updateProfile(this.formData()).subscribe({
-      next: (data) => {
+    this.teacherService.updateProfile({ phone: this.phone().trim(), bio: this.bio() }).subscribe({
+      next: data => {
         this.profile.set(data);
+        this.phone.set(data.user.phone ?? '');
+        this.bio.set(data.bio ?? '');
         this.editing.set(false);
-        this.success.set('Perfil actualizado correctamente');
+        this.success.set('Perfil actualizado.');
         this.saving.set(false);
         setTimeout(() => this.success.set(''), 3000);
       },
-      error: (err) => { this.error.set(err?.error?.error?.message ?? 'Error al guardar'); this.saving.set(false); }
+      error: err => {
+        this.error.set(err?.error?.error?.message ?? 'No se pudo guardar.');
+        this.saving.set(false);
+      },
     });
   }
 
   onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
     this.teacherService.uploadPhoto(file).subscribe({
-      next: (data) => { this.profile.set(data); this.success.set('Foto actualizada'); }
+      next: data => {
+        const url =
+          (data as TeacherProfile).user?.avatarUrl ??
+          (data as unknown as { avatarUrl?: string }).avatarUrl;
+        this.profile.update(p => {
+          if (!p || !url) return p;
+          return { ...p, user: { ...p.user, avatarUrl: url } };
+        });
+        this.photoBroken.set(false);
+        this.success.set('Foto actualizada.');
+        setTimeout(() => this.success.set(''), 3000);
+      },
+      error: () => this.error.set('No se pudo subir la foto.'),
     });
+  }
+
+  onPhotoError() {
+    this.photoBroken.set(true);
+  }
+
+  setCurrentPassword(value: string) {
+    this.changePasswordForm.update(f => ({ ...f, currentPassword: value }));
+  }
+
+  setNewPassword(value: string) {
+    this.changePasswordForm.update(f => ({ ...f, newPassword: value }));
+  }
+
+  setConfirmPassword(value: string) {
+    this.changePasswordForm.update(f => ({ ...f, confirmPassword: value }));
   }
 
   changePassword() {
     const { currentPassword, newPassword, confirmPassword } = this.changePasswordForm();
-    if (newPassword !== confirmPassword) { this.passwordError.set('Las contraseñas no coinciden'); return; }
+    if (!currentPassword || !newPassword) {
+      this.passwordError.set('Completa la contraseña actual y la nueva.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      this.passwordError.set('La nueva contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      this.passwordError.set('Las contraseñas no coinciden.');
+      return;
+    }
     this.passwordError.set('');
     this.authService.changePassword(currentPassword, newPassword).subscribe({
-      next: () => { this.passwordSuccess.set('Contraseña actualizada'); this.changePasswordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' }); },
-      error: (err) => this.passwordError.set(err?.error?.error?.message ?? 'Error al cambiar contraseña')
+      next: () => {
+        this.passwordSuccess.set('Contraseña actualizada.');
+        this.changePasswordForm.set({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setTimeout(() => this.passwordSuccess.set(''), 3000);
+      },
+      error: err => {
+        this.passwordError.set(err?.error?.error?.message ?? 'No se pudo cambiar la contraseña.');
+      },
     });
-  }
-
-  getFullName(): string {
-    const p = this.profile();
-    if (!p) return '';
-    return `${p.user.firstName} ${p.user.lastName}`;
   }
 }
