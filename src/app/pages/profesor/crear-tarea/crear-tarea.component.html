@@ -94,10 +94,20 @@
             name="dueDate"
             class="rule__input"
             [ngModel]="dueDate()"
-            (ngModelChange)="dueDate.set($event)"
+            (ngModelChange)="onDueDateChange($event)"
             required
           />
-          <p class="rule__hint">Cierra a las 11:59 p.m. de ese día.</p>
+          <label class="visually-hidden" for="dueTime">Hora límite</label>
+          <input
+            type="time"
+            id="dueTime"
+            name="dueTime"
+            class="rule__input"
+            [ngModel]="dueTime()"
+            (ngModelChange)="dueTime.set($event)"
+            required
+          />
+          <p class="rule__hint">Por defecto 11:59 p.m. Puedes cambiarla.</p>
         </section>
 
         <section class="rule">

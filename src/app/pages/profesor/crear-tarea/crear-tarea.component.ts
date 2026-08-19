@@ -27,6 +27,7 @@ export class CrearTareaComponent implements OnInit {
   title = signal('');
   instructions = signal('');
   dueDate = signal('');
+  dueTime = signal('23:59');
   points = signal(20);
   /** Cuántas veces el alumno puede enviar o actualizar su entrega (1–20). */
   maxSubmissions = signal(1);
@@ -87,7 +88,9 @@ export class CrearTareaComponent implements OnInit {
       next: (data) => {
         this.title.set(data.title);
         this.instructions.set(data.description ?? '');
-        this.dueDate.set(data.dueDate ? this.toDateValue(data.dueDate) : '');
+        const due = data.dueDate ? this.splitDue(data.dueDate) : { date: '', time: '23:59' };
+        this.dueDate.set(due.date);
+        this.dueTime.set(due.time);
         this.points.set(data.maxScore);
         const ms = Number(data.maxSubmissions);
         this.maxSubmissions.set(
@@ -102,18 +105,30 @@ export class CrearTareaComponent implements OnInit {
     });
   }
 
-  /** Día del plazo (YYYY-MM-DD). La hora se fija a las 23:59 al guardar. */
-  private toDateValue(iso: string): string {
+  /** Día y hora locales del plazo. Si no hay hora, 23:59. */
+  private splitDue(iso: string): { date: string; time: string } {
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return (iso.split('T')[0] ?? '').slice(0, 10);
+    if (Number.isNaN(d.getTime())) {
+      const day = (iso.split('T')[0] ?? '').slice(0, 10);
+      return { date: day, time: '23:59' };
+    }
     const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    };
   }
 
-  private dueDateToIso(dateValue: string): string | undefined {
-    const day = dateValue.trim().slice(0, 10);
+  onDueDateChange(value: string) {
+    this.dueDate.set(value);
+    if (value && !this.dueTime()) this.dueTime.set('23:59');
+  }
+
+  private dueDateToIso(): string | undefined {
+    const day = this.dueDate().trim().slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return undefined;
-    const d = new Date(`${day}T23:59:00`);
+    const time = /^\d{2}:\d{2}$/.test(this.dueTime().trim()) ? this.dueTime().trim() : '23:59';
+    const d = new Date(`${day}T${time}:00`);
     if (Number.isNaN(d.getTime())) return undefined;
     return d.toISOString();
   }
@@ -228,7 +243,7 @@ export class CrearTareaComponent implements OnInit {
       this.teacherService.updateTask(this.courseId(), this.taskId(), {
         title: this.title().trim(),
         description: this.instructions().trim(),
-        dueDate: this.dueDateToIso(this.dueDate()),
+        dueDate: this.dueDateToIso(),
         maxScore: this.points(),
         maxSubmissions: this.maxSubmissions(),
         deliveryType: this.deliveryType(),
@@ -246,7 +261,7 @@ export class CrearTareaComponent implements OnInit {
       const fd = new FormData();
       fd.append('title', this.title().trim());
       fd.append('description', this.instructions().trim());
-      const dueIso = this.dueDateToIso(this.dueDate());
+      const dueIso = this.dueDateToIso();
       if (dueIso) fd.append('dueDate', dueIso);
       fd.append('maxScore', String(this.points()));
       fd.append('maxSubmissions', String(this.maxSubmissions()));

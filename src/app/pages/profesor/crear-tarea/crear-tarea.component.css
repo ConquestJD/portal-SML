@@ -214,6 +214,8 @@
 
 .rule__input:focus { border-bottom-color: var(--navy); }
 
+.rule__input + .rule__input { margin-top: .55rem; }
+
 .rule__score {
   margin: 0;
   font-family: var(--font-display);
