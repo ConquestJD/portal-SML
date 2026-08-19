@@ -1,7 +1,7 @@
 import { Component, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StudentService, StudentTask } from '../../../services/student.service';
 import { pickLocalFiles } from '../../profesor/_utils/pick-local-files';
@@ -17,6 +17,7 @@ type TaskUiStatus = 'pendiente' | 'vencida' | 'en-revision' | 'calificada';
 })
 export class TareaDetalleComponent implements OnInit {
   taskId = signal('');
+  courseId = signal('');
   loading = signal(true);
   error = signal('');
   submitting = signal(false);
@@ -37,13 +38,15 @@ export class TareaDetalleComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private studentService: StudentService,
-    private location: Location,
   ) {}
 
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.taskId.set(id);
+    const params = this.route.snapshot.paramMap;
+    const nestedTaskId = params.get('taskId');
+    this.taskId.set(nestedTaskId ?? params.get('id') ?? '');
+    this.courseId.set(nestedTaskId ? (params.get('id') ?? '') : '');
     this.load();
   }
 
@@ -67,7 +70,12 @@ export class TareaDetalleComponent implements OnInit {
   }
 
   goBack() {
-    this.location.back();
+    const courseId = this.courseId();
+    if (courseId) {
+      void this.router.navigate(['/cursos', courseId], { queryParams: { tab: 'tareas' } });
+      return;
+    }
+    void this.router.navigate(['/tareas']);
   }
 
   formatDue(d?: string): string {

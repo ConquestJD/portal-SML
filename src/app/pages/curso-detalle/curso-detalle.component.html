@@ -237,7 +237,7 @@
             <ul class="brief__list">
               @for (task of filteredTasks(); track task.id) {
                 <li>
-                  <a [routerLink]="['/tareas', task.id]" class="brief-card" [attr.data-kind]="taskKind(task)">
+                  <a [routerLink]="['/cursos', courseId(), 'tareas', task.id]" class="brief-card" [attr.data-kind]="taskKind(task)">
                     <time class="brief-card__when" [attr.datetime]="task.dueDate || null">
                       <span class="brief-card__day">{{ dueDay(task.dueDate) }}</span>
                       <span class="brief-card__month">{{ dueMonth(task.dueDate) }}</span>
@@ -302,7 +302,7 @@
               @for (row of courseGradeRows(); track row.id) {
                 <li>
                   @if (row.kind === 'task' && row.taskId) {
-                    <a [routerLink]="['/tareas', row.taskId]" class="eval-row" [attr.data-kind]="row.kind" [attr.data-tone]="scoreTone(row)">
+                    <a [routerLink]="['/cursos', courseId(), 'tareas', row.taskId]" class="eval-row" [attr.data-kind]="row.kind" [attr.data-tone]="scoreTone(row)">
                       <span class="eval-row__kind">{{ gradeKindLabel(row.kind) }}</span>
                       <span class="eval-row__body">
                         <span class="eval-row__title">{{ row.label }}</span>

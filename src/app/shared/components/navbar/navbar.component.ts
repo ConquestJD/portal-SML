@@ -297,8 +297,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
   
   closeCourse() {
-    const home = this.userRole() === 'profesor' ? '/profesor/cursos' : '/cursos';
-    void this.router.navigateByUrl(home);
+    const path = this.router.url.split('?')[0].split('#')[0];
+    if (this.userRole() === 'profesor') {
+      void this.router.navigateByUrl('/profesor/cursos');
+      return;
+    }
+    if (/^\/tareas\/[^/]+/.test(path)) {
+      void this.router.navigateByUrl('/tareas');
+      return;
+    }
+    void this.router.navigateByUrl('/cursos');
   }
 
   toggleSidebar() {

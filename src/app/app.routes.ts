@@ -31,6 +31,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/curso-detalle/curso-detalle.component').then(m => m.CursoDetalleComponent)
       },
       {
+        path: 'cursos/:id/tareas/:taskId',
+        loadComponent: () => import('./pages/tareas/tarea-detalle/tarea-detalle.component').then(m => m.TareaDetalleComponent)
+      },
+      {
         path: 'tareas',
         loadComponent: () => import('./pages/tareas/tareas.component').then(m => m.TareasComponent)
       },
