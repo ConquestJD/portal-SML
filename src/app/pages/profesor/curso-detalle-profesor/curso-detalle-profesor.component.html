@@ -16,9 +16,6 @@
     <header class="course-hero">
       <img class="course-hero__photo" [src]="coverUrl()" [alt]="coverAlt()" decoding="async" />
       <div class="course-hero__veil"></div>
-      <div class="course-hero__top">
-        <a routerLink="/profesor/cursos" class="course-hero__back">← Cursos</a>
-      </div>
       <div class="course-hero__content">
         @if (courseCode()) {
           <p class="course-hero__code">{{ courseCode() }}</p>

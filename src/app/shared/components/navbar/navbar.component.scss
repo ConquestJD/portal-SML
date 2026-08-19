@@ -611,3 +611,58 @@
     animation: none !important;
   }
 }
+
+/* ── Course rail (aula inmersiva) ───────────────────── */
+:host.course-workspace {
+  --course-rail-width: 56px;
+}
+
+.course-rail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  width: var(--course-rail-width, 56px);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .85rem;
+  padding: .85rem 0 1rem;
+  background:
+    radial-gradient(ellipse 80% 40% at 0% 0%, rgba(196 30 58 / .18), transparent 55%),
+    linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-elevated) 100%);
+  border-right: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+}
+
+.course-rail__close {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.course-rail__close:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.course-rail__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.course-rail__crest {
+  width: 1.85rem;
+  height: 1.85rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0 0 0 / .3));
+  opacity: .85;
+}

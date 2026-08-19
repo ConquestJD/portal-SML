@@ -15,6 +15,12 @@
   margin-left: 76px;
 }
 
+/* Aula del profesor: riel estrecho y el curso ocupa el lienzo */
+:host.course-workspace .main-content {
+  margin-left: 56px;
+  padding: 0;
+}
+
 /* Mobile: el sidebar es un drawer, no ocupa espacio */
 @media (max-width: 1023px) {
   .main-content {
@@ -23,6 +29,11 @@
     padding-left: var(--spacing-md, 1rem);
     padding-right: var(--spacing-md, 1rem);
   }
+
+  :host.course-workspace .main-content {
+    margin-left: 56px;
+    padding: 0;
+  }
 }
 
 /* Tablet: ajuste fino */
@@ -30,5 +41,9 @@
   .main-content {
     padding-left: var(--spacing-lg, 1.5rem);
     padding-right: var(--spacing-lg, 1.5rem);
+  }
+
+  :host.course-workspace .main-content {
+    padding: 0;
   }
 }

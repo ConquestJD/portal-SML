@@ -1,4 +1,18 @@
 @if (authenticated()) {
+  @if (courseWorkspace()) {
+    <aside class="course-rail" aria-label="Curso abierto">
+      <button
+        type="button"
+        class="course-rail__close"
+        (click)="closeCourse()"
+        aria-label="Cerrar curso"
+        title="Cerrar curso"
+      >
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+      <img src="/only-logo.png" alt="" class="course-rail__crest" />
+    </aside>
+  } @else {
   <!-- Mobile Top Bar -->
   @if (isMobile()) {
   <header class="mobile-top-bar">
@@ -153,6 +167,7 @@
       }
     </div>
   </aside>
+  }
 } @else {
   <!-- No autenticado: mostrar solo logo -->
   <aside class="sidebar sidebar-unauthenticated">

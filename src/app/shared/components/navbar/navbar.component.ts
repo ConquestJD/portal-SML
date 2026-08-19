@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService, UserRole } from '../../../services/auth.service';
 import { NavBadgesService } from '../../../services/nav-badges.service';
 import { filter, Subscription } from 'rxjs';
+import { isTeacherCourseWorkspaceUrl } from '../../../layouts/teacher-course-workspace';
 
 interface NavItem {
   label: string;
@@ -159,13 +160,17 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+  styleUrl: './navbar.component.scss',
+  host: {
+    '[class.course-workspace]': 'courseWorkspace()',
+  },
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   // Estados del sidebar
   isCollapsed = signal(false);
   isDrawerOpen = signal(false);
   isUserDropdownOpen = signal(false);
+  courseWorkspace = signal(false);
   
   // Computed signals
   user = computed(() => this.authService.user());
@@ -228,11 +233,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {
     // Detectar tamaño de pantalla
     this.checkMobile();
-    
-    // Cerrar drawer al navegar
+    this.courseWorkspace.set(isTeacherCourseWorkspaceUrl(this.router.url));
+
     this.routerSubscription = this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => {
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.courseWorkspace.set(isTeacherCourseWorkspaceUrl(event.urlAfterRedirects));
         this.isDrawerOpen.set(false);
         this.isUserDropdownOpen.set(false);
       });
@@ -292,6 +298,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
   
+  closeCourse() {
+    void this.router.navigateByUrl('/profesor/cursos');
+  }
+
   toggleSidebar() {
     if (this.isMobile()) {
       this.isDrawerOpen.update(v => !v);
