@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import { StudentService } from '../../services/student.service';
 export interface MensajeriaCourseHeader {
   name: string;
   grade: string;
-  section: string;
+  level: string;
 }
 
 export interface CursoConvoUi {
@@ -54,8 +54,18 @@ export class MensajeriaCursoComponent implements OnInit {
   course = signal<MensajeriaCourseHeader | null>(null);
   conversations = signal<CursoConvoUi[]>([]);
   selectedConversation = signal<CursoConvoUi | null>(null);
+  convoQuery = signal('');
+
+  @ViewChild('threadEl') threadEl?: ElementRef<HTMLElement>;
 
   userRole = computed(() => this.authService.userRole());
+
+  courseKicker = computed(() => {
+    const c = this.course();
+    if (!c) return 'Santa María Laura';
+    const meta = [c.grade, c.level].filter(Boolean).join(' · ');
+    return meta ? `${c.name} · ${meta}` : c.name;
+  });
 
   sortedConversations = computed(() => {
     const list = [...this.conversations()];
@@ -69,6 +79,32 @@ export class MensajeriaCursoComponent implements OnInit {
   unreadTotal = computed(() =>
     this.conversations().reduce((a, c) => a + (Number(c.unreadCount) || 0), 0),
   );
+
+  visibleConversations = computed(() => {
+    const q = this.convoQuery().toLowerCase().trim();
+    const list = this.sortedConversations();
+    if (!q) return list;
+    return list.filter(
+      c =>
+        c.participantName.toLowerCase().includes(q) ||
+        c.lastMessage.toLowerCase().includes(q),
+    );
+  });
+
+  threadBlocks = computed(() => {
+    const msgs = this.selectedConversation()?.messages ?? [];
+    const blocks: Array<{ type: 'day'; key: string; label: string } | { type: 'msg'; message: CursoMessageUi }> = [];
+    let lastKey = '';
+    for (const message of msgs) {
+      const key = this.dayKey(message.timestamp);
+      if (key && key !== lastKey) {
+        blocks.push({ type: 'day', key, label: this.dayLabel(key) });
+        lastKey = key;
+      }
+      blocks.push({ type: 'msg', message });
+    }
+    return blocks;
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -98,7 +134,7 @@ export class MensajeriaCursoComponent implements OnInit {
             map((tc) => ({
               name: tc.course?.name ?? tc.name ?? '—',
               grade: tc.course?.grade ?? tc.grade ?? '',
-              section: tc.section?.name ?? '',
+              level: tc.course?.level ?? '',
             })),
             catchError(() => of(null)),
           )
@@ -110,7 +146,7 @@ export class MensajeriaCursoComponent implements OnInit {
               return {
                 name: String(course['name'] ?? (row as { name?: string }).name ?? '—'),
                 grade: String(course['grade'] ?? section['grade'] ?? ''),
-                section: String(section['name'] ?? ''),
+                level: String(course['level'] ?? section['level'] ?? ''),
               };
             }),
             catchError(() => of(null)),
@@ -131,6 +167,10 @@ export class MensajeriaCursoComponent implements OnInit {
             list.map((r) => this.mapListItem(r as unknown as Record<string, unknown>, myId)),
           );
           this.loading.set(false);
+          if (role !== 'profesor') {
+            const first = this.sortedConversations()[0];
+            if (first && !this.selectedConversation()) this.selectConversation(first);
+          }
         },
         error: () => {
           this.error.set('Error al cargar conversaciones');
@@ -149,13 +189,22 @@ export class MensajeriaCursoComponent implements OnInit {
       next: (raw) => {
         const myId = this.authService.user()?.id ?? '';
         const msgs = this.mapMessages(raw as unknown as Record<string, unknown>, myId);
-        this.selectedConversation.set({ ...conv, messages: msgs });
+        this.selectedConversation.set({ ...conv, messages: msgs, unreadCount: 0 });
+        this.conversations.update(list =>
+          list.map(x => (x.id === conv.id ? { ...x, unreadCount: 0 } : x)),
+        );
         this.messagingService.markAsRead(conv.id).subscribe();
+        this.scrollThread();
       },
     });
   }
 
+  closeConversation() {
+    this.selectedConversation.set(null);
+  }
+
   onMessageEnter(event: KeyboardEvent) {
+    if (event.shiftKey) return;
     event.preventDefault();
     this.sendMessage();
   }
@@ -181,6 +230,7 @@ export class MensajeriaCursoComponent implements OnInit {
               : x,
           ),
         );
+        this.scrollThread();
       },
       error: () => this.sending.set(false),
     });
@@ -190,21 +240,81 @@ export class MensajeriaCursoComponent implements OnInit {
     return this.authService.user()?.id ?? '';
   }
 
+  getInitials(name: string): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    return parts.slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  }
+
   getInitial(name: string): string {
-    const t = (name ?? '').trim();
-    return t ? t.charAt(0).toUpperCase() : '?';
+    return this.getInitials(name);
   }
 
   formatTime(iso: string): string {
     if (!iso) return '';
     const d = new Date(iso);
-    return Number.isNaN(d.getTime())
-      ? iso
-      : d.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+    if (Number.isNaN(d.getTime())) return iso;
+    const diff = Date.now() - d.getTime();
+    const min = Math.round(diff / 60000);
+    if (min < 1) return 'Ahora';
+    if (min < 60) return `${min} min`;
+    const today = this.dayKey(new Date().toISOString());
+    if (this.dayKey(iso) === today) {
+      return d.toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' });
+    }
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    if (this.dayKey(iso) === this.dayKey(yest.toISOString())) return 'Ayer';
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
   }
 
   formatMessageDate(iso: string): string {
-    return this.formatTime(iso);
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  roleLabel(role: UserRole): string {
+    if (role === 'profesor') return 'Profesor';
+    if (role === 'padre') return 'Apoderado';
+    return 'Estudiante';
+  }
+
+  trackBlock(block: { type: 'day'; key: string } | { type: 'msg'; message: CursoMessageUi }): string {
+    return block.type === 'day' ? `day-${block.key}` : block.message.id;
+  }
+
+  private scrollThread() {
+    setTimeout(() => {
+      const el = this.threadEl?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 40);
+  }
+
+  private dayKey(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private dayLabel(key: string): string {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, (m || 1) - 1, d || 1);
+    const today = new Date();
+    if (key === this.dayKey(today.toISOString())) return 'Hoy';
+    const yest = new Date(today);
+    yest.setDate(today.getDate() - 1);
+    if (key === this.dayKey(yest.toISOString())) return 'Ayer';
+    const label = date.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   private mapListItem(conv: Record<string, unknown>, myUserId: string): CursoConvoUi {
