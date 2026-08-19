@@ -123,12 +123,14 @@ export class ActividadComponent implements OnInit {
     return 'Nota de examen';
   }
 
-  kindMark(kind: StudentActivityKind): string {
-    if (kind === 'task') return 'T';
-    if (kind === 'material') return 'M';
-    if (kind === 'announcement') return 'C';
-    if (kind === 'exam') return 'E';
-    return 'N';
+  kindIcon(kind: StudentActivityKind): string {
+    if (kind === 'task') return 'fas fa-clipboard-list';
+    if (kind === 'material') return 'fas fa-folder-open';
+    if (kind === 'announcement') return 'fas fa-bullhorn';
+    if (kind === 'exam') return 'fas fa-file-lines';
+    if (kind === 'graded') return 'fas fa-star';
+    if (kind === 'period-grade') return 'fas fa-award';
+    return 'fas fa-clipboard-check';
   }
 
   scoreParts(item: StudentActivityItem): { score: string; max: string } {

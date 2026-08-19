@@ -61,56 +61,56 @@
     } @else if (days().length === 0) {
       <p class="feed__empty">Aún no hay novedades. Cuando suban material, publiquen una tarea o califiquen, aparecerá aquí.</p>
     } @else {
-      <div class="act-stream" aria-label="Línea de tiempo">
+      <div class="stream" aria-label="Línea de tiempo">
         @for (day of days(); track day.key) {
-          <section class="act-day">
-            <h2 class="act-day__title">{{ day.label }}</h2>
-            <ul class="act-day__list">
+          <section class="stream__day">
+            <h2 class="stream__date">{{ day.label }}</h2>
+            <ol class="stream__list">
               @for (item of day.items; track item.id) {
-                <li>
-                  <article class="act-card" [attr.data-kind]="item.kind">
-                    <span class="act-card__mark" aria-hidden="true">{{ kindMark(item.kind) }}</span>
-                    <div class="act-card__body">
-                      <header class="act-card__meta">
-                        <span class="act-card__kind">{{ kindLabel(item.kind) }}</span>
-                        <span class="act-card__course">
-                          {{ item.courseName }}
-                          @if (item.courseMeta) {
-                            · {{ item.courseMeta }}
-                          }
-                        </span>
-                        <time class="act-card__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
-                      </header>
-                      <h3 class="act-card__title">{{ item.headline }}</h3>
-                      @if (item.detail) {
-                        <p class="act-card__detail">{{ item.detail }}</p>
-                      }
+                <li class="stream__item" [attr.data-kind]="item.kind">
+                  <span class="stream__dot" aria-hidden="true">
+                    <i [class]="kindIcon(item.kind)"></i>
+                  </span>
+                  <article class="stream__card">
+                    <header class="stream__meta">
+                      <span class="stream__kind">{{ kindLabel(item.kind) }}</span>
+                      <span class="stream__course">
+                        {{ item.courseName }}
+                        @if (item.courseMeta) {
+                          · {{ item.courseMeta }}
+                        }
+                      </span>
+                      <time class="stream__time" [attr.datetime]="item.at">{{ timeLabel(item.at) }}</time>
+                    </header>
+                    <p class="stream__headline">{{ item.headline }}</p>
+                    @if (item.detail) {
+                      <p class="stream__detail">{{ item.detail }}</p>
+                    }
 
-                      @if (isGradeKind(item.kind)) {
-                        <div class="act-seal" [class.act-seal--open]="isRevealed(item.id)">
-                          @if (isRevealed(item.id)) {
-                            @let parts = scoreParts(item);
-                            <p class="act-seal__score">
-                              {{ parts.score }}
-                              <span>/ {{ parts.max }}</span>
-                            </p>
-                          } @else {
-                            <p class="act-seal__hidden">Nota oculta</p>
-                            <button type="button" class="act-btn" (click)="reveal(item.id, $event)">
-                              Mostrar nota
-                            </button>
-                          }
-                        </div>
-                      }
+                    @if (isGradeKind(item.kind)) {
+                      <div class="act-seal" [class.act-seal--open]="isRevealed(item.id)">
+                        @if (isRevealed(item.id)) {
+                          @let parts = scoreParts(item);
+                          <p class="act-seal__score">
+                            {{ parts.score }}
+                            <span>/ {{ parts.max }}</span>
+                          </p>
+                        } @else {
+                          <p class="act-seal__hidden">Nota oculta</p>
+                          <button type="button" class="act-btn" (click)="reveal(item.id, $event)">
+                            Mostrar nota
+                          </button>
+                        }
+                      </div>
+                    }
 
-                      <a class="act-open" [routerLink]="itemLink(item)" [queryParams]="itemQuery(item) || {}">
-                        {{ openLabel(item) }}
-                      </a>
-                    </div>
+                    <a class="act-open" [routerLink]="itemLink(item)" [queryParams]="itemQuery(item) || {}">
+                      {{ openLabel(item) }}
+                    </a>
                   </article>
                 </li>
               }
-            </ul>
+            </ol>
           </section>
         }
       </div>

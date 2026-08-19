@@ -9,9 +9,7 @@
   margin: 0 0 1.5rem;
 }
 
-.act-toolbar .view-toggle {
-  margin: 0;
-}
+.act-toolbar .view-toggle { margin: 0; }
 
 .act-select select {
   min-width: 16rem;
@@ -51,16 +49,14 @@
   color: #fff;
 }
 
-.prof-alert .act-btn {
-  margin-top: .75rem;
-}
+.prof-alert .act-btn { margin-top: .75rem; }
 
-.act-stream { max-width: 42rem; }
+.stream { max-width: 46rem; }
 
-.act-day { margin: 0 0 1.85rem; }
+.stream__day { margin: 0 0 1.85rem; }
 
-.act-day__title {
-  margin: 0 0 .85rem;
+.stream__date {
+  margin: 0 0 1rem 2.85rem;
   font-size: .68rem;
   font-weight: 700;
   letter-spacing: .14em;
@@ -68,51 +64,63 @@
   color: var(--muted);
 }
 
-.act-day__list {
+.stream__list {
   list-style: none;
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
-.act-day__list > li + li { margin-top: .75rem; }
+.stream__list::before {
+  content: '';
+  position: absolute;
+  left: 1.15rem;
+  top: .45rem;
+  bottom: .45rem;
+  width: 2px;
+  background: var(--line);
+}
 
-.act-card {
+.stream__item {
+  position: relative;
   display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1.05rem 1.15rem 1.1rem;
-  background: var(--surface);
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  gap: .9rem;
+  align-items: start;
+  margin: 0 0 .95rem;
 }
 
-.act-card__mark {
-  width: 2.5rem;
-  height: 2.5rem;
+.stream__dot {
+  position: relative;
+  z-index: 1;
+  width: 2.4rem;
+  height: 2.4rem;
   display: grid;
   place-items: center;
+  border-radius: 50%;
   background: var(--navy);
   color: #fff;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: .82rem;
+  box-shadow: 0 0 0 4px #eef1f5;
 }
 
-.act-card[data-kind='graded'] .act-card__mark,
-.act-card[data-kind='period-grade'] .act-card__mark,
-.act-card[data-kind='exam-grade'] .act-card__mark {
-  background: #1a6b4a;
+.stream__card {
+  display: block;
+  padding: .95rem 1.1rem 1.05rem;
+  background: var(--surface);
+  color: inherit;
+  min-width: 0;
 }
 
-.act-card__body { min-width: 0; }
-
-.act-card__meta {
+.stream__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: .35rem .7rem;
-  margin-bottom: .3rem;
+  gap: .4rem .75rem;
+  margin-bottom: .35rem;
 }
 
-.act-card__kind {
+.stream__kind {
   font-size: .62rem;
   font-weight: 700;
   letter-spacing: .1em;
@@ -120,13 +128,7 @@
   color: var(--navy);
 }
 
-.act-card[data-kind='graded'] .act-card__kind,
-.act-card[data-kind='period-grade'] .act-card__kind,
-.act-card[data-kind='exam-grade'] .act-card__kind {
-  color: #1a6b4a;
-}
-
-.act-card__course {
+.stream__course {
   flex: 1;
   min-width: 0;
   font-size: .78rem;
@@ -136,28 +138,104 @@
   white-space: nowrap;
 }
 
-.act-card__time {
+.stream__time {
   font-size: .72rem;
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.act-card__title {
+.stream__headline {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.18rem;
+  font-size: 1.14rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--navy);
 }
 
-.act-card__detail {
-  margin: .28rem 0 0;
-  font-size: .88rem;
+.stream__detail {
+  margin: .3rem 0 0;
+  font-size: .85rem;
   color: var(--muted);
   font-family: var(--font-display);
   font-style: italic;
+}
+
+/* Tarea */
+.stream__item[data-kind='task'] .stream__dot {
+  background: #fff;
+  color: var(--navy);
+  border: 2px solid var(--navy);
+}
+.stream__item[data-kind='task'] .stream__card {
+  box-shadow: inset 3px 0 0 var(--navy);
+}
+
+/* Material */
+.stream__item[data-kind='material'] .stream__dot {
+  background: #1a5a8a;
+  color: #fff;
+}
+.stream__item[data-kind='material'] .stream__kind { color: #1a5a8a; }
+.stream__item[data-kind='material'] .stream__card {
+  background: #f5f8fb;
+  box-shadow: inset 3px 0 0 #1a5a8a;
+}
+
+/* Comunicado */
+.stream__item[data-kind='announcement'] .stream__dot {
+  background: var(--crimson);
+  color: #fff;
+}
+.stream__item[data-kind='announcement'] .stream__kind { color: var(--crimson); }
+.stream__item[data-kind='announcement'] .stream__card {
+  background: #fff7f8;
+  box-shadow: inset 3px 0 0 var(--crimson);
+}
+
+/* Examen programado */
+.stream__item[data-kind='exam'] .stream__dot {
+  background: #9a6b12;
+  color: #fff;
+}
+.stream__item[data-kind='exam'] .stream__kind { color: #9a6b12; }
+.stream__item[data-kind='exam'] .stream__card {
+  background: #fffaf0;
+  box-shadow: inset 3px 0 0 #9a6b12;
+}
+
+/* Calificación de tarea */
+.stream__item[data-kind='graded'] .stream__dot {
+  background: #1a6b4a;
+  color: #fff;
+}
+.stream__item[data-kind='graded'] .stream__kind { color: #1a6b4a; }
+.stream__item[data-kind='graded'] .stream__card {
+  box-shadow: inset 3px 0 0 #1a6b4a;
+}
+
+/* Nota de período */
+.stream__item[data-kind='period-grade'] .stream__dot {
+  background: #fff;
+  color: #1a6b4a;
+  border: 2px solid #1a6b4a;
+}
+.stream__item[data-kind='period-grade'] .stream__kind { color: #1a6b4a; }
+.stream__item[data-kind='period-grade'] .stream__card {
+  background: #f3f8f5;
+  box-shadow: inset 3px 0 0 #1a6b4a;
+}
+
+/* Nota de examen */
+.stream__item[data-kind='exam-grade'] .stream__dot {
+  background: #0f5c6b;
+  color: #fff;
+}
+.stream__item[data-kind='exam-grade'] .stream__kind { color: #0f5c6b; }
+.stream__item[data-kind='exam-grade'] .stream__card {
+  background: #f2f8f9;
+  box-shadow: inset 3px 0 0 #0f5c6b;
 }
 
 .act-seal {
@@ -166,12 +244,12 @@
   align-items: center;
   justify-content: space-between;
   gap: .75rem 1rem;
-  margin-top: .9rem;
-  padding: .85rem 1rem;
-  background: #f3f5f8;
+  margin-top: .85rem;
+  padding: .8rem .95rem;
+  background: rgba(20 32 51 / .05);
 }
 
-.act-seal--open { background: #eef6f1; }
+.act-seal--open { background: rgba(26 107 74 / .1); }
 
 .act-seal__hidden {
   margin: 0;
@@ -184,7 +262,7 @@
 .act-seal__score {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 600;
   line-height: 1;
   color: var(--navy);
@@ -198,7 +276,7 @@
 
 .act-open {
   display: inline-block;
-  margin-top: .85rem;
+  margin-top: .8rem;
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .1em;
@@ -216,8 +294,7 @@
 @media (max-width: 700px) {
   .act-toolbar { flex-direction: column; align-items: stretch; }
   .act-select select { min-width: 0; max-width: none; width: 100%; }
-  .act-card { grid-template-columns: 2.15rem minmax(0, 1fr); gap: .8rem; padding: .9rem; }
-  .act-card__mark { width: 2.15rem; height: 2.15rem; font-size: .88rem; }
+  .stream__date { margin-left: 2.55rem; }
   .act-seal { flex-direction: column; align-items: stretch; }
   .act-btn { width: 100%; }
 }
