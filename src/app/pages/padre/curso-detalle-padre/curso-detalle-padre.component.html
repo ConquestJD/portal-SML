@@ -392,34 +392,88 @@
       }
 
       @if (activeTab() === 'tareas') {
-        <section class="feed">
-          <div class="feed__head"><h2>Tareas asignadas</h2></div>
-          @if (tasks().length === 0) {
-            <p class="feed__empty">No hay tareas asignadas para este curso.</p>
+        <section class="docket">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Seguimiento</p>
+              <h2 class="mod-head__title">Tareas del curso</h2>
+              <p class="mod-head__meta">
+                @if (tasks().length === 0) {
+                  Aún no hay encargos publicados.
+                } @else {
+                  {{ tasks().length }} {{ tasks().length === 1 ? 'tarea' : 'tareas' }}
+                  @if (pendingTasksCount() > 0) {
+                    · {{ pendingTasksCount() }} {{ pendingTasksCount() === 1 ? 'pendiente' : 'pendientes' }}
+                  }
+                  @if (overdueTasksCount() > 0) {
+                    · {{ overdueTasksCount() }} {{ overdueTasksCount() === 1 ? 'vencida' : 'vencidas' }}
+                  }
+                  @if (submittedTasksCount() > 0) {
+                    · {{ submittedTasksCount() }} {{ submittedTasksCount() === 1 ? 'entregada' : 'entregadas' }}
+                  }
+                }
+              </p>
+            </div>
+          </header>
+
+          @if (overdueTasksCount() > 0 && taskFilter() !== 'entregada') {
+            <section class="pulse" aria-label="Vencidas">
+              <button type="button" class="pulse__item" (click)="setTaskFilter('vencida')">
+                <span class="pulse__n">{{ overdueTasksCount() }}</span>
+                <span class="pulse__l">{{ overdueTasksCount() === 1 ? 'Tarea vencida sin entregar' : 'Tareas vencidas sin entregar' }}</span>
+              </button>
+            </section>
+          }
+
+          @if (tasks().length > 0) {
+            <nav class="docket-filters" aria-label="Filtrar tareas">
+              <button type="button" class="docket-filters__btn" [class.active]="taskFilter() === 'all'" (click)="setTaskFilter('all')">Todas</button>
+              <button type="button" class="docket-filters__btn" [class.active]="taskFilter() === 'pendiente'" (click)="setTaskFilter('pendiente')">Pendientes</button>
+              <button type="button" class="docket-filters__btn" [class.active]="taskFilter() === 'vencida'" (click)="setTaskFilter('vencida')">Vencidas</button>
+              <button type="button" class="docket-filters__btn" [class.active]="taskFilter() === 'entregada'" (click)="setTaskFilter('entregada')">Entregadas</button>
+            </nav>
+          }
+
+          @if (filteredTasks().length === 0) {
+            <p class="archive__empty">
+              @if (tasks().length === 0) {
+                No hay tareas asignadas para este curso.
+              } @else {
+                No hay tareas en este filtro.
+              }
+            </p>
           } @else {
-            <ul class="feed__list">
-              @for (task of tasks(); track task.id) {
+            <ul class="docket__list">
+              @for (task of filteredTasks(); track task.id) {
                 <li>
-                  <div class="feed-row feed-row--static" [class.feed-row--overdue]="task.status === 'vencida'">
-                    <span class="feed-row__mark">{{ taskStatusMark(task.status) }}</span>
-                    <span class="feed-row__body">
-                      <span class="feed-row__title">{{ task.title }}</span>
-                      <span class="feed-row__meta">
-                        Límite: {{ task.dueDate | date: 'longDate' }}
+                  <article class="docket-row" [attr.data-kind]="task.status">
+                    <time class="docket-row__when" [attr.datetime]="task.dueDate || null">
+                      <span class="docket-row__day">{{ taskDueDay(task.dueDate) }}</span>
+                      <span class="docket-row__month">{{ taskDueMonth(task.dueDate) }}</span>
+                    </time>
+                    <div class="docket-row__body">
+                      <p class="docket-row__kicker">{{ taskDueLabel(task.dueDate) }}</p>
+                      <h3 class="docket-row__title">{{ task.title }}</h3>
+                      <p class="docket-row__meta">
                         @if (task.submitted && task.submittedDate) {
-                          · Entregada {{ task.submittedDate | date: 'shortDate' }}
+                          Entregada {{ task.submittedDate | date: 'd MMM y' }}
+                        } @else if (task.status === 'vencida') {
+                          Sin entregar
+                        } @else {
+                          Aún no entrega
                         }
-                        @if (task.grade !== undefined && task.grade !== null) {
-                          · Nota {{ task.grade }}/20
-                        }
-                      </span>
-                    </span>
-                    <span class="feed-row__side">
-                      <span class="task-badge" [class.task-badge--pendiente]="task.status === 'pendiente'" [class.task-badge--entregada]="task.status === 'entregada'" [class.task-badge--vencida]="task.status === 'vencida'">
-                        {{ taskStatusLabel(task.status) }}
-                      </span>
-                    </span>
-                  </div>
+                      </p>
+                    </div>
+                    <div class="docket-row__score">
+                      @if (task.grade != null) {
+                        <strong>{{ task.grade }}</strong>
+                        <span>de {{ task.maxScore }}</span>
+                      } @else {
+                        <span class="docket-row__pending">Sin nota</span>
+                      }
+                    </div>
+                    <span class="docket-row__status">{{ taskStatusLabel(task.status) }}</span>
+                  </article>
                 </li>
               }
             </ul>

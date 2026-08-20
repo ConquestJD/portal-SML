@@ -14,6 +14,7 @@ import {
 } from '../../../shared/utils/material-notes';
 
 type TabType = 'informacion' | 'materiales' | 'tareas';
+type TaskFilter = 'all' | 'pendiente' | 'entregada' | 'vencida';
 
 export interface ParentCourseDetailVm {
   name: string;
@@ -39,6 +40,7 @@ export interface ParentCourseTaskRow {
   submitted: boolean;
   submittedDate: string | Date | null;
   grade: number | null;
+  maxScore: number;
 }
 
 interface MaterialBinFile {
@@ -100,6 +102,7 @@ export class CursoDetallePadreComponent implements OnInit {
   materialExpanded = signal<Record<string, boolean>>({});
   openFolder = signal<MaterialBinFolder | null>(null);
   tasks = signal<ParentCourseTaskRow[]>([]);
+  taskFilter = signal<TaskFilter>('all');
 
   /** ID tabla `Teacher` (para crear conversación). */
   teacherEntityId = '';
@@ -186,6 +189,30 @@ export class CursoDetallePadreComponent implements OnInit {
   hasLooseMaterial = computed(
     () => this.looseFolders().length + this.looseFiles().length + this.looseNotes().length > 0,
   );
+  pendingTasksCount = computed(
+    () => this.tasks().filter((t) => t.status === 'pendiente').length,
+  );
+  overdueTasksCount = computed(
+    () => this.tasks().filter((t) => t.status === 'vencida').length,
+  );
+  submittedTasksCount = computed(
+    () => this.tasks().filter((t) => t.status === 'entregada').length,
+  );
+  filteredTasks = computed((): ParentCourseTaskRow[] => {
+    const f = this.taskFilter();
+    const list = this.tasks().filter((t) => (f === 'all' ? true : t.status === f));
+    const rank: Record<ParentCourseTaskRow['status'], number> = {
+      vencida: 0,
+      pendiente: 1,
+      entregada: 2,
+    };
+    return [...list].sort((a, b) => {
+      const byStatus = rank[a.status] - rank[b.status];
+      if (byStatus) return byStatus;
+      return this.taskDueMs(a.dueDate) - this.taskDueMs(b.dueDate);
+    });
+  });
+
   folderEntries = computed((): FolderContentEntry[] => {
     const folder = this.openFolder();
     if (!folder) return [];
@@ -400,6 +427,10 @@ export class CursoDetallePadreComponent implements OnInit {
     return c.schedule.some((s) => this.normalizeDay(s.day) === day);
   }
 
+  setTaskFilter(filter: TaskFilter) {
+    this.taskFilter.set(filter);
+  }
+
   taskStatusLabel(status: ParentCourseTaskRow['status']): string {
     const map: Record<ParentCourseTaskRow['status'], string> = {
       pendiente: 'Pendiente',
@@ -409,10 +440,32 @@ export class CursoDetallePadreComponent implements OnInit {
     return map[status];
   }
 
-  taskStatusMark(status: ParentCourseTaskRow['status']): string {
-    if (status === 'entregada') return '✓';
-    if (status === 'vencida') return '!';
-    return '◷';
+  taskDueDay(raw: string | Date | null): string {
+    const d = this.asDate(raw);
+    return d ? String(d.getDate()) : '—';
+  }
+
+  taskDueMonth(raw: string | Date | null): string {
+    const d = this.asDate(raw);
+    if (!d) return 's/f';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
+  taskDueLabel(raw: string | Date | null): string {
+    const d = this.asDate(raw);
+    if (!d) return 'Sin fecha límite';
+    return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  private taskDueMs(raw: string | Date | null): number {
+    const d = this.asDate(raw);
+    return d ? d.getTime() : Number.POSITIVE_INFINITY;
+  }
+
+  private asDate(raw: string | Date | null): Date | null {
+    if (!raw) return null;
+    const d = raw instanceof Date ? raw : new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
 
   private buildCourseVm(raw: unknown): ParentCourseDetailVm {
@@ -591,6 +644,7 @@ export class CursoDetallePadreComponent implements OnInit {
       (sub?.['gradedAt'] as string | Date | undefined) ??
       null;
 
+    const maxRaw = Number(t['maxScore']);
     return {
       id: String(t['id'] ?? ''),
       title: String(t['title'] ?? ''),
@@ -599,6 +653,7 @@ export class CursoDetallePadreComponent implements OnInit {
       submitted: hasSubmission,
       submittedDate,
       grade,
+      maxScore: Number.isFinite(maxRaw) && maxRaw > 0 ? maxRaw : 20,
     };
   }
 }
