@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, viewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
@@ -29,6 +29,10 @@ export interface PadreConversationDetail extends PadreConvoSummary {
   messages: PadreChatMessage[];
 }
 
+type ThreadBlock =
+  | { type: 'day'; id: string; label: string }
+  | { type: 'msg'; id: string; message: PadreChatMessage };
+
 @Component({
   selector: 'app-mensajeria-padre',
   standalone: true,
@@ -48,14 +52,41 @@ export class MensajeriaPadreComponent implements OnInit {
   children = signal<Child[]>([]);
   summaries = signal<PadreConvoSummary[]>([]);
   activeDetail = signal<PadreConversationDetail | null>(null);
+  convoQuery = signal('');
+  private readonly threadEl = viewChild<ElementRef<HTMLElement>>('threadEl');
 
   selectedChild = computed(() => this.children().find((c) => c.id === this.selectedChildId()) ?? null);
 
-  filteredConversations = computed(() => this.summaries());
+  filteredConversations = computed(() => {
+    const q = this.convoQuery().trim().toLowerCase();
+    const list = this.summaries();
+    if (!q) return list;
+    return list.filter(
+      (c) =>
+        c.participantName.toLowerCase().includes(q) ||
+        c.participantTitle.toLowerCase().includes(q) ||
+        c.lastMessage.toLowerCase().includes(q),
+    );
+  });
 
   totalUnreadCount = computed(() =>
     this.summaries().reduce((a, s) => a + (Number(s.unreadCount) || 0), 0),
   );
+
+  threadBlocks = computed((): ThreadBlock[] => {
+    const msgs = this.activeDetail()?.messages ?? [];
+    const blocks: ThreadBlock[] = [];
+    let lastKey = '';
+    for (const message of msgs) {
+      const key = this.dayKey(message.timestamp);
+      if (key && key !== lastKey) {
+        blocks.push({ type: 'day', id: `day-${key}`, label: this.dayLabel(key) });
+        lastKey = key;
+      }
+      blocks.push({ type: 'msg', id: message.id, message });
+    }
+    return blocks;
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -63,7 +94,12 @@ export class MensajeriaPadreComponent implements OnInit {
     private messagingService: MessagingService,
     private parentService: ParentService,
     private authService: AuthService,
-  ) {}
+  ) {
+    effect(() => {
+      this.threadBlocks();
+      this.scrollThread();
+    });
+  }
 
   ngOnInit() {
     this.parentService.getChildren().subscribe({
@@ -89,6 +125,7 @@ export class MensajeriaPadreComponent implements OnInit {
   selectChild(id: string) {
     this.selectedChildId.set(id);
     this.activeDetail.set(null);
+    this.convoQuery.set('');
     this.loadConversations(id);
   }
 
@@ -125,8 +162,12 @@ export class MensajeriaPadreComponent implements OnInit {
         const messages = this.mapMessages(raw as unknown as Record<string, unknown>, myId);
         this.activeDetail.set({
           ...s,
+          unreadCount: 0,
           messages,
         });
+        this.summaries.update((list) =>
+          list.map((row) => (row.id === s.id ? { ...row, unreadCount: 0 } : row)),
+        );
         this.messagingService.markAsRead(s.id).subscribe();
       },
     });
@@ -158,12 +199,37 @@ export class MensajeriaPadreComponent implements OnInit {
     }
   }
 
-  formatTimestamp(iso: string | undefined | null): string {
+  closeConversation() {
+    this.activeDetail.set(null);
+  }
+
+  formatTime(iso: string | undefined | null): string {
     if (!iso) return '';
     const d = new Date(iso);
-    return Number.isNaN(d.getTime())
-      ? String(iso)
-      : d.toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+    if (Number.isNaN(d.getTime())) return String(iso);
+    const diff = Date.now() - d.getTime();
+    const min = Math.round(diff / 60000);
+    if (min < 1) return 'Ahora';
+    if (min < 60) return `${min} min`;
+    const today = this.dayKey(new Date().toISOString());
+    if (this.dayKey(iso) === today) {
+      return d.toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' });
+    }
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    if (this.dayKey(iso) === this.dayKey(yest.toISOString())) return 'Ayer';
+    return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  }
+
+  formatMessageDate(iso: string | undefined | null): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return d.toLocaleTimeString('es-PE', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  formatTimestamp(iso: string | undefined | null): string {
+    return this.formatTime(iso);
   }
 
   getChildName(c: Child): string {
@@ -171,13 +237,13 @@ export class MensajeriaPadreComponent implements OnInit {
   }
 
   getChildGrade(c: Child): string {
-    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+    const grade = c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+    const level = c.level ?? c.enrollments?.[0]?.section?.level ?? '';
+    return [grade, level].filter(Boolean).join(' · ');
   }
 
-  getChildInitial(c: Child): string {
-    const fn = c.user?.firstName?.charAt(0) ?? '';
-    const ln = c.user?.lastName?.charAt(0) ?? '';
-    return (fn + ln).toUpperCase() || '?';
+  childPhoto(c: Child): string | null {
+    return c.photo || c.user?.avatarUrl || null;
   }
 
   private mapSummary(conv: Record<string, unknown>, _myUserId: string): PadreConvoSummary {
@@ -291,5 +357,37 @@ export class MensajeriaPadreComponent implements OnInit {
       timestamp: String(m['createdAt'] ?? ''),
       senderRole: isParent ? 'padre' : 'profesor',
     };
+  }
+
+  private scrollThread() {
+    setTimeout(() => {
+      const el = this.threadEl()?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 40);
+  }
+
+  private dayKey(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  private dayLabel(key: string): string {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, (m || 1) - 1, d || 1);
+    const today = new Date();
+    if (key === this.dayKey(today.toISOString())) return 'Hoy';
+    const yest = new Date(today);
+    yest.setDate(today.getDate() - 1);
+    if (key === this.dayKey(yest.toISOString())) return 'Ayer';
+    const label = date.toLocaleDateString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 }

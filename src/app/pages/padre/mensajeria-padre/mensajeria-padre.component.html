@@ -31,10 +31,8 @@
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            @if (child.photo) {
-              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
-            } @else {
-              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
+            @if (childPhoto(child); as photo) {
+              <img [src]="photo" [alt]="getChildName(child)" class="child-picker__photo" />
             }
             <span>
               <span class="child-picker__name">{{ getChildName(child) }}</span>
@@ -49,91 +47,133 @@
       <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
     } @else if (children().length) {
 
-      @if (selectedChild(); as ch) {
-        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
-      }
+      <section class="metrics metrics--3" aria-label="Resumen de correspondencia">
+        <div class="metric">
+          <span class="metric__n">{{ isLoading() ? '…' : summaries().length }}</span>
+          <span class="metric__l">Conversaciones</span>
+        </div>
+        <div class="metric" [class.metric--alert]="totalUnreadCount() > 0">
+          <span class="metric__n">{{ isLoading() ? '…' : totalUnreadCount() }}</span>
+          <span class="metric__l">Sin leer</span>
+        </div>
+        <div class="metric">
+          <span class="metric__n metric__n--sm">
+            @if (selectedChild(); as ch) {
+              {{ getChildGrade(ch) || '—' }}
+            } @else {
+              —
+            }
+          </span>
+          <span class="metric__l">Grado</span>
+        </div>
+      </section>
 
       @if (isLoading()) {
-        <p class="feed__empty">Cargando conversaciones…</p>
+        <p class="feed__empty">Cargando correspondencia…</p>
       } @else {
-        <div class="chat-layout">
-          <aside class="chat-sidebar feed">
-            <div class="feed__head">
-              <h2>Conversaciones</h2>
-              @if (totalUnreadCount() > 0) {
-                <span class="unread-pill">{{ totalUnreadCount() }} sin leer</span>
-              }
-            </div>
-            @if (filteredConversations().length > 0) {
-              <ul class="feed__list convo-list">
+        <div class="desk" [class.is-open]="!!activeDetail()">
+          <aside class="inbox">
+            <header class="inbox__head">
+              <div>
+                <p class="inbox__kicker">Correspondencia</p>
+                <h2>Docentes</h2>
+              </div>
+              <span>{{ filteredConversations().length }}</span>
+            </header>
+            <label class="inbox__search">
+              <span class="visually-hidden">Buscar conversación</span>
+              <input
+                type="search"
+                [ngModel]="convoQuery()"
+                (ngModelChange)="convoQuery.set($event)"
+                placeholder="Buscar por docente, curso o mensaje…"
+              />
+            </label>
+            @if (filteredConversations().length === 0) {
+              <p class="inbox__empty">
+                @if (convoQuery()) {
+                  No hay coincidencias.
+                } @else if (selectedChild(); as ch) {
+                  Aún no hay mensajes con docentes para {{ getChildName(ch) }}. Puedes escribir desde el curso del hijo.
+                } @else {
+                  No hay conversaciones.
+                }
+              </p>
+            } @else {
+              <ul class="inbox__list">
                 @for (conv of filteredConversations(); track conv.id) {
                   <li>
                     <button
                       type="button"
-                      class="convo-item"
-                      [class.active]="activeDetail()?.id === conv.id"
-                      [class.has-unread]="conv.unreadCount > 0"
+                      class="letter"
+                      [class.has-photo]="!!conv.participantAvatar"
+                      [class.is-on]="activeDetail()?.id === conv.id"
+                      [class.is-new]="conv.unreadCount > 0"
                       (click)="selectConversation(conv)"
                     >
-                      <span class="convo-item__avatar">
-                        @if (conv.participantAvatar) {
-                          <img [src]="conv.participantAvatar" [alt]="conv.participantName" />
-                        } @else {
-                          {{ conv.participantName.charAt(0) }}
-                        }
-                      </span>
-                      <span class="convo-item__body">
-                        <span class="convo-item__name">{{ conv.participantName }}</span>
+                      @if (conv.participantAvatar) {
+                        <img [src]="conv.participantAvatar" [alt]="conv.participantName" class="letter__photo" />
+                      }
+                      <span class="letter__body">
+                        <span class="letter__row">
+                          <span class="letter__name">{{ conv.participantName }}</span>
+                          <time class="letter__when">{{ formatTime(conv.lastMessageTime) }}</time>
+                        </span>
                         @if (conv.participantTitle) {
-                          <span class="convo-item__course">{{ conv.participantTitle }}</span>
+                          <span class="letter__course">{{ conv.participantTitle }}</span>
                         }
-                        <span class="convo-item__preview">{{ conv.lastMessage || 'Sin mensajes' }}</span>
-                      </span>
-                      <span class="convo-item__meta">
-                        <span class="convo-item__time">{{ formatTimestamp(conv.lastMessageTime) }}</span>
-                        @if (conv.unreadCount > 0) {
-                          <span class="convo-item__unread">{{ conv.unreadCount }}</span>
-                        }
+                        <span class="letter__preview">
+                          <span class="letter__text">{{ conv.lastMessage || 'Sin mensajes aún' }}</span>
+                          @if (conv.unreadCount > 0) {
+                            <span class="letter__badge">{{ conv.unreadCount }}</span>
+                          }
+                        </span>
                       </span>
                     </button>
                   </li>
                 }
               </ul>
-            } @else {
-              <p class="feed__empty">
-                @if (selectedChild(); as ch) {
-                  Aún no hay mensajes con docentes para {{ getChildName(ch) }}.
-                } @else {
-                  No hay conversaciones.
-                }
-              </p>
             }
           </aside>
 
-          <section class="chat-panel feed">
+          <section class="thread">
             @if (activeDetail(); as d) {
-              <div class="feed__head chat-panel__head">
-                <div>
+              <header class="thread__head">
+                <button type="button" class="thread__back" (click)="closeConversation()">← Correspondencia</button>
+                @if (d.participantAvatar) {
+                  <img [src]="d.participantAvatar" [alt]="d.participantName" class="thread__photo" />
+                }
+                <div class="thread__who">
                   <h2>{{ d.participantName }}</h2>
                   @if (d.participantTitle) {
-                    <p class="chat-panel__subtitle">{{ d.participantTitle }}</p>
+                    <p>{{ d.participantTitle }}</p>
                   }
                 </div>
-              </div>
+              </header>
 
-              <div class="messages-list">
-                @for (message of d.messages; track message.id) {
-                  <div class="message" [class.message--sent]="message.senderRole === 'padre'">
-                    <div class="message__bubble">
-                      <p class="message__text">{{ message.content }}</p>
-                      <span class="message__time">{{ formatTimestamp(message.timestamp) }}</span>
-                    </div>
-                  </div>
+              <div class="thread__scroll" #threadEl>
+                @for (block of threadBlocks(); track block.id) {
+                  @if (block.type === 'day') {
+                    <p class="thread__day">{{ block.label }}</p>
+                  } @else {
+                    <article class="bubble" [class.is-mine]="block.message.senderRole === 'padre'">
+                      <div class="bubble__card">
+                        <div class="bubble__meta">
+                          <span>{{ block.message.senderRole === 'padre' ? 'Tú' : d.participantName }}</span>
+                          <time [attr.datetime]="block.message.timestamp">{{ formatMessageDate(block.message.timestamp) }}</time>
+                        </div>
+                        <p class="bubble__text">{{ block.message.content }}</p>
+                      </div>
+                    </article>
+                  }
                 }
               </div>
 
-              <div class="message-compose">
+              <form (ngSubmit)="sendMessage()" class="composer">
+                <label class="visually-hidden" for="padre-msg">Mensaje</label>
                 <textarea
+                  id="padre-msg"
+                  class="composer__input"
                   name="padreDraft"
                   [(ngModel)]="draftMessage"
                   placeholder="Escribe un mensaje…"
@@ -141,18 +181,21 @@
                   (keydown)="onEnterKey($event)"
                 ></textarea>
                 <button
-                  type="button"
+                  type="submit"
                   class="padre-btn padre-btn--solid"
-                  (click)="sendMessage()"
                   [disabled]="isSending() || draftMessage.trim() === ''"
                 >
                   @if (isSending()) { Enviando… } @else { Enviar }
                 </button>
-              </div>
+              </form>
             } @else {
-              <p class="feed__empty chat-panel__empty">
-                Selecciona una conversación para ver los mensajes.
-              </p>
+              <div class="thread__idle">
+                <p class="thread__idle-kicker">Correspondencia</p>
+                <p class="thread__idle-title">Elige una conversación</p>
+                <p class="thread__idle-copy">
+                  Los mensajes con los docentes del hijo se leen aquí, como un boletín de ida y vuelta.
+                </p>
+              </div>
             }
           </section>
         </div>
