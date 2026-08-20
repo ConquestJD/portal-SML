@@ -53,7 +53,17 @@ export class PagosComponent implements OnInit {
     if (st !== 'todos') rows = rows.filter((r) => r.status === st);
     const cat = this.filterCategory();
     if (cat !== 'todos') rows = rows.filter((r) => r.category === cat);
-    return rows;
+    const rank: Record<PaymentStatusVm, number> = {
+      vencido: 0,
+      pendiente: 1,
+      proximo: 2,
+      completado: 3,
+    };
+    return [...rows].sort((a, b) => {
+      const byStatus = rank[a.status] - rank[b.status];
+      if (byStatus) return byStatus;
+      return this.dueMs(a.dueDate) - this.dueMs(b.dueDate);
+    });
   });
 
   summary = computed(() => {
@@ -116,7 +126,7 @@ export class PagosComponent implements OnInit {
   }
 
   setFilterStatus(status: 'todos' | PaymentStatusVm) {
-    this.filterStatus.set(status);
+    this.filterStatus.set(this.filterStatus() === status && status !== 'todos' ? 'todos' : status);
   }
 
   setFilterCategory(category: string) {
@@ -138,13 +148,30 @@ export class PagosComponent implements OnInit {
   }
 
   getChildGrade(c: Child): string {
-    return c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+    const grade = c.grade ?? c.enrollments?.[0]?.section?.grade ?? '';
+    const level = c.level ?? c.enrollments?.[0]?.section?.level ?? '';
+    return [grade, level].filter(Boolean).join(' · ');
   }
 
-  getChildInitial(c: Child): string {
-    const fn = c.user?.firstName?.charAt(0) ?? '';
-    const ln = c.user?.lastName?.charAt(0) ?? '';
-    return (fn + ln).toUpperCase() || '?';
+  childPhoto(c: Child): string | null {
+    return c.photo || c.user?.avatarUrl || null;
+  }
+
+  dueDay(raw: string | null): string {
+    const d = this.asDate(raw);
+    return d ? String(d.getDate()) : '—';
+  }
+
+  dueMonth(raw: string | null): string {
+    const d = this.asDate(raw);
+    if (!d) return 's/f';
+    return d.toLocaleDateString('es-PE', { month: 'short' }).replace('.', '');
+  }
+
+  dueLabel(raw: string | null): string {
+    const d = this.asDate(raw);
+    if (!d) return 'Sin fecha';
+    return d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
   getCategoryLabel(category: string): string {
@@ -168,17 +195,15 @@ export class PagosComponent implements OnInit {
     return map[status];
   }
 
-  getReminderClass(payment: PaymentRowVm): string {
-    if (payment.status === 'vencido') return 'reminder-urgent';
-    if (payment.status === 'pendiente') return 'reminder-warning';
-    return 'reminder-info';
+  private dueMs(raw: string | null): number {
+    const d = this.asDate(raw);
+    return d ? d.getTime() : Number.POSITIVE_INFINITY;
   }
 
-  getReminderMessage(payment: PaymentRowVm): string {
-    if (payment.status === 'vencido') return 'Este pago está vencido. Regulariza a la brevedad.';
-    if (payment.status === 'pendiente') return 'Pago pendiente. Revisa la fecha límite.';
-    if (payment.status === 'proximo') return 'Próximo vencimiento. Planifica el pago.';
-    return '';
+  private asDate(raw: string | Date | null): Date | null {
+    if (!raw) return null;
+    const d = raw instanceof Date ? raw : new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
 
   private mapPayment(p: ParentPayment): PaymentRowVm {

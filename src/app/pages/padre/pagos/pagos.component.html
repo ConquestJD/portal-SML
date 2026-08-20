@@ -31,10 +31,8 @@
             [class.active]="selectedChildId() === child.id"
             (click)="selectChild(child.id)"
           >
-            @if (child.photo) {
-              <img [src]="child.photo" [alt]="getChildName(child)" class="child-picker__avatar" />
-            } @else {
-              <span class="child-picker__avatar">{{ getChildInitial(child) }}</span>
+            @if (childPhoto(child); as photo) {
+              <img [src]="photo" [alt]="getChildName(child)" class="child-picker__photo" />
             }
             <span>
               <span class="child-picker__name">{{ getChildName(child) }}</span>
@@ -49,112 +47,139 @@
       <p class="feed__empty">No hay estudiantes vinculados a tu cuenta.</p>
     } @else if (children().length) {
 
-      @if (selectedChild(); as ch) {
-        <p class="page-context">{{ getChildName(ch) }} · {{ getChildGrade(ch) }}</p>
-      }
-
       @if (isLoading()) {
-        <p class="feed__empty">Cargando pagos…</p>
+        <p class="feed__empty">Cargando estado de cuenta…</p>
       } @else {
+        <section class="ledger-page">
+          <header class="mod-head">
+            <div>
+              <p class="mod-head__kicker">Estado de cuenta</p>
+              <h2 class="mod-head__title">
+                @if (selectedChild(); as ch) {
+                  {{ getChildName(ch) }}
+                } @else {
+                  Pensiones y cuotas
+                }
+              </h2>
+              <p class="mod-head__meta">
+                @if (paymentRows().length === 0) {
+                  Aún no hay cargos publicados.
+                } @else {
+                  {{ paymentRows().length }} {{ paymentRows().length === 1 ? 'cargo' : 'cargos' }}
+                  @if (summary().pendientesCount > 0) {
+                    · {{ summary().pendientesCount }} {{ summary().pendientesCount === 1 ? 'pendiente' : 'pendientes' }}
+                  }
+                  @if (summary().vencidosCount > 0) {
+                    · {{ summary().vencidosCount }} {{ summary().vencidosCount === 1 ? 'vencido' : 'vencidos' }}
+                  }
+                }
+              </p>
+            </div>
+          </header>
 
-        <section class="metrics metrics--3" aria-label="Resumen de pagos">
-          <div class="metric">
-            <span class="metric__n">S/ {{ summary().completado | number:'1.0-0' }}</span>
-            <span class="metric__l">Completados</span>
+          <section class="metrics metrics--3" aria-label="Resumen de pagos">
+            <button type="button" class="metric" [class.is-on]="filterStatus() === 'completado'" (click)="setFilterStatus('completado')">
+              <span class="metric__n">S/ {{ summary().completado | number:'1.0-0' }}</span>
+              <span class="metric__l">Completados</span>
+            </button>
+            <button type="button" class="metric" [class.metric--alert]="summary().pendiente > 0" [class.is-on]="filterStatus() === 'pendiente'" (click)="setFilterStatus('pendiente')">
+              <span class="metric__n">S/ {{ summary().pendiente | number:'1.0-0' }}</span>
+              <span class="metric__l">Pendientes</span>
+            </button>
+            <button type="button" class="metric" [class.metric--alert]="summary().vencido > 0" [class.is-on]="filterStatus() === 'vencido'" (click)="setFilterStatus('vencido')">
+              <span class="metric__n">S/ {{ summary().vencido | number:'1.0-0' }}</span>
+              <span class="metric__l">Vencidos</span>
+            </button>
+          </section>
+
+          @if (summary().vencidosCount > 0 && filterStatus() !== 'completado') {
+            <section class="pulse" aria-label="Vencidos">
+              <button type="button" class="pulse__item" (click)="setFilterStatus('vencido')">
+                <span class="pulse__n">{{ summary().vencidosCount }}</span>
+                <span class="pulse__l">
+                  {{ summary().vencidosCount === 1 ? 'Cargo vencido por regularizar' : 'Cargos vencidos por regularizar' }}
+                  · S/ {{ summary().vencido | number:'1.0-0' }}
+                </span>
+              </button>
+            </section>
+          }
+
+          <div class="toolbar">
+            <label class="search">
+              <span class="visually-hidden">Buscar cargo</span>
+              <input
+                type="search"
+                placeholder="Buscar por concepto…"
+                [value]="searchQuery()"
+                (input)="onSearchInput($event)"
+              />
+            </label>
+            <label>
+              <span class="visually-hidden">Categoría</span>
+              <select [ngModel]="filterCategory()" (ngModelChange)="setFilterCategory($event)">
+                <option value="todos">Todas las categorías</option>
+                <option value="matricula">Matrícula</option>
+                <option value="mensualidad">Mensualidad</option>
+                <option value="materiales">Materiales</option>
+                <option value="actividades">Actividades</option>
+              </select>
+            </label>
           </div>
-          <div class="metric" [class.metric--alert]="summary().pendiente > 0">
-            <span class="metric__n">S/ {{ summary().pendiente | number:'1.0-0' }}</span>
-            <span class="metric__l">Pendientes</span>
-          </div>
-          <div class="metric metric--alert">
-            <span class="metric__n">S/ {{ summary().vencido | number:'1.0-0' }}</span>
-            <span class="metric__l">Vencidos</span>
-          </div>
-        </section>
 
-        <div class="toolbar">
-          <label class="search">
-            <span class="visually-hidden">Buscar pago</span>
-            <input
-              type="text"
-              placeholder="Buscar por concepto…"
-              [value]="searchQuery()"
-              (input)="onSearchInput($event)"
-            />
-          </label>
-        </div>
+          <nav class="levy-filters" aria-label="Filtrar por estado">
+            <button type="button" class="levy-filters__btn" [class.active]="filterStatus() === 'todos'" (click)="setFilterStatus('todos')">Todos</button>
+            <button type="button" class="levy-filters__btn" [class.active]="filterStatus() === 'pendiente'" (click)="setFilterStatus('pendiente')">Pendientes</button>
+            <button type="button" class="levy-filters__btn" [class.active]="filterStatus() === 'proximo'" (click)="setFilterStatus('proximo')">Próximos</button>
+            <button type="button" class="levy-filters__btn" [class.active]="filterStatus() === 'vencido'" (click)="setFilterStatus('vencido')">Vencidos</button>
+            <button type="button" class="levy-filters__btn" [class.active]="filterStatus() === 'completado'" (click)="setFilterStatus('completado')">Completados</button>
+          </nav>
 
-        <nav class="padre-tabs" aria-label="Filtrar por estado">
-          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'todos'" (click)="setFilterStatus('todos')">Todos</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'pendiente'" (click)="setFilterStatus('pendiente')">Pendientes</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'proximo'" (click)="setFilterStatus('proximo')">Próximos</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'completado'" (click)="setFilterStatus('completado')">Completados</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterStatus() === 'vencido'" (click)="setFilterStatus('vencido')">Vencidos</button>
-        </nav>
-
-        <nav class="padre-tabs padre-tabs--secondary" aria-label="Filtrar por categoría">
-          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'todos'" (click)="setFilterCategory('todos')">Todas</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'matricula'" (click)="setFilterCategory('matricula')">Matrícula</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'mensualidad'" (click)="setFilterCategory('mensualidad')">Mensualidad</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'materiales'" (click)="setFilterCategory('materiales')">Materiales</button>
-          <button type="button" class="padre-tabs__btn" [class.active]="filterCategory() === 'actividades'" (click)="setFilterCategory('actividades')">Actividades</button>
-        </nav>
-
-        @if (filteredPayments().length === 0) {
-          <section class="feed">
+          @if (filteredPayments().length === 0) {
             <p class="feed__empty">
               @if (searchQuery() || filterStatus() !== 'todos' || filterCategory() !== 'todos') {
-                No se encontraron pagos con ese criterio.
+                No hay cargos en este filtro.
               } @else {
                 Este hijo no tiene pagos registrados.
               }
             </p>
-          </section>
-        } @else {
-          <section class="feed">
-            <ul class="feed__list">
+          } @else {
+            <ul class="levy__list">
               @for (payment of filteredPayments(); track payment.id) {
                 <li>
-                  <div class="feed-row feed-row--static" [class.feed-row--overdue]="payment.status === 'vencido'">
-                    <span class="feed-row__mark">S/</span>
-                    <span class="feed-row__body">
-                      <span class="feed-row__kicker">{{ getCategoryLabel(payment.category) }}</span>
-                      <span class="feed-row__title">{{ payment.concept }}</span>
-                      <span class="feed-row__meta">
-                        @if (payment.dueDate) {
-                          Límite: {{ payment.dueDate | date: 'longDate' }}
+                  <article class="levy-row" [attr.data-kind]="payment.status">
+                    <time class="levy-row__when" [attr.datetime]="payment.dueDate || null">
+                      <span class="levy-row__day">{{ dueDay(payment.dueDate) }}</span>
+                      <span class="levy-row__month">{{ dueMonth(payment.dueDate) }}</span>
+                    </time>
+                    <div class="levy-row__body">
+                      <p class="levy-row__kicker">{{ getCategoryLabel(payment.category) }}</p>
+                      <h3 class="levy-row__title">{{ payment.concept }}</h3>
+                      <p class="levy-row__meta">
+                        @if (payment.status === 'completado' && payment.paymentDate) {
+                          Pagado {{ payment.paymentDate | date: 'd MMM y' }}
+                        } @else if (payment.dueDate) {
+                          {{ dueLabel(payment.dueDate) }}
+                        } @else {
+                          Sin fecha de vencimiento
                         }
                         @if (payment.description) {
                           · {{ payment.description }}
                         }
-                        @if (payment.status === 'completado' && payment.paymentDate) {
-                          · Pagado {{ payment.paymentDate | date: 'shortDate' }}
-                        }
-                      </span>
-                      @if (payment.status !== 'completado') {
-                        <span class="payment-reminder" [class]="getReminderClass(payment)">
-                          {{ getReminderMessage(payment) }}
-                        </span>
-                      }
-                    </span>
-                    <span class="feed-row__side">
-                      <span class="payment-amount">S/ {{ payment.amount | number:'1.2-2' }}</span>
-                      <span class="payment-badge" [class.payment-badge--completado]="payment.status === 'completado'"
-                            [class.payment-badge--pendiente]="payment.status === 'pendiente'"
-                            [class.payment-badge--proximo]="payment.status === 'proximo'"
-                            [class.payment-badge--vencido]="payment.status === 'vencido'">
-                        {{ paymentStatusLabel(payment.status) }}
-                      </span>
+                      </p>
+                    </div>
+                    <div class="levy-row__amount">
+                      <strong>S/ {{ payment.amount | number:'1.2-2' }}</strong>
                       @if (payment.status === 'completado' && payment.receiptNumber) {
                         <button type="button" class="padre-link" (click)="downloadReceipt(payment)">Recibo</button>
                       }
-                    </span>
-                  </div>
+                    </div>
+                    <span class="levy-row__status">{{ paymentStatusLabel(payment.status) }}</span>
+                  </article>
                 </li>
               }
             </ul>
-          </section>
-        }
+          }
+        </section>
       }
     }
   </div>
