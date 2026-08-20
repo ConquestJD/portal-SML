@@ -156,10 +156,10 @@
                   @if (block.type === 'day') {
                     <p class="thread__day">{{ block.label }}</p>
                   } @else {
-                    <article class="bubble" [class.is-mine]="block.message.senderRole === 'padre'">
+                    <article class="bubble" [class.is-mine]="block.message.mine">
                       <div class="bubble__card">
                         <div class="bubble__meta">
-                          <span>{{ block.message.senderRole === 'padre' ? 'Tú' : d.participantName }}</span>
+                          <span>{{ block.message.mine ? 'Tú' : d.participantName }}</span>
                           <time [attr.datetime]="block.message.timestamp">{{ formatMessageDate(block.message.timestamp) }}</time>
                         </div>
                         <p class="bubble__text">{{ block.message.content }}</p>

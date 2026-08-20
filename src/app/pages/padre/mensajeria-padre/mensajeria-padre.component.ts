@@ -23,6 +23,7 @@ export interface PadreChatMessage {
   content: string;
   timestamp: string;
   senderRole: 'padre' | 'profesor';
+  mine: boolean;
 }
 
 export interface PadreConversationDetail extends PadreConvoSummary {
@@ -181,7 +182,7 @@ export class MensajeriaPadreComponent implements OnInit {
     this.messagingService.sendMessage(conv.id, content).subscribe({
       next: (msg) => {
         const myId = this.authService.user()?.id ?? '';
-        const mapped = this.mapOneMessage(msg as unknown as Record<string, unknown>, myId);
+        const mapped = this.mapOneMessage(msg as unknown as Record<string, unknown>, myId, true);
         this.activeDetail.update((c) =>
           c ? { ...c, messages: [...(c.messages ?? []), mapped] } : c,
         );
@@ -345,17 +346,22 @@ export class MensajeriaPadreComponent implements OnInit {
     return msgs.map((m) => this.mapOneMessage(m as Record<string, unknown>, myUserId));
   }
 
-  private mapOneMessage(m: Record<string, unknown>, myUserId: string): PadreChatMessage {
+  private mapOneMessage(
+    m: Record<string, unknown>,
+    myUserId: string,
+    forceMine = false,
+  ): PadreChatMessage {
     const sender = m['sender'] as Record<string, unknown> | undefined;
-    const sid = String(sender?.['id'] ?? '');
+    const sid = String(m['senderId'] ?? sender?.['id'] ?? '');
     const roleObj = sender?.['role'] as Record<string, unknown> | undefined;
     const role = String(roleObj?.['name'] ?? '').toUpperCase();
-    const isParent = sid === myUserId || role === 'PARENT';
+    const mine = forceMine || (!!myUserId && sid === myUserId) || role === 'PARENT';
     return {
       id: String(m['id'] ?? ''),
       content: String(m['content'] ?? ''),
       timestamp: String(m['createdAt'] ?? ''),
-      senderRole: isParent ? 'padre' : 'profesor',
+      senderRole: mine ? 'padre' : 'profesor',
+      mine,
     };
   }
 

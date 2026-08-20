@@ -217,7 +217,7 @@ export class MensajeriaCursoComponent implements OnInit {
     this.messagingService.sendMessage(conv.id, content).subscribe({
       next: (msg) => {
         const myId = this.authService.user()?.id ?? '';
-        const mapped = this.mapOneMessage(msg as unknown as Record<string, unknown>, myId);
+        const mapped = this.mapOneMessage(msg as unknown as Record<string, unknown>, myId, true);
         this.selectedConversation.update((c) =>
           c ? { ...c, messages: [...(c.messages ?? []), mapped] } : c,
         );
@@ -378,18 +378,23 @@ export class MensajeriaCursoComponent implements OnInit {
     return msgs.map((m) => this.mapOneMessage(m as Record<string, unknown>, myUserId));
   }
 
-  private mapOneMessage(m: Record<string, unknown>, myUserId: string): CursoMessageUi {
+  private mapOneMessage(
+    m: Record<string, unknown>,
+    myUserId: string,
+    forceMine = false,
+  ): CursoMessageUi {
     const sender = m['sender'] as Record<string, unknown> | undefined;
     const fn = (sender?.['firstName'] as string) ?? '';
     const ln = (sender?.['lastName'] as string) ?? '';
     const senderName = `${fn} ${ln}`.trim() || '—';
-    const sid = String(sender?.['id'] ?? '');
+    const sid = String(m['senderId'] ?? sender?.['id'] ?? '');
     const roleObj = sender?.['role'] as Record<string, unknown> | undefined;
     const roleName = String(roleObj?.['name'] ?? '').toUpperCase();
+    const mine = forceMine || (!!myUserId && sid === myUserId);
     let senderRole: UserRole = 'estudiante';
     if (roleName === 'TEACHER' || roleName === 'ADMIN') senderRole = 'profesor';
     else if (roleName === 'PARENT') senderRole = 'padre';
-    else if (sid === myUserId) {
+    else if (mine) {
       senderRole = this.authService.userRole() ?? 'estudiante';
     }
 
