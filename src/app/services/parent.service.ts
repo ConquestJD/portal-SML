@@ -79,14 +79,17 @@ export interface ParentMaterialFile {
   filename?: string;
   mimeType?: string;
   size?: number;
+  createdAt?: string;
 }
 
 export interface ParentMaterial {
   id: string;
   title: string;
+  description?: string | null;
   periodId?: string | null;
   period?: { id: string; name: string; order?: number } | null;
   files: ParentMaterialFile[];
+  createdAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -233,14 +236,17 @@ export class ParentService {
     return {
       id: String(m['id'] ?? ''),
       title: String(m['title'] ?? ''),
+      description: m['description'] != null ? String(m['description']) : null,
       periodId: m['periodId'] != null ? String(m['periodId']) : null,
       period: (m['period'] as ParentMaterial['period']) ?? null,
+      createdAt: m['createdAt'] != null ? String(m['createdAt']) : undefined,
       files: filesRaw.map((f) => ({
         id: String(f['id'] ?? ''),
         name: String(f['filename'] ?? f['name'] ?? 'Archivo'),
         filename: String(f['filename'] ?? f['name'] ?? 'Archivo'),
         mimeType: f['mimeType'] != null ? String(f['mimeType']) : undefined,
         size: typeof f['size'] === 'number' ? f['size'] : undefined,
+        createdAt: f['createdAt'] != null ? String(f['createdAt']) : undefined,
       })),
     };
   }

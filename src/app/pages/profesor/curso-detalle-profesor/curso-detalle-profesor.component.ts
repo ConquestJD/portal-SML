@@ -21,6 +21,12 @@ import {
 } from '../../../services/teacher.service';
 import { AnnouncementService } from '../../../services/announcement.service';
 import { courseCoverAlt, resolveCourseCoverUrl } from '../../../shared/utils/course-cover';
+import {
+  buildFolderContents,
+  folderContentCountLabel,
+  isSafeHttpUrl,
+  parseMaterialNotes,
+} from '../../../shared/utils/material-notes';
 
 type TabType = 'estudiantes' | 'tareas' | 'notas' | 'examenes' | 'asistencia' | 'material' | 'comunicados';
 type TaskFilter = 'all' | 'pending';
@@ -58,9 +64,20 @@ interface MaterialBinFile {
   mimeType?: string;
 }
 
+interface MaterialBinNote {
+  id: string;
+  materialId?: string;
+  kind: 'text' | 'link';
+  title: string;
+  body?: string;
+  url?: string;
+}
+
 interface MaterialBinFolder {
   id: string;
   title: string;
+  description?: string | null;
+  createdAt?: string;
   files: MaterialBinFile[];
 }
 
@@ -70,6 +87,7 @@ interface MaterialBin {
   kind: 'period' | 'loose' | 'placeholder';
   files: MaterialBinFile[];
   folders: MaterialBinFolder[];
+  notes: MaterialBinNote[];
 }
 
 @Component({
@@ -188,17 +206,31 @@ export class CursoDetalleProfesorComponent implements OnInit {
           mimeType: f.mimeType,
         })),
       );
+    const toNotes = (list: Material[]): MaterialBinNote[] =>
+      list.flatMap(m =>
+        parseMaterialNotes(m.description).map((n, i) => ({
+          id: `${m.id}-note-${i}`,
+          materialId: m.id,
+          kind: n.kind,
+          title: n.title,
+          body: n.body,
+          url: n.url,
+        })),
+      );
     const toFolders = (list: Material[]): MaterialBinFolder[] =>
       list
         .filter(isMaterialFolder)
         .map(m => ({
           id: m.id,
           title: materialFolderTitle(m),
+          description: m.description,
+          createdAt: m.createdAt,
           files: toFiles([m]),
         }));
     const split = (list: Material[]) => ({
       folders: toFolders(list),
       files: toFiles(list.filter(m => !isMaterialFolder(m))),
+      notes: toNotes(list.filter(m => !isMaterialFolder(m))),
     });
     const inPeriod = (periodId: string) =>
       materials.filter(m => (m.periodId ?? m.period?.id) === periodId);
@@ -216,6 +248,7 @@ export class CursoDetalleProfesorComponent implements OnInit {
           kind: 'placeholder' as const,
           files: [] as MaterialBinFile[],
           folders: [] as MaterialBinFolder[],
+          notes: [] as MaterialBinNote[],
         }));
     bins.push({
       id: '_loose',
@@ -496,16 +529,46 @@ export class CursoDetalleProfesorComponent implements OnInit {
   }
 
   binIsEmpty(bin: MaterialBin): boolean {
-    return bin.files.length === 0 && bin.folders.length === 0;
+    return bin.files.length === 0 && bin.folders.length === 0 && bin.notes.length === 0;
   }
 
   binCountLabel(bin: MaterialBin): string {
     const folders = bin.folders.length;
     const files = bin.files.length + bin.folders.reduce((n, f) => n + f.files.length, 0);
+    const notes =
+      bin.notes.length +
+      bin.folders.reduce((n, f) => n + parseMaterialNotes(f.description).length, 0);
+    if (!folders && !files && !notes) return 'Vacío';
     const parts: string[] = [];
     if (folders) parts.push(`${folders} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
-    parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    if (files) parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    if (notes) parts.push(`${notes} ${notes === 1 ? 'nota' : 'notas'}`);
     return parts.join(' · ');
+  }
+
+  folderCountLabel(folder: MaterialBinFolder): string {
+    return folderContentCountLabel(
+      buildFolderContents({
+        materialId: folder.id,
+        description: folder.description,
+        createdAt: folder.createdAt,
+        files: folder.files,
+      }),
+    );
+  }
+
+  folderNotes(folder: MaterialBinFolder): MaterialBinNote[] {
+    return parseMaterialNotes(folder.description).map((n, i) => ({
+      id: `${folder.id}-note-${i}`,
+      kind: n.kind,
+      title: n.title,
+      body: n.body,
+      url: n.url,
+    }));
+  }
+
+  safeLink(url?: string | null): string | null {
+    return isSafeHttpUrl(url) ? url! : null;
   }
 
   toggleMaterialFolder(materialId: string) {

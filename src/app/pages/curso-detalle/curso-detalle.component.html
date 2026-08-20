@@ -64,6 +64,9 @@
 
       <nav class="prof-tabs" aria-label="Módulos del curso">
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">Material</button>
+        @if (openFolder(); as folderTab) {
+          <button type="button" class="prof-tabs__btn prof-tabs__btn--folder" [class.active]="activeTab() === 'carpeta'" (click)="setTab('carpeta')">{{ folderTab.title }}</button>
+        }
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">Notas</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">Asistencia</button>
@@ -109,13 +112,13 @@
                       @if (bin.kind === 'placeholder') {
                         <p class="archive__empty">Esta carpeta se activa cuando el año lectivo tenga bimestres.</p>
                       } @else if (binIsEmpty(bin)) {
-                        <p class="archive__empty">Aún no hay archivos en este bimestre.</p>
+                        <p class="archive__empty">Aún no hay material en este bimestre.</p>
                       } @else {
                         @if (bin.folders.length) {
                           <ul class="pockets">
                             @for (folder of bin.folders; track folder.id) {
-                              <li class="pocket" [class.is-open]="isMaterialFolderOpen(folder.id)">
-                                <button type="button" class="pocket__tab" (click)="toggleMaterialFolder(folder.id)">
+                              <li class="pocket">
+                                <button type="button" class="pocket__tab" (click)="openMaterialFolder(folder)">
                                   <span class="pocket__glyph" aria-hidden="true">
                                     <span class="pocket__glyph-tab"></span>
                                     <span class="pocket__glyph-body"></span>
@@ -123,28 +126,30 @@
                                   <span class="pocket__copy">
                                     <span class="pocket__kicker">Carpeta</span>
                                     <span class="pocket__title">{{ folder.title }}</span>
-                                    <span class="pocket__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
+                                    <span class="pocket__count">{{ folderCountLabel(folder) }}</span>
                                   </span>
-                                  <span class="pocket__chev" aria-hidden="true">{{ isMaterialFolderOpen(folder.id) ? '−' : '+' }}</span>
+                                  <span class="pocket__chev" aria-hidden="true">→</span>
                                 </button>
-                                @if (isMaterialFolderOpen(folder.id)) {
-                                  <div class="pocket__drawer">
-                                    @if (folder.files.length) {
-                                      <ul class="archive__files">
-                                        @for (f of folder.files; track f.id) {
-                                          <li class="archive__file">
-                                            <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
-                                            <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                                            <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                                            <span></span>
-                                            <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
-                                          </li>
-                                        }
-                                      </ul>
-                                    } @else {
-                                      <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
-                                    }
-                                  </div>
+                              </li>
+                            }
+                          </ul>
+                        }
+                        @if (bin.notes.length) {
+                          <ul class="archive__files">
+                            @for (note of bin.notes; track note.id) {
+                              <li class="archive__file">
+                                @if (note.kind === 'link' && safeLink(note.url); as href) {
+                                  <a [href]="href" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ note.title }}</a>
+                                  <span class="archive__file-type">Enlace</span>
+                                  <span class="archive__file-size">—</span>
+                                  <span></span>
+                                  <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                                } @else {
+                                  <span class="archive__file-name">{{ note.body || note.title }}</span>
+                                  <span class="archive__file-type">Texto</span>
+                                  <span class="archive__file-size">—</span>
+                                  <span></span>
+                                  <span></span>
                                 }
                               </li>
                             }
@@ -170,27 +175,124 @@
               }
             </div>
 
-            @if (looseFiles().length) {
-              <section class="loose" aria-label="Archivos sueltos">
+            @if (hasLooseMaterial() && looseBin(); as loose) {
+              <section class="loose" aria-label="Material suelto">
                 <header class="loose__head">
-                  <h3>Archivos sueltos</h3>
-                  <span>{{ looseFiles().length }} {{ looseFiles().length === 1 ? 'archivo' : 'archivos' }}</span>
+                  <h3>Fuera de bimestres</h3>
+                  <span>{{ binCountLabel(loose) }}</span>
                 </header>
-                <ul class="archive__files">
-                  @for (f of looseFiles(); track f.id) {
-                    <li class="archive__file">
-                      <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
-                      <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                      <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                      <span></span>
-                      <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
-                    </li>
-                  }
-                </ul>
+                @if (looseFolders().length) {
+                  <ul class="pockets">
+                    @for (folder of looseFolders(); track folder.id) {
+                      <li class="pocket">
+                        <button type="button" class="pocket__tab" (click)="openMaterialFolder(folder)">
+                          <span class="pocket__glyph" aria-hidden="true">
+                            <span class="pocket__glyph-tab"></span>
+                            <span class="pocket__glyph-body"></span>
+                          </span>
+                          <span class="pocket__copy">
+                            <span class="pocket__kicker">Carpeta</span>
+                            <span class="pocket__title">{{ folder.title }}</span>
+                            <span class="pocket__count">{{ folderCountLabel(folder) }}</span>
+                          </span>
+                          <span class="pocket__chev" aria-hidden="true">→</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+                @if (looseNotes().length) {
+                  <ul class="archive__files">
+                    @for (note of looseNotes(); track note.id) {
+                      <li class="archive__file">
+                        @if (note.kind === 'link' && safeLink(note.url); as href) {
+                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ note.title }}</a>
+                          <span class="archive__file-type">Enlace</span>
+                          <span class="archive__file-size">—</span>
+                          <span></span>
+                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                        } @else {
+                          <span class="archive__file-name">{{ note.body || note.title }}</span>
+                          <span class="archive__file-type">Texto</span>
+                          <span class="archive__file-size">—</span>
+                          <span></span>
+                          <span></span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+                @if (looseFiles().length) {
+                  <ul class="archive__files">
+                    @for (f of looseFiles(); track f.id) {
+                      <li class="archive__file">
+                        <button type="button" class="archive__file-name link-like" (click)="downloadMaterial(f)">{{ f.name }}</button>
+                        <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                        <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                        <span></span>
+                        <button type="button" class="prof-link" (click)="downloadMaterial(f)">Descargar</button>
+                      </li>
+                    }
+                  </ul>
+                }
               </section>
             }
           }
         </section>
+      }
+
+      @if (activeTab() === 'carpeta') {
+        @if (openFolder(); as folder) {
+          <section class="archive">
+            <header class="mod-head">
+              <div>
+                <p class="mod-head__kicker">Carpeta</p>
+                <h2 class="mod-head__title">{{ folder.title }}</h2>
+                <p class="mod-head__meta">Del más antiguo al más reciente.</p>
+              </div>
+              <button type="button" class="prof-link" (click)="closeMaterialFolder()">← Material</button>
+            </header>
+            @if (materialDownloadError()) {
+              <p class="prof-alert" role="alert">{{ materialDownloadError() }}</p>
+            }
+            @if (folderEntries().length === 0) {
+              <p class="archive__empty">Esta carpeta no tiene archivos, textos ni enlaces.</p>
+            } @else {
+              <table class="ledger">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Contenido</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of folderEntries(); track item.id) {
+                    <tr>
+                      <td>{{ folderKindLabel(item.kind) }}</td>
+                      <td>
+                        @if (item.kind === 'text') {
+                          <span class="ledger__note">{{ item.body }}</span>
+                        } @else {
+                          {{ item.title }}
+                        }
+                      </td>
+                      <td>{{ item.createdAt ? (item.createdAt | date: 'shortDate') : '—' }}</td>
+                      <td>
+                        @if (item.kind === 'file' && item.fileId) {
+                          <button type="button" class="prof-link" (click)="downloadFolderFile(item)">Descargar</button>
+                        } @else if (item.kind === 'link' && safeLink(item.url); as href) {
+                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        }
       }
 
       @if (activeTab() === 'tareas') {

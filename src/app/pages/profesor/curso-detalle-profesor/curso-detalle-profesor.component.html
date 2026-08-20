@@ -450,31 +450,75 @@
                             <header class="nest__head">
                               <button type="button" class="bin__toggle" (click)="toggleMaterialFolder(folder.id)">
                                 <span class="nest__title">{{ folder.title }}</span>
-                                <span class="bin__count">{{ folder.files.length }} {{ folder.files.length === 1 ? 'archivo' : 'archivos' }}</span>
+                                <span class="bin__count">{{ folderCountLabel(folder) }}</span>
                               </button>
                               <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', folder.id]" class="prof-link">Editar</a>
                               <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterial(folder.id)">Quitar</button>
                             </header>
                             @if (isMaterialFolderOpen(folder.id)) {
-                              @if (folder.files.length) {
-                                <ul class="archive__files">
-                                  @for (f of folder.files; track f.id) {
-                                    <li class="archive__file">
-                                      @if (f.url) {
-                                        <a [href]="f.url" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ f.name }}</a>
-                                      } @else {
-                                        <span class="archive__file-name">{{ f.name }}</span>
-                                      }
-                                      <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
-                                      <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
-                                      <span></span>
-                                      <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterialFile(f.materialId, f.id)">Quitar</button>
-                                    </li>
-                                  }
-                                </ul>
+                              @if (folder.files.length || folderNotes(folder).length) {
+                                @if (folderNotes(folder).length) {
+                                  <ul class="archive__files">
+                                    @for (note of folderNotes(folder); track note.id) {
+                                      <li class="archive__file">
+                                        @if (note.kind === 'link' && safeLink(note.url); as href) {
+                                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ note.title }}</a>
+                                          <span class="archive__file-type">Enlace</span>
+                                          <span class="archive__file-size">—</span>
+                                          <span></span>
+                                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                                        } @else {
+                                          <span class="archive__file-name">{{ note.body || note.title }}</span>
+                                          <span class="archive__file-type">Texto</span>
+                                          <span class="archive__file-size">—</span>
+                                          <span></span>
+                                          <span></span>
+                                        }
+                                      </li>
+                                    }
+                                  </ul>
+                                }
+                                @if (folder.files.length) {
+                                  <ul class="archive__files">
+                                    @for (f of folder.files; track f.id) {
+                                      <li class="archive__file">
+                                        @if (f.url) {
+                                          <a [href]="f.url" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ f.name }}</a>
+                                        } @else {
+                                          <span class="archive__file-name">{{ f.name }}</span>
+                                        }
+                                        <span class="archive__file-type">{{ mimeTypeLabel(f.mimeType) }}</span>
+                                        <span class="archive__file-size">{{ formatMaterialFileSize(f.size) }}</span>
+                                        <span></span>
+                                        <button type="button" class="prof-link prof-link--danger" (click)="deleteMaterialFile(f.materialId, f.id)">Quitar</button>
+                                      </li>
+                                    }
+                                  </ul>
+                                }
                               } @else {
-                                <p class="archive__empty">Esta carpeta aún no tiene archivos.</p>
+                                <p class="archive__empty">Esta carpeta aún no tiene archivos, textos ni enlaces.</p>
                               }
+                            }
+                          </li>
+                        }
+                      </ul>
+                    }
+                    @if (bin.notes.length) {
+                      <ul class="archive__files">
+                        @for (note of bin.notes; track note.id) {
+                          <li class="archive__file">
+                            @if (note.kind === 'link' && safeLink(note.url); as href) {
+                              <a [href]="href" target="_blank" rel="noopener noreferrer" class="archive__file-name">{{ note.title }}</a>
+                              <span class="archive__file-type">Enlace</span>
+                              <span class="archive__file-size">—</span>
+                              <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', note.materialId]" class="prof-link">Editar</a>
+                              <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                            } @else {
+                              <span class="archive__file-name">{{ note.body || note.title }}</span>
+                              <span class="archive__file-type">Texto</span>
+                              <span class="archive__file-size">—</span>
+                              <a [routerLink]="['/profesor/cursos', courseId(), 'materiales', note.materialId]" class="prof-link">Editar</a>
+                              <span></span>
                             }
                           </li>
                         }

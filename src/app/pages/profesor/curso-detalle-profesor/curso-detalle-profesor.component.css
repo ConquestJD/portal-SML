@@ -620,6 +620,12 @@ button.pulse__item:hover { background: #ffe8eb; }
   text-decoration: none;
 }
 
+span.archive__file-name {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: unset;
+}
+
 a.archive__file-name { color: var(--navy); font-weight: 600; }
 a.archive__file-name:hover { color: var(--crimson); }
 

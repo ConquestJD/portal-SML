@@ -5,8 +5,15 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ParentService, ParentMaterial, ParentPeriod } from '../../../services/parent.service';
 import { isMaterialFolder, materialFolderTitle } from '../../../services/teacher.service';
+import {
+  buildFolderContents,
+  folderContentCountLabel,
+  FolderContentEntry,
+  isSafeHttpUrl,
+  parseMaterialNotes,
+} from '../../../shared/utils/material-notes';
 
-type TabType = 'informacion' | 'materiales' | 'tareas';
+type TabType = 'informacion' | 'materiales' | 'carpeta' | 'tareas';
 
 export interface ParentCourseDetailVm {
   name: string;
@@ -39,11 +46,22 @@ interface MaterialBinFile {
   name: string;
   size?: number;
   mimeType?: string;
+  createdAt?: string;
+}
+
+interface MaterialBinNote {
+  id: string;
+  kind: 'text' | 'link';
+  title: string;
+  body?: string;
+  url?: string;
 }
 
 interface MaterialBinFolder {
   id: string;
   title: string;
+  description?: string | null;
+  createdAt?: string;
   files: MaterialBinFile[];
 }
 
@@ -54,6 +72,7 @@ interface MaterialBin {
   kind: 'period' | 'loose' | 'placeholder';
   files: MaterialBinFile[];
   folders: MaterialBinFolder[];
+  notes: MaterialBinNote[];
 }
 
 @Component({
@@ -79,6 +98,7 @@ export class CursoDetallePadreComponent implements OnInit {
   periods = signal<ParentPeriod[]>([]);
   materials = signal<ParentMaterial[]>([]);
   materialExpanded = signal<Record<string, boolean>>({});
+  openFolder = signal<MaterialBinFolder | null>(null);
   tasks = signal<ParentCourseTaskRow[]>([]);
 
   /** ID tabla `Teacher` (para crear conversación). */
@@ -93,6 +113,17 @@ export class CursoDetallePadreComponent implements OnInit {
           name: (f.filename ?? f.name ?? '').trim() || 'Archivo',
           size: f.size,
           mimeType: f.mimeType,
+          createdAt: f.createdAt,
+        })),
+      );
+    const toNotes = (list: ParentMaterial[]): MaterialBinNote[] =>
+      list.flatMap((m) =>
+        parseMaterialNotes(m.description).map((n, i) => ({
+          id: `${m.id}-note-${i}`,
+          kind: n.kind,
+          title: n.title,
+          body: n.body,
+          url: n.url,
         })),
       );
     const toFolders = (list: ParentMaterial[]): MaterialBinFolder[] =>
@@ -101,11 +132,14 @@ export class CursoDetallePadreComponent implements OnInit {
         .map((m) => ({
           id: m.id,
           title: materialFolderTitle(m),
+          description: m.description,
+          createdAt: m.createdAt,
           files: toFiles([m]),
         }));
     const split = (list: ParentMaterial[]) => ({
       folders: toFolders(list),
       files: toFiles(list.filter((m) => !isMaterialFolder(m))),
+      notes: toNotes(list.filter((m) => !isMaterialFolder(m))),
     });
     const inPeriod = (periodId: string) =>
       materials.filter((m) => (m.periodId ?? m.period?.id) === periodId);
@@ -123,6 +157,7 @@ export class CursoDetallePadreComponent implements OnInit {
           kind: 'placeholder' as const,
           files: [] as MaterialBinFile[],
           folders: [] as MaterialBinFolder[],
+          notes: [] as MaterialBinNote[],
         };
       }
       return {
@@ -144,10 +179,22 @@ export class CursoDetallePadreComponent implements OnInit {
   });
 
   bimestreBins = computed(() => this.materialGroups().filter((b) => b.kind !== 'loose'));
-  looseFiles = computed((): MaterialBinFile[] => {
-    const loose = this.materialGroups().find((b) => b.kind === 'loose');
-    if (!loose) return [];
-    return [...loose.folders.flatMap((f) => f.files), ...loose.files];
+  looseBin = computed(() => this.materialGroups().find((b) => b.kind === 'loose') ?? null);
+  looseFolders = computed((): MaterialBinFolder[] => this.looseBin()?.folders ?? []);
+  looseFiles = computed((): MaterialBinFile[] => this.looseBin()?.files ?? []);
+  looseNotes = computed((): MaterialBinNote[] => this.looseBin()?.notes ?? []);
+  hasLooseMaterial = computed(
+    () => this.looseFolders().length + this.looseFiles().length + this.looseNotes().length > 0,
+  );
+  folderEntries = computed((): FolderContentEntry[] => {
+    const folder = this.openFolder();
+    if (!folder) return [];
+    return buildFolderContents({
+      materialId: folder.id,
+      description: folder.description,
+      createdAt: folder.createdAt,
+      files: folder.files,
+    });
   });
 
   constructor(
@@ -228,6 +275,9 @@ export class CursoDetallePadreComponent implements OnInit {
   }
 
   selectTab(tab: TabType) {
+    if (tab === 'carpeta' && !this.openFolder()) {
+      tab = 'materiales';
+    }
     this.activeTab.set(tab);
     if (tab === 'tareas') this.loadTasks();
   }
@@ -250,17 +300,52 @@ export class CursoDetallePadreComponent implements OnInit {
     return !!this.materialExpanded()[id];
   }
 
+  openMaterialFolder(folder: MaterialBinFolder) {
+    this.openFolder.set(folder);
+    this.activeTab.set('carpeta');
+  }
+
+  closeMaterialFolder() {
+    this.openFolder.set(null);
+    if (this.activeTab() === 'carpeta') this.activeTab.set('materiales');
+  }
+
+  folderCountLabel(folder: MaterialBinFolder): string {
+    return folderContentCountLabel(
+      buildFolderContents({
+        materialId: folder.id,
+        description: folder.description,
+        createdAt: folder.createdAt,
+        files: folder.files,
+      }),
+    );
+  }
+
+  folderKindLabel(kind: FolderContentEntry['kind']): string {
+    if (kind === 'link') return 'Enlace';
+    if (kind === 'text') return 'Texto';
+    return 'Archivo';
+  }
+
+  safeLink(url?: string | null): string | null {
+    return isSafeHttpUrl(url) ? url! : null;
+  }
+
   binIsEmpty(bin: MaterialBin): boolean {
-    return !bin.folders.length && !bin.files.length;
+    return !bin.folders.length && !bin.files.length && !bin.notes.length;
   }
 
   binCountLabel(bin: MaterialBin): string {
     const folders = bin.folders.length;
     const files = bin.files.length + bin.folders.reduce((n, f) => n + f.files.length, 0);
-    if (!folders && !files) return 'Vacío';
+    const notes =
+      bin.notes.length +
+      bin.folders.reduce((n, f) => n + parseMaterialNotes(f.description).length, 0);
+    if (!folders && !files && !notes) return 'Vacío';
     const parts: string[] = [];
     if (folders) parts.push(`${folders} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
-    parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    if (files) parts.push(`${files} ${files === 1 ? 'archivo' : 'archivos'}`);
+    if (notes) parts.push(`${notes} ${notes === 1 ? 'nota' : 'notas'}`);
     return parts.join(' · ');
   }
 
@@ -288,6 +373,16 @@ export class CursoDetallePadreComponent implements OnInit {
     window.open(
       this.parentService.getChildCourseMaterialDownloadUrl(this.childId, this.courseId, file.id),
     );
+  }
+
+  downloadFolderFile(item: FolderContentEntry) {
+    if (!item.fileId) return;
+    this.downloadMaterial({
+      id: item.fileId,
+      name: item.title,
+      size: item.size,
+      mimeType: item.mimeType,
+    });
   }
 
   sendMessageToTeacher() {
