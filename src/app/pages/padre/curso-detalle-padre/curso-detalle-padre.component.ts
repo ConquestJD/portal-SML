@@ -13,7 +13,7 @@ import {
   parseMaterialNotes,
 } from '../../../shared/utils/material-notes';
 
-type TabType = 'informacion' | 'materiales' | 'carpeta' | 'tareas';
+type TabType = 'informacion' | 'materiales' | 'tareas';
 
 export interface ParentCourseDetailVm {
   name: string;
@@ -275,8 +275,11 @@ export class CursoDetallePadreComponent implements OnInit {
   }
 
   selectTab(tab: TabType) {
-    if (tab === 'carpeta' && !this.openFolder()) {
-      tab = 'materiales';
+    if (tab !== 'materiales') {
+      this.openFolder.set(null);
+    } else if (this.activeTab() === 'materiales' && this.openFolder()) {
+      this.openFolder.set(null);
+      return;
     }
     this.activeTab.set(tab);
     if (tab === 'tareas') this.loadTasks();
@@ -302,12 +305,10 @@ export class CursoDetallePadreComponent implements OnInit {
 
   openMaterialFolder(folder: MaterialBinFolder) {
     this.openFolder.set(folder);
-    this.activeTab.set('carpeta');
   }
 
   closeMaterialFolder() {
     this.openFolder.set(null);
-    if (this.activeTab() === 'carpeta') this.activeTab.set('materiales');
   }
 
   folderCountLabel(folder: MaterialBinFolder): string {

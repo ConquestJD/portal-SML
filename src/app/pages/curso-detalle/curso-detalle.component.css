@@ -864,9 +864,3 @@
   font-style: italic;
   line-height: 1.45;
 }
-
-.prof-tabs__btn--folder {
-  max-width: 14rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}

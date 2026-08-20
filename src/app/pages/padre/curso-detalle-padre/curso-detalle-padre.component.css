@@ -224,12 +224,6 @@
   line-height: 1.45;
 }
 
-.padre-tabs__btn--folder {
-  max-width: 14rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .side { padding: 1.15rem 1.2rem 1.3rem; }
 
 .side__block h2 {

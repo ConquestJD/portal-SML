@@ -25,7 +25,7 @@ import {
   parseMaterialNotes,
 } from '../../shared/utils/material-notes';
 
-type TabType = 'material' | 'carpeta' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
+type TabType = 'material' | 'tareas' | 'notas' | 'asistencia' | 'comunicados';
 type TaskFilter = 'all' | 'pending' | 'done';
 type TaskKind = 'pendiente' | 'vencida' | 'entregada' | 'calificada';
 type AnnFilter = 'all' | 'unread' | 'urgent';
@@ -450,7 +450,6 @@ export class CursoDetalleComponent implements OnInit {
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const tab = this.tabFromQuery(params.get('tab')) ?? 'material';
-      if (this.activeTab() === 'carpeta' && tab === 'material') return;
       if (tab !== this.activeTab()) this.applyTab(tab);
     });
 
@@ -468,6 +467,7 @@ export class CursoDetalleComponent implements OnInit {
   }
 
   private applyTab(tab: TabType) {
+    if (tab !== 'material') this.openFolder.set(null);
     this.activeTab.set(tab);
     if (tab === 'tareas') this.loadTasks();
     if (tab === 'notas') {
@@ -657,9 +657,10 @@ export class CursoDetalleComponent implements OnInit {
   }
 
   setTab(tab: TabType) {
-    if (tab === 'carpeta') {
-      if (!this.openFolder()) tab = 'material';
-      this.activeTab.set(tab);
+    if (tab !== 'material') {
+      this.openFolder.set(null);
+    } else if (this.activeTab() === 'material' && this.openFolder()) {
+      this.openFolder.set(null);
       return;
     }
     this.applyTab(tab);
@@ -681,12 +682,10 @@ export class CursoDetalleComponent implements OnInit {
 
   openMaterialFolder(folder: MaterialBinFolder) {
     this.openFolder.set(folder);
-    this.activeTab.set('carpeta');
   }
 
   closeMaterialFolder() {
     this.openFolder.set(null);
-    if (this.activeTab() === 'carpeta') this.setTab('material');
   }
 
   folderCountLabel(folder: MaterialBinFolder): string {

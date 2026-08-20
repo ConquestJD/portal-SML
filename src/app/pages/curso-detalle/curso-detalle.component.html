@@ -64,9 +64,6 @@
 
       <nav class="prof-tabs" aria-label="Módulos del curso">
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'material'" (click)="setTab('material')">Material</button>
-        @if (openFolder(); as folderTab) {
-          <button type="button" class="prof-tabs__btn prof-tabs__btn--folder" [class.active]="activeTab() === 'carpeta'" (click)="setTab('carpeta')">{{ folderTab.title }}</button>
-        }
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'tareas'" (click)="setTab('tareas')">Tareas</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'notas'" (click)="setTab('notas')">Notas</button>
         <button type="button" class="prof-tabs__btn" [class.active]="activeTab() === 'asistencia'" (click)="setTab('asistencia')">Asistencia</button>
@@ -74,6 +71,57 @@
       </nav>
 
       @if (activeTab() === 'material') {
+        @if (openFolder(); as folder) {
+          <section class="archive">
+            <header class="mod-head">
+              <div>
+                <p class="mod-head__kicker">Carpeta</p>
+                <h2 class="mod-head__title">{{ folder.title }}</h2>
+                <p class="mod-head__meta">Del más antiguo al más reciente.</p>
+              </div>
+              <button type="button" class="prof-link" (click)="closeMaterialFolder()">← Archivo</button>
+            </header>
+            @if (materialDownloadError()) {
+              <p class="prof-alert" role="alert">{{ materialDownloadError() }}</p>
+            }
+            @if (folderEntries().length === 0) {
+              <p class="archive__empty">Esta carpeta no tiene archivos, textos ni enlaces.</p>
+            } @else {
+              <table class="ledger">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Contenido</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of folderEntries(); track item.id) {
+                    <tr>
+                      <td>{{ folderKindLabel(item.kind) }}</td>
+                      <td>
+                        @if (item.kind === 'text') {
+                          <span class="ledger__note">{{ item.body }}</span>
+                        } @else {
+                          {{ item.title }}
+                        }
+                      </td>
+                      <td>{{ item.createdAt ? (item.createdAt | date: 'shortDate') : '—' }}</td>
+                      <td>
+                        @if (item.kind === 'file' && item.fileId) {
+                          <button type="button" class="prof-link" (click)="downloadFolderFile(item)">Descargar</button>
+                        } @else if (item.kind === 'link' && safeLink(item.url); as href) {
+                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        } @else {
         <section class="archive">
           <header class="mod-head">
             <div>
@@ -239,59 +287,6 @@
             }
           }
         </section>
-      }
-
-      @if (activeTab() === 'carpeta') {
-        @if (openFolder(); as folder) {
-          <section class="archive">
-            <header class="mod-head">
-              <div>
-                <p class="mod-head__kicker">Carpeta</p>
-                <h2 class="mod-head__title">{{ folder.title }}</h2>
-                <p class="mod-head__meta">Del más antiguo al más reciente.</p>
-              </div>
-              <button type="button" class="prof-link" (click)="closeMaterialFolder()">← Material</button>
-            </header>
-            @if (materialDownloadError()) {
-              <p class="prof-alert" role="alert">{{ materialDownloadError() }}</p>
-            }
-            @if (folderEntries().length === 0) {
-              <p class="archive__empty">Esta carpeta no tiene archivos, textos ni enlaces.</p>
-            } @else {
-              <table class="ledger">
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Contenido</th>
-                    <th>Fecha</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of folderEntries(); track item.id) {
-                    <tr>
-                      <td>{{ folderKindLabel(item.kind) }}</td>
-                      <td>
-                        @if (item.kind === 'text') {
-                          <span class="ledger__note">{{ item.body }}</span>
-                        } @else {
-                          {{ item.title }}
-                        }
-                      </td>
-                      <td>{{ item.createdAt ? (item.createdAt | date: 'shortDate') : '—' }}</td>
-                      <td>
-                        @if (item.kind === 'file' && item.fileId) {
-                          <button type="button" class="prof-link" (click)="downloadFolderFile(item)">Descargar</button>
-                        } @else if (item.kind === 'link' && safeLink(item.url); as href) {
-                          <a [href]="href" target="_blank" rel="noopener noreferrer" class="prof-link">Abrir</a>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </section>
         }
       }
 
