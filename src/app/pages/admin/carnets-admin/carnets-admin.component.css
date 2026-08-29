@@ -1,0 +1,70 @@
+@import '../_shared/admin-editorial.css';
+
+.lead {
+  margin: 0 0 1.15rem;
+  color: var(--muted);
+  max-width: 40rem;
+}
+
+.roster-count {
+  margin: 0 0 .75rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.roster-table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  box-shadow: 0 1px 0 rgba(20 32 51 / .04);
+}
+
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 44rem;
+}
+
+.roster-table th {
+  text-align: left;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: .7rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  background: #f7f8fa;
+}
+
+.roster-table td {
+  padding: .75rem 1.15rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.roster-table tbody tr:last-child td { border-bottom: none; }
+
+.carnet-bar {
+  width: 14rem;
+}
+
+.carnet-bar app-barcode128 {
+  max-width: 13rem;
+}
+
+.carnet-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.roster-code {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--navy);
+}
+
+.roster-actions { text-align: right; white-space: nowrap; }
+
+.muted { color: var(--muted); font-size: .85rem; }

@@ -100,6 +100,13 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
       ]
     },
     {
+      label: 'Ingreso',
+      items: [
+        { label: 'Carnets', icon: 'fas fa-id-card', path: '/admin/carnets', exact: false },
+        { label: 'Asistencia', icon: 'fas fa-door-open', path: '/admin/asistencia-ingreso', exact: false }
+      ]
+    },
+    {
       label: 'Cuenta',
       items: [
         { label: 'Perfil', icon: 'fas fa-user', path: '/admin/perfil', exact: false },

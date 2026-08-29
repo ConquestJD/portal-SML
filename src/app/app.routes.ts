@@ -266,6 +266,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/comunicados-admin/comunicados-admin.component').then(m => m.ComunicadosAdminComponent)
       },
       {
+        path: 'admin/carnets',
+        loadComponent: () => import('./pages/admin/carnets-admin/carnets-admin.component').then(m => m.CarnetsAdminComponent)
+      },
+      {
+        path: 'admin/asistencia-ingreso',
+        loadComponent: () => import('./pages/admin/asistencia-ingreso/asistencia-ingreso.component').then(m => m.AsistenciaIngresoComponent)
+      },
+      {
         path: 'admin/roles-permisos',
         loadComponent: () => import('./pages/admin/roles-permisos/roles-permisos.component').then(m => m.RolesPermisosComponent)
       },

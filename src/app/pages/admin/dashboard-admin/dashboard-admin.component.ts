@@ -47,6 +47,8 @@ export class DashboardAdminComponent implements OnInit {
     { label: 'Familias', hint: 'Padres de familia', link: '/admin/padres', photo: '/images/heroes/parents.webp' },
     { label: 'Plan de estudios', hint: 'Cursos y horarios', link: '/admin/cursos', photo: '/images/heroes/courses.webp' },
     { label: 'Matrícula', hint: 'Inscripciones', link: '/admin/matricula', photo: '/images/heroes/classrooms.webp' },
+    { label: 'Carnets', hint: 'Código de barras e impresión', link: '/admin/carnets', photo: '/images/heroes/students.webp' },
+    { label: 'Asistencia de ingreso', hint: 'Lector de portería', link: '/admin/asistencia-ingreso', photo: '/images/heroes/classrooms.webp' },
     { label: 'Comunicados', hint: 'Mural institucional', link: '/admin/comunicados', photo: '/images/heroes/announcements.webp' },
     { label: 'Reportes', hint: 'Indicadores', link: '/admin/reportes', photo: '/images/heroes/reports.webp' },
     { label: 'Identidad', hint: 'Colegio, materias, año y pensiones', link: '/admin/configuracion', photo: '/images/heroes/settings.webp' },
@@ -57,6 +59,7 @@ export class DashboardAdminComponent implements OnInit {
     { label: 'Registrar estudiante', hint: 'Alta en la nómina', link: '/admin/estudiantes/nuevo' },
     { label: 'Abrir un curso', hint: 'Plan de estudios', link: '/admin/cursos/crear' },
     { label: 'Publicar comunicado', hint: 'Mural del colegio', link: '/admin/comunicados' },
+    { label: 'Abrir asistencia de ingreso', hint: 'Dejar activa junto al ZKB209', link: '/admin/asistencia-ingreso' },
   ];
 
   constructor(

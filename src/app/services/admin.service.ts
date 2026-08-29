@@ -45,7 +45,9 @@ export interface StudentItem {
   user: {
     id: string; email: string; firstName: string; lastName: string; status: string;
     phone?: string; username?: string; dni?: string; address?: string; createdAt?: string;
+    avatarUrl?: string | null;
   };
+  photo?: string | null;
   birthDate?: string; gender?: string; address?: string; bloodType?: string; medicalNotes?: string;
   createdAt?: string;
   // Normalized display fields
@@ -341,6 +343,7 @@ export class AdminService {
       enrollmentStatus: current?.status ?? '',
       academicYearName: current?.academicYear?.name ?? '',
       enrolledAt: current?.enrolledAt,
+      photo: s.photo ?? u.avatarUrl ?? null,
     };
   }
 
@@ -660,4 +663,50 @@ export class AdminService {
     return this.http.put<{ success: boolean; data: SchoolSettings }>(`${this.url}/settings`, dto)
       .pipe(map(r => r.data));
   }
+
+  scanCampusAttendance(code: string): Observable<CampusScanResult> {
+    return this.http
+      .post<{ success: boolean; data: CampusScanResult }>(`${this.url}/campus-attendance/scan`, {
+        code,
+        source: 'zkb209',
+      })
+      .pipe(map((r) => r.data));
+  }
+
+  getCampusAttendance(date?: string): Observable<CampusAttendanceDay> {
+    return this.get<CampusAttendanceDay>('/campus-attendance', buildParams({ date }));
+  }
+}
+
+export interface CampusScanStudent {
+  id: string;
+  studentCode: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  grade: string;
+  level: string;
+  photoUrl: string | null;
+}
+
+export interface CampusScanResult {
+  duplicate: boolean;
+  status: 'PRESENT' | 'LATE';
+  scannedAt: string;
+  lateCutoff: string;
+  student: CampusScanStudent;
+}
+
+export interface CampusAttendanceDay {
+  date: string;
+  lateCutoff: string;
+  present: number;
+  late: number;
+  total: number;
+  records: Array<{
+    id: string;
+    status: 'PRESENT' | 'LATE';
+    scannedAt: string;
+    student: CampusScanStudent;
+  }>;
 }

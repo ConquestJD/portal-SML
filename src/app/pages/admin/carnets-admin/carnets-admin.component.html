@@ -1,0 +1,103 @@
+<div class="adm-page">
+
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/heroes/students.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Carnets</h1>
+        <p class="adm-page__brand">Código de barras · Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <button
+          type="button"
+          class="adm-btn adm-btn--primary"
+          [disabled]="!filtered().length"
+          (click)="printVisible()"
+        >
+          Imprimir visibles
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+    <p class="lead">
+      Cada carnet lleva el código del alumno en Code 128, listo para el lector ZKTeco ZKB209.
+    </p>
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="toolbar">
+      <label class="search">
+        <span class="visually-hidden">Buscar</span>
+        <input
+          type="search"
+          placeholder="Nombre o código…"
+          [(ngModel)]="searchQuery"
+          name="carnetSearch"
+        />
+      </label>
+      <select [(ngModel)]="filterGrade" name="carnetGrade" aria-label="Grado">
+        <option value="">Grado</option>
+        @for (g of availableGrades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+    </div>
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando carnets…</p>
+    } @else if (filtered().length === 0) {
+      <admin-empty-state message="No hay alumnos para mostrar"></admin-empty-state>
+    } @else {
+      <p class="roster-count">{{ filtered().length }} carnets</p>
+      <div class="roster-table-wrap">
+        <table class="roster-table">
+          <thead>
+            <tr>
+              <th>Código de barras</th>
+              <th>Código</th>
+              <th>Nombre completo</th>
+              <th>Grado</th>
+              <th><span class="visually-hidden">Imprimir</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of filtered(); track s.id) {
+              <tr>
+                <td class="carnet-bar">
+                  @if (studentCode(s)) {
+                    <app-barcode128 [value]="studentCode(s)" [height]="36" [moduleWidth]="1.6" />
+                  } @else {
+                    <span class="muted">Sin código</span>
+                  }
+                </td>
+                <td>
+                  <span class="roster-code">{{ studentCode(s) || '—' }}</span>
+                </td>
+                <td>
+                  <span class="carnet-name">{{ fullName(s) || '—' }}</span>
+                </td>
+                <td>{{ gradeLine(s) || '—' }}</td>
+                <td class="roster-actions">
+                  <button
+                    type="button"
+                    class="adm-link"
+                    [disabled]="!studentCode(s)"
+                    (click)="printOne(s)"
+                  >
+                    Imprimir carnet
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
