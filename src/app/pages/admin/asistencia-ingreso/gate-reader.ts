@@ -168,11 +168,12 @@ export class GateReaderWatch {
       this.setReady(false, saved);
       return;
     }
+    const serial = 'serialNumber' in match ? match.serialNumber : '';
     const info: GateReaderInfo = {
       label: labelOf(match),
       vendorId: match.vendorId,
       productId: match.productId,
-      serialNumber: 'serialNumber' in match ? (match.serialNumber ?? '') : '',
+      serialNumber: typeof serial === 'string' ? serial : '',
     };
     remember(info);
     this.setReady(true, info);
