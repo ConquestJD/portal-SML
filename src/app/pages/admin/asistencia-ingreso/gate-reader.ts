@@ -157,8 +157,8 @@ export class GateReaderWatch {
 
   private async refresh() {
     const saved = remembered();
-    const usbDevices = (await usb()?.getDevices().catch(() => [])) ?? [];
-    const hidDevices = (await hid()?.getDevices().catch(() => [])) ?? [];
+    const usbDevices = (await usb()?.getDevices().catch((): UsbDev[] => [])) ?? [];
+    const hidDevices = (await hid()?.getDevices().catch((): HidDev[] => [])) ?? [];
 
     const match =
       usbDevices.find((d) => this.matchesSaved(d, saved) || looksLikeScanner(d)) ??
