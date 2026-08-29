@@ -7,6 +7,7 @@ import {
   OnInit,
   PLATFORM_ID,
   ViewChild,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -17,6 +18,7 @@ import {
   CampusAttendanceDay,
   CampusScanResult,
 } from '../../../services/admin.service';
+import { GateReaderInfo, GateReaderWatch } from './gate-reader';
 
 @Component({
   selector: 'app-asistencia-ingreso',
@@ -34,10 +36,19 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   day = signal<CampusAttendanceDay | null>(null);
   last = signal<CampusScanResult | null>(null);
   flash = signal<'ok' | 'late' | 'dup' | 'err' | ''>('');
+  readerReady = signal(false);
+  readerInfo = signal<GateReaderInfo | null>(null);
+  pairing = signal(false);
+  pairError = signal('');
+  logOpen = signal(false);
+
+  recent = computed(() => this.day()?.records ?? []);
+  readerSupported = computed(() => this.watch.supported);
 
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly router = inject(Router);
   private readonly admin = inject(AdminService);
+  private readonly watch = new GateReaderWatch();
   private buffer = '';
   private lastKeyAt = 0;
   private clockTimer?: ReturnType<typeof setInterval>;
@@ -50,11 +61,19 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
     this.clockTimer = setInterval(() => this.tickClock(), 1000);
     this.loadDay();
     this.pollTimer = setInterval(() => this.loadDay(), 20000);
-    queueMicrotask(() => this.focusScanner());
+    this.watch.start((ready, info) => {
+      this.readerReady.set(ready);
+      this.readerInfo.set(info);
+      if (ready) {
+        this.pairError.set('');
+        queueMicrotask(() => this.focusScanner());
+      }
+    });
   }
 
   ngOnDestroy() {
     if (this.browser) document.body.style.overflow = '';
+    this.watch.stop();
     clearInterval(this.clockTimer);
     clearInterval(this.pollTimer);
   }
@@ -63,13 +82,43 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/admin/dashboard']);
   }
 
+  toggleLog() {
+    this.logOpen.update((v) => !v);
+    queueMicrotask(() => this.focusScanner());
+  }
+
+  async pairReader() {
+    this.pairing.set(true);
+    this.pairError.set('');
+    try {
+      await this.watch.pair();
+    } catch (err) {
+      const name = (err as { name?: string })?.name;
+      if (name === 'NotFoundError') {
+        this.pairError.set('Conecta el ZKTeco ZKB209 al USB y elige ese dispositivo en la lista.');
+      } else {
+        this.pairError.set(
+          (err as Error)?.message || 'No se pudo detectar el lector. Prueba en Chrome y con el cable USB.',
+        );
+      }
+    } finally {
+      this.pairing.set(false);
+    }
+  }
+
   @HostListener('document:keydown', ['$event'])
   onDocumentKey(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault();
+      if (this.logOpen()) {
+        this.logOpen.set(false);
+        return;
+      }
       this.close();
       return;
     }
+
+    if (!this.readerReady()) return;
 
     const target = event.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
@@ -95,6 +144,7 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   }
 
   onHiddenInput(event: Event) {
+    if (!this.readerReady()) return;
     const input = event.target as HTMLInputElement;
     const code = (input.value ?? '').trim();
     if (!code) return;
@@ -103,6 +153,7 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   }
 
   focusScanner() {
+    if (!this.readerReady()) return;
     this.scanInput?.nativeElement.focus();
   }
 
@@ -115,7 +166,7 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
 
   submitCode(raw: string) {
     const code = raw.replace(/[\u0000-\u001F]/g, '').trim();
-    if (!code || this.scanning()) return;
+    if (!code || this.scanning() || !this.readerReady()) return;
     this.scanning.set(true);
     this.error.set('');
     this.admin.scanCampusAttendance(code).subscribe({
@@ -141,6 +192,10 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   statusLabel(hit: CampusScanResult): string {
     if (hit.duplicate) return 'Ya registrado';
     return hit.status === 'LATE' ? 'Tardanza' : 'A tiempo';
+  }
+
+  rowStatus(status: string): string {
+    return status === 'LATE' ? 'Tardanza' : 'A tiempo';
   }
 
   formatTime(iso: string | null | undefined): string {

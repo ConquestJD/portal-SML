@@ -1,4 +1,4 @@
-<div class="kiosk" [attr.data-flash]="flash()">
+<div class="kiosk" [attr.data-flash]="flash()" [class.kiosk--log]="logOpen()">
   <input
     #scanInput
     class="kiosk__trap"
@@ -12,12 +12,72 @@
   />
 
   <header class="kiosk__bar">
-    <p class="kiosk__clock">{{ clock() }}</p>
+    <div class="kiosk__bar-left">
+      <button type="button" class="kiosk__log-btn" (click)="toggleLog()">
+        {{ logOpen() ? 'Ocultar ingresos' : 'Ingresos' }}
+      </button>
+      <p class="kiosk__clock">{{ clock() }}</p>
+    </div>
     <button type="button" class="kiosk__close" (click)="close()">Cerrar</button>
   </header>
 
+  <aside class="log" [class.is-open]="logOpen()" aria-label="Últimos ingresos">
+    <header class="log__head">
+      <h2>Últimos ingresos</h2>
+      <p>{{ recent().length }} hoy</p>
+    </header>
+    @if (recent().length === 0) {
+      <p class="log__empty">Todavía no hay ingresos.</p>
+    } @else {
+      <ul class="log__list">
+        @for (row of recent(); track row.id) {
+          <li class="log__row">
+            <div class="log__photo">
+              @if (row.student.photoUrl) {
+                <img [src]="row.student.photoUrl" alt="" />
+              }
+            </div>
+            <div class="log__text">
+              <p class="log__name">{{ row.student.fullName }}</p>
+              <p class="log__meta">
+                {{ formatTime(row.scannedAt) }}
+                · {{ row.student.studentCode }}
+                @if (gradeLine(row.student.grade, row.student.level); as grade) {
+                  · {{ grade }}
+                }
+              </p>
+            </div>
+            <span class="log__tag" [attr.data-kind]="row.status === 'LATE' ? 'late' : 'ok'">
+              {{ rowStatus(row.status) }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
   <main class="kiosk__stage" aria-live="polite">
-    @if (last(); as hit) {
+    @if (!readerReady()) {
+      <div class="idle">
+        <img src="/only-logo.png" alt="" class="idle__crest" />
+        <p class="idle__prompt">Conecte el lector ZKTeco ZKB209</p>
+        <p class="idle__hint">
+          @if (readerSupported()) {
+            Enchufa el USB y pulsa detectar. Sin el lector no se registra ningún ingreso.
+          } @else {
+            Esta pantalla necesita Chrome para reconocer el lector USB.
+          }
+        </p>
+        @if (readerSupported()) {
+          <button type="button" class="idle__btn" (click)="pairReader()" [disabled]="pairing()">
+            {{ pairing() ? 'Buscando…' : 'Detectar lector' }}
+          </button>
+        }
+        @if (pairError()) {
+          <p class="idle__error" role="alert">{{ pairError() }}</p>
+        }
+      </div>
+    } @else if (last(); as hit) {
       <article class="card">
         <div class="card__photo">
           @if (hit.student.photoUrl) {
@@ -48,6 +108,9 @@
       <div class="idle">
         <img src="/only-logo.png" alt="" class="idle__crest" />
         <p class="idle__prompt">Acerque el carnet al lector</p>
+        @if (readerInfo(); as reader) {
+          <p class="idle__hint">{{ reader.label }} listo</p>
+        }
         @if (error()) {
           <p class="idle__error" role="alert">{{ error() }}</p>
         }
