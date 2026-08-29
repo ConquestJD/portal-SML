@@ -1,70 +1,114 @@
 @import '../_shared/admin-editorial.css';
 
-.lead {
-  margin: 0 0 1.15rem;
-  color: var(--muted);
-  max-width: 40rem;
+.desk {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: 1.35rem 1.15rem;
 }
 
-.roster-count {
-  margin: 0 0 .75rem;
-  font-family: var(--font-display);
-  font-style: italic;
-  color: var(--muted);
-}
-
-.roster-table-wrap {
-  overflow-x: auto;
+.tile {
   background: var(--surface);
+  padding: 1.1rem 1.1rem .85rem;
   box-shadow: 0 1px 0 rgba(20 32 51 / .04);
 }
 
-.roster-table {
+.tile__face {
+  display: block;
   width: 100%;
-  border-collapse: collapse;
-  min-width: 44rem;
+  height: 11.2rem;
+  border: none;
+  background: #e8edf3;
+  padding: .9rem .5rem 0;
+  overflow: hidden;
+  cursor: pointer;
 }
 
-.roster-table th {
-  text-align: left;
-  font-size: .68rem;
+.tile__face:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.tile__face app-carnet-face {
+  display: block;
+  margin: 0 auto;
+  transform: scale(.78);
+  transform-origin: top center;
+}
+
+.tile__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: .85rem;
+  padding-top: .7rem;
+  border-top: 1px solid var(--line);
+}
+
+.preview {
+  position: fixed;
+  inset: 0;
+  z-index: 4200;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0 16 24 / .72);
+}
+
+.preview__sheet {
+  width: min(40rem, 100%);
+  text-align: center;
+}
+
+.preview__kicker {
+  margin: 0 0 1rem;
+  font-size: .72rem;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--muted);
-  padding: .7rem 1.15rem;
-  border-bottom: 1px solid var(--line);
-  background: #f7f8fa;
+  color: rgba(255 255 255 / .55);
 }
 
-.roster-table td {
-  padding: .75rem 1.15rem;
-  border-bottom: 1px solid var(--line);
-  vertical-align: middle;
+.preview__card {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255 255 255 / .08), transparent 40%),
+    #0b1824;
 }
 
-.roster-table tbody tr:last-child td { border-bottom: none; }
-
-.carnet-bar {
-  width: 14rem;
+.preview__card app-carnet-face {
+  transform: scale(1.55);
+  transform-origin: center;
 }
 
-.carnet-bar app-barcode128 {
-  max-width: 13rem;
-}
-
-.carnet-name {
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.roster-code {
+.preview__name {
+  margin: 1.15rem 0 0;
   font-family: var(--font-display);
+  font-size: 1.45rem;
   font-weight: 600;
-  letter-spacing: .04em;
-  color: var(--navy);
+  color: #fff;
 }
 
-.roster-actions { text-align: right; white-space: nowrap; }
+.preview__actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
 
-.muted { color: var(--muted); font-size: .85rem; }
+.preview__actions .adm-link {
+  color: #fff;
+  border-bottom-color: transparent;
+}
+
+.preview__actions .adm-link:hover {
+  border-bottom-color: #fff;
+}
+
+@media (max-width: 720px) {
+  .preview__card app-carnet-face {
+    transform: scale(1.15);
+  }
+}

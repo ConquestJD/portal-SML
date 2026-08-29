@@ -1,15 +1,15 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, StudentItem } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
-import { Barcode128Component } from '../../../shared/components/barcode128/barcode128.component';
-import { printStudentCarnets } from './print-carnet';
+import { CarnetFaceComponent } from './carnet-face.component';
+import { CarnetPrintData, printStudentCarnets } from './print-carnet';
 
 @Component({
   selector: 'app-carnets-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, Barcode128Component, ...ADMIN_SHARED],
+  imports: [CommonModule, FormsModule, CarnetFaceComponent, ...ADMIN_SHARED],
   templateUrl: './carnets-admin.component.html',
   styleUrl: './carnets-admin.component.css',
 })
@@ -17,6 +17,7 @@ export class CarnetsAdminComponent implements OnInit {
   loading = signal(true);
   error = signal('');
   students = signal<StudentItem[]>([]);
+  preview = signal<StudentItem | null>(null);
 
   private _search = signal('');
   get searchQuery(): string { return this._search(); }
@@ -46,6 +47,11 @@ export class CarnetsAdminComponent implements OnInit {
 
   ngOnInit() {
     this.loadAll(1, []);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.preview()) this.closePreview();
   }
 
   private loadAll(page: number, acc: StudentItem[]) {
@@ -78,28 +84,41 @@ export class CarnetsAdminComponent implements OnInit {
     return [s.grade, s.level].filter(Boolean).join(' · ');
   }
 
+  openPreview(s: StudentItem) {
+    if (!this.studentCode(s)) return;
+    this.preview.set(s);
+  }
+
+  closePreview() {
+    this.preview.set(null);
+  }
+
   printOne(s: StudentItem) {
+    const data = this.toPrint(s);
+    if (!data) return;
+    printStudentCarnets([data]);
+  }
+
+  printPreview() {
+    const s = this.preview();
+    if (s) this.printOne(s);
+  }
+
+  printVisible() {
+    printStudentCarnets(
+      this.filtered().map((s) => this.toPrint(s)).filter((x): x is CarnetPrintData => !!x),
+    );
+  }
+
+  private toPrint(s: StudentItem): CarnetPrintData | null {
     const code = this.studentCode(s);
-    if (!code) return;
-    printStudentCarnets([{
+    if (!code) return null;
+    return {
       fullName: this.fullName(s),
       code,
       grade: s.grade ?? '',
       level: s.level ?? '',
       photoUrl: s.photo,
-    }]);
-  }
-
-  printVisible() {
-    const rows = this.filtered()
-      .map((s) => ({
-        fullName: this.fullName(s),
-        code: this.studentCode(s),
-        grade: s.grade ?? '',
-        level: s.level ?? '',
-        photoUrl: s.photo,
-      }))
-      .filter((s) => !!s.code);
-    printStudentCarnets(rows);
+    };
   }
 }

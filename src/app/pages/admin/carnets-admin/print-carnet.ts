@@ -71,8 +71,14 @@ const PRINT_CSS = `
     break-after: page;
   }
   .card:last-child { page-break-after: auto; break-after: auto; }
-  .card__head { display: flex; align-items: center; gap: 3mm; }
-  .crest { width: 9mm; height: 9mm; object-fit: contain; }
+  .card__head {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 0.45mm solid #c41e3a;
+  }
+  .crest { width: 8.5mm; height: 8.5mm; object-fit: contain; }
   .brand {
     margin: 0;
     font-size: 8.5pt;
