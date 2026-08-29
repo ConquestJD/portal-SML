@@ -1,27 +1,34 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   AdminService,
   CampusAttendanceDay,
   CampusScanResult,
 } from '../../../services/admin.service';
-import { ADMIN_SHARED } from '../_shared';
 
 @Component({
   selector: 'app-asistencia-ingreso',
   standalone: true,
-  imports: [CommonModule, FormsModule, ...ADMIN_SHARED],
+  imports: [CommonModule],
   templateUrl: './asistencia-ingreso.component.html',
   styleUrl: './asistencia-ingreso.component.css',
 })
 export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   @ViewChild('scanInput') scanInput?: ElementRef<HTMLInputElement>;
 
-  live = signal(true);
   clock = signal('');
-  loadingDay = signal(true);
   scanning = signal(false);
   error = signal('');
   day = signal<CampusAttendanceDay | null>(null);
@@ -29,32 +36,41 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   flash = signal<'ok' | 'late' | 'dup' | 'err' | ''>('');
 
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly router = inject(Router);
+  private readonly admin = inject(AdminService);
   private buffer = '';
   private lastKeyAt = 0;
   private clockTimer?: ReturnType<typeof setInterval>;
   private pollTimer?: ReturnType<typeof setInterval>;
-  private flashTimer?: ReturnType<typeof setTimeout>;
-
-  constructor(private admin: AdminService) {}
 
   ngOnInit() {
     if (!this.browser) return;
+    document.body.style.overflow = 'hidden';
     this.tickClock();
     this.clockTimer = setInterval(() => this.tickClock(), 1000);
     this.loadDay();
-    this.pollTimer = setInterval(() => this.loadDay(true), 20000);
+    this.pollTimer = setInterval(() => this.loadDay(), 20000);
     queueMicrotask(() => this.focusScanner());
   }
 
   ngOnDestroy() {
+    if (this.browser) document.body.style.overflow = '';
     clearInterval(this.clockTimer);
     clearInterval(this.pollTimer);
-    clearTimeout(this.flashTimer);
+  }
+
+  close() {
+    void this.router.navigate(['/admin/dashboard']);
   }
 
   @HostListener('document:keydown', ['$event'])
   onDocumentKey(event: KeyboardEvent) {
-    if (!this.live()) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
+      return;
+    }
+
     const target = event.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')) {
       if (target !== this.scanInput?.nativeElement) return;
@@ -90,17 +106,10 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
     this.scanInput?.nativeElement.focus();
   }
 
-  loadDay(silent = false) {
-    if (!silent) this.loadingDay.set(true);
+  loadDay() {
     this.admin.getCampusAttendance().subscribe({
-      next: (day) => {
-        this.day.set(day);
-        this.loadingDay.set(false);
-      },
-      error: () => {
-        if (!silent) this.error.set('No se pudo cargar el listado del día.');
-        this.loadingDay.set(false);
-      },
+      next: (day) => this.day.set(day),
+      error: () => {},
     });
   }
 
@@ -114,8 +123,7 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
         this.last.set(result);
         this.flash.set(result.duplicate ? 'dup' : result.status === 'LATE' ? 'late' : 'ok');
         this.scanning.set(false);
-        this.resetFlash();
-        this.loadDay(true);
+        this.loadDay();
         this.focusScanner();
       },
       error: (err) => {
@@ -125,14 +133,14 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
           err?.error?.error?.message ?? 'No se reconoció el carnet. Vuelve a acercarlo al lector.',
         );
         this.scanning.set(false);
-        this.resetFlash();
         this.focusScanner();
       },
     });
   }
 
-  statusLabel(status: string): string {
-    return status === 'LATE' ? 'Tardanza' : 'A tiempo';
+  statusLabel(hit: CampusScanResult): string {
+    if (hit.duplicate) return 'Ya registrado';
+    return hit.status === 'LATE' ? 'Tardanza' : 'A tiempo';
   }
 
   formatTime(iso: string | null | undefined): string {
@@ -154,10 +162,5 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
         second: '2-digit',
       }),
     );
-  }
-
-  private resetFlash() {
-    clearTimeout(this.flashTimer);
-    this.flashTimer = setTimeout(() => this.flash.set(''), 4500);
   }
 }

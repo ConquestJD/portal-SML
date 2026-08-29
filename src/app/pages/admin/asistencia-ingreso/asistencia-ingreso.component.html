@@ -1,133 +1,65 @@
-<div class="adm-page gate" [attr.data-flash]="flash()">
+<div class="kiosk" [attr.data-flash]="flash()">
+  <input
+    #scanInput
+    class="kiosk__trap"
+    type="text"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+    aria-label="Campo del lector de códigos"
+    (blur)="focusScanner()"
+    (change)="onHiddenInput($event)"
+  />
 
-  <header class="adm-page__hero">
-    <img class="adm-page__hero-photo" src="/images/heroes/classrooms.webp" alt="" decoding="async" />
-    <div class="adm-page__hero-veil"></div>
-    <div class="adm-page__hero-content">
-      <img src="/only-logo.png" alt="" class="adm-page__crest" />
-      <div>
-        <h1 class="adm-page__title">Asistencia de ingreso</h1>
-        <p class="adm-page__brand">Lector ZKTeco ZKB209 · dejar esta vista abierta</p>
-      </div>
-      <div class="adm-page__hero-actions">
-        <span class="live" [class.is-on]="live()">
-          <span class="live__dot"></span>
-          Lector activo
-        </span>
-        <span class="clock">{{ clock() }}</span>
-      </div>
-    </div>
+  <header class="kiosk__bar">
+    <p class="kiosk__clock">{{ clock() }}</p>
+    <button type="button" class="kiosk__close" (click)="close()">Cerrar</button>
   </header>
 
-  <div class="adm-page__body">
-
-    <input
-      #scanInput
-      class="scan-trap"
-      type="text"
-      autocomplete="off"
-      autocorrect="off"
-      spellcheck="false"
-      aria-label="Campo del lector de códigos"
-      (blur)="focusScanner()"
-      (change)="onHiddenInput($event)"
-    />
-
-    <section class="stage" aria-live="polite">
-      @if (last(); as hit) {
-        <article class="pupil" [attr.data-kind]="flash()">
+  <main class="kiosk__stage" aria-live="polite">
+    @if (last(); as hit) {
+      <article class="card">
+        <div class="card__photo">
           @if (hit.student.photoUrl) {
-            <img class="pupil__photo" [src]="hit.student.photoUrl" alt="" />
-          }
-          <div class="pupil__text">
-            <p class="pupil__kicker">
-              @if (hit.duplicate) {
-                Ya registrado hoy
-              } @else if (hit.status === 'LATE') {
-                Tardanza
-              } @else {
-                Ingreso registrado
-              }
-            </p>
-            <h2 class="pupil__name">{{ hit.student.fullName }}</h2>
-            <p class="pupil__meta">
-              {{ hit.student.studentCode }}
-              @if (gradeLine(hit.student.grade, hit.student.level)) {
-                · {{ gradeLine(hit.student.grade, hit.student.level) }}
-              }
-            </p>
-            <p class="pupil__time">{{ formatTime(hit.scannedAt) }} · {{ statusLabel(hit.status) }}</p>
-          </div>
-        </article>
-      } @else {
-        <div class="wait">
-          <p class="wait__kicker">Portería</p>
-          <h2 class="wait__title">Acerque el carnet al lector</h2>
-          <p class="wait__hint">
-            El ZKTeco ZKB209 escribe el código solo. No hace falta teclado.
-            @if (day()?.lateCutoff) {
-              Después de las {{ day()!.lateCutoff }} se marca tardanza.
-            }
-          </p>
-          @if (error()) {
-            <p class="adm-alert" role="alert">{{ error() }}</p>
+            <img [src]="hit.student.photoUrl" [alt]="hit.student.fullName" />
+          } @else {
+            <div class="card__photo-empty" aria-hidden="true"></div>
           }
         </div>
-      }
-    </section>
+        <div class="card__data">
+          <p class="card__status" [attr.data-kind]="flash()">{{ statusLabel(hit) }}</p>
+          <h1 class="card__name">{{ hit.student.fullName }}</h1>
+          @if (gradeLine(hit.student.grade, hit.student.level); as grade) {
+            <p class="card__grade">{{ grade }}</p>
+          }
+          <dl class="card__facts">
+            <div>
+              <dt>Código</dt>
+              <dd>{{ hit.student.studentCode }}</dd>
+            </div>
+            <div>
+              <dt>Hora</dt>
+              <dd>{{ formatTime(hit.scannedAt) }}</dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+    } @else {
+      <div class="idle">
+        <img src="/only-logo.png" alt="" class="idle__crest" />
+        <p class="idle__prompt">Acerque el carnet al lector</p>
+        @if (error()) {
+          <p class="idle__error" role="alert">{{ error() }}</p>
+        }
+      </div>
+    }
+  </main>
 
-    <section class="metrics metrics--3" aria-label="Hoy">
-      <div class="metric">
-        <span class="metric__n">{{ day()?.total ?? 0 }}</span>
-        <span class="metric__l">Ingresos</span>
-      </div>
-      <div class="metric">
-        <span class="metric__n">{{ day()?.present ?? 0 }}</span>
-        <span class="metric__l">A tiempo</span>
-      </div>
-      <div class="metric metric--alert">
-        <span class="metric__n">{{ day()?.late ?? 0 }}</span>
-        <span class="metric__l">Tardanzas</span>
-      </div>
-    </section>
-
-    <section class="feed" aria-label="Últimos ingresos">
-      <div class="feed__head">
-        <h2>Hoy {{ day()?.date || '' }}</h2>
-        <button type="button" class="adm-link" (click)="loadDay()">Actualizar</button>
-      </div>
-      @if (loadingDay() && !day()) {
-        <p class="feed__empty">Cargando ingresos…</p>
-      } @else if (!day()?.records?.length) {
-        <p class="feed__empty">Aún no hay ingresos. Deja esta pantalla abierta junto al lector.</p>
-      } @else {
-        <table class="log">
-          <thead>
-            <tr>
-              <th>Hora</th>
-              <th>Alumno</th>
-              <th>Código</th>
-              <th>Grado</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of day()!.records; track row.id) {
-              <tr>
-                <td>{{ formatTime(row.scannedAt) }}</td>
-                <td class="log__name">{{ row.student.fullName }}</td>
-                <td>{{ row.student.studentCode }}</td>
-                <td>{{ gradeLine(row.student.grade, row.student.level) || '—' }}</td>
-                <td>
-                  <span class="tag" [attr.data-kind]="row.status === 'LATE' ? 'late' : 'ok'">
-                    {{ statusLabel(row.status) }}
-                  </span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-    </section>
-  </div>
+  @if (day(); as today) {
+    <footer class="kiosk__foot">
+      <span>{{ today.total }} ingresos</span>
+      <span>{{ today.present }} a tiempo</span>
+      <span>{{ today.late }} tardanzas</span>
+    </footer>
+  }
 </div>
