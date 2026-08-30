@@ -4,7 +4,14 @@
     <img class="adm-page__hero-photo" src="/images/heroes/profile.webp" alt="" decoding="async" />
     <div class="adm-page__hero-veil"></div>
     <div class="adm-page__hero-content">
-      <span class="hero-avatar" aria-hidden="true">{{ initials() }}</span>
+      <app-profile-photo-picker
+        variant="hero"
+        [photoUrl]="photoUrl()"
+        [initials]="initials()"
+        [alt]="fullName()"
+        (failed)="onPhotoFailed($event)"
+        (succeeded)="onPhotoSucceeded($event)"
+      />
       <div>
         <h1 class="adm-page__title">{{ fullName() }}</h1>
         <p class="adm-page__brand">Administración · Santa María Laura</p>
@@ -19,6 +26,27 @@
     } @else if (error()) {
       <p class="adm-alert" role="alert">{{ error() }}</p>
     } @else if (user(); as u) {
+
+      @if (photoError()) {
+        <p class="adm-alert" role="alert">{{ photoError() }}</p>
+      }
+      @if (photoSuccess()) {
+        <p class="adm-alert adm-alert--ok" role="status">{{ photoSuccess() }}</p>
+      }
+
+      <section class="ficha" aria-label="Foto de perfil">
+        <app-profile-photo-picker
+          [photoUrl]="photoUrl()"
+          [initials]="initials()"
+          [alt]="fullName()"
+          (failed)="onPhotoFailed($event)"
+          (succeeded)="onPhotoSucceeded($event)"
+        />
+        <div class="ficha__who">
+          <h2 class="ficha__name">{{ fullName() }}</h2>
+          <p class="ficha__hint">Haz clic o arrastra una foto JPG, PNG o WebP (máx. 8 MB).</p>
+        </div>
+      </section>
 
       <div class="id-strip">
         <div class="id-strip__code">

@@ -149,6 +149,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
     {
       label: 'Cuenta',
       items: [
+        { label: 'Mi perfil', icon: 'fas fa-user', path: '/padre/perfil', exact: false },
         { label: 'Configuración', icon: 'fas fa-cog', path: '/padre/configuracion', exact: false }
       ]
     }

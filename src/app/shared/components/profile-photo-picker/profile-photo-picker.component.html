@@ -1,0 +1,26 @@
+<button
+  type="button"
+  class="photo-picker"
+  [class.photo-picker--hero]="variant() === 'hero'"
+  [class.is-over]="dragOver()"
+  [disabled]="uploading()"
+  (click)="browse($event)"
+  (dragover)="onDragOver($event)"
+  (dragenter)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  @if (photoUrl() && !photoBroken()) {
+    <img [src]="photoUrl()!" [alt]="alt()" (error)="onImageError()" />
+  } @else {
+    <span>{{ initials() }}</span>
+  }
+  <em>{{ uploading() ? 'Subiendo…' : 'Cambiar foto' }}</em>
+</button>
+<input
+  #photoInput
+  type="file"
+  class="visually-hidden"
+  accept="image/jpeg,image/png,image/webp"
+  (change)="onSelected($event)"
+/>

@@ -2,17 +2,20 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../services/auth.service';
+import { ProfilePhotoPickerComponent } from '../../../shared/components/profile-photo-picker/profile-photo-picker.component';
 
 @Component({
   selector: 'app-perfil-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ProfilePhotoPickerComponent],
   templateUrl: './perfil-admin.component.html',
   styleUrl: './perfil-admin.component.css'
 })
 export class PerfilAdminComponent implements OnInit {
   loading = signal(true);
   error = signal('');
+  photoError = signal('');
+  photoSuccess = signal('');
   passwordError = signal('');
   passwordSuccess = signal('');
   savingPassword = signal(false);
@@ -39,6 +42,19 @@ export class PerfilAdminComponent implements OnInit {
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   });
+
+  photoUrl = computed(() => this.user()?.photo ?? '');
+
+  onPhotoFailed(message: string) {
+    this.photoSuccess.set('');
+    this.photoError.set(message);
+  }
+
+  onPhotoSucceeded(message: string) {
+    this.photoError.set('');
+    this.photoSuccess.set(message);
+    setTimeout(() => this.photoSuccess.set(''), 3000);
+  }
 
   constructor(private authService: AuthService) {}
 

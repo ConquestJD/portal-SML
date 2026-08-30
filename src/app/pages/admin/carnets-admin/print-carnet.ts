@@ -11,11 +11,11 @@ export interface CarnetPrintData {
 function cardHtml(s: CarnetPrintData): string {
   const grade = [s.grade, s.level].filter(Boolean).join(' · ');
   const photo = s.photoUrl
-    ? `<img class="photo" src="${escapeHtml(s.photoUrl)}" alt="" />`
+    ? `<img src="${escapeHtml(s.photoUrl)}" alt="" />`
     : '';
   let barcode = '';
   try {
-    barcode = code128Svg(s.code, 52, 1.8);
+    barcode = code128Svg(s.code, 36, 1.5);
   } catch {
     barcode = '';
   }
@@ -29,11 +29,11 @@ function cardHtml(s: CarnetPrintData): string {
         </div>
       </header>
       <div class="card__body">
-        ${photo}
         <div class="who">
           <p class="name">${escapeHtml(s.fullName)}</p>
           ${grade ? `<p class="grade">${escapeHtml(grade)}</p>` : ''}
         </div>
+        <div class="photo">${photo}</div>
       </div>
       <footer class="card__code">
         ${barcode}
@@ -60,10 +60,11 @@ const PRINT_CSS = `
   .card {
     width: 85.6mm;
     height: 54mm;
-    padding: 4.5mm 5mm 3.5mm;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    padding: 3.6mm 4.6mm 2.8mm;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 2mm;
+    overflow: hidden;
     background: #fff;
     color: #142033;
     border: 0.3mm solid #003366;
@@ -88,9 +89,23 @@ const PRINT_CSS = `
     color: #003366;
   }
   .kind { margin: .4mm 0 0; font-size: 7pt; letter-spacing: .08em; text-transform: uppercase; color: #5c6b7e; }
-  .card__body { display: flex; align-items: center; gap: 3.5mm; min-height: 0; }
-  .photo { width: 16mm; height: 20mm; object-fit: cover; flex-shrink: 0; }
+  .card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3.2mm;
+    min-height: 0;
+    overflow: hidden;
+  }
   .who { min-width: 0; }
+  .photo {
+    width: 18mm;
+    height: 22mm;
+    max-height: 100%;
+    background: #eef1f5;
+    overflow: hidden;
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
   .name {
     margin: 0;
     font-size: 12pt;
@@ -99,8 +114,13 @@ const PRINT_CSS = `
     color: #003366;
   }
   .grade { margin: 1.2mm 0 0; font-size: 8pt; color: #5c6b7e; }
-  .card__code { text-align: center; }
-  .card__code svg { width: 100%; height: 11mm; }
+  .card__code {
+    min-width: 0;
+    padding-top: 1.6mm;
+    border-top: 0.25mm solid rgba(0 51 102 / .16);
+    text-align: center;
+  }
+  .card__code svg { display: block; width: 100%; height: 9mm; }
   .code {
     margin: 1mm 0 0;
     font-family: 'Segoe UI', sans-serif;

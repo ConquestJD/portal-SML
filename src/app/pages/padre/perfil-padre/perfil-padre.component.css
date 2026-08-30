@@ -1,0 +1,95 @@
+@import '../_shared/padre-editorial.css';
+
+.body-nav {
+  margin: 0 0 1rem;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: 6.25rem minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: center;
+  background: var(--surface);
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ficha__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.6vw, 2.05rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--navy);
+}
+
+.ficha__role {
+  margin: .28rem 0 0;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ficha__mail {
+  margin: .2rem 0 0;
+  font-size: .9rem;
+  color: var(--ink);
+}
+
+.mod {
+  background: var(--surface);
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.mod__head {
+  margin-bottom: .85rem;
+  padding-bottom: .55rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mod__head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.mod__hint {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.facts {
+  margin: 0 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .85rem 1.25rem;
+}
+
+.facts div { min-width: 0; }
+.facts--wide { grid-column: 1 / -1; }
+
+.facts dt {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: .2rem 0 0;
+  font-size: .98rem;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .ficha,
+  .facts { grid-template-columns: 1fr; }
+}

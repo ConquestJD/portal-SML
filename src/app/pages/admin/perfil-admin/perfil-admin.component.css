@@ -1,17 +1,30 @@
 @import '../_shared/admin-editorial.css';
 
-.hero-avatar {
-  width: 4.5rem;
-  height: 4.5rem;
-  flex-shrink: 0;
+.ficha {
   display: grid;
-  place-items: center;
-  border: 2px solid rgba(255 255 255 / .55);
-  background: var(--navy-deep);
+  grid-template-columns: 6.25rem minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: center;
+  background: var(--surface);
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ficha__name {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
   font-weight: 600;
-  color: #fff;
+  line-height: 1.15;
+  color: var(--navy);
+}
+
+.ficha__hint {
+  margin: .35rem 0 0;
+  font-size: .82rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-style: italic;
 }
 
 .id-strip {
@@ -147,6 +160,7 @@
 .pw-form .adm-btn { align-self: flex-start; margin-top: .25rem; }
 
 @media (max-width: 800px) {
+  .ficha,
   .mod-grid,
   .facts { grid-template-columns: 1fr; }
 }

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type UserRole = 'estudiante' | 'profesor' | 'admin' | 'padre';
@@ -129,6 +129,28 @@ export class AuthService {
 
   changePassword(currentPassword: string, newPassword: string): Observable<unknown> {
     return this.http.post(`${this.baseUrl}/auth/change-password`, { currentPassword, newPassword });
+  }
+
+  uploadPhoto(file: File): Observable<{ avatarUrl: string }> {
+    const fd = new FormData();
+    fd.append('photo', file);
+    return this.http
+      .post<{ success: boolean; data: { avatarUrl: string } }>(`${this.baseUrl}/auth/profile/photo`, fd)
+      .pipe(
+        tap((res) => this.setPhoto(res.data?.avatarUrl)),
+        map((res) => res.data),
+      );
+  }
+
+  setPhoto(url?: string | null): void {
+    if (!url) return;
+    const current = this.currentUser();
+    if (!current) return;
+    const updated = { ...current, photo: url };
+    this.currentUser.set(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+    }
   }
 
   forgotPassword(identifier: string): Observable<unknown> {

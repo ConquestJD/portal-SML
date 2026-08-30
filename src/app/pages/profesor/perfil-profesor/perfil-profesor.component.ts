@@ -184,6 +184,7 @@ export class PerfilProfesorComponent implements OnInit {
           return { ...p, user: { ...p.user, avatarUrl: url } };
         });
         this.photoBroken.set(false);
+        this.authService.setPhoto(url);
         this.success.set('Foto actualizada.');
         setTimeout(() => this.success.set(''), 3000);
       },

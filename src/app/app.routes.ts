@@ -295,6 +295,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/padre/dashboard-padre/dashboard-padre.component').then(m => m.DashboardPadreComponent)
       },
       {
+        path: 'padre/perfil',
+        loadComponent: () => import('./pages/padre/perfil-padre/perfil-padre.component').then(m => m.PerfilPadreComponent)
+      },
+      {
         path: 'padre/perfil-hijo',
         loadComponent: () => import('./pages/padre/perfil-hijo/perfil-hijo.component').then(m => m.PerfilHijoComponent)
       },

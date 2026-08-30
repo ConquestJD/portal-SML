@@ -1,6 +1,7 @@
 import { Component, signal, computed, OnInit, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentService, StudentProfile } from '../../services/student.service';
+import { AuthService } from '../../services/auth.service';
 import { filesFromClipboard } from '../profesor/_utils/clipboard-files';
 import { pickLocalFiles } from '../profesor/_utils/pick-local-files';
 
@@ -48,7 +49,10 @@ export class PerfilComponent implements OnInit {
   academicYear = computed(() => this.firstEnrollment(this.profile()).academicYear);
   enrollmentStatus = computed(() => this.formatStatus(this.profile()?.status || this.firstEnrollment(this.profile()).status));
 
-  constructor(private studentService: StudentService) {}
+  constructor(
+    private studentService: StudentService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
     this.studentService.getProfile().subscribe({
@@ -173,6 +177,7 @@ export class PerfilComponent implements OnInit {
           });
         }
         this.photoBroken.set(false);
+        this.authService.setPhoto(url);
         this.uploadSuccess.set('Foto actualizada.');
         this.uploading.set(false);
         setTimeout(() => this.uploadSuccess.set(''), 3000);

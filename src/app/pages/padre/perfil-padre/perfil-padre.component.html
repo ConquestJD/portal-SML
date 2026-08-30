@@ -1,0 +1,77 @@
+<div class="padre-page">
+
+  <header class="padre-page__hero">
+    <img class="padre-page__hero-photo" src="/images/heroes/profile.webp" alt="" decoding="async" />
+    <div class="padre-page__hero-veil"></div>
+    <div class="padre-page__hero-content">
+      <img src="/only-logo.png" alt="" class="padre-page__crest" />
+      <div>
+        <h1 class="padre-page__title">Mi perfil</h1>
+        <p class="padre-page__brand">Santa María Laura</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="padre-page__body">
+
+    <p class="body-nav">
+      <a routerLink="/padre/dashboard" class="padre-link">← Inicio</a>
+    </p>
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando perfil…</p>
+    } @else if (error()) {
+      <p class="padre-alert" role="alert">{{ error() }}</p>
+    } @else if (user(); as u) {
+
+      @if (photoError()) {
+        <p class="padre-alert" role="alert">{{ photoError() }}</p>
+      }
+      @if (photoSuccess()) {
+        <p class="padre-alert padre-alert--ok" role="status">{{ photoSuccess() }}</p>
+      }
+
+      <section class="ficha" aria-label="Identidad">
+        <app-profile-photo-picker
+          [photoUrl]="photoUrl()"
+          [initials]="initials()"
+          [alt]="fullName()"
+          (failed)="onPhotoFailed($event)"
+          (succeeded)="onPhotoSucceeded($event)"
+        />
+        <div class="ficha__who">
+          <h2 class="ficha__name">{{ fullName() }}</h2>
+          <p class="ficha__role">Padre de familia</p>
+          <p class="ficha__mail">{{ u.email }}</p>
+        </div>
+      </section>
+
+      <section class="mod">
+        <header class="mod__head">
+          <h2>Identidad</h2>
+        </header>
+        <dl class="facts">
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ u.firstName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Apellido</dt>
+            <dd>{{ u.lastName || '—' }}</dd>
+          </div>
+          <div class="facts--wide">
+            <dt>Correo de acceso</dt>
+            <dd>{{ u.email || '—' }}</dd>
+          </div>
+          @if (u.username && u.username !== u.email) {
+            <div class="facts--wide">
+              <dt>Usuario</dt>
+              <dd>{{ u.username }}</dd>
+            </div>
+          }
+        </dl>
+        <p class="mod__hint">Haz clic en tu foto o arrástrala aquí. JPG, PNG o WebP, máximo 8 MB.</p>
+      </section>
+    }
+  </div>
+</div>

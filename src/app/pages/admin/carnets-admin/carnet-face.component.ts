@@ -15,21 +15,21 @@ import { Barcode128Component } from '../../../shared/components/barcode128/barco
         </div>
       </header>
       <div class="face__body">
-        <div class="face__photo">
-          @if (photoUrl()) {
-            <img [src]="photoUrl()!" [alt]="fullName()" />
-          }
-        </div>
         <div class="face__who">
           <p class="face__name">{{ fullName() }}</p>
           @if (gradeLine()) {
             <p class="face__grade">{{ gradeLine() }}</p>
           }
         </div>
+        <div class="face__photo">
+          @if (photoUrl()) {
+            <img [src]="photoUrl()!" [alt]="fullName()" />
+          }
+        </div>
       </div>
       <footer class="face__code">
         @if (code()) {
-          <app-barcode128 [value]="code()" [height]="40" [moduleWidth]="1.5" />
+          <app-barcode128 [value]="code()" [height]="32" [moduleWidth]="1.4" />
           <p>{{ code() }}</p>
         }
       </footer>
@@ -40,10 +40,11 @@ import { Barcode128Component } from '../../../shared/components/barcode128/barco
     .face {
       width: 85.6mm;
       height: 54mm;
-      padding: 4.2mm 5mm 3.4mm;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      padding: 3.6mm 4.6mm 2.8mm;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 2mm;
+      overflow: hidden;
       background: #fff;
       color: #142033;
       border: 0.35mm solid #003366;
@@ -73,20 +74,23 @@ import { Barcode128Component } from '../../../shared/components/barcode128/barco
       color: #5c6b7e;
     }
     .face__body {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      gap: 3.4mm;
+      gap: 3.2mm;
       min-height: 0;
-      flex: 1;
+      overflow: hidden;
     }
+    .face__who { min-width: 0; }
     .face__photo {
-      width: 16mm;
-      height: 20mm;
-      flex-shrink: 0;
+      width: 18mm;
+      height: 22mm;
+      max-height: 100%;
+      align-self: center;
       background: #eef1f5;
       overflow: hidden;
     }
-    .face__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .face__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
     .face__name {
       margin: 0;
       font-family: 'Newsreader', Georgia, serif;
@@ -96,8 +100,17 @@ import { Barcode128Component } from '../../../shared/components/barcode128/barco
       color: #003366;
     }
     .face__grade { margin: 1.2mm 0 0; font-size: 8pt; color: #5c6b7e; }
-    .face__code { text-align: center; }
-    .face__code app-barcode128 { display: block; }
+    .face__code {
+      min-width: 0;
+      padding-top: 1.6mm;
+      border-top: 0.25mm solid rgba(0 51 102 / .16);
+      text-align: center;
+    }
+    .face__code app-barcode128 {
+      display: block;
+      max-height: 9mm;
+      overflow: hidden;
+    }
     .face__code p {
       margin: 1mm 0 0;
       font-size: 7.5pt;
