@@ -150,7 +150,11 @@
                         </span>
                       </td>
                       <td>
-                        <span class="tuition-badge" [attr.data-kind]="tuitionKind(student)">
+                        <span
+                          class="tuition-badge"
+                          [attr.data-kind]="tuitionKind(student)"
+                          [title]="tuitionHint(student)"
+                        >
                           {{ tuitionLabel(student) }}
                         </span>
                       </td>

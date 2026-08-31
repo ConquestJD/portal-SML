@@ -215,12 +215,15 @@ export class EstudiantesComponent implements OnInit {
   }
 
   tuitionLabel(s: StudentItem): string {
-    if (this.hasOverdue(s)) {
-      const months = s.tuition?.overdueMonths ?? [];
-      return months.length ? `Retraso: ${months.join(', ')}` : 'Retraso';
-    }
+    if (this.hasOverdue(s)) return 'Tiene deudas';
     if (s.enrollmentKind === 'active' || s.enrollmentKind === 'late') return 'Al día';
     return '—';
+  }
+
+  tuitionHint(s: StudentItem): string {
+    if (!this.hasOverdue(s)) return '';
+    const months = s.tuition?.overdueMonths ?? [];
+    return months.length ? months.join(', ') : '';
   }
 
   isSuspended(s: StudentItem): boolean {
