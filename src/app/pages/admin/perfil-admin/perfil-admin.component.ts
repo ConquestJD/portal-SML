@@ -35,6 +35,10 @@ export class PerfilAdminComponent implements OnInit {
     return (u?.name ?? `${u?.firstName ?? ''} ${u?.lastName ?? ''}`).trim() || 'Administrador';
   });
 
+  givenName = computed(() => this.user()?.firstName?.trim() || this.fullName());
+
+  familyName = computed(() => this.user()?.lastName?.trim() || '');
+
   initials = computed(() => {
     const name = this.fullName();
     const parts = name.split(/\s+/).filter(Boolean);

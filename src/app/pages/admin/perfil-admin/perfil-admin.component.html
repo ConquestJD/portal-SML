@@ -1,31 +1,41 @@
-<div class="adm-page">
+<div class="adm-page plate">
 
-  <header class="adm-page__hero">
-    <img class="adm-page__hero-photo" src="/images/heroes/profile.webp" alt="" decoding="async" />
-    <div class="adm-page__hero-veil"></div>
-    <div class="adm-page__hero-content">
-      <app-profile-photo-picker
-        variant="hero"
-        [photoUrl]="photoUrl()"
-        [initials]="initials()"
-        [alt]="fullName()"
-        (failed)="onPhotoFailed($event)"
-        (succeeded)="onPhotoSucceeded($event)"
-      />
-      <div>
-        <h1 class="adm-page__title">{{ fullName() }}</h1>
-        <p class="adm-page__brand">Administración · Santa María Laura</p>
-      </div>
-    </div>
-  </header>
-
-  <div class="adm-page__body">
-
-    @if (loading()) {
+  @if (!user() && loading()) {
+    <div class="adm-page__body">
       <p class="feed__empty">Cargando ficha…</p>
-    } @else if (error()) {
+    </div>
+  } @else if (error() && !user()) {
+    <div class="adm-page__body">
       <p class="adm-alert" role="alert">{{ error() }}</p>
-    } @else if (user(); as u) {
+    </div>
+  } @else if (user(); as u) {
+
+    <header class="plate__mast">
+      <p class="plate__kicker">Dirección · Santa María Laura</p>
+      <div class="plate__who">
+        <app-profile-photo-picker
+          variant="plate"
+          [photoUrl]="photoUrl()"
+          [initials]="initials()"
+          [alt]="fullName()"
+          (failed)="onPhotoFailed($event)"
+          (succeeded)="onPhotoSucceeded($event)"
+        />
+        <div class="plate__id">
+          <p class="plate__role">Administrador del portal</p>
+          <h1 class="plate__name">
+            <span>{{ givenName() }}</span>
+            @if (familyName()) {
+              <span>{{ familyName() }}</span>
+            }
+          </h1>
+          <p class="plate__email">{{ u.email || u.username }}</p>
+          <p class="plate__hint">Clic o arrastra una foto al retrato. JPG, PNG o WebP, máximo 8 MB.</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="adm-page__body">
 
       @if (photoError()) {
         <p class="adm-alert" role="alert">{{ photoError() }}</p>
@@ -34,63 +44,43 @@
         <p class="adm-alert adm-alert--ok" role="status">{{ photoSuccess() }}</p>
       }
 
-      <section class="ficha" aria-label="Foto de perfil">
-        <app-profile-photo-picker
-          [photoUrl]="photoUrl()"
-          [initials]="initials()"
-          [alt]="fullName()"
-          (failed)="onPhotoFailed($event)"
-          (succeeded)="onPhotoSucceeded($event)"
-        />
-        <div class="ficha__who">
-          <h2 class="ficha__name">{{ fullName() }}</h2>
-          <p class="ficha__hint">Haz clic o arrastra una foto JPG, PNG o WebP (máx. 8 MB).</p>
-        </div>
-      </section>
-
-      <div class="id-strip">
-        <div class="id-strip__code">
-          <span class="id-strip__kicker">Usuario</span>
-          <strong>{{ u.email || u.username || '—' }}</strong>
-        </div>
-        <div class="id-strip__meta">
-          <p class="id-strip__grade">Administrador</p>
-        </div>
-      </div>
-
-      <div class="mod-grid">
-        <section class="mod">
-          <header class="mod__head">
-            <h2>Identidad</h2>
+      <div class="plate__split">
+        <section class="sheet" aria-labelledby="ficha-title">
+          <header class="sheet__head">
+            <p class="sheet__kicker">Ficha</p>
+            <h2 id="ficha-title" class="sheet__title">Identidad en el colegio</h2>
           </header>
-          <dl class="facts">
+
+          <dl class="ledger">
             <div>
               <dt>Nombre</dt>
               <dd>{{ u.firstName || '—' }}</dd>
             </div>
             <div>
-              <dt>Apellido</dt>
+              <dt>Apellidos</dt>
               <dd>{{ u.lastName || '—' }}</dd>
             </div>
-            <div class="facts--wide">
-              <dt>Correo de acceso</dt>
+            <div>
+              <dt>Correo</dt>
               <dd>{{ u.email || '—' }}</dd>
             </div>
             @if (u.username && u.username !== u.email) {
-              <div class="facts--wide">
-                <dt>Usuario interno</dt>
+              <div>
+                <dt>Usuario</dt>
                 <dd>{{ u.username }}</dd>
               </div>
             }
           </dl>
-          <p class="mod__hint">Entras al portal con tu correo. La contraseña inicial fue el DNI.</p>
+
+          <p class="sheet__note">Entras al portal con el correo. La contraseña inicial fue el DNI.</p>
         </section>
 
-        <section class="mod">
-          <header class="mod__head">
-            <h2>Contraseña</h2>
+        <aside class="access" aria-labelledby="access-title">
+          <header class="access__head">
+            <p class="access__kicker">Acceso</p>
+            <h2 id="access-title" class="access__title">Contraseña</h2>
           </header>
-          <p class="mod__hint">Déjala vacía si no quieres cambiarla. Mínimo {{ minPasswordLength }} caracteres.</p>
+          <p class="access__lead">Solo si quieres cambiarla. Mínimo {{ minPasswordLength }} caracteres.</p>
 
           @if (passwordError()) {
             <p class="adm-alert" role="alert">{{ passwordError() }}</p>
@@ -101,7 +91,7 @@
 
           <form class="pw-form" (ngSubmit)="changePassword()">
             <div class="pw-field">
-              <label class="pw-label" for="currentPassword">Contraseña actual</label>
+              <label class="pw-label" for="currentPassword">Actual</label>
               <input
                 id="currentPassword"
                 type="password"
@@ -113,7 +103,7 @@
               />
             </div>
             <div class="pw-field">
-              <label class="pw-label" for="newPassword">Nueva contraseña</label>
+              <label class="pw-label" for="newPassword">Nueva</label>
               <input
                 id="newPassword"
                 type="password"
@@ -137,12 +127,12 @@
                 (ngModelChange)="updatePassword('confirmPassword', $event)"
               />
             </div>
-            <button type="submit" class="adm-btn adm-btn--solid" [disabled]="savingPassword()">
-              @if (savingPassword()) { Guardando… } @else { Actualizar contraseña }
+            <button type="submit" class="access__btn" [disabled]="savingPassword()">
+              @if (savingPassword()) { Guardando… } @else { Actualizar }
             </button>
           </form>
-        </section>
+        </aside>
       </div>
-    }
-  </div>
+    </div>
+  }
 </div>

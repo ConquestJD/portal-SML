@@ -32,6 +32,24 @@
   font-size: 1.45rem;
 }
 
+.photo-picker--plate {
+  width: 10.5rem;
+  height: 13.25rem;
+  border: 1px solid rgba(255 255 255 / .28);
+  background: #001528;
+  font-size: 2.6rem;
+}
+
+.photo-picker:focus-visible {
+  outline: 2px solid #003366;
+  outline-offset: 3px;
+}
+
+.photo-picker--hero:focus-visible,
+.photo-picker--plate:focus-visible {
+  outline-color: #fff;
+}
+
 .photo-picker:disabled {
   cursor: wait;
 }
@@ -64,4 +82,12 @@
   letter-spacing: .06em;
   text-transform: uppercase;
   text-align: center;
+}
+
+@media (max-width: 560px) {
+  .photo-picker--plate {
+    width: 7.75rem;
+    height: 9.75rem;
+    font-size: 2.1rem;
+  }
 }

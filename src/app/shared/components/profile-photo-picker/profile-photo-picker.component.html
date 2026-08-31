@@ -2,8 +2,10 @@
   type="button"
   class="photo-picker"
   [class.photo-picker--hero]="variant() === 'hero'"
+  [class.photo-picker--plate]="variant() === 'plate'"
   [class.is-over]="dragOver()"
   [disabled]="uploading()"
+  [attr.aria-label]="'Cambiar foto de ' + alt()"
   (click)="browse($event)"
   (dragover)="onDragOver($event)"
   (dragenter)="onDragOver($event)"
@@ -15,7 +17,7 @@
   } @else {
     <span>{{ initials() }}</span>
   }
-  <em>{{ uploading() ? 'Subiendo…' : 'Cambiar foto' }}</em>
+  <em>{{ uploading() ? 'Subiendo…' : (variant() === 'plate' ? 'Cambiar retrato' : 'Cambiar foto') }}</em>
 </button>
 <input
   #photoInput

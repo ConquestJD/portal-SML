@@ -17,7 +17,7 @@ export class ProfilePhotoPickerComponent {
   photoUrl = input<string | null | undefined>('');
   initials = input('?');
   alt = input('Foto de perfil');
-  variant = input<'ficha' | 'hero'>('ficha');
+  variant = input<'ficha' | 'hero' | 'plate'>('ficha');
 
   uploaded = output<string>();
   failed = output<string>();

@@ -182,19 +182,6 @@
   transition: width .3s var(--ease), transform .3s var(--ease);
   overflow: hidden;
   color: var(--sidebar-text);
-  padding-left: 3px;
-}
-
-.sidebar::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--sidebar-accent);
-  z-index: 2;
-  pointer-events: none;
 }
 
 .sidebar.collapsed {
@@ -716,17 +703,6 @@
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   color: var(--sidebar-text);
-}
-
-.course-rail::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--sidebar-accent);
-  pointer-events: none;
 }
 
 .course-rail__close {
