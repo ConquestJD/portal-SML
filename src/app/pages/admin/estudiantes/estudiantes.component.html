@@ -42,13 +42,6 @@
     }
 
     <div class="toolbar">
-      @if (years().length) {
-        <select [(ngModel)]="filterYear" name="filterYear" aria-label="Año académico">
-          @for (y of years(); track y.id) {
-            <option [value]="y.id">{{ y.name }}</option>
-          }
-        </select>
-      }
       <label class="search">
         <span class="visually-hidden">Buscar</span>
         <input

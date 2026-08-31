@@ -164,9 +164,25 @@ export interface CreateSectionDto {
 
 // ─── ACADEMIC YEARS ──────────────────────────────────────────────────────────
 export interface AcademicYearItem {
-  id: string; name: string; year?: string; startDate: string; endDate: string; status: string;
+  id: string;
+  name: string;
+  year?: string;
+  startDate: string;
+  endDate: string;
+  status: string;
   periods?: AcademicPeriod[];
 }
+
+export function isActiveAcademicYear(status?: string | null): boolean {
+  const s = (status || '').toUpperCase();
+  return s === 'ACTIVE' || s === 'ACTIVO';
+}
+
+export function activeAcademicYear(years: AcademicYearItem[] | null | undefined): AcademicYearItem | null {
+  const list = years ?? [];
+  return list.find((y) => isActiveAcademicYear(y.status)) ?? list[0] ?? null;
+}
+
 export interface AcademicPeriod { id: string; name: string; startDate: string; endDate: string; }
 
 export type ReportCell = string | number;

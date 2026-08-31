@@ -41,13 +41,6 @@
     <p class="rpt-lead">{{ reportHint() }}</p>
 
     <div class="toolbar no-print">
-      @if (years().length) {
-        <select [(ngModel)]="academicYearId" name="academicYearId" aria-label="Año académico">
-          @for (year of years(); track year.id) {
-            <option [value]="year.id">{{ year.name }}</option>
-          }
-        </select>
-      }
       <select [(ngModel)]="grade" name="grade" aria-label="Grado">
         <option value="">Todos los grados</option>
         @for (g of grades(); track g) {

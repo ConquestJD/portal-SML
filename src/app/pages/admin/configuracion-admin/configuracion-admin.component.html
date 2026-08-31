@@ -29,8 +29,8 @@
           <span class="metric__l">Materias</span>
         </div>
         <div class="metric">
-          <span class="metric__n">{{ years().length }}</span>
-          <span class="metric__l">Años</span>
+          <span class="metric__n">{{ activeYear()?.name || '—' }}</span>
+          <span class="metric__l">Año lectivo</span>
         </div>
         <div class="metric">
           <span class="metric__n">S/ {{ monthlyTuitionAmount() }}</span>
@@ -52,10 +52,7 @@
             {{ schoolData().email || 'Correo' }}
           </p>
           @if (activeYear(); as year) {
-            <p class="letterhead__year">
-              Año lectivo {{ year.name }}
-              <span>{{ yearStatusLabel(year.status) }}</span>
-            </p>
+            <p class="letterhead__year">Año lectivo {{ year.name }}</p>
           }
         </aside>
 
@@ -232,86 +229,6 @@
             </article>
           }
         </div>
-      }
-    }
-
-    @if (activeTab() === 'anio') {
-      <div class="toolbar">
-        <span class="toolbar__spacer"></span>
-        <button type="button" class="adm-btn adm-btn--solid" (click)="openYearForm()">Nuevo año</button>
-      </div>
-
-      @if (yearFormOpen()) {
-        <section class="mod">
-          <header class="mod__head">
-            <h2>{{ yearEditId() ? 'Editar año' : 'Nuevo año lectivo' }}</h2>
-          </header>
-          <form class="cfg-grid" (ngSubmit)="saveYear()">
-            <div class="cfg-field">
-              <label class="cfg-label">Nombre</label>
-              <input class="cfg-input" required [ngModel]="yearForm().name" (ngModelChange)="patchYear('name', $event)" name="yearName" />
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Estado</label>
-              <select class="cfg-input" [ngModel]="yearForm().status" (ngModelChange)="patchYear('status', $event)" name="yearStatus">
-                <option value="UPCOMING">Próximo</option>
-                <option value="ACTIVE">En curso</option>
-                <option value="CLOSED">Cerrado</option>
-              </select>
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Inicio</label>
-              <input class="cfg-input" type="date" required [ngModel]="yearForm().startDate" (ngModelChange)="patchYear('startDate', $event)" name="yearStart" />
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Fin</label>
-              <input class="cfg-input" type="date" required [ngModel]="yearForm().endDate" (ngModelChange)="patchYear('endDate', $event)" name="yearEnd" />
-            </div>
-            <div class="cfg-actions cfg-actions--form">
-              <button type="button" class="adm-link" (click)="cancelYearForm()">Cancelar</button>
-              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
-            </div>
-          </form>
-        </section>
-      }
-
-      @if (years().length === 0) {
-        <section class="mod">
-          <p class="mod__empty">Aún no hay años lectivos. Crea el año vigente para matricular y generar pensiones.</p>
-        </section>
-      } @else {
-        <section class="roster-group">
-          <div class="roster-table-wrap">
-            <table class="roster-table">
-              <thead>
-                <tr>
-                  <th>Año</th>
-                  <th>Inicio</th>
-                  <th>Fin</th>
-                  <th>Estado</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (year of years(); track year.id) {
-                  <tr>
-                    <td>{{ year.name }}</td>
-                    <td>{{ year.startDate | date:'mediumDate' }}</td>
-                    <td>{{ year.endDate | date:'mediumDate' }}</td>
-                    <td>
-                      <span class="enroll-badge" [attr.data-kind]="yearStatusKey(year.status) === 'active' ? 'active' : 'none'">
-                        {{ yearStatusLabel(year.status) }}
-                      </span>
-                    </td>
-                    <td>
-                      <button type="button" class="adm-link" (click)="openYearForm(year)">Editar</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </section>
       }
     }
 

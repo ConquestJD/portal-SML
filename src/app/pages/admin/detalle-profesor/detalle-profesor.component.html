@@ -337,17 +337,8 @@
               <h3>Asignar curso</h3>
               <button type="button" class="adm-link" (click)="closeAssignCourseModal()">Cerrar</button>
             </header>
-            <p class="mod__hint">El docente dictará el curso en el año lectivo seleccionado.</p>
+            <p class="mod__hint">El docente dictará el curso en el año lectivo vigente.</p>
             <div class="pay-form">
-              <label>
-                Año académico
-                <select class="stu-like" [(ngModel)]="selectedYearId" name="academicYearId">
-                  <option value="">Seleccionar</option>
-                  @for (year of academicYears(); track year.id) {
-                    <option [value]="year.id">{{ year.name }}</option>
-                  }
-                </select>
-              </label>
               <label>
                 Curso
                 <select class="stu-like" [(ngModel)]="selectedCourseId" name="courseId" [disabled]="!selectedYearId">

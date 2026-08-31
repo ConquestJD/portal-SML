@@ -69,18 +69,6 @@
               </select>
             </div>
             <div class="form-field">
-              <label class="form-label">Año académico *</label>
-              <select class="form-input" required
-                      [ngModel]="formData().academicYearId"
-                      (ngModelChange)="update('academicYearId', $event)"
-                      name="academicYearId">
-                <option value="">Seleccionar</option>
-                @for (y of academicYears(); track y.id) {
-                  <option [value]="y.id">{{ y.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="form-field">
               <label class="form-label">Capacidad *</label>
               <input class="form-input" type="number" min="1" required
                      [ngModel]="formData().capacity" (ngModelChange)="update('capacity', +$event)"

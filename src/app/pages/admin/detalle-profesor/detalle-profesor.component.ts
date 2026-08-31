@@ -9,6 +9,7 @@ import {
   CourseItem,
   SectionItem,
   AcademicYearItem,
+  activeAcademicYear,
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
@@ -347,7 +348,7 @@ export class DetalleProfesorComponent implements OnInit {
         this.catalogCourses.set(courses.data);
         this.sections.set(sections.data);
         this.academicYears.set(years);
-        const active = years.find(y => y.status === 'ACTIVE') ?? years[0];
+        const active = activeAcademicYear(years);
         this.selectedYearId = active?.id ?? '';
       },
       error: () => this.assignError.set('No se pudieron cargar los datos para asignar.'),
@@ -366,7 +367,7 @@ export class DetalleProfesorComponent implements OnInit {
     if (!this.canAssign() || !course) return;
     const sectionId = this.resolveSectionId(course, this.selectedYearId);
     if (!sectionId) {
-      this.assignError.set('No hay un grado configurado para este año académico.');
+      this.assignError.set('No hay un grado configurado para el año lectivo vigente.');
       return;
     }
     this.assignSaving.set(true);

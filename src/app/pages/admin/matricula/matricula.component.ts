@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService, EnrollmentItem, AcademicYearItem, SectionItem, StudentItem } from '../../../services/admin.service';
+import { AdminService, EnrollmentItem, AcademicYearItem, SectionItem, StudentItem, activeAcademicYear } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-matricula',
@@ -34,13 +34,30 @@ export class MatriculaComponent implements OnInit {
     this.students().filter(s => s.enrollmentKind === 'none')
   );
 
+  yearSections = computed(() => {
+    const yearId = this.formData().academicYearId;
+    return this.sections().filter(s => !yearId || s.academicYear?.id === yearId);
+  });
+
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {
-    this.adminService.getAcademicYears().subscribe({ next: d => this.academicYears.set(d) });
-    this.adminService.getSections().subscribe({ next: ({ data }) => this.sections.set(data) });
+    this.adminService.getAcademicYears().subscribe({
+      next: d => {
+        this.academicYears.set(d);
+        const active = activeAcademicYear(d);
+        if (active) {
+          this.filterYear.set(active.name);
+          this.formData.update(f => ({ ...f, academicYearId: active.id, academicYear: active.name }));
+          this.adminService.getSections({ academicYearId: active.id }).subscribe({ next: ({ data }) => this.sections.set(data) });
+        } else {
+          this.adminService.getSections().subscribe({ next: ({ data }) => this.sections.set(data) });
+        }
+        this.load();
+      },
+      error: () => this.load(),
+    });
     this.adminService.getStudents({ pageSize: 100 }).subscribe({ next: ({ data }) => this.students.set(data) });
-    this.load();
   }
 
   load() {
@@ -62,7 +79,11 @@ export class MatriculaComponent implements OnInit {
 
   save() {
     const { studentId, sectionId, academicYearId } = this.formData();
-    if (!studentId || !sectionId || !academicYearId) return;
+    if (!studentId || !sectionId) return;
+    if (!academicYearId) {
+      this.error.set('No hay año lectivo vigente.');
+      return;
+    }
     this.error.set('');
     this.saving.set(true);
     this.adminService.createEnrollment({ studentId, sectionId, academicYearId }).subscribe({
@@ -103,7 +124,15 @@ export class MatriculaComponent implements OnInit {
   update(field: string, value: string) { this.formData.update(d => ({ ...d, [field]: value })); }
 
   enrollStudent() {
-    this.formData.set({ studentId: '', sectionId: '', academicYearId: '', grade: '', section: '', academicYear: '' });
+    const active = activeAcademicYear(this.academicYears());
+    this.formData.set({
+      studentId: '',
+      sectionId: '',
+      academicYearId: active?.id ?? '',
+      grade: '',
+      section: '',
+      academicYear: active?.name ?? '',
+    });
     this.error.set('');
     this.showForm.set(true);
   }

@@ -1,7 +1,7 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService, SectionItem, AcademicYearItem, CreateSectionDto } from '../../../services/admin.service';
+import { AdminService, SectionItem, AcademicYearItem, CreateSectionDto, activeAcademicYear } from '../../../services/admin.service';
 
 @Component({
   selector: 'app-grados-secciones',
@@ -67,22 +67,37 @@ export class GradosSeccionesComponent implements OnInit {
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {
-    this.adminService.getAcademicYears().subscribe({ next: (data) => this.academicYears.set(data) });
-    this.load();
+    this.adminService.getAcademicYears().subscribe({
+      next: (data) => {
+        this.academicYears.set(data);
+        this.load();
+      },
+      error: () => this.load(),
+    });
   }
 
   load() {
     this.loading.set(true);
-    this.adminService.getSections().subscribe({
+    const yearId = activeAcademicYear(this.academicYears())?.id;
+    this.adminService.getSections({ academicYearId: yearId }).subscribe({
       next: ({ data }) => { this.sections.set(data); this.loading.set(false); },
       error: () => { this.error.set('Error al cargar secciones'); this.loading.set(false); }
     });
   }
 
   save() {
+    let dto = this.formData();
+    if (!dto.academicYearId) {
+      dto = { ...dto, academicYearId: activeAcademicYear(this.academicYears())?.id ?? '' };
+      this.formData.set(dto);
+    }
+    if (!dto.academicYearId) {
+      this.error.set('No hay año lectivo vigente.');
+      return;
+    }
     const obs = this.editId()
-      ? this.adminService.updateSection(this.editId(), this.formData())
-      : this.adminService.createSection(this.formData());
+      ? this.adminService.updateSection(this.editId(), dto)
+      : this.adminService.createSection(dto);
     obs.subscribe({ next: () => { this.showForm.set(false); this.editId.set(''); this.load(); } });
   }
 
@@ -104,7 +119,8 @@ export class GradosSeccionesComponent implements OnInit {
   createSection() {
     this.showForm.set(true);
     this.editId.set('');
-    this.formData.set({ name: '', grade: '', level: '', academicYearId: '', capacity: 30 });
+    const active = activeAcademicYear(this.academicYears());
+    this.formData.set({ name: '', grade: '', level: '', academicYearId: active?.id ?? '', capacity: 30 });
   }
 
   enrolledOf(section: SectionItem): number {

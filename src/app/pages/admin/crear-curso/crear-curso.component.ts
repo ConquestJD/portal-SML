@@ -11,6 +11,7 @@ import {
   CourseItem,
   ScheduleSlot,
   TeacherItem,
+  activeAcademicYear,
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import {
@@ -177,7 +178,7 @@ export class CrearCursoComponent implements OnInit {
     this.adminService.getAcademicYears().subscribe({
       next: (years) => {
         this.academicYears.set(years);
-        const active = years.find(y => y.status === 'ACTIVE') ?? years[0];
+        const active = activeAcademicYear(years);
         if (active && !this.formData().academicYearId) {
           this.formData.update(d => ({ ...d, academicYearId: active.id }));
         }
@@ -462,7 +463,7 @@ export class CrearCursoComponent implements OnInit {
     }
 
     if (!d.academicYearId) {
-      this.error.set('Selecciona el año académico para registrar la asignación del profesor.');
+      this.error.set('No hay año lectivo vigente.');
       this.isLoading.set(false);
       return;
     }

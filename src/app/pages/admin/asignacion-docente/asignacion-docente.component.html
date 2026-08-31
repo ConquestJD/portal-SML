@@ -28,7 +28,7 @@
         <div class="wl-assign__rail" aria-hidden="true"></div>
         <div class="wl-assign__content">
           <h2 class="wl-assign__title">Asignar carga</h2>
-          <p class="wl-assign__hint">Profesor → curso → sección → año</p>
+          <p class="wl-assign__hint">Profesor → curso → sección</p>
 
           <form class="wl-assign__form" (ngSubmit)="save()">
             <div class="wl-assign__field wl-assign__field--teacher">
@@ -68,21 +68,6 @@
                 <option value="">Seleccionar sección</option>
                 @for (s of sections(); track s.id) {
                   <option [value]="s.id">{{ s.name }} — {{ s.grade }}</option>
-                }
-              </select>
-            </div>
-
-            <div class="wl-assign__field">
-              <label class="wl-label">Año académico</label>
-              <select
-                class="wl-input"
-                required
-                [ngModel]="formData().academicYearId"
-                (ngModelChange)="update('academicYearId', $event)"
-                name="yearId"
-              >
-                @for (y of academicYears(); track y.id) {
-                  <option [value]="y.id">{{ y.name }}</option>
                 }
               </select>
             </div>

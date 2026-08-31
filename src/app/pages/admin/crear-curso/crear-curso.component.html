@@ -130,20 +130,6 @@
                   (selectedIdChange)="update('teacherId', $event)"
                 ></admin-teacher-search-combobox>
               </div>
-              <div class="stu-field stu-field--wide">
-                <label class="stu-label" for="academicYearId">Año académico</label>
-                <select
-                  id="academicYearId"
-                  class="stu-input"
-                  [ngModel]="formData().academicYearId"
-                  (ngModelChange)="update('academicYearId', $event)"
-                  name="academicYearId">
-                  <option value="">Seleccionar año</option>
-                  @for (year of academicYears(); track year.id) {
-                    <option [value]="year.id">{{ year.name }}{{ year.status === 'ACTIVE' ? ' (activo)' : '' }}</option>
-                  }
-                </select>
-              </div>
             </div>
           </section>
 

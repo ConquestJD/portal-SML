@@ -1,7 +1,7 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService, AssignmentItem, TeacherItem, CourseItem, SectionItem, AcademicYearItem } from '../../../services/admin.service';
+import { AdminService, AssignmentItem, TeacherItem, CourseItem, SectionItem, AcademicYearItem, activeAcademicYear } from '../../../services/admin.service';
 import { AdminTeacherSearchComboboxComponent } from '../_shared/components/teacher-search-combobox/admin-teacher-search-combobox.component';
 
 @Component({
@@ -37,8 +37,13 @@ export class AsignacionDocenteComponent implements OnInit {
   reloadLookups() {
     this.adminService.getTeachers({ pageSize: 100 }).subscribe({ next: ({ data }) => this.teachers.set(data) });
     this.adminService.getCourses({ pageSize: 100 }).subscribe({ next: ({ data }) => this.courses.set(data) });
-    this.adminService.getSections().subscribe({ next: ({ data }) => this.sections.set(data) });
-    this.adminService.getAcademicYears().subscribe({ next: (d) => this.academicYears.set(d) });
+    this.adminService.getAcademicYears().subscribe({
+      next: (d) => {
+        this.academicYears.set(d);
+        const yearId = activeAcademicYear(d)?.id;
+        this.adminService.getSections({ academicYearId: yearId }).subscribe({ next: ({ data }) => this.sections.set(data) });
+      },
+    });
   }
 
   load() {
@@ -93,7 +98,7 @@ export class AsignacionDocenteComponent implements OnInit {
 
   assignTeacher() {
     const years = this.academicYears();
-    const active = years.find(y => y.status === 'ACTIVE') ?? years[0];
+    const active = activeAcademicYear(years);
     this.formData.set({
       teacherId: '',
       courseId: '',

@@ -1,11 +1,11 @@
 import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import {
   AdminService,
   AcademicYearItem,
-  CreateAcademicYearDto,
+  activeAcademicYear,
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
@@ -18,7 +18,7 @@ import {
   resolveCourseSubject,
 } from '../../../shared/utils/course-cover';
 
-type TabId = 'colegio' | 'materias' | 'anio' | 'pensiones';
+type TabId = 'colegio' | 'materias' | 'pensiones';
 
 interface SchoolIdentity {
   name: string;
@@ -38,7 +38,7 @@ const DEFAULT_IDENTITY: SchoolIdentity = {
 @Component({
   selector: 'app-configuracion-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, ...ADMIN_SHARED],
+  imports: [CommonModule, FormsModule, ...ADMIN_SHARED],
   templateUrl: './configuracion-admin.component.html',
   styleUrl: './configuracion-admin.component.css'
 })
@@ -51,7 +51,6 @@ export class ConfiguracionAdminComponent implements OnInit {
   readonly tabs: AdminTab[] = [
     { id: 'colegio', label: 'Colegio' },
     { id: 'materias', label: 'Materias' },
-    { id: 'anio', label: 'Año lectivo' },
     { id: 'pensiones', label: 'Pensiones' },
   ];
 
@@ -81,17 +80,11 @@ export class ConfiguracionAdminComponent implements OnInit {
     return list.filter((s) => s.levels.includes(filter));
   });
 
-  yearFormOpen = signal(false);
-  yearEditId = signal('');
-  yearForm = signal<CreateAcademicYearDto>({ name: '', startDate: '', endDate: '', status: 'UPCOMING' });
-
   monthlyTuitionAmount = signal(250);
   applyToPending = signal(false);
   tuitionSaving = signal(false);
 
-  activeYear = computed(() =>
-    this.years().find(y => this.yearStatusKey(y.status) === 'active') ?? this.years()[0] ?? null
-  );
+  activeYear = computed(() => activeAcademicYear(this.years()));
 
   constructor(
     private adminService: AdminService,
@@ -257,61 +250,6 @@ export class ConfiguracionAdminComponent implements OnInit {
     });
   }
 
-  yearStatusKey(status: string): string {
-    const s = (status || '').toUpperCase();
-    if (s === 'ACTIVE' || s === 'ACTIVO') return 'active';
-    if (s === 'UPCOMING' || s === 'PROXIMO' || s === 'PRÓXIMO') return 'upcoming';
-    return 'closed';
-  }
-
-  yearStatusLabel(status: string): string {
-    const key = this.yearStatusKey(status);
-    if (key === 'active') return 'En curso';
-    if (key === 'upcoming') return 'Próximo';
-    return 'Cerrado';
-  }
-
-  openYearForm(year?: AcademicYearItem) {
-    if (year) {
-      this.yearEditId.set(year.id);
-      this.yearForm.set({
-        name: year.name,
-        startDate: this.toDateInput(year.startDate),
-        endDate: this.toDateInput(year.endDate),
-        status: (year.status || 'UPCOMING').toUpperCase(),
-      });
-    } else {
-      this.yearEditId.set('');
-      this.yearForm.set({ name: '', startDate: '', endDate: '', status: 'UPCOMING' });
-    }
-    this.yearFormOpen.set(true);
-  }
-
-  cancelYearForm() {
-    this.yearFormOpen.set(false);
-    this.yearEditId.set('');
-  }
-
-  patchYear(field: keyof CreateAcademicYearDto, value: string) {
-    this.yearForm.update(d => ({ ...d, [field]: value }));
-  }
-
-  saveYear() {
-    const dto = this.yearForm();
-    if (!dto.name || !dto.startDate || !dto.endDate) return;
-    const req = this.yearEditId()
-      ? this.adminService.updateAcademicYear(this.yearEditId(), dto)
-      : this.adminService.createAcademicYear(dto);
-    req.subscribe({
-      next: () => {
-        this.cancelYearForm();
-        this.saved.set('Año lectivo guardado.');
-        this.reload();
-      },
-      error: () => this.error.set('No se pudo guardar el año lectivo.'),
-    });
-  }
-
   saveTuition() {
     const amount = Number(this.monthlyTuitionAmount());
     if (!Number.isFinite(amount) || amount < 1) {
@@ -337,11 +275,6 @@ export class ConfiguracionAdminComponent implements OnInit {
         this.error.set('No se pudo guardar el monto de la pensión.');
       },
     });
-  }
-
-  private toDateInput(value: string): string {
-    if (!value) return '';
-    return value.slice(0, 10);
   }
 
   private readIdentity(): SchoolIdentity {

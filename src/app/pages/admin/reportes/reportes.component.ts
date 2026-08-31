@@ -9,6 +9,7 @@ import {
   SectionItem,
   ReportResult,
   ReportCell,
+  activeAcademicYear,
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
@@ -97,7 +98,7 @@ export class ReportesComponent implements OnInit {
       next: ({ years, sections }) => {
         this.years.set(years);
         this.sections.set(sections.data ?? []);
-        const active = years.find(y => y.status === 'ACTIVE') ?? years[0];
+        const active = activeAcademicYear(years);
         this._academicYearId.set(active?.id ?? '');
         this.loadPeriods();
         this.generateReport();

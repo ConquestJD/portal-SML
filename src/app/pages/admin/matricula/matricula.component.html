@@ -31,13 +31,8 @@
             <span class="mat-step__label">Estudiante</span>
           </li>
           <li class="mat-step__rail" aria-hidden="true"></li>
-          <li class="mat-step" [class.mat-step--done]="!!formData().academicYearId">
-            <span class="mat-step__num">2</span>
-            <span class="mat-step__label">Año</span>
-          </li>
-          <li class="mat-step__rail" aria-hidden="true"></li>
           <li class="mat-step" [class.mat-step--done]="!!formData().sectionId">
-            <span class="mat-step__num">3</span>
+            <span class="mat-step__num">2</span>
             <span class="mat-step__label">Grado / Sección</span>
           </li>
         </ol>
@@ -68,28 +63,9 @@
             }
           </section>
 
-          <section class="mat-panel" [class.mat-panel--active]="!!formData().studentId && !formData().academicYearId">
-            <h2 class="mat-panel__title">Año académico</h2>
-            <p class="mat-panel__hint">Si ingresa después del inicio, solo se cobran los meses restantes</p>
-            <label class="mat-label" for="mat-year">Año *</label>
-            <select
-              id="mat-year"
-              class="mat-input"
-              name="academicYearId"
-              required
-              [ngModel]="formData().academicYearId"
-              (ngModelChange)="update('academicYearId', $event)"
-            >
-              <option value="">Seleccionar año</option>
-              @for (y of academicYears(); track y.id) {
-                <option [value]="y.id">{{ y.name }}</option>
-              }
-            </select>
-          </section>
-
-          <section class="mat-panel" [class.mat-panel--active]="!!formData().academicYearId">
+          <section class="mat-panel" [class.mat-panel--active]="!!formData().studentId">
             <h2 class="mat-panel__title">Grado y sección</h2>
-            <p class="mat-panel__hint">Destino académico</p>
+            <p class="mat-panel__hint">Destino académico · año {{ formData().academicYear || 'vigente' }}</p>
             <label class="mat-label" for="mat-section">Sección *</label>
             <select
               id="mat-section"
@@ -100,7 +76,7 @@
               (ngModelChange)="update('sectionId', $event)"
             >
               <option value="">Seleccionar sección</option>
-              @for (sec of sections(); track sec.id) {
+              @for (sec of yearSections(); track sec.id) {
                 <option [value]="sec.id">{{ sec.grade }} — {{ sec.name }}</option>
               }
             </select>
@@ -112,7 +88,7 @@
           <button
             type="submit"
             class="adm-btn adm-btn--solid"
-            [disabled]="saving() || !formData().studentId || !formData().academicYearId || !formData().sectionId"
+            [disabled]="saving() || !formData().studentId || !formData().sectionId"
           >
             {{ saving() ? 'Matriculando…' : 'Matricular' }}
           </button>
@@ -121,17 +97,6 @@
     }
 
     <div class="toolbar">
-      <select
-        [ngModel]="filterYear()"
-        (ngModelChange)="filterYear.set($event); currentPage.set(1); load()"
-        name="filterYear"
-        aria-label="Filtrar por año"
-      >
-        <option value="">Todos los años</option>
-        @for (y of academicYears(); track y.id) {
-          <option [value]="y.name">{{ y.name }}</option>
-        }
-      </select>
       <select
         [ngModel]="filterGrade()"
         (ngModelChange)="filterGrade.set($event); currentPage.set(1); load()"
@@ -165,7 +130,6 @@
                 <th>Código</th>
                 <th>Grado</th>
                 <th>Sección</th>
-                <th>Año</th>
                 <th>Ingreso</th>
                 <th>Estado</th>
                 <th></th>
@@ -180,7 +144,6 @@
                   <td>{{ e.student?.studentCode || '—' }}</td>
                   <td>{{ e.grade || e.section?.grade || '—' }}</td>
                   <td>{{ e.section?.name || '—' }}</td>
-                  <td>{{ e.academicYear?.name || '—' }}</td>
                   <td>{{ e.enrolledAt ? (e.enrolledAt | date:'mediumDate') : '—' }}</td>
                   <td>
                     <span class="mat-pill" [attr.data-status]="e.status">{{ enrollmentStatusLabel(e.status) }}</span>

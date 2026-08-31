@@ -247,7 +247,8 @@ export const routes: Routes = [
       },
       {
         path: 'admin/anio-academico',
-        loadComponent: () => import('./pages/admin/anio-academico/anio-academico.component').then(m => m.AnioAcademicoComponent)
+        redirectTo: 'admin/configuracion',
+        pathMatch: 'full'
       },
       {
         path: 'admin/grados-secciones',

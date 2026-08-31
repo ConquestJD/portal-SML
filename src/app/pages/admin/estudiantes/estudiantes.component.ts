@@ -2,7 +2,7 @@ import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AdminService, StudentItem, AcademicYearItem } from '../../../services/admin.service';
+import { AdminService, StudentItem, activeAcademicYear } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 
 @Component({
@@ -18,9 +18,8 @@ export class EstudiantesComponent implements OnInit {
   total = signal(0);
 
   students = signal<StudentItem[]>([]);
-  years = signal<AcademicYearItem[]>([]);
   selectedYearId = signal('');
-  academicYearName = signal('2026');
+  academicYearName = signal(String(new Date().getFullYear()));
 
   private _searchQuery = signal('');
   get searchQuery(): string { return this._searchQuery(); }
@@ -45,12 +44,6 @@ export class EstudiantesComponent implements OnInit {
   private _filterStatus = signal('');
   get filterStatus(): string { return this._filterStatus(); }
   set filterStatus(v: string) { this._filterStatus.set(v); }
-
-  get filterYear(): string { return this.selectedYearId(); }
-  set filterYear(v: string) {
-    if (v === this.selectedYearId()) return;
-    this.onYearChange(v);
-  }
 
   availableGrades = computed(() =>
     Array.from(new Set(this.students().map(s => s.grade ?? '').filter(Boolean))).sort()
@@ -135,8 +128,7 @@ export class EstudiantesComponent implements OnInit {
   ngOnInit() {
     this.adminService.getAcademicYears().subscribe({
       next: (years) => {
-        this.years.set(years ?? []);
-        const active = (years ?? []).find(y => y.status === 'ACTIVE') ?? (years ?? [])[0];
+        const active = activeAcademicYear(years);
         if (active) {
           this.selectedYearId.set(active.id);
           this.academicYearName.set(active.name);
@@ -145,13 +137,6 @@ export class EstudiantesComponent implements OnInit {
       },
       error: () => this.load()
     });
-  }
-
-  onYearChange(id: string) {
-    this.selectedYearId.set(id);
-    const year = this.years().find(y => y.id === id);
-    this.academicYearName.set(year?.name ?? this.academicYearName());
-    this.load();
   }
 
   load() {
