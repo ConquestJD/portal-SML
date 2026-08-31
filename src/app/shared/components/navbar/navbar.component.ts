@@ -164,6 +164,7 @@ const NAV_ITEMS_BY_ROLE: Record<UserRole, NavGroup[]> = {
   styleUrl: './navbar.component.scss',
   host: {
     '[class.course-workspace]': 'courseWorkspace()',
+    '[class.sidebar-collapsed]': 'isCollapsed() && !isMobile()',
   },
 })
 export class NavbarComponent implements OnInit, OnDestroy {

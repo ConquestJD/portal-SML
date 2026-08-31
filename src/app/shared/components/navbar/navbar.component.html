@@ -27,7 +27,7 @@
     
     <a [routerLink]="dashboardRoute()" class="mobile-logo">
       <img src="/only-logo.png" alt="Santa María Laura" class="mobile-logo-image">
-      <span class="mobile-logo-text">Portal SML</span>
+        <span class="mobile-logo-text">Santa María Laura</span>
     </a>
     
     <div class="mobile-actions">
@@ -79,7 +79,13 @@
     <div class="sidebar-header">
       <a [routerLink]="dashboardRoute()" class="logo-link" (click)="closeDrawer()">
         <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
-        <span class="logo-text">Portal SML</span>
+        <span class="logo-brand">
+          <span class="logo-kicker">Colegio</span>
+          <span class="logo-text">
+            <span>Santa María</span>
+            <span>Laura</span>
+          </span>
+        </span>
       </a>
       
       @if (!isMobile()) {
@@ -174,7 +180,13 @@
     <div class="sidebar-header">
       <a routerLink="/login" class="logo-link">
         <img src="/only-logo.png" alt="Santa María Laura" class="logo-image">
-        <span class="logo-text">Portal SML</span>
+        <span class="logo-brand">
+          <span class="logo-kicker">Colegio</span>
+          <span class="logo-text">
+            <span>Santa María</span>
+            <span>Laura</span>
+          </span>
+        </span>
       </a>
     </div>
     <div class="sidebar-content-unauthenticated">
