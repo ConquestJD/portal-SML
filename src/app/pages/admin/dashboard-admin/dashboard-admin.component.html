@@ -26,13 +26,7 @@
           <div>
             <p class="admin-dash__kicker">Dirección · Santa María Laura</p>
             <h1 class="admin-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
-            <p class="admin-dash__brand">
-              @if (activeYear(); as year) {
-                Año lectivo {{ year.name }}
-              } @else {
-                Colegio de alto rendimiento · Abancay
-              }
-            </p>
+            <p class="admin-dash__brand" [class.admin-dash__brand--alert]="hasAttention()">{{ statusLine() }}</p>
           </div>
         </div>
         <div class="admin-dash__date" aria-label="Fecha de hoy">
@@ -45,80 +39,66 @@
 
     <div class="admin-dash__body">
 
-      <section class="census" aria-labelledby="census-title">
-        <div class="census__head">
-          <h2 id="census-title">Censo escolar</h2>
-          <p>{{ communitySize() }} personas en la comunidad</p>
-        </div>
-        <div class="metrics">
-          <a routerLink="/admin/estudiantes" class="metric">
-            <span class="metric__kicker">En el aula</span>
-            <span class="metric__n">{{ totalStudents() }}</span>
-            <span class="metric__l">Estudiantes</span>
-          </a>
-          <a routerLink="/admin/profesores" class="metric">
-            <span class="metric__kicker">Claustro</span>
-            <span class="metric__n">{{ totalTeachers() }}</span>
-            <span class="metric__l">Profesores</span>
-          </a>
-          <a routerLink="/admin/padres" class="metric">
-            <span class="metric__kicker">Hogares</span>
-            <span class="metric__n">{{ totalParents() }}</span>
-            <span class="metric__l">Familias</span>
-          </a>
-          <a routerLink="/admin/matricula" class="metric">
-            <span class="metric__kicker">Vigentes</span>
-            <span class="metric__n">{{ activeEnrollments() }}</span>
-            <span class="metric__l">Matrículas</span>
-          </a>
-        </div>
-      </section>
-
       <section class="desk" aria-labelledby="desk-title">
-        <h2 id="desk-title">Hoy en dirección</h2>
-        @if (hasAttention()) {
+        <h2 id="desk-title">Pendiente en dirección</h2>
+        @if (deskItems().length) {
           <div class="pulse">
-            @if (pendingJustifications() > 0) {
-              <a routerLink="/admin/estudiantes" class="pulse__item">
-                <span class="pulse__n">{{ pendingJustifications() }}</span>
+            @for (item of deskItems(); track item.link + item.label) {
+              <a [routerLink]="item.link" class="pulse__item">
+                @if (item.n) {
+                  <span class="pulse__n">{{ item.n }}</span>
+                }
                 <span class="pulse__copy">
-                  <span class="pulse__l">Justificaciones por revisar</span>
-                  <span class="pulse__hint">Asistencia de estudiantes</span>
-                </span>
-              </a>
-            }
-            @if (pendingPayments() > 0) {
-              <a routerLink="/admin/reportes" class="pulse__item">
-                <span class="pulse__n">{{ pendingPayments() }}</span>
-                <span class="pulse__copy">
-                  <span class="pulse__l">Pagos por regularizar</span>
-                  <span class="pulse__hint">Tesorería familiar</span>
+                  <span class="pulse__l">{{ item.label }}</span>
+                  <span class="pulse__hint">{{ item.hint }}</span>
                 </span>
               </a>
             }
           </div>
         } @else {
-          <p class="desk__ok">Sin pendientes de dirección. El colegio está al día.</p>
+          <p class="desk__ok">No hay pendientes de dirección. El colegio está al día.</p>
         }
       </section>
 
-      <section class="directory" aria-labelledby="dir-title">
-        <div class="directory__head">
-          <h2 id="dir-title">El colegio</h2>
-          <p>Entrar a cada área de gestión</p>
+      <section class="census" aria-labelledby="census-title">
+        <div class="census__head">
+          <h2 id="census-title">
+            @if (activeYear(); as year) {
+              Año {{ year.name }}
+            } @else {
+              El año lectivo
+            }
+          </h2>
+          <p>{{ enrollmentNote() }}</p>
         </div>
-        <nav class="directory__grid" aria-label="Áreas del colegio">
-          @for (item of directory; track item.link) {
-            <a [routerLink]="item.link" class="dir-card">
-              <img [src]="item.photo" alt="" decoding="async" />
-              <span class="dir-card__veil"></span>
-              <span class="dir-card__copy">
-                <span class="dir-card__hint">{{ item.hint }}</span>
-                <span class="dir-card__label">{{ item.label }}</span>
-              </span>
-            </a>
-          }
-        </nav>
+        <div class="metrics">
+          <a routerLink="/admin/matricula" class="metric" [class.metric--alert]="notEnrolled() > 0">
+            <span class="metric__kicker">Matrícula</span>
+            <span class="metric__n">{{ activeEnrollments() }}</span>
+            <span class="metric__l">
+              @if (totalStudents() === 0) {
+                Sin estudiantes
+              } @else {
+                de {{ totalStudents() }} {{ totalStudents() === 1 ? 'estudiante' : 'estudiantes' }}
+              }
+            </span>
+          </a>
+          <a routerLink="/admin/profesores" class="metric" [class.metric--alert]="totalTeachers() === 0">
+            <span class="metric__kicker">Claustro</span>
+            <span class="metric__n">{{ totalTeachers() }}</span>
+            <span class="metric__l">{{ totalTeachers() === 1 ? 'Profesor' : 'Profesores' }}</span>
+          </a>
+          <a routerLink="/admin/reportes" class="metric" [class.metric--alert]="pendingPayments() > 0">
+            <span class="metric__kicker">Pensiones</span>
+            <span class="metric__n">{{ pendingPayments() }}</span>
+            <span class="metric__l">{{ pendingPayments() === 0 ? 'Al día' : 'Por regularizar' }}</span>
+          </a>
+          <a routerLink="/admin/padres" class="metric" [class.metric--alert]="totalParents() === 0 && totalStudents() > 0">
+            <span class="metric__kicker">Familias</span>
+            <span class="metric__n">{{ totalParents() }}</span>
+            <span class="metric__l">{{ totalParents() === 1 ? 'Hogar' : 'Hogares' }}</span>
+          </a>
+        </div>
       </section>
 
       <div class="admin-dash__split">

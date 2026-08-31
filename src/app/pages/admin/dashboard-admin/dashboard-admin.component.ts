@@ -33,26 +33,99 @@ export class DashboardAdminComponent implements OnInit {
     return list.find(y => this.isActiveYear(y.status)) ?? list[0] ?? null;
   });
 
-  hasAttention = computed(() =>
-    this.pendingJustifications() > 0 || this.pendingPayments() > 0
-  );
+  hasAttention = computed(() => this.deskItems().length > 0);
 
-  communitySize = computed(() =>
-    this.totalStudents() + this.totalTeachers() + this.totalParents()
-  );
+  notEnrolled = computed(() => Math.max(0, this.totalStudents() - this.activeEnrollments()));
 
-  directory = [
-    { label: 'Estudiantes', hint: 'Nómina y fichas', link: '/admin/estudiantes', photo: '/images/heroes/students.webp' },
-    { label: 'Profesores', hint: 'Claustro docente', link: '/admin/profesores', photo: '/images/heroes/teachers.webp' },
-    { label: 'Familias', hint: 'Padres de familia', link: '/admin/padres', photo: '/images/heroes/parents.webp' },
-    { label: 'Plan de estudios', hint: 'Cursos y horarios', link: '/admin/cursos', photo: '/images/heroes/courses.webp' },
-    { label: 'Matrícula', hint: 'Inscripciones', link: '/admin/matricula', photo: '/images/heroes/classrooms.webp' },
-    { label: 'Carnets', hint: 'Código de barras e impresión', link: '/admin/carnets', photo: '/images/heroes/students.webp' },
-    { label: 'Asistencia de ingreso', hint: 'Lector de portería', link: '/admin/asistencia-ingreso', photo: '/images/heroes/classrooms.webp' },
-    { label: 'Comunicados', hint: 'Mural institucional', link: '/admin/comunicados', photo: '/images/heroes/announcements.webp' },
-    { label: 'Reportes', hint: 'Indicadores', link: '/admin/reportes', photo: '/images/heroes/reports.webp' },
-    { label: 'Identidad', hint: 'Colegio, materias, año y pensiones', link: '/admin/configuracion', photo: '/images/heroes/settings.webp' },
-  ];
+  deskItems = computed(() => {
+    const items: { n: string; label: string; hint: string; link: string }[] = [];
+    if (this.pendingPayments() > 0) {
+      items.push({
+        n: String(this.pendingPayments()),
+        label: this.pendingPayments() === 1 ? 'Pago por regularizar' : 'Pagos por regularizar',
+        hint: 'Tesorería familiar',
+        link: '/admin/reportes',
+      });
+    }
+    if (this.pendingJustifications() > 0) {
+      items.push({
+        n: String(this.pendingJustifications()),
+        label: this.pendingJustifications() === 1 ? 'Justificación por revisar' : 'Justificaciones por revisar',
+        hint: 'Asistencia de estudiantes',
+        link: '/admin/estudiantes',
+      });
+    }
+    if (this.notEnrolled() > 0) {
+      items.push({
+        n: String(this.notEnrolled()),
+        label: this.notEnrolled() === 1 ? 'Estudiante sin matrícula este año' : 'Estudiantes sin matrícula este año',
+        hint: 'Inscripciones',
+        link: '/admin/matricula',
+      });
+    }
+    if (this.totalTeachers() === 0) {
+      items.push({
+        n: '',
+        label: 'Sin docentes en el claustro',
+        hint: 'Hay que registrar al menos un profesor',
+        link: '/admin/profesores',
+      });
+    }
+    if (this.totalStudents() === 0) {
+      items.push({
+        n: '',
+        label: 'La nómina está vacía',
+        hint: 'Registrar al primer estudiante',
+        link: '/admin/estudiantes/nuevo',
+      });
+    }
+    if (this.totalParents() === 0 && this.totalStudents() > 0) {
+      items.push({
+        n: '',
+        label: 'Ningún hogar vinculado',
+        hint: 'Registrar padres de familia',
+        link: '/admin/padres',
+      });
+    }
+    return items;
+  });
+
+  enrollmentNote = computed(() => {
+    const year = this.activeYear()?.name;
+    const students = this.totalStudents();
+    const missing = this.notEnrolled();
+    if (students === 0) return 'Todavía no hay estudiantes en la nómina.';
+    if (missing === 0) {
+      if (students === 1) {
+        return year ? `El estudiante está matriculado en ${year}.` : 'El estudiante está matriculado.';
+      }
+      return year
+        ? `Los ${students} estudiantes están matriculados en ${year}.`
+        : `Los ${students} estudiantes están matriculados.`;
+    }
+    return year
+      ? `${missing} de ${students} aún no ${missing === 1 ? 'está matriculado' : 'están matriculados'} en ${year}.`
+      : `${missing} de ${students} aún no ${missing === 1 ? 'tiene' : 'tienen'} matrícula vigente.`;
+  });
+
+  statusLine = computed(() => {
+    const year = this.activeYear()?.name;
+    if (this.pendingPayments() > 0) {
+      const n = this.pendingPayments();
+      return `${n} ${n === 1 ? 'pago' : 'pagos'} por regularizar`;
+    }
+    if (this.pendingJustifications() > 0) {
+      const n = this.pendingJustifications();
+      return `${n} ${n === 1 ? 'justificación' : 'justificaciones'} por revisar`;
+    }
+    if (this.notEnrolled() > 0) {
+      const n = this.notEnrolled();
+      return `${n} ${n === 1 ? 'estudiante' : 'estudiantes'} sin matrícula`;
+    }
+    if (this.totalTeachers() === 0) return 'Falta registrar el claustro';
+    if (this.totalStudents() === 0) return 'Nómina vacía';
+    return year ? `Año lectivo ${year} · al día` : 'Colegio de alto rendimiento · Abancay';
+  });
 
   actions = [
     { label: 'Nueva matrícula', hint: 'Inscribir a un estudiante', link: '/admin/matricula' },
