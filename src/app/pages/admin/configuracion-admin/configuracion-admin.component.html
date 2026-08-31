@@ -237,7 +237,7 @@
         <header class="mod__head">
           <h2>Pensión mensual</h2>
         </header>
-        <p class="mod__hint">Las cuotas nuevas usarán este monto. El vencimiento sigue siendo el día 5 de cada mes.</p>
+        <p class="mod__hint">Al guardar, las cuotas pendientes y en retraso pasan a este monto. Las ya pagadas no se modifican. El vencimiento sigue siendo el día 5 de cada mes.</p>
         <form class="pay-form" (ngSubmit)="saveTuition()">
           <label>
             Monto (soles)
@@ -250,10 +250,6 @@
               [ngModel]="monthlyTuitionAmount()"
               (ngModelChange)="monthlyTuitionAmount.set(+$event)"
             />
-          </label>
-          <label class="cfg-check">
-            <input type="checkbox" [ngModel]="applyToPending()" (ngModelChange)="applyToPending.set($event)" name="applyToPending" />
-            Actualizar cuotas pendientes y en retraso del año vigente
           </label>
           <div class="cfg-actions">
             <button type="submit" class="adm-btn adm-btn--solid" [disabled]="tuitionSaving()">

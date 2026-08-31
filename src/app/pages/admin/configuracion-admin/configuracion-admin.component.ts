@@ -81,7 +81,6 @@ export class ConfiguracionAdminComponent implements OnInit {
   });
 
   monthlyTuitionAmount = signal(250);
-  applyToPending = signal(false);
   tuitionSaving = signal(false);
 
   activeYear = computed(() => activeAcademicYear(this.years()));
@@ -260,7 +259,7 @@ export class ConfiguracionAdminComponent implements OnInit {
     this.error.set('');
     this.adminService.updateSettings({
       monthlyTuitionAmount: amount,
-      applyToPending: this.applyToPending(),
+      applyToPending: true,
     }).subscribe({
       next: (res) => {
         this.tuitionSaving.set(false);
