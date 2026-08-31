@@ -23,7 +23,7 @@
     }
 
     @if (activeTab() === 'colegio') {
-      <section class="metrics" aria-label="Resumen del colegio">
+      <section class="metrics metrics--3" aria-label="Resumen del colegio">
         <div class="metric">
           <span class="metric__n">{{ subjects().length }}</span>
           <span class="metric__l">Materias</span>
@@ -38,38 +38,43 @@
         </div>
       </section>
 
-      <form (ngSubmit)="saveIdentity()">
-        <section class="identity" aria-labelledby="school-identity">
-          <div class="identity__crest">
-            <img src="/only-logo.png" alt="" />
-          </div>
-          <div class="identity__copy">
-            <p class="identity__kicker">Colegio</p>
-            <label class="visually-hidden" for="school-name">Nombre del colegio</label>
-            <input
-              id="school-name"
-              type="text"
-              class="identity__name"
-              name="name"
-              [ngModel]="schoolData().name"
-              (ngModelChange)="patchSchool('name', $event)"
-            />
-            <p class="identity__place">{{ schoolData().address || 'Dirección institucional' }}</p>
-          </div>
+      <form class="studio" (ngSubmit)="saveIdentity()">
+        <aside class="letterhead" aria-label="Membrete del colegio">
+          <img src="/only-logo.png" alt="" class="letterhead__crest" />
+          <p class="letterhead__place">Abancay, Perú</p>
+          <p class="letterhead__name">{{ schoolData().name || 'Colegio Santa María Laura' }}</p>
+          <p class="letterhead__line">{{ schoolData().address || 'Dirección institucional' }}</p>
+          <p class="letterhead__line">
+            {{ schoolData().phone || 'Teléfono' }}
+            @if (schoolData().phone && schoolData().email) {
+              <span aria-hidden="true"> · </span>
+            }
+            {{ schoolData().email || 'Correo' }}
+          </p>
           @if (activeYear(); as year) {
-            <div class="identity__year">
-              <span class="identity__year-kicker">Año lectivo</span>
-              <strong>{{ year.name }}</strong>
+            <p class="letterhead__year">
+              Año lectivo {{ year.name }}
               <span>{{ yearStatusLabel(year.status) }}</span>
-            </div>
+            </p>
           }
-        </section>
+        </aside>
 
-        <div class="mod-grid">
+        <div class="studio__edit">
           <section class="mod">
             <header class="mod__head">
-              <h2>Sede</h2>
+              <h2>Identidad</h2>
             </header>
+            <div class="cfg-field cfg-field--wide">
+              <label class="cfg-label" for="school-name">Nombre del colegio</label>
+              <input
+                id="school-name"
+                type="text"
+                class="cfg-input"
+                name="name"
+                [ngModel]="schoolData().name"
+                (ngModelChange)="patchSchool('name', $event)"
+              />
+            </div>
             <div class="cfg-field cfg-field--wide">
               <label class="cfg-label" for="school-address">Dirección</label>
               <input
@@ -81,11 +86,6 @@
                 (ngModelChange)="patchSchool('address', $event)"
               />
             </div>
-          </section>
-          <section class="mod">
-            <header class="mod__head">
-              <h2>Contacto</h2>
-            </header>
             <div class="cfg-grid">
               <div class="cfg-field">
                 <label class="cfg-label" for="school-phone">Teléfono</label>
@@ -110,10 +110,10 @@
                 />
               </div>
             </div>
+            <div class="cfg-actions">
+              <button type="submit" class="adm-btn adm-btn--solid">Guardar identidad</button>
+            </div>
           </section>
-        </div>
-        <div class="cfg-actions">
-          <button type="submit" class="adm-btn adm-btn--solid">Guardar identidad</button>
         </div>
       </form>
     }
@@ -139,8 +139,8 @@
               <input class="cfg-input" maxlength="4" [ngModel]="subjectForm().codePrefix" (ngModelChange)="patchSubject('codePrefix', $event)" name="subjectCode" />
             </div>
             <div class="cfg-field">
-              <label class="cfg-label">Color</label>
-              <input class="cfg-input" type="color" [ngModel]="subjectForm().color" (ngModelChange)="patchSubject('color', $event)" name="subjectColor" />
+              <label class="cfg-label" for="subjectColor">Color</label>
+              <input id="subjectColor" class="cfg-input" type="color" [ngModel]="subjectForm().color" (ngModelChange)="patchSubject('color', $event)" name="subjectColor" />
             </div>
             <div class="cfg-field cfg-field--wide">
               <span class="cfg-label">Niveles</span>
