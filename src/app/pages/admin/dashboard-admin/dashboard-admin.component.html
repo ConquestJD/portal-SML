@@ -3,11 +3,9 @@
   @if (loading()) {
     <div class="admin-dash__loading" aria-busy="true">
       <div class="skel skel--hero"></div>
-      <div class="skel-row">
-        <div class="skel skel--tile"></div>
-        <div class="skel skel--tile"></div>
-        <div class="skel skel--tile"></div>
-        <div class="skel skel--tile"></div>
+      <div class="skel-board">
+        <div class="skel skel--sheet"></div>
+        <div class="skel skel--sheet skel--sheet-narrow"></div>
       </div>
     </div>
   } @else if (error()) {
@@ -17,129 +15,150 @@
     </div>
   } @else {
 
-    <header class="admin-dash__hero">
-      <img class="admin-dash__hero-photo" src="/images/fondo.webp" alt="" decoding="async" />
-      <div class="admin-dash__hero-veil"></div>
-      <div class="admin-dash__hero-content">
-        <div class="admin-dash__welcome">
-          <img src="/only-logo.png" alt="" class="admin-dash__crest" />
+    <header class="mast">
+      <img class="mast__photo" src="/images/fondo.webp" alt="" decoding="async" />
+      <div class="mast__veil"></div>
+      <div class="mast__inner">
+        <div class="mast__brand">
+          <img src="/only-logo.png" alt="" class="mast__crest" />
           <div>
-            <p class="admin-dash__kicker">Dirección · Santa María Laura</p>
-            <h1 class="admin-dash__title">{{ greeting() }}, {{ firstName() }}</h1>
-            <p class="admin-dash__brand" [class.admin-dash__brand--alert]="hasAttention()">{{ statusLine() }}</p>
+            <p class="mast__kicker">Dirección general</p>
+            <h1 class="mast__title">
+              <em>{{ greeting() }},</em>
+              {{ firstName() }}
+            </h1>
+            <p class="mast__place">Abancay · Colegio de alto rendimiento</p>
+            @if (hasAttention()) {
+              <p class="mast__status">{{ statusLine() }}</p>
+            }
           </div>
         </div>
-        <div class="admin-dash__date" aria-label="Fecha de hoy">
-          <span class="admin-dash__date-week">{{ weekdayLabel() }}</span>
-          <span class="admin-dash__date-day">{{ dayNumber() }}</span>
-          <span class="admin-dash__date-month">{{ monthYearLabel() }}</span>
+        <div class="mast__date" aria-label="Fecha de hoy">
+          <span class="mast__date-week">{{ weekdayLabel() }}</span>
+          <span class="mast__date-day">{{ dayNumber() }}</span>
+          <span class="mast__date-month">{{ monthYearLabel() }}</span>
         </div>
       </div>
     </header>
 
-    <div class="admin-dash__body">
+    <div class="folio">
 
-      <section class="desk" aria-labelledby="desk-title">
-        <h2 id="desk-title">Pendiente en dirección</h2>
-        @if (deskItems().length) {
-          <div class="pulse">
-            @for (item of deskItems(); track item.link + item.label) {
-              <a [routerLink]="item.link" class="pulse__item">
-                @if (item.n) {
-                  <span class="pulse__n">{{ item.n }}</span>
-                }
-                <span class="pulse__copy">
-                  <span class="pulse__l">{{ item.label }}</span>
-                  <span class="pulse__hint">{{ item.hint }}</span>
-                </span>
-              </a>
-            }
-          </div>
-        } @else {
-          <p class="desk__ok">No hay pendientes de dirección. El colegio está al día.</p>
-        }
-      </section>
+      <div class="board">
+        <section class="order" aria-labelledby="order-title">
+          <header class="order__head">
+            <p class="folio-kicker">Mesa de dirección</p>
+            <h2 id="order-title">Orden del día</h2>
+          </header>
+          @if (deskItems().length) {
+            <ul class="order__list">
+              @for (item of deskItems(); track item.link + item.label) {
+                <li>
+                  <a [routerLink]="item.link" class="matter">
+                    <span class="matter__n" [class.matter__n--quiet]="!item.n">{{ item.n || '—' }}</span>
+                    <span class="matter__copy">
+                      <span class="matter__l">{{ item.label }}</span>
+                      <span class="matter__hint">{{ item.hint }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="order__ok">Sin asuntos pendientes. El colegio está al día.</p>
+          }
+        </section>
 
-      <section class="census" aria-labelledby="census-title">
-        <div class="census__head">
-          <h2 id="census-title">
+        <aside class="year" aria-labelledby="year-title">
+          <p class="folio-kicker">Año lectivo</p>
+          <h2 id="year-title" class="year__name">
             @if (activeYear(); as year) {
-              Año {{ year.name }}
+              {{ year.name }}
             } @else {
-              El año lectivo
+              Sin periodo
             }
           </h2>
-          <p>{{ enrollmentNote() }}</p>
-        </div>
-        <div class="metrics">
-          <a routerLink="/admin/matricula" class="metric" [class.metric--alert]="notEnrolled() > 0">
-            <span class="metric__kicker">Matrícula</span>
-            <span class="metric__n">{{ activeEnrollments() }}</span>
-            <span class="metric__l">
-              @if (totalStudents() === 0) {
-                Sin estudiantes
-              } @else {
-                de {{ totalStudents() }} {{ totalStudents() === 1 ? 'estudiante' : 'estudiantes' }}
-              }
-            </span>
-          </a>
-          <a routerLink="/admin/profesores" class="metric" [class.metric--alert]="totalTeachers() === 0">
-            <span class="metric__kicker">Claustro</span>
-            <span class="metric__n">{{ totalTeachers() }}</span>
-            <span class="metric__l">{{ totalTeachers() === 1 ? 'Profesor' : 'Profesores' }}</span>
-          </a>
-          <a routerLink="/admin/reportes" class="metric" [class.metric--alert]="pendingPayments() > 0">
-            <span class="metric__kicker">Pensiones</span>
-            <span class="metric__n">{{ pendingPayments() }}</span>
-            <span class="metric__l">{{ pendingPayments() === 0 ? 'Al día' : 'Por regularizar' }}</span>
-          </a>
-          <a routerLink="/admin/padres" class="metric" [class.metric--alert]="totalParents() === 0 && totalStudents() > 0">
-            <span class="metric__kicker">Familias</span>
-            <span class="metric__n">{{ totalParents() }}</span>
-            <span class="metric__l">{{ totalParents() === 1 ? 'Hogar' : 'Hogares' }}</span>
-          </a>
-        </div>
-      </section>
-
-      <div class="admin-dash__split">
-        <section class="feed" aria-labelledby="feed-title">
-          <div class="feed__head">
-            <h2 id="feed-title">Mural institucional</h2>
-            <a routerLink="/admin/comunicados">Ver todos</a>
+          <p class="year__note">{{ enrollmentNote() }}</p>
+          <div class="register">
+            <a routerLink="/admin/matricula" class="register__row" [class.register__row--alert]="notEnrolled() > 0">
+              <span class="register__k">Matrícula</span>
+              <span class="register__v">{{ activeEnrollments() }}</span>
+              <span class="register__m">
+                @if (totalStudents() === 0) {
+                  Sin estudiantes
+                } @else {
+                  de {{ totalStudents() }}
+                }
+              </span>
+            </a>
+            <a routerLink="/admin/profesores" class="register__row" [class.register__row--alert]="totalTeachers() === 0">
+              <span class="register__k">Claustro</span>
+              <span class="register__v">{{ totalTeachers() }}</span>
+              <span class="register__m">{{ totalTeachers() === 1 ? 'Profesor' : 'Profesores' }}</span>
+            </a>
+            <a routerLink="/admin/reportes" class="register__row" [class.register__row--alert]="pendingPayments() > 0">
+              <span class="register__k">Pensiones</span>
+              <span class="register__v">{{ pendingPayments() }}</span>
+              <span class="register__m">{{ pendingPayments() === 0 ? 'Al día' : 'Por regularizar' }}</span>
+            </a>
+            <a routerLink="/admin/padres" class="register__row" [class.register__row--alert]="totalParents() === 0 && totalStudents() > 0">
+              <span class="register__k">Familias</span>
+              <span class="register__v">{{ totalParents() }}</span>
+              <span class="register__m">{{ totalParents() === 1 ? 'Hogar' : 'Hogares' }}</span>
+            </a>
           </div>
+        </aside>
+      </div>
+
+      <div class="press">
+        <section class="gazette" aria-labelledby="gazette-title">
+          <header class="gazette__head">
+            <div>
+              <p class="folio-kicker">Gaceta</p>
+              <h2 id="gazette-title">Mural institucional</h2>
+            </div>
+            <a routerLink="/admin/comunicados" class="folio-link">Ver todos</a>
+          </header>
           @if (recentAnnouncements().length === 0) {
-            <p class="feed__empty">El mural está en silencio. Publica el primer comunicado del periodo.</p>
+            <p class="gazette__empty">
+              El mural está en silencio.
+              <a routerLink="/admin/comunicados">Publica el primer comunicado del periodo.</a>
+            </p>
           } @else {
-            <ul class="feed__list">
+            <ul class="gazette__list">
               @for (item of recentAnnouncements(); track item.id) {
                 <li>
-                  <a routerLink="/admin/comunicados" class="feed__link">
-                    <span class="feed__kicker">{{ announcementKicker(item) }}</span>
-                    <span class="feed__title">{{ item.title }}</span>
+                  <a routerLink="/admin/comunicados" class="dispatch">
+                    <span class="dispatch__meta">
+                      <span class="dispatch__kicker">{{ announcementKicker(item) }}</span>
+                      @if (formatAnnouncementDate(item)) {
+                        <time>{{ formatAnnouncementDate(item) }}</time>
+                      }
+                    </span>
+                    <span class="dispatch__title">{{ item.title }}</span>
                     @if (announcementExcerpt(item); as excerpt) {
-                      <span class="feed__excerpt">{{ excerpt }}</span>
+                      <span class="dispatch__excerpt">{{ excerpt }}</span>
                     }
                   </a>
-                  @if (formatAnnouncementDate(item)) {
-                    <time>{{ formatAnnouncementDate(item) }}</time>
-                  }
                 </li>
               }
             </ul>
           }
         </section>
 
-        <section class="actions" aria-labelledby="actions-title">
-          <h2 id="actions-title">Hacer ahora</h2>
-          <nav class="actions__list">
+        <nav class="programme" aria-labelledby="programme-title">
+          <p class="folio-kicker">Altas</p>
+          <h2 id="programme-title">Programa</h2>
+          <ol class="programme__list">
             @for (a of actions; track a.link) {
-              <a [routerLink]="a.link" class="actions__item">
-                <span class="actions__label">{{ a.label }}</span>
-                <span class="actions__hint">{{ a.hint }}</span>
-              </a>
+              <li>
+                <a [routerLink]="a.link" class="programme__item">
+                  <span class="programme__label">{{ a.label }}</span>
+                  <span class="programme__hint">{{ a.hint }}</span>
+                </a>
+              </li>
             }
-          </nav>
-        </section>
+          </ol>
+        </nav>
       </div>
     </div>
   }
