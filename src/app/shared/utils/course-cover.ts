@@ -49,6 +49,30 @@ const SUBJECT_COVERS = [
 
 export type CourseCoverSubject = (typeof SUBJECT_COVERS)[number]['key'] | 'general';
 
+export const COURSE_COVER_LIBRARY: { key: CourseCoverSubject; label: string }[] = [
+  { key: 'comunicacion', label: 'Comunicación' },
+  { key: 'matematicas', label: 'Matemática' },
+  { key: 'ciencia', label: 'Ciencia' },
+  { key: 'historia', label: 'Historia y sociales' },
+  { key: 'ingles', label: 'Inglés' },
+  { key: 'arte', label: 'Arte' },
+  { key: 'religion', label: 'Religión' },
+  { key: 'educacion-fisica', label: 'Educación física' },
+  { key: 'computacion', label: 'Computación' },
+  { key: 'musica', label: 'Música' },
+  { key: 'tutoria', label: 'Tutoría' },
+  { key: 'general', label: 'General' },
+];
+
+export function isCourseCoverKey(value: string | null | undefined): value is CourseCoverSubject {
+  return COURSE_COVER_LIBRARY.some((c) => c.key === value);
+}
+
+export function courseCoverSrc(key: string): string {
+  const k = isCourseCoverKey(key) ? key : 'general';
+  return `/images/courses/${k}.webp`;
+}
+
 export function resolveCourseSubject(name?: string | null): CourseCoverSubject {
   const n = (name ?? '').trim();
   if (!n) return 'general';
@@ -66,7 +90,7 @@ export function resolveCourseCoverUrl(opts: {
   const custom = opts.imageUrl?.trim();
   if (custom) return custom;
   const subject = resolveCourseSubject(opts.name);
-  return `/images/courses/${subject}.webp`;
+  return courseCoverSrc(subject);
 }
 
 export function courseCoverAlt(name?: string | null): string {

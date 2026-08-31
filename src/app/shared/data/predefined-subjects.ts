@@ -1,6 +1,6 @@
-import { type CourseCoverSubject } from '../utils/course-cover';
+import { courseCoverSrc, type CourseCoverSubject } from '../utils/course-cover';
 
-export type SchoolLevel = 'inicial' | 'primaria' | 'secundaria';
+export type SchoolLevel = 'primaria' | 'secundaria';
 
 export interface PredefinedSubject {
   id: string;
@@ -19,7 +19,7 @@ export const PREDEFINED_SUBJECTS: PredefinedSubject[] = [
     codePrefix: 'COM',
     color: '#c41e3a',
     coverKey: 'comunicacion',
-    levels: ['inicial', 'primaria', 'secundaria'],
+    levels: ['primaria', 'secundaria'],
   },
   {
     id: 'matematicas',
@@ -27,7 +27,7 @@ export const PREDEFINED_SUBJECTS: PredefinedSubject[] = [
     codePrefix: 'MAT',
     color: '#003366',
     coverKey: 'matematicas',
-    levels: ['inicial', 'primaria', 'secundaria'],
+    levels: ['primaria', 'secundaria'],
   },
   {
     id: 'ciencia',
@@ -35,7 +35,7 @@ export const PREDEFINED_SUBJECTS: PredefinedSubject[] = [
     codePrefix: 'CYT',
     color: '#1a5a8a',
     coverKey: 'ciencia',
-    levels: ['inicial', 'primaria', 'secundaria'],
+    levels: ['primaria', 'secundaria'],
   },
   {
     id: 'personal-social',
@@ -43,15 +43,7 @@ export const PREDEFINED_SUBJECTS: PredefinedSubject[] = [
     codePrefix: 'PSO',
     color: '#3d5a80',
     coverKey: 'tutoria',
-    levels: ['inicial', 'primaria'],
-  },
-  {
-    id: 'psicomotriz',
-    name: 'Psicomotriz',
-    codePrefix: 'PSI',
-    color: '#1a6b4a',
-    coverKey: 'educacion-fisica',
-    levels: ['inicial'],
+    levels: ['primaria'],
   },
   {
     id: 'religion',
@@ -59,7 +51,7 @@ export const PREDEFINED_SUBJECTS: PredefinedSubject[] = [
     codePrefix: 'REL',
     color: '#6b4c9a',
     coverKey: 'religion',
-    levels: ['inicial', 'primaria', 'secundaria'],
+    levels: ['primaria', 'secundaria'],
   },
   {
     id: 'educacion-fisica',
@@ -142,8 +134,8 @@ export function findSubjectById(id: string): PredefinedSubject | undefined {
   return PREDEFINED_SUBJECTS.find(s => s.id === id);
 }
 
-export function subjectCoverUrl(subject: PredefinedSubject): string {
-  return `/images/courses/${subject.coverKey}.webp`;
+export function subjectCoverUrl(subject: Pick<PredefinedSubject, 'coverKey'>): string {
+  return courseCoverSrc(subject.coverKey);
 }
 
 export function gradeCodeSuffix(grade: string): string {

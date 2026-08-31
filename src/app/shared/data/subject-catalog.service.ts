@@ -8,7 +8,7 @@ import {
   SchoolLevel,
   subjectCoverUrl,
 } from './predefined-subjects';
-import { CourseCoverSubject, resolveCourseSubject } from '../utils/course-cover';
+import { isCourseCoverKey, resolveCourseSubject } from '../utils/course-cover';
 
 @Injectable({ providedIn: 'root' })
 export class SubjectCatalogService {
@@ -93,14 +93,18 @@ export class SubjectCatalogService {
     const name = String(raw.name ?? '').trim();
     const id = String(raw.id ?? '').trim() || this.slug(name);
     const levels = (raw.levels ?? []).filter((l): l is SchoolLevel =>
-      l === 'inicial' || l === 'primaria' || l === 'secundaria'
+      l === 'primaria' || l === 'secundaria'
     );
+    const incomingCover = raw.coverKey ?? '';
+    const coverKey = isCourseCoverKey(incomingCover)
+      ? incomingCover
+      : resolveCourseSubject(name);
     return {
       id,
       name,
       codePrefix: (raw.codePrefix || this.prefixFromName(name)).slice(0, 4).toUpperCase(),
       color: /^#([0-9a-fA-F]{6})$/.test(raw.color ?? '') ? raw.color! : '#003366',
-      coverKey: (raw.coverKey as CourseCoverSubject) || resolveCourseSubject(name),
+      coverKey,
       levels: levels.length ? levels : ['primaria', 'secundaria'],
     };
   }

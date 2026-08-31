@@ -120,89 +120,118 @@
 
     @if (activeTab() === 'materias') {
       <div class="toolbar">
+        <div class="view-toggle" role="group" aria-label="Nivel">
+          <button type="button" [class.active]="subjectFilter() === 'all'" (click)="subjectFilter.set('all')">Todas</button>
+          <button type="button" [class.active]="subjectFilter() === 'primaria'" (click)="subjectFilter.set('primaria')">Primaria</button>
+          <button type="button" [class.active]="subjectFilter() === 'secundaria'" (click)="subjectFilter.set('secundaria')">Secundaria</button>
+        </div>
         <span class="toolbar__spacer"></span>
         <button type="button" class="adm-btn adm-btn--solid" (click)="openSubjectForm()">Nueva materia</button>
       </div>
 
       @if (subjectFormOpen()) {
-        <section class="mod">
-          <header class="mod__head">
-            <h2>{{ subjectEditId() ? 'Editar materia' : 'Nueva materia' }}</h2>
-          </header>
-          <form class="cfg-grid" (ngSubmit)="saveSubject()">
-            <div class="cfg-field">
-              <label class="cfg-label">Nombre</label>
-              <input class="cfg-input" required [ngModel]="subjectForm().name" (ngModelChange)="patchSubject('name', $event)" name="subjectName" />
+        <form class="studio studio--subject" (ngSubmit)="saveSubject()">
+          <aside class="cover-plate" aria-label="Portada de la materia">
+            <img [src]="formCoverSrc()" [alt]="subjectForm().name || 'Portada'" class="cover-plate__img" />
+            <div class="cover-plate__veil"></div>
+            <div class="cover-plate__copy">
+              <p class="cover-plate__code">{{ subjectForm().codePrefix || '—' }}</p>
+              <p class="cover-plate__name">{{ subjectForm().name || 'Nueva materia' }}</p>
             </div>
-            <div class="cfg-field">
-              <label class="cfg-label">Código</label>
-              <input class="cfg-input" maxlength="4" [ngModel]="subjectForm().codePrefix" (ngModelChange)="patchSubject('codePrefix', $event)" name="subjectCode" />
-            </div>
-            <div class="cfg-field">
-              <label class="cfg-label" for="subjectColor">Color</label>
-              <input id="subjectColor" class="cfg-input" type="color" [ngModel]="subjectForm().color" (ngModelChange)="patchSubject('color', $event)" name="subjectColor" />
-            </div>
-            <div class="cfg-field cfg-field--wide">
-              <span class="cfg-label">Niveles</span>
-              <div class="cfg-checks">
-                <label class="cfg-check">
-                  <input type="checkbox" [ngModel]="subjectForm().inicial" (ngModelChange)="toggleSubjectLevel('inicial', $event)" name="lvlInicial" />
-                  Inicial
-                </label>
-                <label class="cfg-check">
-                  <input type="checkbox" [ngModel]="subjectForm().primaria" (ngModelChange)="toggleSubjectLevel('primaria', $event)" name="lvlPrimaria" />
-                  Primaria
-                </label>
-                <label class="cfg-check">
-                  <input type="checkbox" [ngModel]="subjectForm().secundaria" (ngModelChange)="toggleSubjectLevel('secundaria', $event)" name="lvlSecundaria" />
-                  Secundaria
-                </label>
+          </aside>
+
+          <section class="mod">
+            <header class="mod__head">
+              <h2>{{ subjectEditId() ? 'Editar materia' : 'Nueva materia' }}</h2>
+            </header>
+            <div class="cfg-grid">
+              <div class="cfg-field">
+                <label class="cfg-label" for="subjectName">Nombre</label>
+                <input id="subjectName" class="cfg-input" required [ngModel]="subjectForm().name" (ngModelChange)="patchSubject('name', $event)" name="subjectName" />
+              </div>
+              <div class="cfg-field">
+                <label class="cfg-label" for="subjectCode">Código</label>
+                <input id="subjectCode" class="cfg-input" maxlength="4" [ngModel]="subjectForm().codePrefix" (ngModelChange)="patchSubject('codePrefix', $event)" name="subjectCode" />
+              </div>
+              <div class="cfg-field">
+                <label class="cfg-label" for="subjectColor">Color de acento</label>
+                <input id="subjectColor" class="cfg-input" type="color" [ngModel]="subjectForm().color" (ngModelChange)="patchSubject('color', $event)" name="subjectColor" />
+              </div>
+              <div class="cfg-field">
+                <span class="cfg-label">Niveles</span>
+                <div class="cfg-checks">
+                  <label class="cfg-check">
+                    <input type="checkbox" [ngModel]="subjectForm().primaria" (ngModelChange)="toggleSubjectLevel('primaria', $event)" name="lvlPrimaria" />
+                    Primaria
+                  </label>
+                  <label class="cfg-check">
+                    <input type="checkbox" [ngModel]="subjectForm().secundaria" (ngModelChange)="toggleSubjectLevel('secundaria', $event)" name="lvlSecundaria" />
+                    Secundaria
+                  </label>
+                </div>
+              </div>
+              <div class="cfg-field cfg-field--wide">
+                <span class="cfg-label">Portada</span>
+                <p class="mod__hint cover-hint">Elige la imagen que verán al crear el curso. Hay una por área.</p>
+                <div class="cover-pick" role="listbox" aria-label="Portadas disponibles">
+                  @for (cover of coverLibrary; track cover.key) {
+                    <button
+                      type="button"
+                      class="cover-pick__item"
+                      role="option"
+                      [class.is-on]="subjectForm().coverKey === cover.key"
+                      [attr.aria-selected]="subjectForm().coverKey === cover.key"
+                      (click)="selectCover(cover.key)">
+                      <img [src]="'/images/courses/' + cover.key + '.webp'" [alt]="cover.label" loading="lazy" />
+                      <span>{{ cover.label }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="cfg-actions cfg-actions--form">
+                <button type="button" class="adm-link" (click)="cancelSubjectForm()">Cancelar</button>
+                <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
               </div>
             </div>
-            <div class="cfg-actions cfg-actions--form">
-              <button type="button" class="adm-link" (click)="cancelSubjectForm()">Cancelar</button>
-              <button type="submit" class="adm-btn adm-btn--solid">Guardar</button>
-            </div>
-          </form>
-        </section>
+          </section>
+        </form>
       }
 
       @if (subjects().length === 0) {
         <section class="mod">
           <p class="mod__empty">No hay materias en el catálogo. Agrégalas para poder crear cursos.</p>
         </section>
-      } @else {
-        <p class="roster-count">{{ subjects().length }} {{ subjects().length === 1 ? 'materia' : 'materias' }}</p>
-        <section class="roster-group">
-          <div class="roster-table-wrap">
-            <table class="roster-table">
-              <thead>
-                <tr>
-                  <th>Materia</th>
-                  <th>Código</th>
-                  <th>Niveles</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (subject of subjects(); track subject.id) {
-                  <tr>
-                    <td>
-                      <span class="subject-swatch" [style.background]="subject.color"></span>
-                      {{ subject.name }}
-                    </td>
-                    <td>{{ subject.codePrefix }}</td>
-                    <td>{{ levelLabel(subject.levels) }}</td>
-                    <td>
-                      <button type="button" class="adm-link" (click)="openSubjectForm(subject)">Editar</button>
-                      <button type="button" class="adm-link adm-link--danger" (click)="removeSubject(subject)">Quitar</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+      } @else if (visibleSubjects().length === 0) {
+        <section class="mod">
+          <p class="mod__empty">Ninguna materia en este nivel.</p>
         </section>
+      } @else {
+        <p class="roster-count">
+          {{ visibleSubjects().length }}
+          {{ visibleSubjects().length === 1 ? 'materia' : 'materias' }}
+          @if (subjectFilter() !== 'all') {
+            en {{ subjectFilter() === 'primaria' ? 'primaria' : 'secundaria' }}
+          }
+        </p>
+        <div class="catalog">
+          @for (subject of visibleSubjects(); track subject.id) {
+            <article class="catalog__card">
+              <button type="button" class="catalog__media" (click)="openSubjectForm(subject)">
+                <img [src]="coverUrl(subject)" [alt]="'Portada de ' + subject.name" loading="lazy" />
+                <span class="catalog__veil"></span>
+                <span class="catalog__code">{{ subject.codePrefix }}</span>
+              </button>
+              <div class="catalog__body">
+                <h3>{{ subject.name }}</h3>
+                <p>{{ levelLabel(subject.levels) }}</p>
+                <div class="catalog__actions">
+                  <button type="button" class="adm-link" (click)="openSubjectForm(subject)">Editar</button>
+                  <button type="button" class="adm-link adm-link--danger" (click)="removeSubject(subject)">Quitar</button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
       }
     }
 

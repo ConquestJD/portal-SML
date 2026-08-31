@@ -52,7 +52,6 @@ export class CrearCursoComponent implements OnInit {
   readonly weekDayShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   readonly subjectCoverUrl = subjectCoverUrl;
   readonly levels: { key: string; label: string }[] = [
-    { key: 'inicial', label: 'Inicial' },
     { key: 'primaria', label: 'Primaria' },
     { key: 'secundaria', label: 'Secundaria' },
   ];
@@ -255,7 +254,7 @@ export class CrearCursoComponent implements OnInit {
           : rawLevel.includes('prim')
             ? 'primaria'
             : rawLevel.includes('inic')
-              ? 'inicial'
+              ? 'primaria'
               : '';
 
         const subject = this.subjectCatalog.findByName(course.name);

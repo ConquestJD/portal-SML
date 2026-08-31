@@ -9,8 +9,14 @@ import {
 } from '../../../services/admin.service';
 import { ADMIN_SHARED } from '../_shared';
 import type { AdminTab } from '../_shared/components/tabs/admin-tabs.component';
-import { PredefinedSubject, SchoolLevel } from '../../../shared/data/predefined-subjects';
+import { PredefinedSubject, SchoolLevel, subjectCoverUrl } from '../../../shared/data/predefined-subjects';
 import { SubjectCatalogService } from '../../../shared/data/subject-catalog.service';
+import {
+  COURSE_COVER_LIBRARY,
+  CourseCoverSubject,
+  courseCoverSrc,
+  resolveCourseSubject,
+} from '../../../shared/utils/course-cover';
 
 type TabId = 'colegio' | 'materias' | 'anio' | 'pensiones';
 
@@ -52,16 +58,27 @@ export class ConfiguracionAdminComponent implements OnInit {
   schoolData = signal<SchoolIdentity>({ ...DEFAULT_IDENTITY });
   years = signal<AcademicYearItem[]>([]);
   subjects = signal<PredefinedSubject[]>([]);
+  subjectFilter = signal<'all' | SchoolLevel>('all');
 
   subjectFormOpen = signal(false);
   subjectEditId = signal('');
+  coverPicked = signal(false);
   subjectForm = signal({
     name: '',
     codePrefix: '',
     color: '#003366',
-    inicial: false,
+    coverKey: 'general' as CourseCoverSubject,
     primaria: true,
     secundaria: true,
+  });
+
+  readonly coverLibrary = COURSE_COVER_LIBRARY;
+
+  visibleSubjects = computed(() => {
+    const filter = this.subjectFilter();
+    const list = this.subjects();
+    if (filter === 'all') return list;
+    return list.filter((s) => s.levels.includes(filter));
   });
 
   yearFormOpen = signal(false);
@@ -122,28 +139,38 @@ export class ConfiguracionAdminComponent implements OnInit {
   }
 
   levelLabel(levels: SchoolLevel[]): string {
-    const map: Record<SchoolLevel, string> = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
-    return levels.map(l => map[l]).filter(Boolean).join(', ') || '—';
+    const map: Record<SchoolLevel, string> = { primaria: 'Primaria', secundaria: 'Secundaria' };
+    return levels.map(l => map[l]).filter(Boolean).join(' · ') || '—';
+  }
+
+  coverUrl(subject: PredefinedSubject): string {
+    return subjectCoverUrl(subject);
+  }
+
+  formCoverSrc(): string {
+    return courseCoverSrc(this.subjectForm().coverKey);
   }
 
   openSubjectForm(subject?: PredefinedSubject) {
     if (subject) {
       this.subjectEditId.set(subject.id);
+      this.coverPicked.set(true);
       this.subjectForm.set({
         name: subject.name,
         codePrefix: subject.codePrefix,
         color: subject.color,
-        inicial: subject.levels.includes('inicial'),
+        coverKey: subject.coverKey,
         primaria: subject.levels.includes('primaria'),
         secundaria: subject.levels.includes('secundaria'),
       });
     } else {
       this.subjectEditId.set('');
+      this.coverPicked.set(false);
       this.subjectForm.set({
         name: '',
         codePrefix: '',
         color: '#003366',
-        inicial: false,
+        coverKey: 'general',
         primaria: true,
         secundaria: true,
       });
@@ -154,6 +181,7 @@ export class ConfiguracionAdminComponent implements OnInit {
   cancelSubjectForm() {
     this.subjectFormOpen.set(false);
     this.subjectEditId.set('');
+    this.coverPicked.set(false);
   }
 
   patchSubject(field: 'name' | 'codePrefix' | 'color', value: string) {
@@ -161,12 +189,18 @@ export class ConfiguracionAdminComponent implements OnInit {
       const next = { ...d, [field]: value };
       if (field === 'name' && !this.subjectEditId()) {
         next.codePrefix = this.subjectCatalog.prefixFromName(value);
+        if (!this.coverPicked()) next.coverKey = resolveCourseSubject(value);
       }
       return next;
     });
   }
 
-  toggleSubjectLevel(level: 'inicial' | 'primaria' | 'secundaria', on: boolean) {
+  selectCover(key: CourseCoverSubject) {
+    this.coverPicked.set(true);
+    this.subjectForm.update(d => ({ ...d, coverKey: key }));
+  }
+
+  toggleSubjectLevel(level: SchoolLevel, on: boolean) {
     this.subjectForm.update(d => ({ ...d, [level]: on }));
   }
 
@@ -178,7 +212,6 @@ export class ConfiguracionAdminComponent implements OnInit {
       return;
     }
     const levels: SchoolLevel[] = [];
-    if (f.inicial) levels.push('inicial');
     if (f.primaria) levels.push('primaria');
     if (f.secundaria) levels.push('secundaria');
     if (!levels.length) {
@@ -191,6 +224,7 @@ export class ConfiguracionAdminComponent implements OnInit {
       name,
       codePrefix: f.codePrefix,
       color: f.color,
+      coverKey: f.coverKey,
       levels,
     });
     const duplicate = current.some(s => s.name.toLowerCase() === name.toLowerCase() && s.id !== draft.id);
