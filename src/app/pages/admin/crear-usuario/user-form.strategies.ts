@@ -77,7 +77,7 @@ export interface UserFormStrategy {
   subtitle: string;
   /** Campos específicos del rol que se muestran en la sección "Información del rol" */
   roleFields: FieldKey[];
-  /** Devuelve true si el rol requiere credenciales en creación (en inicial para estudiantes no se requiere) */
+  /** Devuelve true si el rol requiere credenciales en creación */
   requiresCredentials: (data: UserFormData, isEditMode: boolean) => boolean;
   /** Construye el DTO para creación */
   buildCreateDto: (d: UserFormData) => Record<string, unknown>;

@@ -24,7 +24,6 @@ export class CrearUsuarioComponent implements OnInit {
   readonly MIN_DNI_DIGITS = 8;
 
   readonly GRADES: Record<string, string[]> = {
-    inicial:    ['3 años', '4 años', '5 años'],
     primaria:   ['1ro Primaria', '2do Primaria', '3ro Primaria', '4to Primaria', '5to Primaria', '6to Primaria'],
     secundaria: ['1ro Secundaria', '2do Secundaria', '3ro Secundaria', '4to Secundaria', '5to Secundaria'],
   };
@@ -70,11 +69,6 @@ export class CrearUsuarioComponent implements OnInit {
 
   credentialsRequired = computed(() =>
     this.strategy().requiresCredentials(this.formData(), this.isEditMode())
-  );
-
-  /** En "inicial" el acceso también es automático (código + DNI). */
-  showInitialNote = computed(() =>
-    this.roleKind() === 'student' && this.formData().level === 'inicial' && !this.isEditMode()
   );
 
   showAccessSection = computed(() =>
