@@ -242,6 +242,26 @@ export class EstudiantesComponent implements OnInit {
     this.suspendReason = '';
   }
 
+  deleteStudent(s: StudentItem) {
+    const name = s.name || 'este alumno';
+    if (!confirm(`¿Eliminar a ${name} de la base de datos? Se borrarán su cuenta, matrícula y registros. Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    this.error.set('');
+    this.busyId.set(s.id);
+    this.adminService.deleteStudent(s.id).subscribe({
+      next: () => {
+        this.students.update((list) => list.filter((row) => row.id !== s.id));
+        this.total.update((n) => Math.max(0, n - 1));
+        this.busyId.set('');
+      },
+      error: (err) => {
+        this.error.set(err?.error?.error?.message ?? 'No se pudo eliminar al alumno.');
+        this.busyId.set('');
+      },
+    });
+  }
+
   confirmSuspend() {
     const s = this.suspendTarget();
     const reason = this.suspendReason.trim();

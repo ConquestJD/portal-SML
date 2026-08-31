@@ -172,6 +172,13 @@
                           (click)="toggleSuspend(student)">
                           {{ isSuspended(student) ? 'Reactivar' : 'Suspender' }}
                         </button>
+                        <button
+                          type="button"
+                          class="adm-link adm-link--danger"
+                          [disabled]="busyId() === student.id"
+                          (click)="deleteStudent(student)">
+                          Eliminar
+                        </button>
                       </td>
                     </tr>
                   }

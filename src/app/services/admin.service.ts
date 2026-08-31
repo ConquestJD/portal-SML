@@ -423,6 +423,9 @@ export class AdminService {
   updateStudent(id: string, dto: Partial<CreateStudentDto>): Observable<StudentItem> {
     return this.http.put<{ success: boolean; data: StudentItem }>(`${this.url}/students/${id}`, dto).pipe(map(r => r.data));
   }
+  deleteStudent(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/students/${id}`);
+  }
   getStudentAcademicHistory(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/students/${id}/academic-history`); }
   getStudentGrades(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/students/${id}/grades`); }
   getStudentAttendance(id: string): Observable<unknown[]> { return this.get<unknown[]>(`/students/${id}/attendance`); }
