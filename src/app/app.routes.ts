@@ -272,6 +272,11 @@ export const routes: Routes = [
       },
       {
         path: 'admin/asistencia-ingreso',
+        loadComponent: () =>
+          import('./pages/admin/ingreso-diario/ingreso-diario.component').then((m) => m.IngresoDiarioComponent)
+      },
+      {
+        path: 'admin/asistencia-ingreso/lector',
         loadComponent: () => import('./pages/admin/asistencia-ingreso/asistencia-ingreso.component').then(m => m.AsistenciaIngresoComponent)
       },
       {

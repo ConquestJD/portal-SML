@@ -1,0 +1,108 @@
+@import '../_shared/admin-editorial.css';
+
+.gate-toolbar {
+  align-items: flex-end;
+}
+
+.gate-day {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.gate-day__pick input {
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  padding: .45rem 0;
+  font: inherit;
+  color: var(--ink);
+  outline: none;
+}
+
+.gate-day__pick input:focus {
+  border-bottom-color: var(--navy);
+}
+
+.gate-day__label {
+  margin: 0 .5rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+  min-width: 12rem;
+}
+
+.gate-photo {
+  width: 2.35rem;
+  height: 2.95rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #e8edf3;
+}
+
+.gate-time {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.roster-group {
+  background: var(--surface);
+  margin-bottom: 1.15rem;
+  box-shadow: 0 1px 0 rgba(20 32 51 / .04);
+}
+
+.is-absent td {
+  color: var(--muted);
+}
+
+.enroll-badge {
+  display: inline-block;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: .2rem .45rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.enroll-badge[data-kind='ok'] {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #eef3f8;
+}
+
+.enroll-badge[data-kind='late'] {
+  border-color: #9a6b12;
+  color: #9a6b12;
+  background: #f8f1e0;
+}
+
+.enroll-badge[data-kind='none'] {
+  background: #f4f6f9;
+}
+
+.adm-link:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .gate-toolbar {
+    align-items: stretch;
+  }
+
+  .gate-day {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .gate-day__label {
+    width: 100%;
+    min-width: 0;
+  }
+}

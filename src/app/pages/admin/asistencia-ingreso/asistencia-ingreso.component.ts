@@ -79,7 +79,7 @@ export class AsistenciaIngresoComponent implements OnInit, OnDestroy {
   }
 
   close() {
-    void this.router.navigate(['/admin/dashboard']);
+    void this.router.navigate(['/admin/asistencia-ingreso']);
   }
 
   toggleLog() {

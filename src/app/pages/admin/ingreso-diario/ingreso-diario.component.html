@@ -1,0 +1,159 @@
+<div class="adm-page">
+
+  <header class="adm-page__hero">
+    <img class="adm-page__hero-photo" src="/images/heroes/attendance.webp" alt="" decoding="async" />
+    <div class="adm-page__hero-veil"></div>
+    <div class="adm-page__hero-content">
+      <img src="/only-logo.png" alt="" class="adm-page__crest" />
+      <div>
+        <h1 class="adm-page__title">Ingreso diario</h1>
+        <p class="adm-page__brand">Santa María Laura</p>
+      </div>
+      <div class="adm-page__hero-actions">
+        <a routerLink="/admin/asistencia-ingreso/lector" class="adm-btn adm-btn--primary">Abrir lector</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="adm-page__body">
+
+    <section class="metrics" aria-label="Resumen de ingreso">
+      <div class="metric">
+        <span class="metric__n">{{ expected() }}</span>
+        <span class="metric__l">Matriculados</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ inCount() }}</span>
+        <span class="metric__l">Ingresaron</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ present() }}</span>
+        <span class="metric__l">A tiempo</span>
+      </div>
+      <div class="metric">
+        <span class="metric__n">{{ late() }}</span>
+        <span class="metric__l">Tardanzas · corte {{ cutoff() }}</span>
+      </div>
+      <div class="metric" [class.metric--alert]="absent() > 0 && isToday()">
+        <span class="metric__n">{{ absent() }}</span>
+        <span class="metric__l">Sin ingreso</span>
+      </div>
+    </section>
+
+    @if (error()) {
+      <p class="adm-alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="toolbar gate-toolbar">
+      <div class="gate-day">
+        <button type="button" class="adm-link" (click)="shiftDay(-1)" aria-label="Día anterior">Anterior</button>
+        <label class="gate-day__pick">
+          <span class="visually-hidden">Fecha</span>
+          <input
+            type="date"
+            [ngModel]="date()"
+            (ngModelChange)="setDate($event)"
+            [max]="today"
+            name="gateDate"
+          />
+        </label>
+        <button
+          type="button"
+          class="adm-link"
+          (click)="shiftDay(1)"
+          [disabled]="isToday()"
+          aria-label="Día siguiente"
+        >Siguiente</button>
+      </div>
+      <p class="gate-day__label">{{ dateLabel() }}@if (isToday()) { · Hoy }</p>
+      <label class="search">
+        <span class="visually-hidden">Buscar alumno</span>
+        <input
+          type="search"
+          placeholder="Nombre o código…"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          name="gateSearch"
+        />
+      </label>
+      <select [ngModel]="grade()" (ngModelChange)="grade.set($event)" name="gateGrade" aria-label="Grado">
+        <option value="">Todos los grados</option>
+        @for (g of grades(); track g) {
+          <option [value]="g">{{ g }}</option>
+        }
+      </select>
+      <select [ngModel]="filter()" (ngModelChange)="setFilter($event)" name="gateFilter" aria-label="Estado de ingreso">
+        <option value="all">Todos</option>
+        <option value="in">Ingresaron</option>
+        <option value="late">Tardanzas</option>
+        <option value="absent">Sin ingreso</option>
+      </select>
+    </div>
+
+    @if (loading()) {
+      <p class="feed__empty">Cargando el ingreso del día…</p>
+    } @else if (expected() === 0) {
+      <section class="feed">
+        <p class="feed__empty">No hay alumnos matriculados para mostrar el ingreso de este día.</p>
+      </section>
+    } @else if (filtered().length === 0) {
+      <section class="feed">
+        <p class="feed__empty">Nadie coincide con estos filtros.</p>
+      </section>
+    } @else {
+      @for (group of grouped(); track group.grade) {
+        <section class="roster-group" [attr.aria-label]="group.grade">
+          <header class="roster-group__head">
+            <div>
+              @if (group.level) {
+                <p class="roster-group__kicker">{{ group.level | levelLabel }}</p>
+              }
+              <h2 class="roster-group__title">{{ group.grade }}</h2>
+            </div>
+            <span class="roster-group__n">{{ group.rows.length }}</span>
+          </header>
+          <div class="roster-table-wrap">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Código</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of group.rows; track row.id) {
+                  <tr [class.is-absent]="row.status === 'ABSENT'">
+                    <td>
+                      <a [routerLink]="['/admin/estudiantes', row.student.id]" class="roster-person">
+                        @if (photoOf(row.student); as photo) {
+                          <img class="gate-photo" [src]="photo" alt="" />
+                        }
+                        <span class="roster-person__text">
+                          <span class="roster-person__name">{{ row.student.fullName || '—' }}</span>
+                          @if (row.student.level && row.student.grade) {
+                            <span class="roster-person__meta">{{ row.student.grade }}</span>
+                          }
+                        </span>
+                      </a>
+                    </td>
+                    <td>
+                      <span class="roster-code">{{ row.student.studentCode || '—' }}</span>
+                    </td>
+                    <td class="gate-time">{{ formatTime(row.scannedAt) }}</td>
+                    <td>
+                      <span class="enroll-badge" [attr.data-kind]="statusKind(row.status)">
+                        {{ statusLabel(row.status) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>

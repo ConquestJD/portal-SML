@@ -132,7 +132,7 @@ export class DashboardAdminComponent implements OnInit {
     { label: 'Registrar estudiante', hint: 'Alta en la nómina', link: '/admin/estudiantes/nuevo' },
     { label: 'Abrir un curso', hint: 'Plan de estudios', link: '/admin/cursos/crear' },
     { label: 'Publicar comunicado', hint: 'Mural del colegio', link: '/admin/comunicados' },
-    { label: 'Abrir asistencia de ingreso', hint: 'Dejar activa junto al ZKB209', link: '/admin/asistencia-ingreso' },
+    { label: 'Ingreso diario', hint: 'Nómina del día o abrir el lector', link: '/admin/asistencia-ingreso' },
   ];
 
   constructor(

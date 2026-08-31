@@ -716,16 +716,28 @@ export interface CampusScanResult {
   student: CampusScanStudent;
 }
 
+export type CampusGateStatus = 'PRESENT' | 'LATE' | 'ABSENT';
+
+export interface CampusAttendanceRow {
+  id: string;
+  status: CampusGateStatus;
+  scannedAt: string | null;
+  student: CampusScanStudent;
+}
+
 export interface CampusAttendanceDay {
   date: string;
   lateCutoff: string;
   present: number;
   late: number;
   total: number;
+  expected?: number;
+  absent?: number;
   records: Array<{
     id: string;
     status: 'PRESENT' | 'LATE';
     scannedAt: string;
     student: CampusScanStudent;
   }>;
+  roster?: CampusAttendanceRow[];
 }
